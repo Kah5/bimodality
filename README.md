@@ -1,2 +1,3 @@
 # biomodality
-Code for pls tree cover bimodality paper
+Repository for code for pls tree cover bimodality analysis.
+

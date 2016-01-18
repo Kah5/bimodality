@@ -1,0 +1,25 @@
+Species Code,Species,b1,b2,b3,Adj R^2,MSE,Model,Local Basal Area Mean,min BA,max BA,sd BA,Sample size,Continent,location
+ABIBAL,Abies balsamea (L.) Mill.,-1.1421,1.499522,0.396995,0.7954,0.323,CW = b1 + b2*DBH^(b3),26.3,0,59.7,11.8,75,N. America,N. Wisc and Mich.
+ACERUB,Acer rubrum L.,1.644354,0.248532,0.875754,0.8493,0.99,CW = b1 + b2*DBH^(b3),29.1,4.6,57.4,10.7,81,N. America,N. Wisc and Mich.
+ACESAC,Acer saccharum Marsh.,1.70343,0.324161,0.828794,0.8878,1.324,CW = b1 + b2*DBH^(b3),26.8,0,50.5,9.4,150,N. America,N. Wisc and Mich.
+BETALL,Betula alleghaniensis Britton,0.723785,0.666365,0.677279,0.9233,0.937,CW = b1 + b2*DBH^(b3),30.4,0,55.1,9.9,92,N. America,N. Wisc and Mich.
+BETPAP,Betula papyrifera Marsh.,1.933184,0.04892,1.325343,0.8567,0.638,CW = b1 + b2*DBH^(b3),20.1,0,52.8,11.5,64,N. America,N. Wisc and Mich.
+FRAAME,Fraxinus americana L.,1.742014,0.098761,1.113605,0.7712,1.216,CW = b1 + b2*DBH^(b3),29,9.2,48.2,8,41,N. America,N. Wisc and Mich.
+FRANIG,Fraxinus nigra Marsh.,0.648349,0.470476,0.7,0.8125,0.623,CW = b1 + b2*DBH^(b3),29.6,11.5,48.2,9.2,45,N. America,N. Wisc and Mich.
+LARLAR,Larix Zaricina (Du Roi) K. Koch,0.763092,0.125368,1.056165,0.8693,0.52,CW = b1 + b2*DBH^(b3),12.6,0,32.1,8.1,45,N. America,N. Wisc and Mich.
+OSTVIR,Ostrya virginiana (Mill.) K. Koch,-10.3335,10.23996,0.152706,0.8195,0.422,CW = b1 + b2*DBH^(b3),26.7,13.8,43.1,5.9,46,N. America,N. Wisc and Mich.
+PICGLA,Picea glauca (Moench) Voss,0.934983,0.303404,0.71858,0.8197,0.418,CW = b1 + b2*DBH^(b3),17.9,0,34.4,7.8,69,N. America,N. Wisc and Mich.
+PICMAR,Picea mariana (Mill.) B.S.P.,1.304953,0.008827,1.787981,0.7755,0.319,CW = b1 + b2*DBH^(b3),18.1,0,45.9,10.3,59,N. America,N. Wisc and Mich.
+PINBAN,Pinus bankiana Lamb.,1.030976,0.049391,1.269472,0.8379,0.358,CW = b1 + b2*DBH^(b3),29.9,0,68.9,11.8,98,N. America,N. Wisc and Mich.
+PINRES,Pinus resinosa Ait,1.066601,0.088879,1.090938,0.9317,0.417,CW = b1 + b2*DBH^(b3),15.5,0,39,10.4,99,N. America,N. Wisc and Mich.
+PINSTR,Pinus strobus L.,1.180847,0.131145,0.969578,0.8712,1.545,CW = b1 + b2*DBH^(b3),23.8,0,52.8,10.1,116,N. America,N. Wisc and Mich.
+POPBAL,Populus balsamifera L.,2.292949,0.006774,1.855259,0.823,0.764,CW = b1 + b2*DBH^(b3),29.8,0,68.9,11.8,25,N. America,N. Wisc and Mich.
+POPGRA,Populus grandidentata Michx,1.228857,0.132852,1.248,0.8642,0.705,CW = b1 + b2*DBH^(b3),15.5,0,39,10.4,63,N. America,N. Wisc and Mich.
+POPTRE,Populus tremuloides Michx.,0.452656,0.436079,0.75,0.8784,0.677,CW = b1 + b2*DBH^(b3),23.8,0,52.8,11.1,77,N. America,N. Wisc and Mich.
+PRUPEN,Prunus pensylvanica L.,1.250506,0.15585,1.077472,0.6221,0.232,CW = b1 + b2*DBH^(b3),15.3,0,48.2,11.9,30,N. America,N. Wisc and Mich.
+PRUSER,Prunus serotina Ehrh.,0.397577,0.856605,0.526893,0.676,0.565,CW = b1 + b2*DBH^(b3),18.7,0,48.2,12.6,48,N. America,N. Wisc and Mich.
+QUERUB,Quercus rubra L.,0.695116,0.376525,0.83074,0.8902,1.38,CW = b1 + b2*DBH^(b3),23.9,0,39,9.3,53,N. America,N. Wisc and Mich.
+THUOCC,Thuja occidentalis L.,0.647299,0.283876,0.76419,0.8324,0.387,CW = b1 + b2*DBH^(b3),34.4,11.5,64.3,11.6,62,N. America,N. Wisc and Mich.
+TILAME,Tilia americana L.,2.186146,0.070577,1.127812,0.8163,0.675,CW = b1 + b2*DBH^(b3),25.2,0,41.3,6.9,58,N. America,N. Wisc and Mich.
+TSUCAN,Tsuga canadensis (L.) Carr.,0.264749,0.796417,0.589485,0.8434,1.392,CW = b1 + b2*DBH^(b3),34.8,6.9,66.6,10.9,111,N. America,N. Wisc and Mich.
+ULMAME,Ulmus americana L.,3.143002,0.089564,1,0.3511,0.142,CW = b1 + b2*DBH^(b3),23.7,9.2,36.7,10.6,6,N. America,N. Wisc and Mich.

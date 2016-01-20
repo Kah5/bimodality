@@ -89,7 +89,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   morisita.est[q < 2] <- NA
   
-  #  Now they're in stems / ha
+  #  Now they're in stems / hectare
   morisita.est <- morisita.est * 10000
   
   #  Basal area is the average diameter times the stem density.

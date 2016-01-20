@@ -132,26 +132,18 @@ for(i in 1:nrow(spec.table)){
   cat(i,'\n')
 }
 
-###
-##calculate mean crown width (average, not species specific)
-#this could be improved by saturating at a calculated density
 
-  #b0 <- 0.529302
-  #b1 <- 0.137036
-  
-  #crown.area <- pi*((b0 + b1 * spec.table$diams)^2) # assuming diams in cm
-  
 #spec.table$crown.area <- crown.area
 #crown.area.dens <- crown.area/2*spec.table$density #gives crown area per hectares
 #spec.table$crown.area.dens <- crown.area.dens
 
-#once biomass is estimated from diameter, need to multiply by the estimated density at each point
+#once crown width  is estimated from diameter, need to multiply by the estimated density at each point
 #spec.table provides point level  estimates of biomass, density, and species
-spec.table$CW <- CW
+spec.table$CW <- CW # Crown diameter of each tree
 #spec.table$CW.scaled <- CW*spec.table$density
-spec.table$crown.cover <- 0.25*pi*CW^2
-spec.table$crown.scaled <- spec.table$crown.cover*spec.table$density*10000
-
+spec.table$crown.area <- 0.25*pi*CW^2 #crown area of each tree
+#spec.table$crown.scaled <-(spec.table$crown.area*spec.table$density) #(crown area (m2))/tree)*(trees/8km^2)
+#crown.scaled = tree estimate of 
 CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
 
 #spec.table$biom <- biomass * (spec.table$density / 1000)
@@ -174,7 +166,10 @@ spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.p
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 #spec.table$biom[spec.table$biom > nine.nine.pct['biom']] <- nine.nine.pct['biom']
 spec.table$crown.area[spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
-spec.table$crown.cover[spec.table$crown.scaled > nine.nine.pct['crown.scaled']] <- nine.nine.pct['crown.scaled']
+#spec.table$crown.cover[spec.table$crown.scaled > nine.nine.pct['crown.scaled']] <- nine.nine.pct['crown.scaled']
+
+spec.table$cover <- spec.table$crown.area * spec.table$density
+hist(spec.table$cover)
 
 library(plyr)
 library(reshape2)
@@ -209,10 +204,15 @@ density.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.
 basal.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'basal')
 #biomass.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'biom')
 diam.table <-  dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'diams')
-CW.table <- dcast(spec.table, x + y + cell ~ spec, mean, na.rm=TRUE, value.var = 'CW')
+CW.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'CW')
 #mean.dens.table <- dcast(spec.table, x + y + cell ~ spec, mean, na.rm=TRUE, value.var = 'density')
-crown.scale <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'crown.scaled')
+#crown.scale <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'crown.scaled')
+#crown.avg <- dcast(spec.table, x +y ~ cell , mean, na.rm = TRUE, value.var = "CW")
 
+crown.means <- rowMeans(CW.table[,4:ncol(CW.table)], na.rm=TRUE)
+diam.means <- rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
+
+CC.adj <-  100*(1-exp(-0.01*crown.sums))
 
 #calculate standard deviations of density, basal area, biomass, and diameters
 density.sd.table <- dcast(spec.table, x + y  + cell ~ spec, sd, na.rm=TRUE, value.var = 'density')
@@ -232,10 +232,13 @@ basal.table <- normalize(basal.table)
 #biomass.table <- normalize(biomass.table)
 diam.table <- normalize(diam.table, mult = 2.54, trees.by.cell)
 CW.table<- normalize(CW.table)
+crown.scale <- normalize(crown.scale)
 
-  total = rowSums(crown.scale[,4:ncol(crown.scale)], na.rm=TRUE)
+#CW.table$total <-  rowSums(CW.table[,4:ncol(CW.table)], na.rm=TRUE)
+density.table$total.dens <-  rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
-crown.scale$total <- total
+
+#crown.scale$total <- total
 
 #this has the totals per grid cell, need to divide by #trees/cell and multiply 
 
@@ -265,20 +268,12 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
 dens     <- rast.fun(density.table)
 count.up <- rast.fun(count.table)
 basal    <- rast.fun(basal.table)
-biomass  <- rast.fun(biomass.table)
+#biomass  <- rast.fun(biomass.table)
 mdiam    <- rast.fun(diam.table); mdiam[mdiam==0] <- NA
-#CW.rast <- rast.fun(CW.table)
+CW.rast <- rast.fun(CW.table)
+crown <- rast.fun(crown.scale)
 
 
-
-#creat rasters for indiana totals
-
-#dens     <- rast.fun(dens.agg)
-#count.up <- rast.fun2(count.agg)
-#basal    <- rast.fun(basal.agg, "Oak")
-#biomass  <- rast.fun(biom.agg, "Oak")
-#mdiam    <- rast.fun(diams.agg, "Oak") 
-#mdiam[mdiam==0] <- NA
 
 writeRaster(biomass, "data/biomass.grd", overwrite=TRUE)
 

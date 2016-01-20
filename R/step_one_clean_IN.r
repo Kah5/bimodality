@@ -30,7 +30,7 @@ library(sp)
 library(spdep)
 library(rgdal)
 library(raster)
-install.packages('Rcpp')
+#install.packages('Rcpp')
 library(Rcpp)
 # Read in the data
 ind <- read.csv("data/ndinpls_v1.4.csv", stringsAsFactors = FALSE)

@@ -77,6 +77,7 @@ plot(CA.df$precip, CA.df$layer)
 hist(CW.df$precip)
 hist(CW.df$layer, breaks = 25)
 
+
 #if we designate savanna < 50 and forest > 50 % cover, 
 CW.df.sav <- CW.df[ CW.df$layer < 50, ]
 CW.df.forest <- CW.df[CW.df$layer >= 50, ]
@@ -88,6 +89,10 @@ CA.df.forest <- CA.df[CA.df$layer >= 50, ]
 
 
 pdf("Precip_hists.pdf")
+hist(CW.df$layer, breaks = 25, xlab = "Average % crown cover in each grid cell", 
+     ylab = "Number of grid cells", 
+     main = "Histogram of Crown cover")
+
 hist(CA.df$layer, breaks = 25, xlab = "Average projected Crown area (m^2) per tree in each grid cell", 
      ylab = "Number of grid cells", 
      main = "Histogram of Crown area")
@@ -98,7 +103,7 @@ hist(CA.df.forest$precip, xlim = c(70, 110), breaks = 15,
      main = "Precipitation of Forest grid cells")
 
 hist(CA.df.sav$precip, xlim = c(70, 110), breaks = 15,
-     xlab = "MAR (cm)", 
+     xlab = "MAP (cm)", 
      ylab = "Number of Non-forest grid cells", 
      main = "Precipitation of Savanna grid cells")
 
@@ -111,15 +116,15 @@ hist(CW.df$precip, xlim= c(70, 110), breaks = 30,
      xlab = "MAP (cm)", ylab = "Number of grid cells", 
      main = "average 1900-1910 Precipitation")
 
-hist(CW.df.forest$precip, xlim = c(70, 110), breaks = 15,
-     xlab = "MAP (cm)", 
-     ylab = "Number of Forest grid cells", 
-     main = "Precipitation of Forest grid cells")
+#hist(CW.df.forest$precip, xlim = c(70, 110), breaks = 15,
+ #    xlab = "MAP (cm)", 
+  #   ylab = "Number of Forest grid cells", 
+   #  main = "Precipitation of Forest grid cells")
 
-hist(CW.df.sav$precip, xlim = c(70, 110), breaks = 15,
-     xlab = "MAR (cm)", 
-     ylab = "Number of Non-forest grid cells", 
-     main = "Precipitation of Savanna grid cells")
+#hist(CW.df.sav$precip, xlim = c(70, 110), breaks = 15,
+ #    xlab = "MAR (cm)", 
+  #   ylab = "Number of Non-forest grid cells", 
+   #  main = "Precipitation of Savanna grid cells")
 
 dev.off()
 

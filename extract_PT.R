@@ -63,6 +63,8 @@ CW.df <- as.data.frame(CC.adj, xy = TRUE)
 CW.df$precip <- extract(avg.alb, CW.df[,1:2])
 plot(CW.df$precip, CW.df$layer)
 
+
+
 #extract just crown area
 CA.df <- as.data.frame(CW.adj, xy = TRUE)
 CA.df$precip <- extract(avg.alb, CA.df[,1:2])
@@ -184,4 +186,23 @@ hist(CA.df.100.110$layer, xlim = c(0, 100), breaks = 1,
 
 #CA.df.110.120 <- CA.df[ CA.df$precip < 120 & CA.df$precip > 110, ]
 #hist(CA=.df.110.120$layer, xlim = c(0, 100))
+dev.off()
+
+
+#map out crown area
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c( "indiana" , "illinois" ) )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata<-data.frame(mapdata)
+
+pdf("crown_maps.pdf")
+ca.map <- ggplot() +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group))+ scale_x_continuous(limits = c(250000, 1000000)) +
+  scale_y_continuous(limits=c(0, 800000))
+ca.map <- ca.map + geom_point(data=na.omit(CA.df), aes(x=x, y=y, color = layer), shape = 15)+
+  labs(x="easting", y="northing", title="Average Projected Crown Area") + 
+  scale_color_gradientn(colours = rainbow(4), name ="Proj. Crown Area (m^2)")
+ca.map
 dev.off()

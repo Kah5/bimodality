@@ -26,12 +26,15 @@ mw1999 <- rbind(IL1999,
 summary(mw1999$SPECIES_COMMON_NAME)
 mw1999<- mw1999[!summary(mw1999$SPECIES_COMMON_NAME)<2,]
 
-convert <- read.csv("./data/fullpaleon_conversion_v0.3.csv")
+
 library(Hmisc)
 mw1999$SPECIES_COMMON_NAME<- capitalize(as.character(mw1999$SPECIES_COMMON_NAME))
-index <- match(mw1999$SPECIES_COMMON_NAME, convert$Level.0)
-index
+
  
+#created a lookup table converting FHM species to paleon species
+lookup <- read.csv("FHM_spec.csv")
+mw1999<- join(mw1999,lookup,by= 'SPECIES_COMMON_NAME')
+
 
 plot(mw1999$DBH, mw1999$CROWN_DIAMETER_90)
 plot(mw1999$DBH, mw1999$CROWN_DIAMETER_WIDE)
@@ -44,7 +47,7 @@ summary(mw1999$SPECIES_COMMON_NAME)
 #LCW = b0 + b1* DBH
 full.lm <- lm( mw1999$CROWN_DIAMETER_90 ~ mw1999$DBH)
 
-w.oak <- lm(CROWN_DIAMETER_90 ~ DBH, SPECIES_COMMON_NAME=="white oak", data=mw1999)
+oak <- lm(CROWN_DIAMETER_90 ~ DBH, Paleon=="Oak", data=mw1999)
 
 #remove na for DBH and CROWn diameters
 
@@ -83,7 +86,7 @@ model <- function(x){
 fit <- model(mw1999[mw1999$SPECIES_COMMON_NAME=="White oak" ,])
 
 #loop over all subsets of species
-fitted.crown.allom <- dlply(mw1999, .(SPECIES_COMMON_NAME), model)
+fitted.crown.allom <- dlply(mw1999, .(Paleon), model)
 
 #gives the coefficients of all the lm, note NA values in DBH coef for some species
 ldply(fitted.crown.allom, coef)
@@ -95,15 +98,23 @@ add.trend.line <- function(x, y, d, ...) {
   fit <- lm(d[[y]] ~ (d[[x]]))
   abline(fit, ...)
 }
-col.table <- rainbow(length(unique(mw1999$SPECIES_COMMON_NAME)))
-plot(CROWN_DIAMETER_90 ~ DBH, mw1999, cex=1.5, pch=21)
-d_ply(mw1999, .(SPECIES_COMMON_NAME), function(x) add.trend.line("DBH", "CROWN_DIAMETER_90", x, col=col.table[x$SPECIES_COMMON_NAME]))
+col.table <- rainbow(length(unique(mw1999$Paleon)))
+plot(CROWN_DIAMETER_90 ~ DBH, mw1999, col = mw1999$Paleon, cex=0.5, pch=21)
+d_ply(mw1999, .(Paleon), function(x) add.trend.line("DBH", "CROWN_DIAMETER_90", x, col=col.table[x$Paleon]))
 
 ##plot the crown diameters using ggplot
 
 
-#ggplot(mw1999, aes(DBH, CROWN_DIAMETER_90, colour = "SPECIES_COMMON_NAME")
+ggplot(mw1999, aes(DBH, CROWN_DIAMETER_90, colour = mw1999$SPECIES_COMMON_NAME))
 
+
+
+qplot(
+  x = DBH,
+  y = CROWN_DIAMETER_90,
+  data = mw1999#,
+  #color = mw1999$SPECIES_COMMON_NAME # color by factor color (I know, confusing)
+) + facet_grid(Paleon ~ ., shrink = FALSE)
 
 #should we generate paleon taxa level relationships?
 

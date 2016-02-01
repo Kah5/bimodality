@@ -99,7 +99,10 @@ col.table <- rainbow(length(unique(mw1999$SPECIES_COMMON_NAME)))
 plot(CROWN_DIAMETER_90 ~ DBH, mw1999, cex=1.5, pch=21)
 d_ply(mw1999, .(SPECIES_COMMON_NAME), function(x) add.trend.line("DBH", "CROWN_DIAMETER_90", x, col=col.table[x$SPECIES_COMMON_NAME]))
 
+##plot the crown diameters using ggplot
 
+
+#ggplot(mw1999, aes(DBH, CROWN_DIAMETER_90, colour = "SPECIES_COMMON_NAME")
 
 
 #should we generate paleon taxa level relationships?

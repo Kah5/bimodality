@@ -48,7 +48,7 @@ density <- SpatialPointsDataFrame(coordinates(final.data),
 
 proj4string(density)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
 
-writeOGR(density, dsn = "Shapefiles/il_point_density_alb.shp", layer = "Shapefiles/il_point_density_alb", driver = "ESRI Shapefile")
+writeOGR(density, dsn = "Shapefiles/in_point_density_alb.shp", layer = "Shapefiles/in_point_density_alb", driver = "ESRI Shapefile")
 
 ##make sure I can read it
 #setwd("C:/Users/Kelly/Documents/biomodality/Shapefiles")

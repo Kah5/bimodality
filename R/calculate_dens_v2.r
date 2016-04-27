@@ -84,8 +84,8 @@ numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+in
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
 
 #create dataframe with stem density, speceies
-spec.table <- data.frame(xyFromCell(base.rast, numbered.cell),
-                         cell = numbered.cell,
+spec.table <- data.frame(PointX = final.data$PointX, 
+                         PointY = final.data$PointY,
                          spec = c(as.character(species[,1]), as.character(species[,2])),
                          count = 1,
                          point = 1:nrow(species),
@@ -139,8 +139,8 @@ for(i in 1:nrow(spec.table)){
   cat(i,'\n')
 }
 
-
-
+summary(CW)
+hist(CW, breaks = 75)
 #once crown width  is estimated from diameter, need to multiply by the estimated density at each point
 #spec.table provides point level  estimates of biomass, density, and species
 spec.table$CW <- CW # Crown diameter of each tree

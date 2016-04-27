@@ -20,7 +20,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   }
   
   #m.diam <- diam/100 #diameters are in cm already
-  m.diam <- (diam * 2.54) / 100 # convert diameter to meters
+  m.diam <- (diam * 2.54) / 100 # convert diameter from inches to meters
   
   dist <- floor(apply(dist, 2, function(x)as.numeric(as.character(x))))
   azim <- floor(apply(azim, 2, function(x)as.numeric(as.character(x))))
@@ -65,7 +65,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   
   
-     m.dist <- dist * 0.201168 + 0.5 * m.diam
+     m.dist <- dist * 0.201168 + 0.5 * m.diam # convert distances from chains to meters
      #m.dist <- dist + 0.5 * m.diam 
   #  rsum is the sum of the squared radii, in cases where there are two trees in
   #  the same quadrant I'm going to drop the site, as I will with any corner 
@@ -94,8 +94,8 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   #  Basal area is the average diameter times the stem density.
   #  The stem density is measured in trees / ha.
-  #met.rad <- (diam / 2) * 2.54 / 100
-  met.rad <- (diam / 2)/100
+  met.rad <- (diam / 2) * 2.54 / 100
+  #met.rad <- (diam / 2)/100
   basal.area <- morisita.est * rowSums(pi * met.rad^2, na.rm=TRUE)
   
   basal.area[ q < 2 ] <- NA

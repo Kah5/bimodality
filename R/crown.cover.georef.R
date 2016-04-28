@@ -5,22 +5,18 @@
 library(plyr)
 library(reshape2)
 library(ggplot2)
+library(aspace)
+
 #read.csv("data/pointwise")
-#but perhaps we should do this by township to better estimate?
 
-#crown.full$avg <- rowMeans(crown.full[,4:34], na.rm=TRUE)
-#density.full$avg <- rowMeans(density.full[,4:34], na.rm=TRUE)
-#density.full$total <- rowSums(density.full[,4:34], na.rm=TRUE)
+###need to make sure that the distances to trees are in meters
 
-#cover <- density.full$total/10000*crown.full$avg
-
-#hist(cover)
-#summary(cover*10000/64000000)
-#hist(cover*10000/(8000*8000))
-#cover.oaks <- density.full$total*crown.full$Oak
+final.data$TreeX1 <- final.data$PointX + cos(as_radians(final.data$az1))*final.data$dist1
+final.data$TreeY1 <- final.data$PointY + sin(as_radians(final.data$az1))*final.data$dist1
+final.data$TreeX2 <- final.data$PointX + cos(as_radians(final.data$az2))*final.data$dist2
+final.data$TreeY2 <- final.data$PointY + sin(as_radians(final.data$az2))*final.data$dist2
 
 
-#final.data<- read.csv("data/n")
 correction.factor <- read.csv("Data//correction_factors.csv", header = TRUE)
 
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
@@ -32,6 +28,7 @@ estimates <- morisita(final.data, correction.factor, veil = FALSE)
 
 stem.density <- estimates[[1]]
 basal.area <- estimates[[2]]
+plot.area <- estimates[[3]]
 summary(stem.density)
 summary(basal.area)
 zero.trees <- is.na(stem.density) & (species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
@@ -43,8 +40,12 @@ basal.area[zero.trees] <- 0
 summary(stem.density)
 summary(basal.area)
 
-stem.density <- data.frame(stem.density, basal.area, final.data)
+stem.dens <- data.frame(stem.density, basal.area)
 #write.csv(stem.density, 'IN_ILdensestimates_v1.5.csv')
+
+nine.nine.pct <- apply(stem.dens, 2, quantile, probs = 0.95, na.rm=TRUE)
+stem.dens$stem.density[stem.dens$stem.density > nine.nine.pct['stem.density']] <- nine.nine.pct['stem.density']
+stem.dens$basal.area[stem.dens$basal.area > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
 
 
@@ -79,23 +80,28 @@ spec.table <- data.frame(xyFromCell(base.rast, numbered.cell),
                          cell = numbered.cell,
                          PointX = final.data$PointX, 
                          PointY = final.data$PointY,
+                         TreeX = c(final.data$TreeX1, final.data$Treex2),
+                         TreeY = c(final.data$TreeY1, final.data$TreeY2),
                          spec = c(as.character(final.data$species1), as.character(final.data$species2)),
-                         density = rep(stem.density$density/2, 2),
-                         basal =  rep(stem.density$basal/2, 2),
+                         density = rep(stem.dens$stem.density/2, 2),
+                         basal =  rep(stem.dens$basal.area/2, 2),
+                         plot.area = plot.area,
                          diams = c(final.data$diam1, final.data$diam2),
                          stringsAsFactors = FALSE)
+#library(sampSurf)
+#sp.dbh = spCircle(spec.table$density, centerPoint=c(x=spec.table$PointX, y=spec.table$PointY), spID='tree.1') 
 
 #classify trees as zero or as wet trees
-zero.trees <- is.na(stem.density$density) & (final.data$species1 %in% c('No tree') | final.data$species2 %in% c('No tree'))
+zero.trees <- is.na(stem.dens$stem.density) & (final.data$species1 %in% c('No tree') | final.data$species2 %in% c('No tree'))
 wet.trees <- (final.data$species1 %in% c('Wet', "Water") | final.data$species2 %in% c('Wet','Water'))
 
 #designate all zero trees as density of 0
-stem.density$density[zero.trees] <- 0
-stem.density$basal[zero.trees] <- 0
+stem.dens$stem.density[zero.trees] <- 0
+stem.dens$basal.area[zero.trees] <- 0
 
 #desgnate all wet trees as 'NA'
-stem.density$density[wet.trees] <- NA
-stem.density$basal[wet.trees] <- NA
+stem.dens$stem.density[wet.trees] <- NA
+stem.dens$basal.area[wet.trees] <- NA
 
 #fix the captalized "No tree" problem
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
@@ -131,11 +137,11 @@ for(i in 1:nrow(spec.table)){
 
 summary(CW)
 
-spec.table$CW <- CW
-#spec.table[spec.table$density == 0, ] <- NA
+spec.table$CW <- CW #add crown width to the spec.table
+spec.table<- spec.table[complete.cases(spec.table),] #get rid of NA values
+spec.table[spec.table$density < 1,] <- NA # make densities less than one NA
 
-spec.table <- spec.table[!spec.table$density ==0,]
-spec.table <- spec.table[!is.na(spec.table$density), ]
+spec.table<- spec.table[complete.cases(spec.table),] #get rid of na values
 
 nine.nine.pct <- apply(spec.table[,7:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
 #point    density      basal      diams       biom 
@@ -151,14 +157,45 @@ spec.table$crown.area[spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW'
 spec.table$crown.scaled[spec.table$crown.scaled > nine.nine.pct['crown.scaled']] <- nine.nine.pct['crown.scaled']
 
 spec.table$crown.area <- 0.25*pi*(spec.table$CW^2) #crown area of each tree
-spec.table$cover <- spec.table$crown.area/2 * spec.table$density
-spec.table$crown.scaled <-100*((spec.table$crown.area/2*spec.table$density)/10000) #(crown area (m2))/tree)*(trees/hectare)
+spec.table$ratio <- spec.table$crown.area/spec.table$plot.area
+spec.table$cover <- spec.table$crown.area*2 * spec.table$density
+spec.table$crown.scaled <-100*((spec.table$crown.area*2*spec.table$density)/10000) #(crown area (m2))/tree)*(trees/hectare)
 
 CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
 spec.table$CC.adj <- CC.adj
 
-hist(spec.table$CC.adj)
+hist(spec.table$crown.scaled, breaks = 200, xlim = c(0,200))
 
+
+
+
+
+#now write species table as a shapefile with the TreeX and TreeY as coordinates
+
+
+coordinates(spec.table)<- ~TreeX+TreeY 
+geo.tree <- SpatialPointsDataFrame(coordinates(spec.table), 
+                                  data=data.frame(spec.table))
+
+proj4string(geo.tree)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
+
+library(rgdal)
+writeOGR(geo.tree, dsn = "Shapefiles/in_tree_alb.shp", layer = "Shapefiles/in_tree_alb", driver = "ESRI Shapefile")
+
+
+## now make a shapefile with thesame dataset, but using pointX & pointY as the coordinates
+spec.table <- data.frame(spec.table)
+coordinates(spec.table)<- ~PointX+PointY 
+geo.point <- SpatialPointsDataFrame(coordinates(spec.table), 
+                                   data=data.frame(spec.table))
+
+proj4string(geo.point)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
+writeOGR(geo.point, dsn = "Shapefiles/in_point_alb.shp", layer = "Shapefiles/in_point_alb", driver = "ESRI Shapefile")
+
+
+
+
+#make plots
 library(plyr)
 library(reshape2)
 
@@ -170,8 +207,8 @@ Crown.scales <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'crown
 
 
 hist(Crown.width[,3])
-hist(Crown.area[,3])
-hist(Crown.scales[,3])
+hist(Crown.area[,3], breaks = 25)
+hist(Crown.scales[,3], breaks = 25)
 
 
 

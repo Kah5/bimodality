@@ -33,49 +33,45 @@ library(raster)
 #install.packages('Rcpp')
 library(Rcpp)
 # Read in the data
-ind <- read.csv("data/ndinpls_v1.4.csv", stringsAsFactors = FALSE)
+ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFactors = FALSE)
 
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE)
 
-il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
+#il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
 
 #take out all original data with L3_tree1 = No data. Simon does this at the 
 
 
-ind <- ind[!ind$L3_tree1 == 'No data',]
-ind <- ind[!ind$L3_tree2 == 'No data',]
-ind <- ind[!ind$L3_tree3 == 'No data',]
-ind <- ind[!ind$L3_tree4 == 'No data',]
+#ind <- ind[!ind$L3_tree1 == 'No data',]
+#ind <- ind[!ind$L3_tree2 == NA,]
+#ind <- ind[!ind$L3_tree3 == 'NA',]
+#ind <- ind[!ind$L3_tree4 == 'No data',]
 
 
 il <- il[!il$L3_tree1 == 'No data',]
-il <- il[!il$L3_tree2 == 'No data',]
-il <- il[!il$L3_tree3 == 'No data',]
-il <- il[!il$L3_tree4 == 'No data',]
+#il <- il[!il$L3_tree2 == 'No data',]
+#il <- il[!il$L3_tree3 == 'No data',]
+#il <- il[!il$L3_tree4 == 'No data',]
 
 
 # remove all points with 'No data' points for chainstree in Indiana
 #ind <- ind[!ind$chainstree == 'NA',]
-ind <- ind[!ind$chainstree == 88888,]
-ind <- ind[!ind$chainstree == 99999,]
-ind <- ind[!ind$chainstree2 == 88888,]
-ind <- ind[!ind$chainstree2 == 99999,]
+#ind <- ind[!ind$chainstree == 88888,]
+#ind <- ind[!ind$chainstree == 99999,]
+#ind <- ind[!ind$chainstree2 == 88888,]
+#ind <- ind[!ind$chainstree2 == 99999,]
 
 
-il <- il[!il$chainstree == 88888,]
-il <- il[!il$chainstree == 99999,]
-il <- il[!il$chainstree2 == 88888,]
-il <- il[!il$chainstree2 == 99999,]
 
 #it just has NA if it is no tree or no data, 
 #so we have to removed points where there is "No data" or "Water listed as a tree
-il <- il[!il$L1_tree1 == 'Water'| !il$L1_tree1=='No data',]
-il <- il[!il$L1_tree2 == 'Water'| !il$L1_tree2 == 'No data',]
-il <- il[!il$L1_tree3 == 'Water'| !il$L1_tree3 == 'No data',]
-il <- il[!il$L1_tree4 == 'Water'| !il$L1_tree4 == 'No data',]
+il <- il[!il$L3_tree1 == 'Water'| !il$L3_tree1=='No data',]
+il <- il[!il$L3_tree2 == 'Water'| !il$L3_tree2 == 'No data',]
+#il <- il[!il$L1_tree3 == 'Water'| !il$L1_tree3 == 'No data',]
+#il <- il[!il$L1_tree4 == 'Water'| !il$L1_tree4 == 'No data',]
 
 #  IN distances in chains
 ind$DIST1 <- as.numeric(ind$chainstree)
@@ -87,6 +83,13 @@ il$DIST1 <- as.numeric(il$chainstree)
 il$DIST2 <- as.numeric(il$chainstree2)
 il$DIST3 <- as.numeric(il$chainstree3)
 il$DIST4 <- as.numeric(il$chainstree4)
+
+
+
+il <- il[!il$DIST1 == 88888,]
+il <- il[!il$DIST1 == 99999,]
+il <- il[!il$DIST2 == 88888,]
+il <- il[!il$DIST2 == 99999,]
 
 
 #  Character vectors are read into R as factors, to merge them they need to
@@ -123,9 +126,7 @@ il.data <- il[keeps]
 #  The merged dataset is called inil
 inil <- rbind(data.frame(ind.data), data.frame(il.data), stringsAsFactors = FALSE)
 
-# now kill missing cells:
-inil <- inil[!is.na(inil$x),]
-inil <- inil[!is.na(inil$y),]
+
 
 #inil$rng <- rng
 inil<-data.frame(inil, stringsAsFactors = FALSE)
@@ -139,6 +140,10 @@ inil$DIST1 == '88888' <- 'NA'
 inil$DIST1 == '99999' <- NA
 inil$diameter == '99999' <- NA      # Except those that have already been assigned to 'QQ'
 inil$diameter == '88888' <- NA
+
+# now kill missing cells:
+inil <- inil[!is.na(inil$y),]
+inil <- inil[!is.na(inil$x),]
 
 #diameters in centimeters
 diams <-  cbind(as.numeric(inil$diameter), 
@@ -196,7 +201,7 @@ species[is.na(species)] <- 'No tree'
 
 #  Here there needs to be a check, comparing species.old against species.
 test.table <- table(unlist(species.old), unlist(species), useNA='always')
-write.csv(test.table, 'Data/output/clean.bind.test.csv')
+write.csv(test.table, 'data/outputs/clean.bind.test.csv')
 
 ######
 #  Some annoying things that need to be done:
@@ -274,6 +279,12 @@ species <- data.frame(species1 = sp.levels[ranked.data[, 9]],
                       species4 = sp.levels[ranked.data[,12]],
                       stringsAsFactors=FALSE)
 
+
+
+
+
+
+
 #  Indiana data has same correction factors for the whole state
 #  There are 8 corners that have 4 trees, and some corners with 3 trees. 
 #  For now, we are treating all corners as '2 trees' for the correction factors
@@ -345,9 +356,7 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
 #  Turn it into a SpatialPointsDataFrame:
 coordinates(final.data) <- coordinates(inil)
 
-# now kill missing cells:
-final.data <- final.data[!is.na(final.data$PointX),]
-final.data <- final.data[!is.na(final.data$PointY),]
+
 
 #write the data as a csv
 write.csv(final.data, "ndilinpls_for_density_v1.5.csv")

@@ -21,7 +21,7 @@ stem.density <- estimates[[1]]
 basal.area <- estimates[[2]]
 summary(stem.density)
 summary(basal.area)
-zero.trees <- is.na(stem.density) & (species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
+zero.trees <-(species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
 
 #set stem.density where there are zero trees due to No tree or Wet or Water to 0
 stem.density[zero.trees] <- 0

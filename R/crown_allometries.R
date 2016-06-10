@@ -11,11 +11,11 @@ library(Hmisc)
 
 #here we use only those surveys in IL, MN, IN, WI, and MI, since this is where the PLS data cover
 
-IL1999<- read.csv("./data/FHM_data/IL_TREE_1999.CSV")
-MN1999<- read.csv("./data/FHM_data/MN_TREE_1999.CSV")
-IN1999 <- read.csv("./data/FHM_data/IN_TREE_1999.CSV")
-WI1999 <- read.csv("./data/FHM_data/WI_TREE_1999.CSV")
-MI1999 <- read.csv("./data/FHM_data/MI_TREE_1999.CSV")
+IL1999<- read.csv("./data/IL_TREE_1999.CSV")
+MN1999<- read.csv("./data/MN_TREE_1999.CSV")
+IN1999 <- read.csv("./data/IN_TREE_1999.CSV")
+WI1999 <- read.csv("./data/WI_TREE_1999.CSV")
+MI1999 <- read.csv("./data/MI_TREE_1999.CSV")
 
 #only keep relevant columns
 keeps <- c("FHM_SPECIES", "SPECIES_COMMON_NAME", "DBH", "DBH_CHECK", "CROWN_DIAMETER_90", 
@@ -33,19 +33,20 @@ mw1999 <- rbind(IL1999,
                 MN1999, 
                 WI1999, 
                 MI1999)
+
 #look at species
-summary(mw1999$SPECIES_COMMON_NAME)
+unique(mw1999$SPECIES_COMMON_NAME)
 #mw1999<- mw1999[!summary(mw1999$SPECIES_COMMON_NAME)<2,]
 
 #capitalize the first character in the name
 mw1999$SPECIES_COMMON_NAME<- capitalize(as.character(mw1999$SPECIES_COMMON_NAME))
 #double check the FHM- paleon taxa conversion
 FHM_spec2 <- data.frame(unique(mw1999$SPECIES_COMMON_NAME))
-#colnames(FHM_spec2) <- "SPECIES_COMMON_NAME"
-#write.csv(FHM_spec2, "FHM_spec2.csv")
+colnames(FHM_spec2) <- "SPECIES_COMMON_NAME"
+#write.csv(FHM_spec2, "FHM_spec3.csv")
 
 #created a lookup table converting FHM species to paleon species
-lookup <- read.csv("FHM_spec2.csv")
+lookup <- read.csv("FHM_spec3.csv", stringsAsFactors = FALSE)
 mw1999<- join(mw1999, lookup, by= 'SPECIES_COMMON_NAME')
 mw1999$CROWN_DIAMETER_90 <- mw1999$CROWN_DIAMETER_90*0.3048 #convert ft to m
 mw1999$CROWN_DIAMETER_WIDE <- mw1999$CROWN_DIAMETER_WIDE*0.3048
@@ -62,7 +63,7 @@ full.lm <- lm(mw1999$AVG_CROWN_DIAMETER ~ mw1999$DBH)
 mw1999 <- mw1999[complete.cases(mw1999),]
 library("data.table")
 
-mw1999 <- data.table(mw1999, key = "Paleon")
+mw1999 <- data.table(mw1999, setkey = 'Paleon')
 
 #################
 #create generic model function to create the linear model allometries

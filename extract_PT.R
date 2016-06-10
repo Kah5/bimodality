@@ -8,18 +8,18 @@
 #getting gridded climate data
 #need to clean this up
 
-precip.1900<- read.table("./Global2011P.tar/Global2011P/precip.1900")
-precip.1901<- read.table("./Global2011P.tar/Global2011P/precip.1901")
-precip.1902<- read.table("./Global2011P.tar/Global2011P/precip.1902")
-precip.1903<- read.table("./Global2011P.tar/Global2011P/precip.1903")
-precip.1904<- read.table("./Global2011P.tar/Global2011P/precip.1904")
-precip.1905<- read.table("./Global2011P.tar/Global2011P/precip.1905")
-precip.1906<- read.table("./Global2011P.tar/Global2011P/precip.1906")
-precip.1907<- read.table("./Global2011P.tar/Global2011P/precip.1907")
-precip.1908<- read.table("./Global2011P.tar/Global2011P/precip.1908")
-precip.1909<- read.table("./Global2011P.tar/Global2011P/precip.1909")
-precip.1910<- read.table("./Global2011P.tar/Global2011P/precip.1910")
-precip.2010<- read.table("./Global2011P.tar/Global2011P/precip.2010")
+precip.1900<- read.table("./data/precip_2014/precip.1900")
+precip.1901<- read.table("./data/precip_2014/precip.1901")
+precip.1902<- read.table("./data/precip_2014/precip.1902")
+precip.1903<- read.table("./data/precip_2014/precip.1903")
+precip.1904<- read.table("./data/precip_2014/precip.1904")
+precip.1905<- read.table("./data/precip_2014/precip.1905")
+precip.1906<- read.table("./data/precip_2014/precip.1906")
+precip.1907<- read.table("./data/precip_2014/precip.1907")
+precip.1908<- read.table("./data/precip_2014/precip.1908")
+precip.1909<- read.table("./data/precip_2014/precip.1909")
+precip.1910<- read.table("./data/precip_2014/precip.1910")
+precip.2010<- read.table("./data/precip_2014/precip.2010")
 
 Lat <- precip.1900[,2]
 Long <- precip.1900[,1]
@@ -58,10 +58,14 @@ avg.rast <- raster(averages)
 projection(avg.rast) <- CRS("+init=epsg:4326")
 
 avg.alb <- projectRaster(avg.rast, crs='+init=epsg:3175')
-avg.paleon <- mask(avg.alb, extent(CW.rast))
-CW.df <- as.data.frame(CC.adj, xy = TRUE)
-CW.df$precip <- extract(avg.alb, CW.df[,1:2])
-plot(CW.df$precip, CW.df$layer)
+base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
+                    ymn = 58000,  ymx = 1498000, nrows = 180,
+                    crs = '+init=epsg:3175')
+
+avg.paleon <- mask(avg.alb, extent(base.rast))
+rast.df <- as.data.frame(base.rast, xy = TRUE)
+rast.df$precip <- extract(avg.alb, rast.df[,1:2])
+plot(rast.df$precip, CW.df$layer)
 
 
 

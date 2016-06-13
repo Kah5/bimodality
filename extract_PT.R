@@ -62,17 +62,25 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
                     ymn = 58000,  ymx = 1498000, nrows = 180,
                     crs = '+init=epsg:3175')
 
-avg.paleon <- mask(avg.alb, extent(base.rast))
-rast.df <- as.data.frame(base.rast, xy = TRUE)
+#crown scaled estimates
+avg.paleon <- crop(avg.alb, extent(CS.df))
+rast.df <- as.data.frame(CS.df, xy = TRUE)
 rast.df$precip <- extract(avg.alb, rast.df[,1:2])
-plot(rast.df$precip, CW.df$layer)
+plot(rast.df$precip, rast.df$./8000)
+
+#crown area
+p.ca.df <- as.data.frame(CA.df, xy = TRUE)
+p.ca.df$precip <- extract(avg.alb, p.ca.df[,1:2])
+plot(p.ca.df$precip, p.ca.df$./10000)
 
 
 
 #extract just crown area
-CA.df <- as.data.frame(CW.adj, xy = TRUE)
-CA.df$precip <- extract(avg.alb, CA.df[,1:2])
-plot(CA.df$precip, CA.df$layer)
+CS.df <- as.data.frame(CS.df, xy = TRUE)
+CS.df$precip <- extract(avg.alb, CS.df[,1:2])
+plot(CS.df$precip, CS.df$./8000)
+
+over.85 <- CS.df[CS.df$precip > 85,]
 
 #CW.df$precip2 <- as.numeric(cut2(CW.df$precip, g=25))
 
@@ -80,8 +88,12 @@ plot(CA.df$precip, CA.df$layer)
 
 #ggplot(data=df, aes(x=precip2, y=mean)) +
  # geom_bar(stat="identity")
-hist(CW.df$precip)
-hist(CW.df$layer, breaks = 25)
+hist(CS.df$precip)
+hist(p.ca.df$., breaks = 25)
+
+hist(p.ca.df$precip)
+
+
 
 
 #if we designate savanna < 50 and forest > 50 % cover, 

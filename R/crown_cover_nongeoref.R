@@ -185,6 +185,8 @@ geo.tree <- SpatialPointsDataFrame(coordinates(spec.table),
 
 prism<- raster("data/PRISM_1900/PRISM_ppt_stable_4kmM2_1900_asc.asc")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+
+spec.table <- data.frame(spec.table)
 spec.table$prism.1900p <- extract(prism.alb, spec.table[,c("x","y")])
 
 avg.prism.p<- dcast(spec.table, x + y ~. , mean, na.rm=TRUE, value.var = 'prism.1900p')
@@ -197,7 +199,7 @@ CC.adj <- dcast(spec.table, x + y ~., mean, na.rm = TRUE, value.var = "CC.adj")
 
 tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
 basal <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'basal')
-
+tree.dens.sd <- dcast(spec.table, x+y~., sd, na.rm=TRUE, value.var = 'density')
 
 #lets make some plots of cover, %cover, density, and basal area
 #carla staver uses a cut off of 40-45% cover for forest regions
@@ -210,9 +212,9 @@ x11(width = 8)
 pdf('outputs/inil_cover.pdf')
 #par(xpd=TRUE)
 plot(avg.prism.p$.,cover$./10000, col=ifelse(cover$./10000>=0.45,"red","black"), ylab = 'porportion cover', xlab = '1900 prism precipitation (mm)')
-rect(1200,-1, 1000,2, col = rgb(0.75,0.75,0.75,1/4)) # add the range of tropical savanna intermediate climate
-rect(1200, -1, 850, 2, col = rgb(red = 1, 0, 0, alpha = 1/4))
-rect(1200,-1, 1000,2, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+rect(1200,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/4)) # add the range of tropical savanna intermediate climate
+rect(1200, -10, 850, 2, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1200,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
 legend("topleft", 
        cex = 1, 
        bty = "n", 
@@ -224,9 +226,9 @@ legend("topleft",
 hist(CC.adj$., breaks = 50, xlab = "porportion cover", main = 'Histogram of porporiton of cover')
 
 plot(avg.prism.p$.,Crown.scales$.,  col=ifelse(Crown.scales$.>=45,"red","black"),ylab = '% cover', xlab = '1900 prism precipitation (mm)')
-rect(1200,-1, 1000,200, col = rgb(0.5,0.5,0.5,1/4))
-rect(1200, -1, 850, 200, col = rgb(red = 1, 0, 0, alpha = 1/4))
-rect(1200,-1, 1000,200, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+rect(1200,-10, 1000,200, col = rgb(0.5,0.5,0.5,1/4))
+rect(1200, -10, 850, 200, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1200,-10, 1000,200, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
 legend("topleft", 
        cex = 1,  
        bty = "n", 

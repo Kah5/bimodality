@@ -183,13 +183,13 @@ geo.tree <- SpatialPointsDataFrame(coordinates(spec.table),
 
 write.csv(spec.table, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv")
 
-prism<- raster("data/PRISM_1900/PRISM_ppt_stable_4kmM2_1900_asc.asc")
-prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+#prism<- raster("data/PRISM_1900/PRISM_ppt_stable_4kmM2_1900_asc.asc")
+#prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 
 spec.table <- data.frame(spec.table)
 spec.table$prism.1900p <- extract(prism.alb, spec.table[,c("x","y")])
 
-avg.prism.p<- dcast(spec.table, x + y ~. , mean, na.rm=TRUE, value.var = 'prism.1900p')
+#avg.prism.p<- dcast(spec.table, x + y ~. , mean, na.rm=TRUE, value.var = 'prism.1900p')
 #need to aggregate the spec.table cover values by each point
 Crown.width <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'CW')
 Crown.area <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'crown.area')
@@ -201,6 +201,8 @@ tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
 basal <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'basal')
 tree.dens.sd <- dcast(spec.table, x+y~., sd, na.rm=TRUE, value.var = 'density')
 
+pr.alb <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1895_1905.csv")
+
 #lets make some plots of cover, %cover, density, and basal area
 #carla staver uses a cut off of 40-45% cover for forest regions
 
@@ -211,10 +213,10 @@ Crown.scales[Crown.scales$. > 100,]<-100
 x11(width = 8)
 pdf('outputs/inil_cover.pdf')
 #par(xpd=TRUE)
-plot(avg.prism.p$.,cover$./10000, col=ifelse(cover$./10000>=0.45,"red","black"), ylab = 'porportion cover', xlab = '1900 prism precipitation (mm)')
-rect(1200,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/4)) # add the range of tropical savanna intermediate climate
-rect(1200, -10, 850, 2, col = rgb(red = 1, 0, 0, alpha = 1/4))
-rect(1200,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+plot(pr.alb$total_.,cover$./10000, col=ifelse(cover$./10000>=0.45,"red","black"), ylab = 'porportion cover', xlab = '1900 prism precipitation (mm)')
+rect(1400,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/4)) # add the range of tropical savanna intermediate climate
+rect(1400, -10, 850, 2, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
 legend("topleft", 
        cex = 1, 
        bty = "n", 
@@ -225,10 +227,10 @@ legend("topleft",
 
 hist(CC.adj$., breaks = 50, xlab = "porportion cover", main = 'Histogram of porporiton of cover')
 
-plot(avg.prism.p$.,Crown.scales$.,  col=ifelse(Crown.scales$.>=45,"red","black"),ylab = '% cover', xlab = '1900 prism precipitation (mm)')
-rect(1200,-10, 1000,200, col = rgb(0.5,0.5,0.5,1/4))
-rect(1200, -10, 850, 200, col = rgb(red = 1, 0, 0, alpha = 1/4))
-rect(1200,-10, 1000,200, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+plot(pr.alb$total_.,Crown.scales$.,  col=ifelse(Crown.scales$.>=45,"red","black"),ylab = '% cover', xlab = '1900 prism precipitation (mm)')
+rect(1400,-10, 1000,200, col = rgb(0.5,0.5,0.5,1/4))
+rect(1400, -10, 850, 200, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,200, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
 legend("topleft", 
        cex = 1,  
        bty = "n", 
@@ -242,10 +244,10 @@ hist(Crown.scales$., breaks = 55, xlab = '% cover', main = 'Histogram of % Cover
 
 #25 trees per acre is savanna limit
 #25 trees per acre = 25 trees/acre / 0.404686 hectares /acre = 61.77629 trees /hectare
-plot(avg.prism.p$.,tree.dens$.,  col=ifelse(tree.dens$.>=61,"red","black"),ylab = 'Tree Density (stems/ha)', xlab = "Prism 1900 precipitaiton (mm)")
-rect(1200,-10, 1000,300, col = rgb(0.5,0.5,0.5,1/4))
-rect(1200, -10, 850, 300, col = rgb(red = 1, 0, 0, alpha = 1/4))
-rect(1200,-10, 1000,300, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+plot(pr.alb$total_.,tree.dens$.,  col=ifelse(tree.dens$.>=61,"red","black"),ylab = 'Tree Density (stems/ha)', xlab = "Prism 1900 precipitaiton (mm)")
+rect(1400,-10, 1000,300, col = rgb(0.5,0.5,0.5,1/4))
+rect(1400, -10, 850, 300, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,300, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
 legend("topleft", 
        cex = 1, 
        bty = "n", 

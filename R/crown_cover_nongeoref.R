@@ -277,51 +277,11 @@ dev.off()
 
 
 
-proj4string(geo.tree)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
-
-library(rgdal)
-writeOGR(geo.tree, dsn = "Shapefiles/in_tree_alb.shp", layer = "Shapefiles/in_tree_alb", driver = "ESRI Shapefile")
-
-
-## now make a shapefile with thesame dataset, but using pointX & pointY as the coordinates
 spec.table <- data.frame(spec.table)
-coordinates(spec.table)<- ~PointX+PointY 
-geo.point <- SpatialPointsDataFrame(coordinates(spec.table), 
-                                   data=data.frame(spec.table))
-
-proj4string(geo.point)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
-writeOGR(geo.point, dsn = "Shapefiles/in_point_alb.shp", layer = "Shapefiles/in_point_alb", driver = "ESRI Shapefile")
-
-
-
-
-#make plots
-library(plyr)
-library(reshape2)
-
-
-#need to aggregate the spec.table cover values by each point
-Crown.width <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'CW')
-Crown.area <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'crown.area')
-Crown.scales <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'crown.scaled')
-
-
-
-hist(Crown.width[,3])
-hist(Crown.area[,3]/10000, breaks = 25)
-hist(Crown.scales[,3], breaks = 25)
-
-coordinates(Crown.scales)<- ~x+y
-gridded(Crown.scales)<- TRUE
-CS.df<- raster(Crown.scales)
-
-coordinates(Crown.area)<- ~x+y
-gridded(Crown.area)<- TRUE
-CA.df<- raster(Crown.area)
 
 
 ##plot these across the region 
-ggplot(data = spec.table, aes(x = PointX, y = PointY, color = density)) + geom_point()
+ggplot(data = tree.dens, aes(x = x, y = y, color = .)) + geom_point()
 ggplot(data = spec.table, aes(x = PointX, y = PointY, color = CW)) + geom_point()
 ggplot(data = spec.table, aes(x = PointX, y = PointY, color = basal)) + geom_point()
 ggplot(data = spec.table, aes(x = PointX, y = PointY, color = crown.scaled)) + geom_point()

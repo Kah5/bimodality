@@ -1,3 +1,6 @@
+library(plyr)
+library(raster)
+library(data.table)
 # read in and average prism data
 prism<- raster("data/PRISM_ppt_stable_4kmM2_189501_198012_bil/PRISM_ppt_stable_4kmM2_189501_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
@@ -13,20 +16,51 @@ install.packages('prism')
 
 #get_prism_annual(type = 'ppt', years = 1901:1905, keepZip = FALSE)
 
-#setwd to data directory
-setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
 
 
 #try this loop, takes awhile, but works
 
 library(raster)
-years <- 1900:1910
+#setwd to data directory
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
+
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+coordinates(spec.table) <- ~x + y
+
+years <- 1895:1905
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
-  s <- stack(filenames)
-  y <- data.frame(rasterToPoints(s))
-  colnames(y) <- c("lon", "lat", month.abb)
+  s <- stack(filenames) #make all into a raster
+  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
+  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  colnames(y) <- c("x", "y", month.abb)
   y$year <- i
-  y$gridNumber <- cellFromXY(s, y[, 1:2])
+  y$gridNumber <- cellFromXY(t, y[, 1:2])
   # write.csv( ) ?
 }
+
+
+spec.table <- data.frame(spec.table)
+
+y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+
+#this averages for each month within each gridcell
+full <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                                             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+
+
+
+#convert to rasterstack
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+plot(avgs) #plots averages
+
+avgs.df <- extract(avgs, spec.table[,c("x","y")])
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1895_1905.csv")

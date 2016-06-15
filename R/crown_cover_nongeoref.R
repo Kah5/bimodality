@@ -181,7 +181,7 @@ coordinates(spec.table)<- ~TreeX+TreeY
 geo.tree <- SpatialPointsDataFrame(coordinates(spec.table), 
                                   data=data.frame(spec.table))
 
-
+write.csv(spec.table, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv")
 
 prism<- raster("data/PRISM_1900/PRISM_ppt_stable_4kmM2_1900_asc.asc")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')

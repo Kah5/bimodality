@@ -73,7 +73,7 @@ for (i in years) {
   y$year <- i
 }
 
-y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
 #this averages for each month within each gridcell
@@ -120,7 +120,7 @@ for (i in years) {
   y$year <- i
 }
 
-y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
 #this averages for each month within each gridcell
@@ -167,7 +167,7 @@ for (i in years) {
   y$year <- i
 }
 
-y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
 #this averages for each month within each gridcell

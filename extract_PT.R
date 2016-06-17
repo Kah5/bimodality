@@ -8,217 +8,51 @@
 #getting gridded climate data
 #need to clean this up
 
-precip.1900<- read.table("./data/precip_2014/precip.1900")
-precip.1901<- read.table("./data/precip_2014/precip.1901")
-precip.1902<- read.table("./data/precip_2014/precip.1902")
-precip.1903<- read.table("./data/precip_2014/precip.1903")
-precip.1904<- read.table("./data/precip_2014/precip.1904")
-precip.1905<- read.table("./data/precip_2014/precip.1905")
-precip.1906<- read.table("./data/precip_2014/precip.1906")
-precip.1907<- read.table("./data/precip_2014/precip.1907")
-precip.1908<- read.table("./data/precip_2014/precip.1908")
-precip.1909<- read.table("./data/precip_2014/precip.1909")
-precip.1910<- read.table("./data/precip_2014/precip.1910")
-precip.2010<- read.table("./data/precip_2014/precip.2010")
+library(reshape2)
+library(data.table)
+library(sp)
+library(raster)
 
-Lat <- precip.1900[,2]
-Long <- precip.1900[,1]
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
+years <- 1900:1910
+month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
+  'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
-p.1900<- rowSums(precip.1900[,3:14], na.rm = TRUE)
-p.1901<- rowSums(precip.1901[,3:14], na.rm = TRUE)
-p.1902<- rowSums(precip.1902[,3:14], na.rm = TRUE)
-p.1903<- rowSums(precip.1903[,3:14], na.rm = TRUE)
-p.1904<- rowSums(precip.1904[,3:14], na.rm = TRUE)
-p.1905<- rowSums(precip.1905[,3:14], na.rm = TRUE)
-p.1906<- rowSums(precip.1906[,3:14], na.rm = TRUE)
-p.1907<- rowSums(precip.1907[,3:14], na.rm = TRUE)
-p.1908<- rowSums(precip.1908[,3:14], na.rm = TRUE)
-p.1909<- rowSums(precip.1909[,3:14], na.rm = TRUE)
-p.1910<- rowSums(precip.1910[,3:14], na.rm = TRUE)
-
-avg.p<- rowMeans(data.frame(p.1900,
-                    p.1901, 
-                    p.1902,
-                    p.1903, 
-                    p.1904, 
-                    p.1905, 
-                    p.1906, 
-                    p.1907,
-                    p.1908,
-                    p.1909, 
-                    p.1910))/11
-                    
-averages <- data.frame(Lat = Lat, 
-                       Long = Long, 
-                       avg = avg.p)
-
-coordinates(averages) <- ~Long + Lat
-gridded(averages) <- TRUE
-avg.rast <- raster(averages)
-projection(avg.rast) <- CRS("+init=epsg:4326")
-
-avg.alb <- projectRaster(avg.rast, crs='+init=epsg:3175')
-base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
-                    ymn = 58000,  ymx = 1498000, nrows = 180,
-                    crs = '+init=epsg:3175')
-
-#crown scaled estimates
-avg.paleon <- crop(avg.alb, extent(CS.df))
-rast.df <- as.data.frame(CS.df, xy = TRUE)
-rast.df$precip <- extract(avg.alb, rast.df[,1:2])
-plot(rast.df$precip, rast.df$./8000)
-
-#crown area
-p.ca.df <- as.data.frame(CA.df, xy = TRUE)
-p.ca.df$precip <- extract(avg.alb, p.ca.df[,1:2])
-plot(p.ca.df$precip, p.ca.df$./10000)
+#this loop extracts the data and adds the year to a dataframe
+for (i in years) {
+  filenames <- list.files(pattern=paste("precip.",i, sep = ""))
+  s <- read.table(filenames)
+  y <- data.frame(s) #covert to dataframe
+  colnames(y) <- c("Lon", "Lat", month.abb)
+  y$year <- i
+}
 
 
+y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
-#extract just crown area
-CS.df <- as.data.frame(CS.df, xy = TRUE)
-CS.df$precip <- extract(avg.alb, CS.df[,1:2])
-plot(CS.df$precip, CS.df$./8000)
+#this averages for each month within each gridcell
+full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                                               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
 
-over.85 <- CS.df[CS.df$precip > 85,]
+#convert to rasterstack
+coordinates(full) <- ~Lon + Lat
+gridded(full) <- TRUE
+avgs <- stack(full) 
 
-#CW.df$precip2 <- as.numeric(cut2(CW.df$precip, g=25))
-
-#df <- ddply(CW.df,~ precip2,summarise,mean=mean(layer, na.rm= TRUE),sd=sd(layer, na.rm = TRUE))
-
-#ggplot(data=df, aes(x=precip2, y=mean)) +
- # geom_bar(stat="identity")
-hist(CS.df$precip)
-hist(p.ca.df$., breaks = 25)
-
-hist(p.ca.df$precip)
+plot(avgs) #plots averages
+projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
+avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+coordinates(spec.table) <- ~x + y
 
+precip.alb <- crop(avg.alb, extent(spec.table)) 
+spec.table <- data.frame(spec.table)
 
-#if we designate savanna < 50 and forest > 50 % cover, 
-CW.df.sav <- CW.df[ CW.df$layer < 50, ]
-CW.df.forest <- CW.df[CW.df$layer >= 50, ]
+precip <- data.frame(extract(avg.alb, spec.table[,c('x', 'y')]))
+precip$x <- spec.table$x
+precip$y <- spec.table$y
 
-CA.df.sav <- CA.df[ CA.df$layer < 50, ]
-CA.df.forest <- CA.df[CA.df$layer >= 50, ]
-
-
-
-
-pdf("Precip_hists.pdf")
-hist(CW.df$layer, breaks = 25, xlab = "Average % crown cover in each grid cell", 
-     ylab = "Number of grid cells", 
-     main = "Histogram of Crown cover")
-
-hist(CA.df$layer, breaks = 25, xlab = "Average projected Crown area (m^2) per tree in each grid cell", 
-     ylab = "Number of grid cells", 
-     main = "Histogram of Crown area")
-
-hist(CA.df.forest$precip, xlim = c(70, 110), breaks = 15,
-     xlab = "MAP (cm)", 
-     ylab = "Number of Forest grid cells", 
-     main = "Precipitation of Forest grid cells")
-
-hist(CA.df.sav$precip, xlim = c(70, 110), breaks = 15,
-     xlab = "MAP (cm)", 
-     ylab = "Number of Non-forest grid cells", 
-     main = "Precipitation of Savanna grid cells")
-
-par(mfrow=c(2,1))
-
-hist(CW.df$layer, breaks = 25, xlab = "% cover per grid cell", 
-     ylab = "Number of grid cells", main = "Histogram of %cover")
-
-hist(CW.df$precip, xlim= c(70, 110), breaks = 30, 
-     xlab = "MAP (cm)", ylab = "Number of grid cells", 
-     main = "average 1900-1910 Precipitation")
-
-#hist(CW.df.forest$precip, xlim = c(70, 110), breaks = 15,
- #    xlab = "MAP (cm)", 
-  #   ylab = "Number of Forest grid cells", 
-   #  main = "Precipitation of Forest grid cells")
-
-#hist(CW.df.sav$precip, xlim = c(70, 110), breaks = 15,
- #    xlab = "MAR (cm)", 
-  #   ylab = "Number of Non-forest grid cells", 
-   #  main = "Precipitation of Savanna grid cells")
-
-dev.off()
-
-
-
-##Make cover plots
-pdf("cover_by_precip.pdf")
-par(mfrow=c(2,2))
-
-CW.df.70.80 <- CW.df[ CW.df$precip < 80 & CW.df$precip > 70, ]
-hist(CW.df.70.80$layer, xlim = c(0, 100),
-     xlab = "% cover",
-     main = "cover 70-80cm")
-
-CW.df.80.90 <- CW.df[ CW.df$precip < 90 & CW.df$precip > 80, ]
-hist(CW.df.80.90$layer, xlim = c(0, 100), 
-     xlab = "% cover",
-     main = "cover 80-90cm")
-
-CW.df.90.100 <- CW.df[ CW.df$precip < 100 & CW.df$precip > 90, ]
-hist(CW.df.90.100$layer, xlim = c(0, 100), 
-     xlab = "% cover",
-     main = "cover 90-100cm")
-
-CW.df.100.110 <- CW.df[ CW.df$precip < 110 & CW.df$precip > 100, ]
-hist(CW.df.100.110$layer, xlim = c(0, 100), 
-     xlab = "% cover",
-     main = "cover 100-110cm")
-
-#CW.df.110.120 <- CW.df[ CW.df$precip < 120 & CW.df$precip > 110, ]
-#hist(CW.df.110.120$layer, xlim = c(0, 100))
-dev.off()
-
-
-pdf("crown_area_by_precip.pdf")
-par(mfrow=c(2,2))
-
-CA.df.70.80 <- CA.df[ CA.df$precip < 80 & CA.df$precip > 70, ]
-hist(CA.df.70.80$layer, xlim = c(0, 100),
-     xlab = "projected Crown Area",
-     main = "cover 70-80cm")
-
-CA.df.80.90 <- CA.df[ CA.df$precip < 90 & CA.df$precip > 80, ]
-hist(CA.df.80.90$layer, xlim = c(0, 100), 
-     xlab = "projected Crown Area",
-     main = "cover 80-90cm")
-
-CA.df.90.100 <- CA.df[ CA.df$precip < 100 & CA.df$precip > 90, ]
-hist(CA.df.90.100$layer, xlim = c(0, 100), 
-     xlab = "projected Crown Area",
-     main = "cover 90-100cm")
-
-CA.df.100.110 <- CA.df[ CA.df$precip < 110 & CA.df$precip > 100, ]
-hist(CA.df.100.110$layer, xlim = c(0, 100), breaks = 1,
-     xlab = "projected Crown Area",
-     main = "cover 100-110cm")
-
-#CA.df.110.120 <- CA.df[ CA.df$precip < 120 & CA.df$precip > 110, ]
-#hist(CA=.df.110.120$layer, xlim = c(0, 100))
-dev.off()
-
-
-#map out crown area
-all_states <- map_data("state")
-states <- subset(all_states, region %in% c( "indiana" , "illinois" ) )
-coordinates(states)<-~long+lat
-class(states)
-proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
-mapdata<-spTransform(states, CRS('+init=epsg:3175'))
-mapdata<-data.frame(mapdata)
-
-pdf("crown_maps.pdf")
-ca.map <- ggplot() +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group))+ scale_x_continuous(limits = c(250000, 1000000)) +
-  scale_y_continuous(limits=c(0, 800000))
-ca.map <- ca.map + geom_point(data=na.omit(CA.df), aes(x=x, y=y, color = layer), shape = 15)+
-  labs(x="easting", y="northing", title="Average Projected Crown Area") + 
-  scale_color_gradientn(colours = rainbow(4), name ="Proj. Crown Area (m^2)")
-ca.map
-dev.off()
+write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1900_1910_GHCN.csv')

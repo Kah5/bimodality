@@ -12,6 +12,7 @@ library(reshape2)
 library(data.table)
 library(sp)
 library(raster)
+library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
 years <- 1900:1910
@@ -46,13 +47,16 @@ avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes a
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 coordinates(spec.table) <- ~x + y
+tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
 
 precip.alb <- crop(avg.alb, extent(spec.table)) 
 spec.table <- data.frame(spec.table)
 
-precip <- data.frame(extract(avg.alb, spec.table[,c('x', 'y')]))
-precip$x <- spec.table$x
-precip$y <- spec.table$y
+precip <- data.frame(extract(avg.alb, tree.dens[,c('x', 'y')]))
+precip$x <- tree.dens$x
+precip$y <- tree.dens$y
+
+
 
 write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1900_1910_GHCN.csv')
 
@@ -76,9 +80,13 @@ for (i in years) {
 y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
+#also calculate the rrange of temperature
+y$range <- apply(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")],1, function(x) max(x)-min(x))
+
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'annual', 'range'))
 
 #convert to rasterstack
 coordinates(full) <- ~Lon + Lat
@@ -96,9 +104,9 @@ coordinates(spec.table) <- ~x + y
 air_temp.alb <- crop(avg.alb, extent(spec.table)) 
 spec.table <- data.frame(spec.table)
 
-air_temp <- data.frame(extract(air_temp.alb, spec.table[,c('x', 'y')]))
-air_temp$x <- spec.table$x
-air_temp$y <- spec.table$y
+air_temp <- data.frame(extract(air_temp.alb, tree.dens[,c('x', 'y')]))
+air_temp$x <- tree.dens$x
+air_temp$y <- tree.dens$y
 
 write.csv(air_temp, 'C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_alb_1900_1910_GHCN.csv')
 
@@ -125,7 +133,7 @@ y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'annual'))
 
 #convert to rasterstack
 coordinates(full) <- ~Lon + Lat
@@ -143,9 +151,9 @@ coordinates(spec.table) <- ~x + y
 Eo150.alb <- crop(avg.alb, extent(spec.table)) 
 spec.table <- data.frame(spec.table)
 
-Eo150 <- data.frame(extract(Eo150.alb, spec.table[,c('x', 'y')]))
-Eo150$x <- spec.table$x
-Eo150$y <- spec.table$y
+Eo150 <- data.frame(extract(Eo150.alb, tree.dens[,c('x', 'y')]))
+Eo150$x <- tree.dens$x
+Eo150$y <- tree.dens$y
 
 write.csv(Eo150, 'C:/Users/JMac/Documents/Kelly/biomodality/data/Eo150_alb_1900_1910_GHCN.csv')
 
@@ -172,7 +180,7 @@ y$annual <- rowMeans(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'annual'))
 
 #convert to rasterstack
 coordinates(full) <- ~Lon + Lat
@@ -190,10 +198,265 @@ coordinates(spec.table) <- ~x + y
 E150.alb <- crop(avg.alb, extent(spec.table)) 
 spec.table <- data.frame(spec.table)
 
-E150 <- data.frame(extract(E150.alb, spec.table[,c('x', 'y')]))
-E150$x <- spec.table$x
-E150$y <- spec.table$y
+E150 <- data.frame(extract(E150.alb, tree.dens[,c('x', 'y')]))
+E150$x <- tree.dens$x
+E150$y <- tree.dens$y
 
 write.csv(E150, 'C:/Users/JMac/Documents/Kelly/biomodality/data/E150_alb_1900_1910_GHCN.csv')
 
+############################################
+##caculate the P-ET or effective rainfall
+############################################
 
+#extract ET again
+setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
+years <- 1900:1910
+month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
+               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+
+#this loop extracts the data and adds the year to a dataframe
+for (i in years) {
+  filenames <- list.files(pattern=paste("E150.",i, sep = ""))
+  s <- read.table(filenames)
+  y <- data.frame(s) #covert to dataframe
+  colnames(y) <- c("Lon", "Lat", month.abb)
+  y$year <- i
+}
+
+y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                          'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+ET <- y
+
+#extract precip again
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
+years <- 1900:1910
+month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
+               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+
+#this loop extracts the data and adds the year to a dataframe
+for (i in years) {
+  filenames <- list.files(pattern=paste("precip.",i, sep = ""))
+  s <- read.table(filenames)
+  y <- data.frame(s) #covert to dataframe
+  colnames(y) <- c("Lon", "Lat", month.abb)
+  y$year <- i
+}
+
+y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+
+pr <- y
+
+
+#subtract PR- ET
+P.ET<- pr[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+      'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')] - ET[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                                                              'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')]
+
+P.ET$Lat <- pr$Lat
+P.ET$Lon <- pr$Lon
+P.ET$year <- P.ET$year
+
+
+#P.ET$total <- rowSums(P.ET[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+ #                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+
+#this averages for each month within each gridcell
+full <- dcast(setDT(P.ET), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+
+#convert to rasterstack
+coordinates(full) <- ~Lon + Lat
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+plot(avgs) #plots averages
+projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
+avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
+
+
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+coordinates(spec.table) <- ~x + y
+
+P.ET.alb <- crop(avg.alb, extent(spec.table)) 
+spec.table <- data.frame(spec.table)
+
+PET <- data.frame(extract(P.ET.alb, tree.dens[,c('x', 'y')]))
+PET$x <- tree.dens$x
+PET$y <- tree.dens$y
+
+write.csv(PET, 'C:/Users/JMac/Documents/Kelly/biomodality/data/PET_alb_1900_1910_GHCN.csv')
+
+
+##############################################################
+#Density & cover aggregations (also in crown_cover_nongeoref)#
+##############################################################
+
+
+#avg.prism.p<- dcast(spec.table, x + y ~. , mean, na.rm=TRUE, value.var = 'prism.1900p')
+#need to aggregate the spec.table cover values by each point
+Crown.width <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'CW')
+Crown.area <- dcast(spec.table, x + y ~. , sum, na.rm=TRUE, value.var = 'crown.area')
+Crown.scales <- dcast(spec.table, x + y ~. , mean, na.rm=TRUE, value.var = 'crown.scaled')
+cover <- dcast(spec.table, x + y ~. , mean, na.rm = TRUE, value.var = "cover") 
+CC.adj <- dcast(spec.table, x + y ~., mean, na.rm = TRUE, value.var = "CC.adj")
+
+tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
+basal <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'basal')
+tree.dens.sd <- dcast(spec.table, x+y~., sd, na.rm=TRUE, value.var = 'density')
+
+
+#lets make some plots of cover, %cover, density, and basal area
+#carla staver uses a cut off of 40-45% cover for forest regions
+
+#make all cover over 100& cover == 100
+cover[cover$./10000 > 1,]<- 1*10000
+Crown.scales[Crown.scales$. > 100,]<-100
+
+##########
+#plotting#
+##########
+
+
+#for precipitaiton and tree cover metrics
+x11(width = 8)
+pdf('outputs/inil_cover_ghcn.pdf')
+#par(xpd=TRUE)
+plot(precip$total_.,cover$./10000, col=ifelse(cover$./10000>=0.45,"red","black"), ylab = 'porportion cover', xlab = '1900 prism precipitation (mm)')
+rect(1400,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/4)) # add the range of tropical savanna intermediate climate
+rect(1400, -10, 725, 2, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,2, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+legend("topleft", 
+       cex = 1, 
+       bty = "n", 
+       legend = c("Midwest intermediate climate", "Tropical intermediate", '>40% cover', '<40% cover'), 
+       
+       col = c(rgb(red = 1, 0, 0, alpha = 1/4), rgb(0.75,0.75,0.75,1/2), 'red', 'black'), 
+       pch = c(15,15,1,1))
+
+hist(CC.adj$., breaks = 50, xlab = "porportion cover", main = 'Histogram of porporiton of cover')
+
+plot(precip$total_.,Crown.scales$.,  col=ifelse(Crown.scales$.>=45,"red","black"),ylab = '% cover', xlab = '1900 prism precipitation (mm)')
+rect(1400,-10, 1000,200, col = rgb(0.5,0.5,0.5,1/4))
+rect(1400, -10, 725, 200, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,200, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+legend("topleft", 
+       cex = 1,  
+       bty = "n", 
+       legend = c("Midwest intermediate climate", "Tropical intermediate", '>40% cover', '<40% cover'), 
+       
+       col = c(rgb(red = 1, 0, 0, alpha = 1/4), rgb(0.75,0.75,0.75,1/2), 'red', 'black'), 
+       pch = c(15,15,1,1))
+
+hist(Crown.scales$., breaks = 55, xlab = '% cover', main = 'Histogram of % Cover')
+
+
+#25 trees per acre is savanna limit
+#25 trees per acre = 25 trees/acre / 0.404686 hectares /acre = 61.77629 trees /hectare
+plot(precip$total_.,tree.dens$.,  col=ifelse(tree.dens$.>=61,"red","black"),ylab = 'Tree Density (stems/ha)', xlab = "Prism 1900 precipitaiton (mm)")
+rect(1400,-10, 1000,300, col = rgb(0.5,0.5,0.5,1/4))
+rect(1400, -10, 725, 300, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1400,-10, 1000,300, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+legend("topleft", 
+       cex = 1, 
+       bty = "n", 
+       legend = c("Midwest intermediate climate", "Tropical intermediate", '>60 trees/ha cover', '<60trees/ha'), 
+       col = c(rgb(red = 1, 0, 0, alpha = 1/4), rgb(0.75,0.75,0.75,1/2), 'red', 'black'), 
+       pch = c(15,15,1,1))
+
+hist(tree.dens$.)
+hist(tree.dens$., breaks = 25, xlab = "density (stems/ha)", main = 'Histogram of Density')
+
+hist(basal$., breaks = 50, xlab = 'basal area (m^2/m^2)', main = 'Histogram of Basal Area')
+
+#plot(avg.prism.p$., basal$.)
+plot(precip$total_., basal$., ylim = c(0, 100), col=ifelse(basal$.>=40,"red","black"), ylab = 'Basal area (m^2/m^2)', xlab = 'Prism 1900 precipitation')
+rect(1200,-10, 1000,300, col = rgb(0.5,0.5,0.5,1/4))
+rect(1200, -10, 725, 300, col = rgb(red = 1, 0, 0, alpha = 1/4))
+rect(1200,-10, 1000,300, col = rgb(0.75,0.75,0.75,1/2)) # add the range of tropical savanna intermediate climate
+legend("topleft", 
+       cex = 1, 
+       bty = "n", 
+       legend = c("Midwest intermediate climate", "Tropical intermediate", '>40 m^/m2 BA', '<40% m^2/m^2 BA'), 
+       col = c(rgb(red = 1, 0, 0, alpha = 1/4), rgb(0.75,0.75,0.75,1/2), 'red', 'black'), 
+       pch = c(15,15,1,1))
+dev.off()
+
+
+
+
+
+#for now we focus on density and climate space
+
+#assign discrete values to density
+dens.discrete <- tree.dens
+dens.discrete$bins <- dens.discrete$.
+dens.discrete[dens.discrete$.>80, ]$bins <- '1'
+dens.discrete[dens.discrete$.<=53, ]$bins <- '2'
+dens.discrete[dens.discrete$.<=80 & dens.discrete$. >53, ]$bins <- 3
+
+#plot air temp annnual and precip annual
+plot( air_temp$annual_., precip$total_.,col= as.numeric(dens.discrete$bins), main = ' Climate space of midwest GHCN 1900-1910')
+legend('topleft', col = as.numeric(dens.discrete$bins))
+
+#plot p-ET annual and annual temperature range
+plot(air_temp$range_., PET$total_., col = dens.discrete$bins)
+
+
+tropics <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/1247355_Dataset_S1.csv')
+
+plot(tropics$Annual.temperature.range/10, tropics$Effective.Rainfall, 
+     ylab = 'Effective rainfall (mm)', xlab = 'Annual temperature range (DegC)')
+points(air_temp$range_., PET$total_., col = 'red')
+legend('bottomleft', pch =1, col = c('black', 'red'), c('Tropics', 'midwest'))
+
+# the mean annual precipitation is not listed in the dataset
+hist(tropics$Tree.Basal.Area..m2.ha.)
+hist(basal$., breaks = 50)
+
+
+
+#maps of where tree.dens is 
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  "illinois", "indiana" ) )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+
+
+mapdata<-data.frame(mapdata)
+
+#make the map in GGPLOT
+
+dens.map <- ggplot()+ geom_raster(data=tree.dens, aes(x=x, y=y, fill = .))+
+  labs(x="easting", y="northing", title="Tree raw density") + 
+  scale_fill_gradientn(colours = rainbow(4), name ="Tree Density (stems/ha)")
+#dens.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
+dens.map <- dens.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
+dens.map
+
+dens.discrete$type <- dens.discrete$bins
+dens.discrete[dens.discrete$type == 1, ]$type <- '>85 stems/ha'
+dens.discrete[dens.discrete$type == 2, ]$type <- '<50 stems/ha'
+dens.discrete[dens.discrete$type == 3, ]$type <- '50-85 stems/ha'
+
+dens.dis.map <- ggplot()+ geom_raster(data=dens.discrete, aes(x=x, y=y, fill =type))+
+  labs(x="easting", y="northing", title="Tree density binned") #+ 
+ # scale_fill_gradientn(colours = rainbow(4), name ="Tree Density (stems/ha)")
+#dens.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
+dens.dis.map <- dens.dis.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
+dens.dis.map
+
+
+dens.hist <- ggplot(data=dens.discrete, aes(x=., fill=bins) )+
+  geom_histogram(binwidth=5, alpha=.5, position="identity") 
+
+
+pdf('outputs/density.maps.pdf')
+
+dens.map
+dens.dis.map
+dens.hist
+
+dev.off()

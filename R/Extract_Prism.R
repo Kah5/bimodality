@@ -2,13 +2,13 @@ library(plyr)
 library(raster)
 library(data.table)
 # read in and average prism data
-prism<- raster("data/PRISM_ppt_stable_4kmM2_189501_198012_bil/PRISM_ppt_stable_4kmM2_189501_bil.bil")
+prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_800mM2_annual_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 
 spec.table <- data.frame(spec.table)
-spec.table$prism.1900p <- extract(prism.alb, spec.table[,c("x","y")])
+spec.table$pr30yr <- extract(prism.alb, spec.table[,c("TreeX","TreeY")])
 
-
+write.csv(spec.table, 'C:/Users/JMac/Documents/Kelly/datascience/data/spec_table_30yr_prism.csv')
 #try prims
 install.packages('prism')
 #library(prism)

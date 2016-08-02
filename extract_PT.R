@@ -15,7 +15,7 @@ library(raster)
 library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1900:1910
+years <- 1975:2014
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -31,9 +31,10 @@ for (i in years) {
 y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
+require(data.table)
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total'))
+                                                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total'))
 library(plyr)
 library(reshape2)
 
@@ -52,7 +53,7 @@ avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes a
 
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-coordinates(spec.table) <- ~x + y
+#coordinates(spec.table) <- ~x + y
 tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
 
 precip.alb <- crop(avg.alb, extent(spec.table)) 
@@ -64,7 +65,7 @@ precip$y <- tree.dens$y
 
 
 
-write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1900_1910_GHCN.csv')
+write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_2001_2011_GHCN.csv')
 
 ######################
 ##For Temperature now
@@ -105,7 +106,7 @@ avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes a
 
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-coordinates(spec.table) <- ~x + y
+#coordinates(spec.table) <- ~x + y
 
 air_temp.alb <- crop(avg.alb, extent(spec.table)) 
 spec.table <- data.frame(spec.table)
@@ -114,7 +115,7 @@ air_temp <- data.frame(extract(air_temp.alb, tree.dens[,c('x', 'y')]))
 air_temp$x <- tree.dens$x
 air_temp$y <- tree.dens$y
 
-write.csv(air_temp, 'C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_alb_1900_1910_GHCN.csv')
+write.csv(air_temp, 'C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_alb_2000_2011_GHCN.csv')
 
 
 ######################

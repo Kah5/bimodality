@@ -2,13 +2,13 @@ library(plyr)
 library(raster)
 library(data.table)
 # read in and average prism data
-prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_800mM2_annual_asc/PRISM_ppt_30yr_normal_800mM2_annual_asc.asc")
+prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 
 spec.table <- data.frame(spec.table)
-spec.table$pr30yr <- extract(prism.alb, spec.table[,c("TreeX","TreeY")])
+spec.table$pr30yr <- extract(prism.alb, spec.table[,c("x","y")])
 
-write.csv(spec.table, 'C:/Users/JMac/Documents/Kelly/datascience/data/spec_table_30yr_prism.csv')
+write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/spec_table_30yr_prism.csv')
 #try prims
 install.packages('prism')
 #library(prism)
@@ -27,7 +27,7 @@ setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 coordinates(spec.table) <- ~x + y
 
-years <- 1895:1905
+years <- 1970:1980
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster

@@ -43,7 +43,7 @@ summary(basal.area)
 stem.dens <- data.frame(stem.density, basal.area)
 #write.csv(stem.density, 'IN_ILdensestimates_v1.5.csv')
 
-nine.nine.pct <- apply(stem.dens, 2, quantile, probs = 0.95, na.rm=TRUE)
+nine.nine.pct <- apply(stem.dens, 2, quantile, probs = 0.99, na.rm=TRUE)
 stem.dens$stem.density[stem.dens$stem.density > nine.nine.pct['stem.density']] <- nine.nine.pct['stem.density']
 stem.dens$basal.area[stem.dens$basal.area > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
@@ -155,7 +155,7 @@ nine.five.pct <- apply(spec.table[,9:ncol(spec.table)], 2, quantile, probs = 0.9
 #47511.0000   207.6151   217.5150    55.0000   930.0320 
 
 #assign all species greater than the 99th percentile to 99th percentile values
-spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
+#spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table$CW[spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
 #spec.table$crown.scaled[spec.table$crown.scaled > nine.nine.pct['crown.scaled']] <- nine.nine.pct['crown.scaled']
@@ -381,3 +381,4 @@ dev.off()
 
 ##aggregated or not?
 # need P --point to tree distances, and I--tree to tree distances
+write.csv(spec.table, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/density_tables.csv")

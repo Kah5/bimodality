@@ -19,7 +19,7 @@ hist(density.FIA.table$FIAdensity, breaks = 100)
 #merge inil pls and inil FIA
 
 #read in tree level data
-pls.inil<- read.csv('outputs/spec.table.csv')
+pls.inil<- read.csv('outputs/density_tables.csv')
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
@@ -45,9 +45,11 @@ dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y')
 dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'total_.')], by = c('x', 'y'))
 colnames(dens.pr) <- c('x', 'y', 'cell', 'PLSdensity', 'FIAdensity', 'MAP1910', "MAP2011")
 
+#plot histograms
 hist(dens.pr$PLSdensity, breaks = 50)
 hist(dens.pr$FIAdensity, breaks = 50)
 
+#plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity)
 plot(dens.pr$MAP2011,dens.pr$FIAdensity)
 plot(dens.pr$MAP2011, dens.pr$PLSdensity)
@@ -63,23 +65,35 @@ summary(PLS_mod.lm)
 
 dens.pr$diff <- dens.pr$PLSdensity - dens.pr$FIAdensity
 
+
 #dens.pr<- data.frame(dens.pr)
 
 pls.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
   labs(x="easting", y="northing", title="Tree PLS density") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Tree Dens. \n (stems/ha)")
-#dens.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-#dens.map <- dens.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
 pls.map
 
 FIA.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = FIAdensity))+
   labs(x="easting", y="northing", title="Tree FIA density") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Tree Dens. \n (stems/ha)")
-#dens.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-#dens.map <- dens.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
 FIA.map
 
 diff.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = diff))+
-  labs(x="easting", y="northing", title="Tree FIA density") + 
-  scale_fill_gradientn(colours = rainbow(4), name ="PLS-FIA tree density")
+  labs(x="easting", y="northing", title="Tree FIA density")  + 
+  scale_fill_gradientn(colours = rainbow(4), name ="Tree Dens. \n (stems/ha)")
 diff.map
+
+
+#use ggplot to plot data and regression line
+pls.pr <- ggplot()+ geom_point(data=dens.pr, aes(x=MAP1910, y=PLSdensity))+
+  geom_smooth(data=dens.pr, aes(x=MAP1910, y=PLSdensity),method=lm) 
+pls.pr
+
+
+fia.pr <- ggplot()+ geom_point(data=dens.pr, aes(x=MAP2011, y=FIAdensity))+
+  geom_smooth(data=dens.pr, aes(x=MAP2011, y=FIAdensity),method=lm) 
+fia.pr
+
+dif.pr <- ggplot()+ geom_point(data=dens.pr, aes(x=MAP2011, y=diff))+
+  geom_smooth(data=dens.pr, aes(x=MAP2011, y=diff),method=lm) 
+dif.pr

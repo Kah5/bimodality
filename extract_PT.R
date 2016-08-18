@@ -8,14 +8,14 @@
 #getting gridded climate data
 #need to clean this up
 
-library(reshape2)
+#library(reshape2)
 library(data.table)
 library(sp)
 library(raster)
 library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1975:2014
+years <- 1895:1935
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -52,20 +52,21 @@ projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+#spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 #coordinates(spec.table) <- ~x + y
-tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
+#tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
+dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv')
 
-precip.alb <- crop(avg.alb, extent(spec.table)) 
-spec.table <- data.frame(spec.table)
+precip.alb <- crop(avg.alb, extent(dens.table)) 
+spec.table <- data.frame(dens.table)
 
-precip <- data.frame(extract(avg.alb, tree.dens[,c('x', 'y')]))
-precip$x <- tree.dens$x
-precip$y <- tree.dens$y
+precip <- data.frame(extract(avg.alb, dens.table[,c('x', 'y')]))
+precip$x <- dens.table$x
+precip$y <- dens.table$y
 
 
 
-write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_2001_2011_GHCN.csv')
+write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1895_1935_GHCN.csv')
 
 ######################
 ##For Temperature now

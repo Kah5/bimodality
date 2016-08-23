@@ -6,6 +6,7 @@ library(plyr)
 library(reshape2)
 library(ggplot2)
 library(aspace)
+library(raster)
 
 final.data <- read.csv("ndilinpls_for_density_v1.5.csv")
 
@@ -71,6 +72,7 @@ numbered.cell <- extract(numbered.rast, spTransform(density,CRSobj=CRS('+init=ep
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
 
 final.data <- data.frame(final.data)
+
 #create dataframe with stem density, speceies
 spec.table <- data.frame(xyFromCell(base.rast, numbered.cell),
                          cell = numbered.cell,

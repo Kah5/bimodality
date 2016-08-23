@@ -11,6 +11,7 @@ density.FIA.table$FIAdensity <- rowSums(density.FIA.table[,5:24], na.rm = TRUE)
 summary(density.FIA.table$FIAdensity)
 hist(density.FIA.table$FIAdensity, breaks = 100)
 
+
 #if you want to do a quick plot
 #coordinates(density.FIA.table) <- ~x + y
 #gridded(density.FIA.table) <- TRUE
@@ -23,6 +24,11 @@ pls.inil<- read.csv('outputs/density_tables.csv')
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
+
+#can aggregate by species
+pls.spec<- read.csv('outputs/density_tables.csv')
+pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
+
 
 umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
 umdw$total <- rowSums(umdw[,5:33])
@@ -38,6 +44,50 @@ densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.tabl
 write.csv(densitys, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
 #this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
+
+pls.names<- colnames(pls.spec)
+umdw.names<- colnames(umdw)
+colnames(pls.spec)[6] <- 'Bald.cypress'
+colnames(pls.spec)[10] <- 'Black.gum'
+colnames(pls.spec)[13] <- 'Cedar.juniper'
+colnames(pls.spec)[25] <- 'Other.hardwood'
+colnames(pls.spec)[32] <- 'Tulip.poplar'
+
+pls.names<- colnames(pls.spec)
+umdw.names<- colnames(umdw)
+
+#create name vectors for species columns missing in the upper and lower midewst
+to.add.umdw <-pls.names[!pls.names %in% umdw.names]
+to.add.pls <- umdw.names[!umdw.names %in% pls.names]
+
+#add these species columns to the respective dataframes, but with 0 for data values
+pls.spec[,to.add.pls] <- 0
+umdw[,to.add.umdw] <- 0
+
+#reorder the columns so the pls.spec and umdw dataframes match
+pls.spec<- pls.spec[ , order(names(pls.spec))]
+umdw <- umdw[,order(names(umdw))]
+
+full.spec <- rbind(pls.spec, umdw)
+
+#move around the columns
+library(dplyr)
+full.spec<- full.spec %>%
+  select(cell, everything())
+
+full.spec<- full.spec %>%
+  select(y, everything())
+
+full.spec<- full.spec %>%
+  select(x, everything())
+
+full.spec<- full.spec %>%
+  select(X, everything())
+
+full.spec<- full.spec %>%
+  select(-total, everything())
+
+#now add totals to the 'total columns
 #past.precip <- read.csv('data/pr_alb_1895_1935_GHCN.csv')
 #mod.precip <- read.csv('data/pr_alb_1975_2014_GHCN.csv')
 

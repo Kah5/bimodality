@@ -5,8 +5,8 @@ FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
 
 FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
-
-density.FIA.table <- dcast(FIA.pal, x + y + cell ~ PalEON, mean, na.rm=TRUE, value.var = 'density')
+density.FIA.table <- dcast(FIA.pal, plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
+density.FIA.table <- dcast(FIA.pal, x + y + cell ~ PalEON, mean, na.rm=TRUE, value.var = 'density') #average density of plots in grid cell
 density.FIA.table$FIAdensity <- rowSums(density.FIA.table[,5:24], na.rm = TRUE)
 summary(density.FIA.table$FIAdensity)
 hist(density.FIA.table$FIAdensity, breaks = 100)
@@ -28,7 +28,7 @@ colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 #can aggregate by species
 pls.spec<- read.csv('outputs/density_tables.csv')
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
-
+pls.spec$total <- rowSums(pls.spec[4:35], na.rm=TRUE)
 
 umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
 umdw$total <- rowSums(umdw[,5:33])
@@ -177,11 +177,12 @@ colnames(fia.dens.pr)[42:44] <- c('FIAdensity', 'MAP1910', "MAP2011")
 write.csv(dens.pr, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb.csv")
 write.csv(fia.dens.pr, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb.csv")
 
-dens.pr[dens.pr$PLSdensity>1000,]$PLSdensity <- 1000 #patch fix the overestimates of density
+nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
+dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density
 
 #plot histograms
-hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,1000), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
-hist(fia.dens.pr$FIAdensity, breaks = 50, xlim = c(0,1000), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
+hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,550), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
+hist(fia.dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
 
 #plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
@@ -212,7 +213,28 @@ summary(diff.lm)
 
 dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)')
+
+
+library(MASS)  # in case it is not already loaded 
+set.seed(101)
+n <- 1000
+X <- mvrnorm(n, mu=c(.5,2.5), Sigma=matrix(c(1,.6,.6,1), ncol=2))
+
+## some pretty colors
+library(RColorBrewer)
+k <- 11
+my.cols <- rev(brewer.pal(k, "RdYlBu"))
+
+## compute 2D kernel density, see MASS book, pp. 130-131
+z <- kde2d(dens.pr$PLSdensity, dens.pr$diff, n=50)
+
+plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)', pch=19, cex=.4)
+contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
+legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
+
+
+
 
 ##calculate species richness: number of species in each grid cell
 dens.pr$spec.rich <- rowSums(dens.pr[,5:41] != 0, na.rm=TRUE)
@@ -238,7 +260,69 @@ lambda.fia <- rowSums((fia.dens.pr[,5:41]*(fia.dens.pr[,5:41]-1))/(fia.dens.pr$P
 #similarity index to compare pls & FIA
 #sim = 2*sum(n*c)
 
+dens.only <- dens.pr[,5:41]
+dens.only[is.na(dens.only)] <- 0
+shan.div <- diversity(dens.only, index = "shannon")
 
+
+bci.mds<-metaMDS(dens.only, distance = "bray", k = 2, trymax = 20, autotransform =TRUE, noshare = 0.1, expand = TRUE, trace = 1, plot = FALSE) #makes the object bci.mds using Bray-Curtis ordination
+
+plot(bci.mds, choices = c(1, 2), type="n") #plots the ordination axes
+points(bci.mds, display = c("sites", "species"))#displays both sites and species on the same plot.  Try choosing just “sites” to reduce clutter
+text(bci.mds, display = c("sites", "species"))
+
+######################################################
+#read in us ecoregions shapefile to overlay in ggplot#
+######################################################
+library(sp)
+library(rgdal)
+library(plyr)
+library(ggplot2)
+require("rgdal")
+require("rgeos")
+require("dplyr")
+
+ecoregions <- readOGR(dsn = 'data/eco-us-shp/eco_us.shp', layer = 'eco_us')
+#has all ecoregions, only want the Laurentian Mixed Forest Province, Prairie Parkland (Temperate) Province
+
+Prairie <- c('Prairie Parkland (Temperate) Province',                                                      
+              'Great Plains Steppe and Shrub Province')
+Forest <- c('Laurentian Mixed Forest Province','Ozark Broadleaf Forest - Meadow Province','Eastern Broadleaf Forest (Continental) Province')
+
+ecoregions.P <- ecoregions[ecoregions$PROVINCE %in% Prairie|ecoregions$PROVINCE %in% Forest, ]
+#ecoregions.F <- ecoregions[ecoregions$PROVINCE %in% Forest]
+ecoregions <- ecoregions[ecoregions$PROVINCE %in% Prairie & ecoregions$PROVINCE %in% Forest, ]
+#ecoregions$PF <- NA
+#ecoregions@data[ecoregions$PROVINCE %in% Forest, ]$PF <- 1
+#ecoregions@data[ecoregions$PROVINCE %in% Prairie, ]$PF <- 0
+#X11(width = 14)
+
+#plot(ecoregions)
+P.data <- spTransform(ecoregions.P, CRS('+init=epsg:3175'))
+eco.data <-spTransform(ecoregions, CRS('+init=epsg:3175'))
+P.data_df <- rename(P.data_df, ECO_US_ID = id)
+P.data_df <- left_join(P.data_df, P.data@data, by = 'ECO_US_ID')
+
+#P.data@data$id <- rownames(P.data@data)
+F.data <- spTransform(ecoregions.F, CRS('+init=epsg:3175'))
+P.data_df <- fortify(P.data) #fortify to plot in ggplot
+#ecoreg.df     <- join(P.data_df,P.data@data, by="ECO_US_ID")
+F.data_df <- fortify(F.data)
+ecoregionmap<- ggplot()+
+  geom_polygon(data = P.data_df,aes(x = long, y = lat, group = group, colours = group)) +
+  geom_polygon(data = F.data_df,aes(x = long, y = lat, group = group), fill = 'tan')+
+  geom_raster(data=fia.dens.pr, aes(x=x, y=y, fill = FIAdensity))
+  #coord_map()
+  coord_equal()
+  #geom_path(color = 'red') +theme_bw() 
+ecoregionmap
+
+ggplot(P.data, aes(long, lat)) + coord_map() + geom_polygon(aes(group=group)) + 
+  geom_polygon(data=subset(P.data, subregion %in% c("patrick", "henry", "franklin",
+                                                "pittsylvania")), aes(group=group), size=1, color="white",fill="white")
+#################################
+#plot maps of tree density
+#################################
 #dens.pr<- data.frame(dens.pr)
 library(ggplot2)
 melt.test <- melt(dens.pr[,1:41], id = c('x', 'y', 'cell', 'X'))
@@ -248,13 +332,15 @@ pls.2map <- ggplot()+ geom_raster(data=melt.test, aes(x=x, y=y, fill = value))+
 pls.2map
 
 X11(width = 18)
+
+pdf('outputs/maps.pdf')
 pls.map
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 
 
 pls.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = spec.rich))+
-  labs(x="easting", y="northing", title="Tree PLS density") + 
+  labs(x="easting", y="northing", title="Species Richness") + 
   scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,16), name ="Species \n Richness (S)") 
 pls.map
 
@@ -263,9 +349,21 @@ FIA.map <- ggplot()+ geom_raster(data=fia.dens.pr, aes(x=x, y=y, fill = spec.ric
   scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,16), name ="Species \n Richness (S)") 
 FIA.map
 
+pls.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
+  labs(x="easting", y="northing", title="Tree PLS density") + 
+  scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,1000), name ="Tree Dens. \n (stems/ha)") 
+  
+
+pls.map
+
+FIA.map <- ggplot()+ geom_raster(data=fia.dens.pr, aes(x=x, y=y, fill = FIAdensity))+
+  labs(x="easting", y="northing", title="Tree FIA density") + 
+  scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,1000),name ="Tree Dens. \n (stems/ha)") 
+FIA.map
+
 diff.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = diff))+
-  labs(x="easting", y="northing", title="Tree FIA density")  + 
-  scale_fill_gradientn(colours = rainbow(4), name ="Tree Dens. \n (stems/ha)")
+  labs(x="easting", y="northing", title="FIA-PLS")  + 
+  scale_fill_gradientn(colours = rainbow(4), name ="Difference in \n Tree Dens. \n (stems/ha)")
 diff.map
 
 pr1901.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = MAP1910))+
@@ -278,11 +376,16 @@ pr2011.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = MAP2011))
   scale_fill_gradientn(colours = rainbow(4), name ="TPrecip. \n (mm/year)",limits = c(0,1300))
 pr2011.map
 
+dev.off()
 #use ggplot to plot data and regression line
 pls.pr <- ggplot()+ geom_point(data=dens.pr, aes(x=MAP1910, y=PLSdensity))+
   geom_smooth(data=dens.pr, aes(x=MAP1910, y=PLSdensity),method=lm) 
 pls.pr
 
+
+pls.dens.rich <- ggplot()+ geom_point(data=dens.pr, aes(x=H.pls, y=PLSdensity))+
+  geom_smooth(data=dens.pr, aes(x=H.pls, y=PLSdensity),method=lm) 
+pls.dens.rich
 
 fia.pr <- ggplot()+ geom_point(data=dens.pr, aes(x=MAP1910, y=FIAdensity))+
   geom_smooth(data=dens.pr, aes(x=MAP1910, y=FIAdensity),method=lm) 

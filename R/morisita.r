@@ -65,7 +65,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   
   
-     m.dist <- dist * 0.201168 + 0.5 * m.diam # convert distances from chains to meters
+     m.dist <- dist * 0.201168 + 0.5 * m.diam # convert distances from chains (links) to meters
      #m.dist <- dist + 0.5 * m.diam 
   #  rsum is the sum of the squared radii, in cases where there are two trees in
   #  the same quadrant I'm going to drop the site, as I will with any corner 

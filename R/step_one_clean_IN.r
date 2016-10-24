@@ -25,7 +25,7 @@
 #  Updated {1.3): Nov 18, 2014
 #  Updated (1.4): Dec  8, 2014
 #  Kelly Heilman 1.5: April 14, 2015
-
+#  Updated (1.5-2: illinois georeferenced): October 24th, 2016
 library(sp)
 library(spdep)
 library(rgdal)
@@ -36,7 +36,7 @@ library(Rcpp)
 ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFactors = FALSE)
 
 # Read in the il data
-il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE)
+il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE)
 
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
@@ -80,9 +80,9 @@ ind$DIST3 <- as.numeric(ind$chainstree3)
 ind$DIST4 <- as.numeric(ind$chainstree4)
 
 il$DIST1 <- as.numeric(il$chainstree)
-il$DIST2 <- as.numeric(il$chainstree2)
-il$DIST3 <- as.numeric(il$chainstree3)
-il$DIST4 <- as.numeric(il$chainstree4)
+il$DIST2 <- as.numeric(il$chainstr_2)
+il$DIST3 <- as.numeric(il$chainstr_3)
+#il$DIST4 <- as.numeric(il$chainstr_4)
 
 
 
@@ -115,6 +115,13 @@ il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingdir4
 
 il$state <-'IL'
 ind$state <-'IN'
+#create and rename columns to match that of indiana
+il$twp <- il$TRP
+il$bearings1 <- il$bearing
+il$bearings2 <- il$bearing2
+il$bearings3 <- il$bearing3
+il$bearings4 <- il$bearing4
+il$DIST4 <- NA
 
 keeps <- c("x","y","twp", "L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
   "bearings2", "bearings3", "bearings4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
@@ -349,14 +356,14 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
 
                           
                   
-#now kill cells with NANA for cornertype
+
 
 
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
-coordinates(final.data) <- coordinates(inil)
+#coordinates(final.data) <- coordinates(inil)
 
 
 
 #write the data as a csv
-write.csv(final.data, "ndilinpls_for_density_v1.5.csv")
+write.csv(final.data, "ndilinpls_for_density_v1.5-2.csv")

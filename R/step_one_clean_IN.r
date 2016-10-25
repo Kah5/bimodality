@@ -30,50 +30,56 @@ library(sp)
 library(spdep)
 library(rgdal)
 library(raster)
-#install.packages('Rcpp')
+
 library(Rcpp)
 # Read in the data
 ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFactors = FALSE)
 
 # Read in the il data
-il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE)
+il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE) # version 1.5-2
+#il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
 
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
+#coordinates(il) <- ~x+y
+#X11(width = 12)
+#spplot(il, "L3_tree1")
 
-#take out all original data with L3_tree1 = No data. Simon does this at the 
+#take out all original data with L3_tree1 = No data. Simon does this at the end
 
 
-#ind <- ind[!ind$L3_tree1 == 'No data',]
-#ind <- ind[!ind$L3_tree2 == NA,]
+ind[ind$L3_tree1 %in% 'No data',] <- NA
+ind[ind$L3_tree2 %in% 'No data',] <- NA
 #ind <- ind[!ind$L3_tree3 == 'NA',]
 #ind <- ind[!ind$L3_tree4 == 'No data',]
 
 
-il <- il[!il$L3_tree1 == 'No data',]
-#il <- il[!il$L3_tree2 == 'No data',]
+il[il$L3_tree1 %in% 'No data',] <- NA
+il[il$L3_tree2 %in% 'No data',] <- NA
 #il <- il[!il$L3_tree3 == 'No data',]
 #il <- il[!il$L3_tree4 == 'No data',]
 
 
 # remove all points with 'No data' points for chainstree in Indiana
 #ind <- ind[!ind$chainstree == 'NA',]
-#ind <- ind[!ind$chainstree == 88888,]
+#ind <- ind[ind$chainstree == 88888,]<- NA
 #ind <- ind[!ind$chainstree == 99999,]
 #ind <- ind[!ind$chainstree2 == 88888,]
 #ind <- ind[!ind$chainstree2 == 99999,]
 
+# remove all instances of no data for the l3tree 1
+ind <- ind[!is.na(ind$L3_tree1),]
+il <- il[!is.na(il$L3_tree1),]
 
-
-#it just has NA if it is no tree or no data, 
+#it just has NA if it is no tree due to water or no data, 
 #so we have to removed points where there is "No data" or "Water listed as a tree
-il <- il[!il$L3_tree1 == 'Water'| !il$L3_tree1=='No data',]
-il <- il[!il$L3_tree2 == 'Water'| !il$L3_tree2 == 'No data',]
+#il <- il[!il$L3_tree1 == 'Water'| !il$L3_tree1=='No data',]
+#il <- il[!il$L3_tree2 == 'Water'| !il$L3_tree2 == 'No data',]
 #il <- il[!il$L1_tree3 == 'Water'| !il$L1_tree3 == 'No data',]
 #il <- il[!il$L1_tree4 == 'Water'| !il$L1_tree4 == 'No data',]
 
-#  IN distances in chains
+#  IN distances are in chains
 ind$DIST1 <- as.numeric(ind$chainstree)
 ind$DIST2 <- as.numeric(ind$chainstree2)
 ind$DIST3 <- as.numeric(ind$chainstree3)
@@ -85,11 +91,11 @@ il$DIST3 <- as.numeric(il$chainstr_3)
 #il$DIST4 <- as.numeric(il$chainstr_4)
 
 
-
-il <- il[!il$DIST1 == 88888,]
-il <- il[!il$DIST1 == 99999,]
-il <- il[!il$DIST2 == 88888,]
-il <- il[!il$DIST2 == 99999,]
+#this removes all points (including no trees) that dont have distances provided. 
+#il <- il[!il$DIST1 == 88888,]
+#il <- il[!il$DIST1 == 99999,]
+#il <- il[!il$DIST2 == 88888,]
+#il <- il[!il$DIST2 == 99999,]
 
 
 #  Character vectors are read into R as factors, to merge them they need to
@@ -131,26 +137,35 @@ ind.data <- ind[keeps]
 il.data <- il[keeps]
 
 #  The merged dataset is called inil
-inil <- rbind(data.frame(ind.data), data.frame(il.data), stringsAsFactors = FALSE)
+inil <- rbind(data.frame(ind.data), data.frame(il.data))
 
 
 
 #inil$rng <- rng
 inil<-data.frame(inil, stringsAsFactors = FALSE)
-inil [inil == 99999] <- 'NA'
-inil [inil == '99999'] <- 'NA'
-inil [inil == 88888] <- 'NA'
-inil [inil =='88888'] <- 'NA'
+#inil [inil$DIST1 == 99999] <- 'NA'
+#inil [inil == '99999'] <- 'NA'
+#inil [inil == 88888] <- 'NA'
+#inil [inil =='88888'] <- 'NA'
 
 #  There are a set of 9999 values for distances which I assume are meant to be NAs. 
-inil$DIST1 == '88888' <- 'NA'
-inil$DIST1 == '99999' <- NA
-inil$diameter == '99999' <- NA      # Except those that have already been assigned to 'QQ'
-inil$diameter == '88888' <- NA
+inil[inil$DIST1 %in% '88888',] <- NA
+inil[inil$DIST1 %in% '99999',] <- NA
+inil[inil$DIST2 %in% '88888',] <- NA
+inil[inil$DIST2 %in% '99999',] <- NA
+inil[inil$diameter %in% '99999',] <- NA 
+inil[inil$diameter %in% '88888',] <- NA
+inil[inil$diameter2 %in% '99999',] <- NA     
+inil[inil$diameter2 %in% '88888',] <- NA
 
 # now kill missing cells:
 inil <- inil[!is.na(inil$y),]
 inil <- inil[!is.na(inil$x),]
+X11(width = 12)
+coordinates(inil) <- ~x+y
+spplot(inil, "DIST1")
+
+inil <- data.frame(inil)
 
 #diameters in centimeters
 diams <-  cbind(as.numeric(inil$diameter), 
@@ -181,7 +196,7 @@ degrees <- cbind(as.numeric(inil$degrees),
 source('R/get_angle_IN.R')
 azimuths <- get_angle_IN(bearings,degrees, dists)
 
-#####  Cleaning Trees:  I thinks this is already done in the CSV file
+#####  Cleaning Trees:  Kelly thinks this is already done in the CSV file, but this is from Simon's Code
 #      Changing tree codes to lumped names:
 #spec.codes <- read.csv('data/input/relation_tables/fullpaleon_conversion_v0.3-3.csv', stringsAsFactor = FALSE)
 #spec.codes <- subset(spec.codes, Domain %in% 'Upper Midwest')
@@ -199,8 +214,7 @@ species <- species.old #since species is already converted
 
 #  We need to indicate water and remove it.  
 
-#  There are a set of dead taxa (DA, DB & cetera) that we exclude.  Only AM is
-#  unknown at this point.  This excludes 213 trees.
+
 species[species %in% ''] <- 'No tree'
 
 #  Now we assign species that don't fit to the 'No tree' category.
@@ -229,7 +243,20 @@ dists[rowSums(dists == 1, na.rm=T) > 1, ] <- rep(NA, 4)
 
 #  When the object is NA, or the species is not a tree (NonTree or Water), set
 #  the distance to NA.
+#this way when we estimate density, we get density of places that have trees
+
 dists[is.na(species) | species %in% c('No tree', 'Wet', 'Water')] <- NA
+
+#this code removes all distances that have 1 or 2 as the distance
+#ones <- (dists[,1] == 1 | dists[,2] ==1  )
+#dists[ones] <- NA
+
+#twos <- (dists[,1] == 2 | dists[,2] ==2  )
+#dists[twos] <- NA
+
+#test to see if we get different densities if we include No trees
+#dists[is.na(species) | species %in% c( 'Wet', 'Water')] <- NA
+
 
 
 #  At this point we need to make sure that the species are ordered by distance
@@ -355,15 +382,15 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
                           paste('az',      1:4, sep = ''), 'corner')
 
                           
-                  
-
-
+# part of the high density problem in indiana might be due to a large number of points with really low distances                  
+count(final.data[final.data$dist1 ==1,]) # 78 points with dist1= 1
+count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2
 
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
-#coordinates(final.data) <- coordinates(inil)
-
-
+coordinates(final.data) <- ~PointX + PointY
+spplot(final.data, "species1")
+final.data <- data.frame(final.data)
 
 #write the data as a csv
 write.csv(final.data, "ndilinpls_for_density_v1.5-2.csv")

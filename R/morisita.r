@@ -19,6 +19,8 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
     diam[diam < 8] <- NA #double check that this is corrected veil line, and do we want to use it?
   }
   
+  diam[diam == 0 & !spec == 'No tree'] <- NA
+  
   #m.diam <- diam/100 #diameters are in cm already
   m.diam <- (diam * 2.54) / 100 # convert diameter from inches to meters
   

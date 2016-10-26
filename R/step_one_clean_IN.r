@@ -38,13 +38,13 @@ ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFact
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE) # version 1.5-2
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-
+ggplot(data = il, aes(x = x, y = y, color = chainstree)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
 #coordinates(il) <- ~x+y
 #X11(width = 12)
-#spplot(il, "L3_tree1")
+#spplot(il, "chainstree")
 
 #take out all original data with L3_tree1 = No data. Simon does this at the end
 
@@ -149,21 +149,38 @@ inil<-data.frame(inil, stringsAsFactors = FALSE)
 #inil [inil =='88888'] <- 'NA'
 
 #  There are a set of 9999 values for distances which I assume are meant to be NAs. 
-inil[inil$DIST1 %in% '88888',] <- NA
-inil[inil$DIST1 %in% '99999',] <- NA
-inil[inil$DIST2 %in% '88888',] <- NA
-inil[inil$DIST2 %in% '99999',] <- NA
-inil[inil$diameter %in% '99999',] <- NA 
-inil[inil$diameter %in% '88888',] <- NA
-inil[inil$diameter2 %in% '99999',] <- NA     
-inil[inil$diameter2 %in% '88888',] <- NA
+inil$DIST1[inil$DIST1 == 88888] <- NA
+inil$DIST1[inil$DIST1 == 99999] <- NA
+inil$DIST2[inil$DIST2 == 88888] <- NA
+inil$DIST2[inil$DIST2 == 99999] <- NA
+inil$DIST3[inil$DIST3 == 88888] <- NA
+inil$DIST3[inil$DIST3 == 99999] <- NA
+inil$diameter[inil$diameter == 99999] <- NA 
+inil$diameter[inil$diameter == 88888] <- NA
+inil$diameter2[inil$diameter2 == 99999] <- NA     
+inil$diameter2[inil$diameter2 == 88888] <- NA
+inil$degrees[inil$degrees == 99999] <- NA     
+inil$degrees[inil$degrees == 88888] <- NA
+inil$degrees2[inil$degrees2 == 99999] <- NA     
+inil$degrees2[inil$degrees2 == 88888] <- NA
+inil$degrees2[inil$degrees2 == 8888] <- NA
+inil$degrees2[inil$degrees3 == 99999] <- NA     
+inil$degrees2[inil$degrees4 == 88888] <- NA
 
+summary(inil)
+# There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"
+# Here we change these distnces to 'NA'
+summary(inil[inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'),])
+zero.trees <-(inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'))
+
+inil[zero.trees, c("DIST1", "DIST2", "DIST3")] <- NA
+inil[zero.trees, c('diameter', 'diameter2', "diameter3")] <- NA
 # now kill missing cells:
 inil <- inil[!is.na(inil$y),]
 inil <- inil[!is.na(inil$x),]
 X11(width = 12)
-coordinates(inil) <- ~x+y
-spplot(inil, "DIST1")
+ggplot(data = inil, aes(x = x, y = y, color = DIST1)) + geom_point()
+
 
 inil <- data.frame(inil)
 
@@ -214,8 +231,7 @@ species <- species.old #since species is already converted
 
 #  We need to indicate water and remove it.  
 
-
-species[species %in% ''] <- 'No tree'
+#species[species %in% 'NA'] <- 'No tree'
 
 #  Now we assign species that don't fit to the 'No tree' category.
 species[is.na(species)] <- 'No tree'
@@ -236,22 +252,22 @@ write.csv(test.table, 'data/outputs/clean.bind.test.csv')
 treed.center <- (dists[,1] == 0 & !is.na(azimuths[,1]) & diams[,1] > 0)
 treed.center[is.na(treed.center)] <- FALSE
 
-azimuths[treed.center,1] <- 0
+azimuths[treed.center,1] <- 0 #assign azimuth to 0
 
 #  Another special case, two trees of distance 1.  What's up with that?!
 dists[rowSums(dists == 1, na.rm=T) > 1, ] <- rep(NA, 4)
 
 #  When the object is NA, or the species is not a tree (NonTree or Water), set
 #  the distance to NA.
-#this way when we estimate density, we get density of places that have trees
+# this way when we estimate density, we get density of places that have trees
 
-dists[is.na(species) | species %in% c('No tree', 'Wet', 'Water')] <- NA
+#dists[is.na(species) | species %in% c('No tree', 'Wet', 'Water')] <- NA
 
-#this code removes all distances that have 1 or 2 as the distance
-#ones <- (dists[,1] == 1 | dists[,2] ==1  )
+#this code removes all distances that have 1 or 2 as the distance (test)
+#ones <- (dists[,1] == 1 | dists[,2] ==1  ) # 57 points where distance = 1
 #dists[ones] <- NA
 
-#twos <- (dists[,1] == 2 | dists[,2] ==2  )
+#twos <- (dists[,1] == 2 | dists[,2] ==2  ) # 226 where the distance = 2
 #dists[twos] <- NA
 
 #test to see if we get different densities if we include No trees
@@ -383,14 +399,23 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
 
                           
 # part of the high density problem in indiana might be due to a large number of points with really low distances                  
-count(final.data[final.data$dist1 ==1,]) # 78 points with dist1= 1
-count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2
+
+summary(final.data[final.data$dist1 ==1.0,])
+# 78 points with dist1= 1 
+count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2 (most in IN)
 
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
 coordinates(final.data) <- ~PointX + PointY
-spplot(final.data, "species1")
+spplot(final.data, "dist1")
 final.data <- data.frame(final.data)
+summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.data$species2 == c("No tree", "Water", "Wet"),])
+summary(final.data)
+
+# now kill missing cells:
+#final.data <- final.data[!is.na(final.data$PointY),]
+#final.data <- final.data[!is.na(final.data$PointX),]
+ggplot(data = final.data, aes(x = PointX, y = PointY, color = dist2)) + geom_point()
 
 #write the data as a csv
 write.csv(final.data, "ndilinpls_for_density_v1.5-2.csv")

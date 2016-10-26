@@ -30,7 +30,7 @@ library(sp)
 library(spdep)
 library(rgdal)
 library(raster)
-
+library(ggplot2)
 library(Rcpp)
 # Read in the data
 ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFactors = FALSE)
@@ -155,17 +155,25 @@ inil$DIST2[inil$DIST2 == 88888] <- NA
 inil$DIST2[inil$DIST2 == 99999] <- NA
 inil$DIST3[inil$DIST3 == 88888] <- NA
 inil$DIST3[inil$DIST3 == 99999] <- NA
+inil$DIST4[inil$DIST4 == 88888] <- NA
+inil$DIST4[inil$DIST4 == 99999] <- NA
 inil$diameter[inil$diameter == 99999] <- NA 
 inil$diameter[inil$diameter == 88888] <- NA
 inil$diameter2[inil$diameter2 == 99999] <- NA     
 inil$diameter2[inil$diameter2 == 88888] <- NA
+inil$diameter3[inil$diameter3 == 99999] <- NA     
+inil$diameter3[inil$diameter3 == 88888] <- NA
+inil$diameter4[inil$diameter4 == 99999] <- NA     
+inil$diameter4[inil$diameter4 == 88888] <- NA
 inil$degrees[inil$degrees == 99999] <- NA     
 inil$degrees[inil$degrees == 88888] <- NA
 inil$degrees2[inil$degrees2 == 99999] <- NA     
 inil$degrees2[inil$degrees2 == 88888] <- NA
 inil$degrees2[inil$degrees2 == 8888] <- NA
-inil$degrees2[inil$degrees3 == 99999] <- NA     
-inil$degrees2[inil$degrees4 == 88888] <- NA
+inil$degrees3[inil$degrees3 == 99999] <- NA     
+inil$degrees3[inil$degrees3 == 88888] <- NA
+inil$degrees4[inil$degrees4 == 99999] <- NA     
+inil$degrees4[inil$degrees4 == 88888] <- NA
 
 summary(inil)
 # There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"

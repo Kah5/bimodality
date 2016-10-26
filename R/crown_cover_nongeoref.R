@@ -8,7 +8,7 @@ library(ggplot2)
 library(aspace)
 library(raster)
 
-final.data <- read.csv("ndilinpls_for_density_v1.5.csv")
+final.data <- read.csv("ndilinpls_for_density_v1.5-2.csv.csv")
 
 ###need to make sure that the distances to trees are in meters
 
@@ -83,7 +83,7 @@ spec.table <- data.frame(xyFromCell(base.rast, numbered.cell),
                          spec = c(as.character(final.data$species1), as.character(final.data$species2)),
                          density = rep(stem.dens$stem.density/2, 2),
                          basal =  rep(stem.dens$basal.area/2, 2),
-                         plot.area = plot.area,
+                         #plot.area = plot.area,
                          diams = c(final.data$diam1, final.data$diam2),
                          stringsAsFactors = FALSE)
 

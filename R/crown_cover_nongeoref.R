@@ -8,7 +8,7 @@ library(ggplot2)
 library(aspace)
 library(raster)
 
-final.data <- read.csv("ndilinpls_for_density_v1.5-2.csv.csv")
+final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv")
 
 ###need to make sure that the distances to trees are in meters
 

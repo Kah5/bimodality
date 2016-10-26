@@ -77,11 +77,11 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   #  I'm going to let the NAs stand in this instance.
   rsum <- rowSums((m.dist[,1:2])^2, na.rm=T)
   #rmax <- max(m.dist[,1:2], na.rm=T)
-  rmax<- apply(m.dist[,1:2], 1, max, na.rm= T)
+  #rmax<- apply(m.dist[,1:2], 1, max, na.rm= T)
   
   #  A set of conditions to be met for the rsum to be valid:
   rsum[rowSums(is.na(m.dist[,1:2])) == 2 |  q < 2 | rsum == 0 | rowSums(m.dist[,1:2], na.rm=T) < 0.6035] <- NA
-  rmax[rowSums(is.na(m.dist[,1:2])) == 2 |  q < 2 | rmax == 0 | rowSums(m.dist[,1:2], na.rm=T) < 0.6035] <- NA
+  #rmax[rowSums(is.na(m.dist[,1:2])) == 2 |  q < 2 | rmax == 0 | rowSums(m.dist[,1:2], na.rm=T) < 0.6035] <- NA
   
   #  From the formula,
   #  lambda = kappa * theta * (q - 1)/(pi * n) * (q / sum_(1:q)(r^2))
@@ -108,7 +108,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   
  # radius <- max(m.dist, na.rm = TRUE)
-  plot.area <- pi*rmax/2 # calculate average plot area
-  return(list(morisita.est, basal.area, plot.area, rmax))
+  #plot.area <- pi*rmax/2 # calculate average plot area
+  return(list(morisita.est, basal.area))
   
 }

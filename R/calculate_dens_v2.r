@@ -1,10 +1,13 @@
 ##############################
 #PLS Crown Width calculations#
 #Kelly Heilman               #
-#January 20, 2016            #
+#January 20, 2016   
+#Updated October 26, 2016
 ##############################
+library(plyr)
+library(reshape2)
 
-
+final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFactors = FALSE)
 # calculate stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
 
@@ -32,7 +35,7 @@ summary(stem.density)
 summary(basal.area)
 
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, 'IN_ILdensestimates_v1.5.csv')
+write.csv(stem.density, 'outputs/IN_ILdensestimates_v1.5-2.csv')
 
 
 ## maximum Stem density estimates decreases when you remove trees below 8 cm veil line
@@ -82,17 +85,18 @@ numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
 
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
+final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFactors = FALSE)
 
 #create dataframe with stem density, speceies
 spec.table <- data.frame(PointX = final.data$PointX, 
                          PointY = final.data$PointY,
-                         spec = c(as.character(species[,1]), as.character(species[,2])),
+                         spec = c(as.character(final.data$species1), as.character(final.data$species2)),
                          count = 1,
-                         point = 1:nrow(species),
+                         point = 1:nrow(final.data),
                          density = rep(stem.density$density/2, 2),
                          #shhould density be /2 or not??
                          basal =  rep(stem.density$basal/2, 2),
-                         diams = c(diams[,1], diams[,2]),
+                         diams = c(final.data$diam1, final.data$diam2),
                          stringsAsFactors = FALSE)
 
 #classify trees as zero or as wet trees
@@ -158,13 +162,13 @@ saveRDS(spec.table, file=paste0('data/pointwise.ests','_v',1.5, '.RDS'))
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
-#point    density      basal      diams       biom 
-#49506.0000   504.5722   520.1407    55.0000  3520.7191   
+#density        basal        diams           CW   crown.area crown.scaled 
+#530.65620    188.25543     36.00000     44.24462   1537.48477 223412.97961   
 nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.95, na.rm=TRUE)
-#point    density      basal      diams       biom 
-#47511.0000   207.6151   217.5150    55.0000   930.0320 
+#density        basal        diams           CW   crown.area crown.scaled 
+#204.90706     71.25188     30.00000     34.81683    952.06885  78810.17268 
 
-#assign all species greater than the 99th percentile to 99th percentile values
+# assign all species greater than the 99th percentile to 99th percentile values
 spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table$crown.area[spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
@@ -173,8 +177,11 @@ spec.table$crown.scaled[spec.table$crown.scaled > nine.nine.pct['crown.scaled']]
 spec.table$cover <- spec.table$crown.area * spec.table$density
 hist(spec.table$cover/10000)
 
-library(plyr)
-library(reshape2)
+spec.table$x <- spec.table$PointX
+spec.table$y <- spec.table$PointY
+
+
+
 
 # These are not the full tables since the include only the cells with points in the database.
 #dcast rearranges the spec.table data by x, y and cell

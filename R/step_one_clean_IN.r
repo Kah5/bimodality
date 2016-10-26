@@ -38,7 +38,7 @@ ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFact
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE) # version 1.5-2
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-ggplot(data = il, aes(x = x, y = y, color = chainstr_2)) + geom_point()
+ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
@@ -85,6 +85,7 @@ ind$DIST2 <- as.numeric(ind$chainstree2)
 ind$DIST3 <- as.numeric(ind$chainstree3)
 ind$DIST4 <- as.numeric(ind$chainstree4)
 
+# there is something off about the chainstree labels that needs to be fixed in version 1.5-2 of illinios data
 il$DIST1 <- as.numeric(il$chainstree)
 il$DIST2 <- as.numeric(il$chainstr_1)
 il$DIST3 <- as.numeric(il$chainstr_2)
@@ -114,10 +115,11 @@ ind$bearings2 <- c(paste0(as.character(ind$bearing2),  as.character(ind$bearingd
 ind$bearings3 <- c(paste0(as.character(ind$bearing3),  as.character(ind$bearingdir3)))
 ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingdir4)))
 
+#there is something off about the labeing for bearing direction in illinios for version 1.5-2
 il$bearings1 <- c(paste0(as.character(il$bearing),  as.character(il$bearingdir)))
-il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingdir2)))
-il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingdir3)))
-il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingdir4)))
+il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingd_1)))
+il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingd_2)))
+il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingd_3)))
 
 il$state <-'IL'
 ind$state <-'IN'
@@ -423,7 +425,7 @@ summary(final.data)
 # now kill missing cells:
 #final.data <- final.data[!is.na(final.data$PointY),]
 #final.data <- final.data[!is.na(final.data$PointX),]
-ggplot(data = final.data, aes(x = PointX, y = PointY, color = dist2)) + geom_point()
+ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
 
 #write the data as a csv
 write.csv(final.data, "ndilinpls_for_density_v1.5-2.csv")

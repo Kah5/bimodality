@@ -90,6 +90,7 @@ final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFact
 #create dataframe with stem density, speceies
 spec.table <- data.frame(PointX = final.data$PointX, 
                          PointY = final.data$PointY,
+                         cell = numbered.cell,
                          spec = c(as.character(final.data$species1), as.character(final.data$species2)),
                          count = 1,
                          point = 1:nrow(final.data),
@@ -197,15 +198,15 @@ biomass.points <- dcast(spec.table, x + y + cell ~ spec, unique.len, value.var =
 #biomass.points represents the number of unique points
 
 #sum the number of points per cell (includes no tree) and the number of trees per cell (not including no tree or Water)
-points.by.cell <- rowSums(count.table[,4:ncol(count.table)], na.rm=TRUE)
+#points.by.cell <- rowSums(count.table[,4:ncol(count.table)], na.rm=TRUE)
 
 #patch fix for the non-georefereenced data of in & il
-twp.by.cell <- points.by.cell
-twp.by.cell[twp.by.cell< 111 ] <- 1
-twp.by.cell[twp.by.cell>=111 ]<- 2
+#twp.by.cell <- points.by.cell
+#twp.by.cell[twp.by.cell< 111 ] <- 1
+#twp.by.cell[twp.by.cell>=111 ]<- 2
 #twp.by.cell[twp.by.cell>=211 ]<- 3
 
-#points.by.cell <- rowSums(biomass.points[, 4:ncol(biomass.points)], na.rm=TRUE)
+points.by.cell <- rowSums(biomass.points[, 4:ncol(biomass.points)], na.rm=TRUE)
 trees.by.cell  <- rowSums(count.table[,!colnames(count.table) %in% c('x', 'y', 'cell', 'No tree','Wet', 'Water')], na.rm=TRUE)
 
 #calculate the sum of total density, basal area, biomass & diameter by cell and species
@@ -227,13 +228,18 @@ crown.area.sd.table <- dcast(spec.table, x + y + cell ~ spec, mean, na.rm=TRUE, 
 
 
 #  The function averages the estimates a single value for density, basal area, and biomass based on the points.by.cell
-normalize <- function(x, mult = 2, value = points.by.cell) {x[,4:ncol(x)] <-  x[,4:ncol(x)] / value *mult; x}
+normalize <- function(x, mult = 2, value = points.by.cell) {
+  x[,4:ncol(x)] <-  x[,4:ncol(x)] / value *mult; x}
 
 density.table <- normalize(density.table)
 basal.table <- normalize(basal.table)
 diam.table <- normalize(diam.table, mult = 2.54, trees.by.cell)
 CW.table<- normalize(CW.table)
 crown.scale <- normalize(crown.scale)
+
+
+X11(width =12)
+ggplot(data = density.table, aes(x = x, y = y, color = Oak)) + geom_point()
 
 #CW.table$total <-  rowSums(CW.table[,4:ncol(CW.table)], na.rm=TRUE)
 #density.table$total.dens <-  rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)

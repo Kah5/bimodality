@@ -38,7 +38,7 @@ ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFact
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE) # version 1.5-2
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-ggplot(data = il, aes(x = x, y = y, color = chainstree)) + geom_point()
+ggplot(data = il, aes(x = x, y = y, color = chainstr_2)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
@@ -86,9 +86,9 @@ ind$DIST3 <- as.numeric(ind$chainstree3)
 ind$DIST4 <- as.numeric(ind$chainstree4)
 
 il$DIST1 <- as.numeric(il$chainstree)
-il$DIST2 <- as.numeric(il$chainstr_2)
-il$DIST3 <- as.numeric(il$chainstr_3)
-#il$DIST4 <- as.numeric(il$chainstr_4)
+il$DIST2 <- as.numeric(il$chainstr_1)
+il$DIST3 <- as.numeric(il$chainstr_2)
+il$DIST4 <- as.numeric(il$chainstr_3)
 
 
 #this removes all points (including no trees) that dont have distances provided. 

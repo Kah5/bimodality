@@ -6,6 +6,7 @@
 ##############################
 library(plyr)
 library(reshape2)
+version <- "1.5-2"
 
 final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFactors = FALSE)
 # calculate stem density:
@@ -117,6 +118,54 @@ spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 
 #change all No tree densities to 0
 spec.table$density[spec.table$spec == 'No tree'] <- 0
+
+####################################################3
+# Estimate Biomass from density
+###################################
+
+spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
+
+biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
+                       stringsAsFactors = FALSE)
+
+form <- function(x) {
+  
+  eqn <- match(x$spec, biom.table[,1])
+  eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
+  
+  b0 <- biom.table[eqn,2]
+  b1 <- biom.table[eqn,3]
+  
+  biomass <- exp(b0 + b1 * log(x$diams * 2.54))
+  biomass
+  
+}
+
+#  This is the biomass of individual trees.  It needs to be converted into
+#  a stand level value, through the stem density estimate?  The values are
+#  in kg.
+
+biomass <- rep(NA, nrow(spec.table))
+
+for (i in 1:nrow(spec.table)) {
+  # It's just really slow, so I do it this way to see what's happening.
+  biomass[i] <- form(spec.table[i,])
+  cat(i,'\n')
+}
+
+# convert to Mg.
+spec.table$biom <- biomass * spec.table$density / 1000
+spec.table      <- spec.table[!is.na(spec.table$density), ]
+
+spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
+
+colnames(spec.table)[1:2] <- c('x', 'y')
+
+saveRDS(spec.table, 
+        file = paste0('outputs/biomass_pointwise.ests','_v', 
+                      version, 
+                      '.RDS'))
+
 
 
 

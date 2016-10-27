@@ -161,74 +161,32 @@ spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 
 colnames(spec.table)[1:2] <- c('x', 'y')
 
-saveRDS(spec.table, 
-        file = paste0('outputs/biomass_pointwise.ests','_v', 
+write.csv(spec.table, 
+        file = paste0('outputs/density_biomass_pointwise.ests','_v', 
                       version, 
-                      '.RDS'))
+                      '.csv'))
 
 
-
-
-##this section estimates point level crown widths using density and allometic equation s 
-#allometric equations from simon
-CW.table <- read.csv('data/plss.pft.CW.conversion_v0.1-1.csv', 
-                       stringsAsFactors=FALSE)
-
-form <- function(x){
-  
-  eqn <- match(x$spec, CW.table[,1])
-  eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
-  
-  b0 <- CW.table[eqn,2]
-  b1 <- CW.table[eqn,3]
-  
-  CW <- (b0 + b1 * (x$diams*2.54))*0.305 # 2.54 converts cm to inches
-  CW
-}
-
-CW <- rep(NA, nrow(spec.table))
-
-for(i in 1:nrow(spec.table)){
-  CW[i] <- form(spec.table[i,])
-  cat(i,'\n')
-}
-
-summary(CW)
-hist(CW, breaks = 75)
-#once crown width  is estimated from diameter, need to multiply by the estimated density at each point
-#spec.table provides point level  estimates of biomass, density, and species
-spec.table$CW <- CW # Crown diameter of each tree
-#spec.table$CW.scaled <- CW*spec.table$density
-spec.table$crown.area <- 0.25*pi*(CW^2) #crown area of each tree
-spec.table$crown.scaled <-(spec.table$crown.area*spec.table$density) #(crown area (m2))/tree)*(trees/hectare)
-
-#CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
 
 spec.table <- spec.table[!is.na(spec.table$density), ]
 
 
 
-saveRDS(spec.table, file=paste0('data/pointwise.ests','_v',1.5, '.RDS'))
+saveRDS(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.RDS'))
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
-#density        basal        diams           CW   crown.area crown.scaled 
-#530.65620    188.25543     36.00000     44.24462   1537.48477 223412.97961   
+#     point    density      basal      diams       biom 
+#57436.3500   530.6562   188.2554    36.0000  1002.7144   
 nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.95, na.rm=TRUE)
-#density        basal        diams           CW   crown.area crown.scaled 
-#204.90706     71.25188     30.00000     34.81683    952.06885  78810.17268 
+#      point     density       basal       diams        biom 
+#55212.75000   204.90706    71.25188    30.00000   332.58766 
 
 # assign all species greater than the 99th percentile to 99th percentile values
 spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
-spec.table$crown.area[spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
-spec.table$crown.scaled[spec.table$crown.scaled > nine.nine.pct['crown.scaled']] <- nine.nine.pct['crown.scaled']
 
-spec.table$cover <- spec.table$crown.area * spec.table$density
-hist(spec.table$cover/10000)
 
-spec.table$x <- spec.table$PointX
-spec.table$y <- spec.table$PointY
 
 
 
@@ -261,10 +219,8 @@ trees.by.cell  <- rowSums(count.table[,!colnames(count.table) %in% c('x', 'y', '
 #calculate the sum of total density, basal area, biomass & diameter by cell and species
 density.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'density')
 basal.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'basal')
-#biomass.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'biom')
+biomass.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'biom')
 diam.table <-  dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'diams')
-CW.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'CW')
-crown.scale <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'crown.scaled')
 
 
 
@@ -272,9 +228,7 @@ crown.scale <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var
 density.sd.table <- dcast(spec.table, x + y  + cell ~ spec, sd, na.rm=TRUE, value.var = 'density')
 basal.sd.table <- dcast(spec.table, x + y  + cell ~ spec, sd, na.rm=TRUE, value.var = 'basal')
 diam.sd.table <-  dcast(spec.table, x + y  + cell ~ spec, sd, na.rm=TRUE, value.var = 'diams')
-CW.sd.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'CW')
-crown.area.sd.table <- dcast(spec.table, x + y + cell ~ spec, mean, na.rm=TRUE, value.var = 'crown.cover')
-
+biom.sd.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'biom')
 
 #  The function averages the estimates a single value for density, basal area, and biomass based on the points.by.cell
 normalize <- function(x, mult = 2, value = points.by.cell) {
@@ -283,16 +237,12 @@ normalize <- function(x, mult = 2, value = points.by.cell) {
 density.table <- normalize(density.table)
 basal.table <- normalize(basal.table)
 diam.table <- normalize(diam.table, mult = 2.54, trees.by.cell)
-CW.table<- normalize(CW.table)
-crown.scale <- normalize(crown.scale)
+biomass.table <- normalize(biomass.table)
 
 
 X11(width =12)
-ggplot(data = density.table, aes(x = x, y = y, color = Oak)) + geom_point()
+ggplot(data = biomass.table, aes(x = x, y = y, color = Beech)) + geom_point()
 
-#CW.table$total <-  rowSums(CW.table[,4:ncol(CW.table)], na.rm=TRUE)
-#density.table$total.dens <-  rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
-#crown.scale$total <-  rowSums(crown.scale[,4:ncol(crown.scale)], na.rm=TRUE)
 
 
 biomass.table$plss_pts <- points.by.cell
@@ -318,16 +268,7 @@ dens     <- rast.fun(density.table)
 count.up <- rast.fun(count.table)
 basal    <- rast.fun(basal.table)
 mdiam    <- rast.fun(diam.table); mdiam[mdiam==0] <- NA
-CW.rast <- rast.fun(CW.table)
-crown <- rast.fun(crown.scale)
-
-#scale by # of grid cells and correct 
-hist(100*(1-exp(-0.01*(dens*CW.rast/800)))) # 800 hectares in 1 grid cell
-plot(100*(1-exp(-0.01*(dens*CW.rast/800))))
-CC.adj <- 100*(1-exp(-0.01*(dens*CW.rast/800))) 
-CW.adj <- 100*(1-exp(-0.01*(CW.rast)))
-plot(CW.adj)
-
+biomass <- rast.fun(biomass.table)
 
 writeRaster(biomass, "data/biomass.grd", overwrite=TRUE)
 
@@ -349,7 +290,7 @@ rowset <- cbind(1:(nrow(spec.table)/2), (nrow(spec.table)/2+1):nrow(spec.table))
 sd.table <- data.frame(cell = spec.table$cell[rowset[,1]],
                        density = spec.table$density[rowset[,1]] * 2,
                        basal   = spec.table$basal[rowset[,1]] + spec.table$basal[rowset[,2]],
-                       #biomass = spec.table$biom[rowset[,1]] + spec.table$biom[rowset[,2]],
+                       biomass = spec.table$biom[rowset[,1]] + spec.table$biom[rowset[,2]],
                        diam = spec.table$diam[rowset[,1]] + spec.table$diam[rowset[,2]])
 
 dens.sd <- dcast(sd.table, cell ~ ., fun.aggregate=sd, na.rm=TRUE, value.var = 'density')
@@ -394,14 +335,13 @@ biomass.full <- reform(biomass.table)
 density.full <- reform(density.table)
 diameter.full <- reform(diam.table)
 composition.table <- reform(basal.table)
-crown.full <- reform(crown.table)
-crown.dens.full <- reform(crown.dens.table)
+
 
 #not sure why you need this next line of code
 composition.table[,4:ncol(composition.table)] <- composition.table[,4:ncol(composition.table)]/rowSums(composition.table[,4:ncol(composition.table)], na.rm=TRUE)
-ind_il <- readOGR(dsn = "C:/Users/Kelly/Documents/Indiana_Density_Biomass/Data//IL_IN_merge_project.shp", layer = 'IL_IN_merge_project')
-ind_il <- spTransform(ind_il, CRS('+proj=longlat +ellps=WGS84'))
-ind_il<- spTransform(ind_il, CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+#ind_il <- readOGR(dsn = "C:/Users/Kelly/Documents/Indiana_Density_Biomass/Data//IL_IN_merge_project.shp", layer = 'IL_IN_merge_project')
+#ind_il <- spTransform(ind_il, CRS('+proj=longlat +ellps=WGS84'))
+#ind_il<- spTransform(ind_il, CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
 #extract biomass.full table by the extent of the state of indiana to get a datatable
 #with just indiana data
@@ -439,16 +379,16 @@ biomass.table$plsspts_cell <- points.by.cell
 add.v(density.table, 'plss_density')
 add.v(basal.table, 'plss_basal')
 add.v(biomass.table, 'plss_biomass')
-add.v(crown.table, 'plss_crown_area')
-add.v(crown.dens.table, 'plss_crown_dens')
+#add.v(crown.table, 'plss_crown_area')
+#add.v(crown.dens.table, 'plss_crown_dens')
 add.v(biomass.full,  'plss_spec_biomass') #full species biomass for indiana
 add.v(density.full, 'plss_spec_density')
 add.v(diameter.full, 'plss_spec_diam')
 add.v(diam.table, 'plss_diam')
-add.v(crown.full, 'plss_spec_crown_area')
-add.v(crown.dens.full, 'plss_spec_crown_area_dens')
+#add.v(crown.full, 'plss_spec_crown_area')
+#add.v(crown.dens.full, 'plss_spec_crown_area_dens')
 #these three outputs created for biomass model runs may 21, 2015
-add.v(biomass.indiana, 'plss_biomass_indiana_illinois')
-add.v(biomass.points.ind, 'plss_points_indiana_illinois')
-add.v(count.trees.ind, 'plss_trees_indiana_illinois')
+#add.v(biomass.indiana, 'plss_biomass_indiana_illinois')
+#add.v(biomass.points.ind, 'plss_points_indiana_illinois')
+#add.v(count.trees.ind, 'plss_trees_indiana_illinois')
 

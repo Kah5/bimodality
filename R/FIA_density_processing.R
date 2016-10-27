@@ -23,14 +23,17 @@ hist(density.FIA.table$FIAdensity, breaks = 100)
 
 #read in tree level data
 pls.inil<- read.csv('outputs/density_tables.csv')
+pls.inil <- read.csv(paste0('outputs/density_biomass_pointwise.ests_v',version, '.csv'))
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 
 #can aggregate by species
-pls.spec<- read.csv(paste0('outputs/density_tables',version, '.csv')
+#pls.spec<- read.csv(paste0('outputs/density_tables.csv'))
+pls.spec <- read.csv(paste0('outputs/density_biomass_pointwise.ests_v',version, '.csv'))
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
-pls.spec$total <- rowSums(pls.spec[4:35], na.rm=TRUE)
+pls.spec$total <- rowSums(pls.spec[4:36], na.rm=TRUE)
+#hist(pls.spec$total)
 
 umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
 umdw$total <- rowSums(umdw[,5:33])
@@ -44,7 +47,7 @@ pls.inil <- rbind(pls.inil, umdw.new)
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
                   by = c('x', 'y', 'cell'))
 
-write.csv(densitys, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
+write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
 #this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
 
@@ -150,9 +153,9 @@ FIA.full<- FIA.full %>%
  # dplyr::select(-total, everything())
 
 #now add totals to the 'total columns
-FIA.full$total <- rowSums(FIA.full[,5:41], na.rm = TRUE)
-summary(FIA.full$total)
-hist(FIA.full$total, breaks = 50, xlim = c(0,600))
+FIA.full$FIAdensity <- rowSums(FIA.full[,5:41], na.rm = TRUE)
+summary(FIA.full$FIAdensity)
+hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 
 
 
@@ -170,14 +173,14 @@ mod.precip <- read.csv('data/spec_table_30yr_prism.csv')
 
 dens.pr <- merge(full.spec, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(dens.pr)[42:44] <- c('PLSdensity', 'MAP1910', "MAP2011")
+colnames(dens.pr)[46:47] <- c('MAP1910', "MAP2011")
 
 fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(fia.dens.pr)[42:44] <- c('FIAdensity', 'MAP1910', "MAP2011")
+colnames(fia.dens.pr)[46:47] <- c( 'MAP1910', "MAP2011")
 
-write.csv(dens.pr, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb.csv")
-write.csv(fia.dens.pr, "C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb.csv")
+write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
+write.csv(fia.dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
 #dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density

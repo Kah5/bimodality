@@ -1,4 +1,6 @@
 #read in FIA from Sean's repository
+# set pls version to use
+version <- "1.5-2"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
@@ -26,7 +28,7 @@ pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'de
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 
 #can aggregate by species
-pls.spec<- read.csv('outputs/density_tables.csv')
+pls.spec<- read.csv(paste0('outputs/density_tables',version, '.csv')
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
 pls.spec$total <- rowSums(pls.spec[4:35], na.rm=TRUE)
 

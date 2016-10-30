@@ -99,6 +99,7 @@ spec.table <- data.frame(PointX = final.data$PointX,
                          #shhould density be /2 or not??
                          basal =  rep(stem.density$basal/2, 2),
                          diams = c(final.data$diam1, final.data$diam2),
+                         dists = c(final.data$dist1, final.data$dist2),
                          stringsAsFactors = FALSE)
 
 #classify trees as zero or as wet trees
@@ -166,6 +167,49 @@ write.csv(spec.table,
                       version, 
                       '.csv'))
 
+#################################
+# Crown Width Estimates per tree#
+#################################
+
+##this section estimates point level crown widths using density and allometic equation s 
+#allometric equations from simon
+  CW.table <- read.csv('data/plss.pft.CW.conversion_v0.1-1.csv', 
+                                              stringsAsFactors=FALSE)
+
+  form <- function(x){
+
+       eqn <- match(x$spec, CW.table[,1])
+       eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
+        
+          b0 <- CW.table[eqn,2]
+          b1 <- CW.table[eqn,3]
+          
+            CW <- (b0 + b1 * (x$diams*2.54))*0.305 # 2.54 converts cm to inches
+            CW
+          }
+
+  CW <- rep(NA, nrow(spec.table))
+
+  for(i in 1:nrow(spec.table)){
+      CW[i] <- form(spec.table[i,])
+      cat(i,'\n')
+    }
+
+summary(CW)
+hist(CW, breaks = 75)
+#once crown width  is estimated from diameter, need to multiply by the estimated density at each point
+  #spec.table provides point level  estimates of biomass, density, and species
+
+
+spec.table$CW <- CW # Crown diameter of each tree
+#spec.table$CW.scaled <- CW*spec.table$density
+spec.table$crown.area <- 0.25*pi*(CW^2) #crown area of each tree
+spec.table$crown.scaled <-(spec.table$crown.area*spec.table$density) #(crown area (m2))/tree)*(trees/hectare)
+
+  #CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
+  
+
+
 
 
 spec.table <- spec.table[!is.na(spec.table$density), ]
@@ -185,16 +229,18 @@ nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.9
 # assign all species greater than the 99th percentile to 99th percentile values
 spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+spec.table$CW [spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
 
 
-
-
-
+spec.table$covered <- 0
+spec.table$covered [spec.table$CW < spec.table$dists] <- 1
 
 # These are not the full tables since the include only the cells with points in the database.
 #dcast rearranges the spec.table data by x, y and cell
 count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
-
+covered.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm = TRUE, value.var = 'covered')
+count.table$total <- rowSums(count.table[, 4:36], na.rm=TRUE)
+covered.table$total <- rowSums(covered.table[,4:36], na.rm=TRUE)
 unique.len <- function(x){length(unique(x))}
 
 #melt data by by x, y, cell as rows and spec as columns and provide the sum or the number of unique points
@@ -203,7 +249,10 @@ biomass.trees  <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.
 #biomass.trees represnts the number of trees in each category
 biomass.points <- dcast(spec.table, x + y + cell ~ spec, unique.len, value.var = 'point')
 #biomass.points represents the number of unique points
-
+pct.covered.points <- data.frame(x = covered.table$x, 
+                                 y = covered.table$y, 
+                                 cell = covered.table$cell, 
+                                 covered.table[,4:37]/count.table[,4:37])
 #sum the number of points per cell (includes no tree) and the number of trees per cell (not including no tree or Water)
 #points.by.cell <- rowSums(count.table[,4:ncol(count.table)], na.rm=TRUE)
 

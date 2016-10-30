@@ -31,9 +31,9 @@ colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 #can aggregate by species
 #pls.spec<- read.csv(paste0('outputs/density_tables.csv'))
 pls.spec <- read.csv(paste0('outputs/density_biomass_pointwise.ests_v',version, '.csv'))
-pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
+pls.spec <- dcast(pls.spec, x + y + cell ~spec, sum, na.rm = TRUE, value.var = 'density')
 pls.spec$total <- rowSums(pls.spec[4:36], na.rm=TRUE)
-#hist(pls.spec$total)
+hist(pls.spec$total)
 
 umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
 umdw$total <- rowSums(umdw[,5:33])

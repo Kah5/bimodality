@@ -22,23 +22,30 @@ hist(density.FIA.table$FIAdensity, breaks = 100)
 #merge inil pls and inil FIA
 
 #read in tree level data
-pls.inil<- read.csv('outputs/density_tables.csv')
-pls.inil <- read.csv(paste0('outputs/density_biomass_pointwise.ests_v',version, '.csv'))
+#pls.inil<- read.csv('outputs/density_tables.csv')
+pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
+hist(pls.inil$PLSdensity, xlim = c(0, 400),breaks = 100)
 
 #can aggregate by species
 #pls.spec<- read.csv(paste0('outputs/density_tables.csv'))
-pls.spec <- read.csv(paste0('outputs/density_biomass_pointwise.ests_v',version, '.csv'))
-pls.spec <- dcast(pls.spec, x + y + cell ~spec, sum, na.rm = TRUE, value.var = 'density')
+pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
 pls.spec$total <- rowSums(pls.spec[4:36], na.rm=TRUE)
 hist(pls.spec$total)
+pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
+colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
 
 umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
-umdw$total <- rowSums(umdw[,5:33])
+#umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
+umdw$total <- rowSums(umdw[,5:33], na.rm= TRUE)
 umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
+
+
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
+hist(umdw.new$PLSdensity)
 
 pls.inil <- rbind(pls.inil, umdw.new)
 #write.csv(pls.inil,C:/Users/JMac/Documents/Kelly/biomodality/outputs )
@@ -50,7 +57,7 @@ densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.tabl
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
 #this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
-
+#this is to join the species tables
 pls.names<- colnames(pls.spec)
 umdw.names<- colnames(umdw)
 colnames(pls.spec)[6] <- 'Bald.cypress'
@@ -171,9 +178,9 @@ past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
 mod.precip <- read.csv('data/spec_table_30yr_prism.csv')
 
 
-dens.pr <- merge(full.spec, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(dens.pr)[46:47] <- c('MAP1910', "MAP2011")
+colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
 fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
@@ -187,22 +194,23 @@ write.csv(fia.dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/mi
 
 #plot histograms
 hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,550), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
-hist(fia.dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
+hist(dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
 
 #plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
-plot(fia.dens.pr$MAP2011,fia.dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
+plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
 plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
-plot(fia.dens.pr$MAP1910, fia.dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
+plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 
 fia.dens.pr[is.na(fia.dens.pr)] <- 0
 
-dens.pr <- merge(dens.pr, fia.dens.pr[,c('x', 'y', 'cell', 'FIAdensity')], by = c('x', 'y', 'cell'))
+#dens.pr <- merge(dens.pr, fia.dens.pr[,c('x', 'y', 'cell', 'FIAdensity')], by = c('x', 'y', 'cell'))
 
 
 
 summary(rowSums(dens.pr != 0, na.rm=TRUE))
-
+dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
+  
 PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
 FIA.lm<- lm(dens.pr$FIAdensity ~dens.pr$MAP2011)
 PLS_mod.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP2011)
@@ -216,7 +224,7 @@ summary(FIA_pas.lm)
 summary(diff.lm)
 
 
-dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
+
 plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)')
 
 
@@ -239,7 +247,7 @@ abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
 
-
+#need to do this with species, dens.pr is now just densitys
 
 ##calculate species richness: number of species in each grid cell
 dens.pr$spec.rich <- rowSums(dens.pr[,5:41] != 0, na.rm=TRUE)
@@ -291,7 +299,7 @@ dev.off()
 png('outputs/FIA_precip_hist.png')
 p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+ xlab('Mean Annual Precipitation (mm)') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
-ggExtra::ggMarginal(p, type = "histogram",  margins = 'y', size = 3, colour = 'black', fill = "#0072B2")
+ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
   
 dev.off()
 ######################################################
@@ -344,9 +352,6 @@ ecoregionmap<- ggplot()+
   #geom_path(color = 'red') +theme_bw() 
 ecoregionmap
 
-ggplot(P.data, aes(long, lat)) + coord_map() + geom_polygon(aes(group=group)) + 
-  geom_polygon(data=subset(P.data, subregion %in% c("patrick", "henry", "franklin",
-                                                "pittsylvania")), aes(group=group), size=1, color="white",fill="white")
 
 #map out 
 all_states <- map_data("state")

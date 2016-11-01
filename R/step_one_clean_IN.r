@@ -428,4 +428,4 @@ summary(final.data)
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
 
 #write the data as a csv
-write.csv(final.data, "ndilinpls_for_density_v1.5-2.csv")
+write.csv(final.data, "outputs/ndilinpls_for_density_v1.5-2.csv")

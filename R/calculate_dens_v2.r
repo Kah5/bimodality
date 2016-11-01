@@ -123,7 +123,8 @@ spec.table$density[spec.table$spec == 'No tree'] <- 0
 ####################################################3
 # Estimate Biomass from density
 ###################################
-
+spec.table$Pointx <- spec.table$PointX
+spec.table$Pointy <- spec.table$PointY
 spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
 
 biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
@@ -160,8 +161,8 @@ spec.table      <- spec.table[!is.na(spec.table$density), ]
 
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 
-colnames(spec.table)[1:2] <- c('x', 'y')
-
+#colnames(spec.table)[11:12] <- c('x', 'y')
+colnames(spec.table)[1:2] <- c("x", "y")
 write.csv(spec.table, 
         file = paste0('outputs/density_biomass_pointwise.ests','_v', 
                       version, 
@@ -216,7 +217,6 @@ spec.table <- spec.table[!is.na(spec.table$density), ]
 
 
 
-saveRDS(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.RDS'))
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
@@ -231,6 +231,7 @@ spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.p
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table$CW [spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
 
+write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.csv'))
 
 spec.table$covered <- 0
 spec.table$covered [spec.table$CW < spec.table$dists] <- 1
@@ -238,9 +239,18 @@ spec.table$covered [spec.table$CW < spec.table$dists] <- 1
 # These are not the full tables since the include only the cells with points in the database.
 #dcast rearranges the spec.table data by x, y and cell
 count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
-covered.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm = TRUE, value.var = 'covered')
+covered.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm = TRUE, value.var = 'covered')
+
+covered.table.pt <- dcast(spec.table, Pointx + Pointy + cell ~ spec, sum, na.rm=TRUE, value.var = "covered")
+covered.table.pt$pct.cov <- rowSums(covered.table.pt[,4:36], na.rm = TRUE)
+covered.table.pt[,38:39] <- xyFromCell(base.rast, covered.table.pt$cell)
+colnames(covered.table.pt)[38:39] <- c('x', "y")
+
+covered.table.cell <- dcast(covered.table.pt[,3:39], x + y + cell ~., sum, value.var = "pct.cov")
+
 count.table$total <- rowSums(count.table[, 4:36], na.rm=TRUE)
 covered.table$total <- rowSums(covered.table[,4:36], na.rm=TRUE)
+
 unique.len <- function(x){length(unique(x))}
 
 #melt data by by x, y, cell as rows and spec as columns and provide the sum or the number of unique points
@@ -249,10 +259,30 @@ biomass.trees  <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.
 #biomass.trees represnts the number of trees in each category
 biomass.points <- dcast(spec.table, x + y + cell ~ spec, unique.len, value.var = 'point')
 #biomass.points represents the number of unique points
-pct.covered.points <- data.frame(x = covered.table$x, 
-                                 y = covered.table$y, 
-                                 cell = covered.table$cell, 
-                                 covered.table[,4:37]/count.table[,4:37])
+
+# pct.covered.trees is calculated using the total number of trees (can be 1 or 2) that cover a given point, summed over the grid cell
+pct.covered.trees <- data.frame(x = covered.table.cell$x, 
+                                 y = covered.table.cell$y, 
+                                 cell = covered.table.cell$cell, 
+                                 treecover = covered.table.cell[,4]/count.table[,37])
+hist(pct.covered.trees$treecover, breaks = 10)
+
+# pct.covered. points is calculated differently, but they give the same answer
+pct.covered.points <- data.frame(x = covered.table.cell$x, 
+                                 y = covered.table.cell$y, 
+                                 cell = covered.table.cell$cell, 
+                                 treecover = covered.table[,37]/count.table[,37])
+hist(pct.covered.points$treecover)
+
+#save tree cover estimates, histogram, and graphs:
+
+write.csv(pct.covered.points, paste0("outputs/treecover_inil_v", version,".csv"))
+png(filename = paste0("outputs/treecover_map", version,".png"))
+ggplot()+ geom_raster(data=pct.covered.points, aes(x=x, y=y, fill = treecover))
+dev.off()
+png(filename = paste0("outputs/treecover_histogram", version,".png"))
+hist(pct.covered.points$treecover)
+dev.off()
 #sum the number of points per cell (includes no tree) and the number of trees per cell (not including no tree or Water)
 #points.by.cell <- rowSums(count.table[,4:ncol(count.table)], na.rm=TRUE)
 

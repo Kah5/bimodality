@@ -374,12 +374,58 @@ f.awc <- ggplot(dens.soils, aes(awc, FIAdensity)) + geom_point() + ylim(0, 800)+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
 f.awc
 
+#so soils don't seem to explain much of the tree density overall...
+#what about in the places of intermediate precipitation?
 
+ggplot(dens.soils, aes(DEM, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(silt, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(sand, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(clay, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(awc, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(ksat, PLSdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
 
+ggplot(dens.soils, aes(DEM, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(silt, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(sand, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(clay, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(awc, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
+ggplot(dens.soils, aes(ksat, FIAdensity)) +geom_point() + ylim(0, 800)+ facet_wrap(~plsprbins)
 
+#DEM seems to be the only one where the data isn't really messed up. I am going to average the density by bins for soils
+by_silt<- summarise (group_by(dens.soils, silt), mean = mean(PLSdensity), sd = sd(PLSdensity))
+by_sand<- summarise (group_by(dens.soils, sand), mean =mean(PLSdensity), sd = sd(PLSdensity))
+by_clay<- summarise (group_by(dens.soils, clay), mean =mean(PLSdensity), sd = sd(PLSdensity))
+by_ksat<- summarise (group_by(dens.soils, ksat), mean =mean(PLSdensity), sd = sd(PLSdensity))
+by_awc<- summarise (group_by(dens.soils, awc), mean =mean(PLSdensity), sd = sd(PLSdensity))
+by_DEM <- summarise (group_by(dens.soils, DEM), mean =mean(PLSdensity), sd = sd(PLSdensity))
 
+#now plot average PLS density by % soil characteristics
+ggplot(by_silt, aes(silt, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_sand, aes(sand, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_clay, aes(clay, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_awc, aes(awc, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_ksat, aes(ksat, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+#ggplot(by_DEM, aes(DEM, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
 
+#Do the same for FIA density
+by_silt.f<- summarise (group_by(dens.soils, silt), mean = mean(FIAdensity), sd = sd(FIAdensity))
+by_sand.f<- summarise (group_by(dens.soils, sand), mean =mean(FIAdensity), sd = sd(FIAdensity))
+by_clay.f<- summarise (group_by(dens.soils, clay), mean =mean(FIAdensity), sd = sd(FIAdensity))
+by_ksat.f<- summarise (group_by(dens.soils, ksat), mean =mean(FIAdensity), sd = sd(FIAdensity))
+by_awc.f<- summarise (group_by(dens.soils, awc), mean =mean(FIAdensity), sd = sd(FIAdensity))
+by_DEM.f <- summarise (group_by(dens.soils, DEM), mean =mean(FIAdensity), sd = sd(FIAdensity))
 
+#now plot average PLS density by % soil characteristics
+ggplot(by_silt.f, aes(silt, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_sand.f, aes(sand, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_clay.f, aes(clay, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_awc.f, aes(awc, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+ggplot(by_ksat.f, aes(ksat, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+#ggplot(by_DEM, aes(DEM, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+
+###########################################################
+#does temperature explain the distribution in density?####
+##########################################################
 
 
 

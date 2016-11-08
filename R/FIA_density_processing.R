@@ -3,6 +3,9 @@
 version <- "1.5-2"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
+library(reshape2)
+library(dtplyr)
+
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
 
@@ -246,9 +249,21 @@ contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
+####
+#plot denisity histograms binned by precipitation amount
 
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
+
+library(ggplot2)
+pdf("outputs/binned_histograms_pr.pdf")
+ggplot(dens.pr, aes(PLSdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~plsprbins)
+ggplot(dens.pr, aes(FIAdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~fiaprbins)
+
+ggplot(dens.pr, aes(x=PLSdensity, fill=plsprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
+ggplot(dens.pr, aes(x=FIAdensity, fill=fiaprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
 #need to do this with species, dens.pr is now just densitys
-
+dev.off()
 ##calculate species richness: number of species in each grid cell
 dens.pr$spec.rich <- rowSums(dens.pr[,5:41] != 0, na.rm=TRUE)
 fia.dens.pr$spec.rich <- rowSums(fia.dens.pr[,5:41] != 0, na.rm=TRUE)

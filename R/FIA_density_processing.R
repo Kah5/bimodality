@@ -5,6 +5,7 @@ setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
 library(dtplyr)
+library(ggplot2)
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
@@ -226,7 +227,22 @@ summary(PLS_mod.lm)
 summary(FIA_pas.lm)
 summary(diff.lm)
 
+library(ggExtra)
+library(ggplot2)
+png('outputs/PLS_precip_hist.png')
+#X11(width = 5)
+p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  xlim(450, 1200) + ylim(0, 800)+theme_bw()+
+  theme(text = element_text(size = 20))
+ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
+dev.off()
 
+png('outputs/FIA_precip_hist.png')
+p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+ xlab('Mean Annual Precipitation (mm)') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
+ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
+
+dev.off()
 
 plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)')
 
@@ -254,16 +270,119 @@ legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), b
 
 dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
+melted <- melt(dens.pr, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff')) 
 
-library(ggplot2)
 pdf("outputs/binned_histograms_pr.pdf")
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~plsprbins)
 ggplot(dens.pr, aes(FIAdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~fiaprbins)
+
+ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 600)+ facet_wrap(~plsprbins)+
+  scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white"))
+
+ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+
 
 ggplot(dens.pr, aes(x=PLSdensity, fill=plsprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
 ggplot(dens.pr, aes(x=FIAdensity, fill=fiaprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
 #need to do this with species, dens.pr is now just densitys
 dev.off()
+
+###read in soil covariates from STATSGO (working on ssurgo)
+covariates <- read.csv('C:/Users/JMac/Documents/Kelly/BIOMASS/biomass_UW/IL_IN_covariates/datacovariates_full_extract_v2.csv')
+
+#merge covariates with density data
+dens.soils <- merge(dens.pr, covariates, by = c('x', 'y', 'cell'))
+
+#basic linear models to get an idea of what is important
+PLS.silt<- lm(dens.soils$PLSdensity ~dens.soils$silt)
+PLS.sand<- lm(dens.soils$PLSdensity ~dens.soils$sand)
+PLS.clay<- lm(dens.soils$PLSdensity ~dens.soils$clay)
+PLS.awc<- lm(dens.soils$PLSdensity ~dens.soils$awc)
+PLS.DEM<- lm(dens.soils$PLSdensity ~dens.soils$DEM)
+PLS.ksat<- lm(dens.soils$PLSdensity ~dens.soils$ksat)
+summary(PLS.DEM)
+summary(PLS.silt)
+summary(PLS.sand)
+summary(PLS.clay)
+summary(PLS.awc)
+summary(PLS.ksat)
+
+#FIA
+FIA.silt<- lm(dens.soils$FIAdensity ~dens.soils$silt)
+FIA.sand<- lm(dens.soils$FIAdensity ~dens.soils$sand)
+FIA.clay<- lm(dens.soils$FIAdensity ~dens.soils$clay)
+FIA.awc<- lm(dens.soils$FIAdensity ~dens.soils$awc)
+FIA.DEM<- lm(dens.soils$FIAdensity ~dens.soils$DEM)
+FIA.ksat<- lm(dens.soils$FIAdensity ~dens.soils$ksat)
+
+summary(FIA.DEM)
+summary(FIA.silt)
+summary(FIA.sand)
+summary(FIA.clay)
+summary(FIA.awc)
+summary(FIA.ksat)
+
+p.dem <- ggplot(dens.soils, aes(DEM, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('elevation (m)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+   theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+p.dem
+
+p.silt <- ggplot(dens.soils, aes(silt, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% silt') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+p.silt
+
+p.sand <- ggplot(dens.soils, aes(sand, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% sand') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+p.sand
+
+p.clay <- ggplot(dens.soils, aes(clay, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% clay') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+p.clay
+
+p.awc <- ggplot(dens.soils, aes(awc, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('awc)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+p.awc
+
+
+f.DEM <- ggplot(dens.soils, aes(DEM, FIAdensity)) + geom_point()  + ylim(0, 800) + theme_classic() + xlab('elevation (m)') + ylab('Modern \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20)) +geom_smooth(method = 'lm')
+f.DEM
+
+f.silt <- ggplot(dens.soils, aes(silt, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% silt') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+f.silt
+
+f.sand <- ggplot(dens.soils, aes(sand, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% sand') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+f.sand
+
+f.clay <- ggplot(dens.soils, aes(clay, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% clay') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+f.clay
+
+f.awc <- ggplot(dens.soils, aes(awc, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('awc)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  theme_bw()+
+  theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
+f.awc
+
+
+
+
+
+
+
+
+
+
 ##calculate species richness: number of species in each grid cell
 dens.pr$spec.rich <- rowSums(dens.pr[,5:41] != 0, na.rm=TRUE)
 fia.dens.pr$spec.rich <- rowSums(fia.dens.pr[,5:41] != 0, na.rm=TRUE)
@@ -301,22 +420,7 @@ text(bci.mds, display = c("sites", "species"))
 
 
 
-library(ggExtra)
-library(ggplot2)
-png('outputs/PLS_precip_hist.png')
-X11(width = 5)
-p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
-  xlim(450, 1200) + ylim(0, 800)+theme_bw()+
-  theme(text = element_text(size = 20))
-ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
-dev.off()
 
-png('outputs/FIA_precip_hist.png')
-p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+ xlab('Mean Annual Precipitation (mm)') + ylab('Modern Tree Density \n (Trees/hectare)') + 
-  xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
-ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
-  
-dev.off()
 ######################################################
 #read in us ecoregions shapefile to overlay in ggplot#
 ######################################################

@@ -273,8 +273,8 @@ dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('350-500mm', '500-650mm', '
 melted <- melt(dens.pr, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff')) 
 
 pdf("outputs/binned_histograms_pr.pdf")
-ggplot(dens.pr, aes(PLSdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~plsprbins)
-ggplot(dens.pr, aes(FIAdensity)) +geom_histogram() +xlim(0, 700) + facet_wrap(~fiaprbins)
+ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700) #+ facet_wrap(~plsprbins)
+ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700) #+ facet_wrap(~fiaprbins)
 
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 600)+ facet_wrap(~plsprbins)+
@@ -293,9 +293,15 @@ covariates <- read.csv('C:/Users/JMac/Documents/Kelly/BIOMASS/biomass_UW/IL_IN_c
 
 #merge covariates with density data
 dens.soils <- merge(dens.pr, covariates, by = c('x', 'y', 'cell'))
+library(stargazer)
+
 
 #basic linear models to get an idea of what is important
 PLS.silt<- lm(dens.soils$PLSdensity ~dens.soils$silt)
+plot(PLSdensity ~ silt, data=dens.soils)
+lines(lowess(dens.soils$silt ~ dens.soils$PLSdensity), col="red")
+abline(PLS.silt)
+
 PLS.sand<- lm(dens.soils$PLSdensity ~dens.soils$sand)
 PLS.clay<- lm(dens.soils$PLSdensity ~dens.soils$clay)
 PLS.awc<- lm(dens.soils$PLSdensity ~dens.soils$awc)
@@ -307,6 +313,10 @@ summary(PLS.sand)
 summary(PLS.clay)
 summary(PLS.awc)
 summary(PLS.ksat)
+stargazer(PLS.DEM, PLS.silt, PLS.sand, PLS.clay, PLS.awc, PLS.ksat, type="html",
+          dep.var.labels=c("PLS Tree Density"),  
+          covariate.labels=c("DEM","silt","sand",
+                             "clay","AWC", "ksat"), flip = TRUE, out="PLSmodels.htm")
 
 #FIA
 FIA.silt<- lm(dens.soils$FIAdensity ~dens.soils$silt)
@@ -323,6 +333,16 @@ summary(FIA.clay)
 summary(FIA.awc)
 summary(FIA.ksat)
 
+
+model.summary = rbind(coef(summary(FIA.silt))[,1:4],coef(summary(FIA.DEM))[, 1:4])
+stargazer(model.summary, flip=TRUE, out = 'FIAmodel.htm')
+stargazer(FIA.DEM, FIA.silt, FIA.sand, FIA.clay, FIA.awc, FIA.ksat, type="html",
+          dep.var.labels=c("FIA Tree Density"), column.separate = c(1), 
+          covariate.labels=c("DEM","silt","sand",
+                             "clay","AWC", "ksat"), align  = TRUE, out="FIAmodels.htm")
+
+
+pdf("outputs/soil_density_plots.pdf")
 p.dem <- ggplot(dens.soils, aes(DEM, PLSdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('elevation (m)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
    theme_bw()+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
@@ -354,22 +374,22 @@ f.DEM <- ggplot(dens.soils, aes(DEM, FIAdensity)) + geom_point()  + ylim(0, 800)
   theme(text = element_text(size = 20)) +geom_smooth(method = 'lm')
 f.DEM
 
-f.silt <- ggplot(dens.soils, aes(silt, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% silt') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+f.silt <- ggplot(dens.soils, aes(silt, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% silt') + ylab('Modern \n Tree Density \n (Trees/hectare)')+
   theme_bw()+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
 f.silt
 
-f.sand <- ggplot(dens.soils, aes(sand, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% sand') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+f.sand <- ggplot(dens.soils, aes(sand, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% sand') + ylab('Modern \n Tree Density \n (Trees/hectare)')+
   theme_bw()+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
 f.sand
 
-f.clay <- ggplot(dens.soils, aes(clay, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% clay') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+f.clay <- ggplot(dens.soils, aes(clay, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('% clay') + ylab('Modern \n Tree Density \n (Trees/hectare)')+
   theme_bw()+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
 f.clay
 
-f.awc <- ggplot(dens.soils, aes(awc, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('awc)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+f.awc <- ggplot(dens.soils, aes(awc, FIAdensity)) + geom_point() + ylim(0, 800)+ theme_classic() + xlab('awc)') + ylab('Modern \n Tree Density \n (Trees/hectare)')+
   theme_bw()+
   theme(text = element_text(size = 20))+geom_smooth(method = 'lm')
 f.awc
@@ -422,11 +442,13 @@ ggplot(by_clay.f, aes(clay, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin
 ggplot(by_awc.f, aes(awc, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
 ggplot(by_ksat.f, aes(ksat, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
 #ggplot(by_DEM, aes(DEM, mean))+geom_point()+geom_errorbar(width=.1, aes(ymin=mean-sd, ymax=mean+sd), color = 'grey')+theme_bw()
+dev.off()
 
 ###########################################################
 #does temperature explain the distribution in density?####
 ##########################################################
-
+t.mod <- read.csv('data/air_temp_alb_2000_2011_GHCN.csv')
+t.past <- read.csv('data/air_temp_alb_1900_1910_GHCN.csv')
 
 
 ##calculate species richness: number of species in each grid cell
@@ -539,7 +561,7 @@ pls.2map
 
 X11(width = 18)
 
-pdf('outputs/maps.pdf')
+pdf('outputs/maps_CHW_talk.pdf')
 pls.map
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
@@ -552,7 +574,7 @@ pls.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))
   coord_equal()
 pls.map
 
-FIA.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = FIAdensity.x))+
+FIA.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = FIAdensity))+
   labs(x="easting", y="northing", title="Tree FIA density") + 
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+
   scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,700), name= "Tree density") +

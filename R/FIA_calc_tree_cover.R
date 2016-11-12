@@ -4,7 +4,7 @@
 # Download a state PLOT and TREE datatables. 
 # initially, lets try Illinois Data: IL_plot and IL_Tree
 library(sp)
-
+library(ggplot2)
 IL_PLOT <- read.csv( "data/IL_PLOT.csv" )
 IL_TREE <- read.csv("data/IL_TREE.csv")
 
@@ -21,11 +21,17 @@ PLOT.albers <- spTransform(IL_PLOT ,CRS("+init=epsg:3175"))
 
 PLOT.albers <- data.frame(PLOT.albers)
 
-merge(PLOT.albers[,c("PLOT_CN","LAT", "LON")], IL_TREE, by = c("CN", "CN"))
+tree.sp <- merge(x= IL_TREE, y=PLOT.albers, by.x="PLT_CN", by.y = "CN")
+                 
+feettometers <- 0.3048
+# need to make sure that the distances to trees are in meters, and we calculate xy coords of each tree in the plot, based on the xy coordiantes of the plot
+# and the azimuth, and distance to each tree. We also add 1/2 of the diameter (also in m) to the distance to account for the distance to center of the tree  
+# r trig functions take angles in radians
 
-###need to make sure that the distances to trees are in meters
+as_radians<- function(deg) {(deg * pi) / (180)}
 
-final.data$TreeX1 <- final.data$PointX + cos(as_radians(final.data$az1))*final.data$dist1
-final.data$TreeY1 <- final.data$PointY + sin(as_radians(final.data$az1))*final.data$dist1
-final.data$TreeX2 <- final.data$PointX + cos(as_radians(final.data$az2))*final.data$dist2
-final.data$TreeY2 <- final.data$PointY + sin(as_radians(final.data$az2))*final.data$dist2
+tree.sp$TreeX1 <- tree.sp$LON + cos(as_radians(tree.sp$AZIMUTH))*((tree.sp$DIST*feettometers) + (0.5*tree.sp$DIA*feettometers))
+tree.sp$TreeY1 <- tree.sp$LAT + sin(as_radians(tree.sp$AZIMUTH))*((tree.sp$DIST*feettometers) + (0.5*tree.sp$DIA*feettometers))
+
+# now need to calculate a crown width for the trees in this plot
+# need to match up a species code

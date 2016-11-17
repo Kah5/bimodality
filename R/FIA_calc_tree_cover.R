@@ -58,6 +58,8 @@ form <- function(x){
 
 CW <- rep(1, nrow(tree.sp))
 
+#this function takes a really long time for all the il points, can we use an apply
+
 for(i in 1:nrow(tree.sp)){
   CW[i] <- form(tree.sp[i,])
   cat(i,'\n')
@@ -66,10 +68,14 @@ for(i in 1:nrow(tree.sp)){
 summary(CW)
 
 tree.sp$CROWNWIDTH <- CW # add the crown widths to the dataset
+#for now, remove the NA values
+tree.sp <- tree.sp[!is.na(tree.sp$CROWNWIDTH),]
+#there are alot of NAs in the DIST column too, this is potentially problematic
+tree.sp <- tree.sp[!is.na(tree.sp$DIST),]
 
 #now we need to code which trees have crown widths that extend greater than their distance to the center point
 tree.sp$coverscenter <- 0 #value if no trees cover center
-tree.sp[tree.sp$CROWNWIDTH > tree.sp$DIST, ]$coverscenter <- 1
+tree.sp[tree.sp$CROWNWIDTH < tree.sp$DIST, ]$coverscenter <- 1
 
 #next, we need to provide a value per plot that indicates if we have at least 1 tree covereing the FIA plot center
 

@@ -35,3 +35,35 @@ tree.sp$TreeY1 <- tree.sp$LAT + sin(as_radians(tree.sp$AZIMUTH))*((tree.sp$DIST*
 
 # now need to calculate a crown width for the trees in this plot
 # need to match up a species code
+spec.codes <- read.csv('data/FIA_conversion-SGD_remove_dups.csv', stringsAsFactor = FALSE)
+spec.codes$SPCD <- spec.codes$spcd
+spec.codes$Paleon <- spec.codes$PalEON
+
+tree.sp <- merge(tree.sp, spec.codes[, c('SPCD', 'PalEON')],  by = "SPCD")
+
+CW.table <- read.csv('data/FHM_paleon_crown_allometry_coeff.csv', 
+                     stringsAsFactors=FALSE)
+
+form <- function(x){
+  
+  eqn <- match(x$PalEON, CW.table[,2])
+  eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
+  
+  b0 <- CW.table[eqn,3]
+  b1 <- CW.table[eqn,4]
+  
+  CW <- (b0 + b1 * (x$DIA*2.54))
+  CW
+}
+
+CW <- rep(1, nrow(tree.sp))
+
+for(i in 1:nrow(tree.sp)){
+  CW[i] <- form(tree.sp[i,])
+  cat(i,'\n')
+}
+
+summary(CW)
+
+tree.sp$CROWNWIDTH <- CW
+

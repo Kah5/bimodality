@@ -79,4 +79,40 @@ tree.sp[tree.sp$CROWNWIDTH < tree.sp$DIST, ]$coverscenter <- 1
 
 #next, we need to provide a value per plot that indicates if we have at least 1 tree covereing the FIA plot center
 
+agg.plot <- aggregate(tree.sp$coverscenter, by=list(Y =  tree.sp$LAT,X = tree.sp$LON), 
+          FUN=sum, na.rm=TRUE)
 
+head(agg.plot)
+colnames(agg.plot) <- c('y', "x", "coverscenter")
+#coordinates(agg.plot) <- ~x +y
+#spplot(agg.plot, "coverscenter")
+agg.plot$pctcover <-NA 
+agg.plot[agg.plot$coverscenter >= 1, ]$pctcover <- 1
+agg.plot[agg.plot$coverscenter < 1, ]$pctcover <- 0
+summary(agg.plot)
+
+
+#okay now we need to find the proportion points covered within each paleon grid cell
+# assign to paleon grid cell
+base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
+                    ymn = 58000,  ymx = 1498000, nrows = 180,
+                    crs = '+init=epsg:3175')
+coordinates(agg.plot)<- ~ x + y
+
+#create spatial object with agg.plot
+
+proj4string(agg.plot)<-CRS('+init=epsg:3175')
+numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
+numbered.cell <- extract(numbered.rast, spTransform(agg.plot,CRSobj=CRS('+init=epsg:3175')))
+
+gridded.plot<- data.frame(xyFromCell(base.rast, numbered.cell),
+                        numbered.cell, 
+                       pctcover = agg.plot$pctcover, 
+                          coverscenter = agg.plot$coverscenter)
+gridded.plot$count <- 1
+gridded.cells <- aggregate(gridded.plot$pctcover, by=list(Y =  gridded.plot$y,X = gridded.plot$x), 
+                          FUN=sum, na.rm=TRUE)
+gridded.count <- aggregate(gridded.plot$count, by=list(Y =  gridded.plot$y,X = gridded.plot$x), 
+                           FUN=sum, na.rm=TRUE)
+hist(gridded.cells$x/gridded.count$x)
+#okay there are alot of grid cells with only one plot per cell. We need an alternative

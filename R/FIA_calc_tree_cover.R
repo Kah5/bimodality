@@ -8,11 +8,15 @@ library(ggplot2)
 IL_PLOT <- read.csv( "data/IL_PLOT.csv" )
 IL_TREE <- read.csv("data/IL_TREE.csv")
 
+#add in the indiana data
+IN_PLOT <- read.csv("data/IN_PLOT.csv")
+IN_TREE <- read.csv("data/IN_TREE.csv")
 #IL_PLOT has the fuzzed plot coordinates
 #IL_TREE has the azimuth, diameter, and direction from the plot center to create the stem maps
 # they can be merged based on the PLT_CN
 
-
+IL_PLOT <- rbind(IL_PLOT, IN_PLOT)
+IL_TREE <- rbind(IL_TREE, IN_TREE)
 #before we can map each FIA stand, we need to convert the FIA lat long coordinates to great lakes albers projections (in meters)
 coordinates(IL_PLOT) <- ~ LON + LAT # make this a spatial object
 proj4string(IL_PLOT)<-CRS( "+proj=longlat +datum=WGS84" ) #define at the WGS84 latl

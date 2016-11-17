@@ -65,5 +65,12 @@ for(i in 1:nrow(tree.sp)){
 
 summary(CW)
 
-tree.sp$CROWNWIDTH <- CW
+tree.sp$CROWNWIDTH <- CW # add the crown widths to the dataset
+
+#now we need to code which trees have crown widths that extend greater than their distance to the center point
+tree.sp$coverscenter <- 0 #value if no trees cover center
+tree.sp[tree.sp$CROWNWIDTH > tree.sp$DIST, ]$coverscenter <- 1
+
+#next, we need to provide a value per plot that indicates if we have at least 1 tree covereing the FIA plot center
+
 

@@ -53,7 +53,7 @@ CW.table <- read.csv('data/FHM_paleon_crown_allometry_coeff.csv',
 
 form <- function(x){
   
-  eqn <- match(x$PalEON.x, CW.table[,2])
+  eqn <- match(x$PalEON, CW.table[,2])
   eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
   
   b0 <- CW.table[eqn,3]
@@ -95,7 +95,7 @@ colnames(agg.plot) <- c('y', "x", "coverscenter")
 #spplot(agg.plot, "coverscenter")
 agg.plot$pctcover <-NA 
 agg.plot[agg.plot$coverscenter >= 1, ]$pctcover <- 1
-agg.plot[agg.plot$coverscenter < 1, ]$pctcover <- 0
+agg.plot[agg.plot$coverscenter <= 1, ]$pctcover <- 0
 summary(agg.plot)
 
 
@@ -123,3 +123,44 @@ gridded.count <- aggregate(gridded.plot$count, by=list(Y =  gridded.plot$y,X = g
                            FUN=sum, na.rm=TRUE)
 hist(gridded.cells$x/gridded.count$x)
 #okay there are alot of grid cells with only one plot per cell. We need an alternative
+gridded.count$porcover <- (gridded.cells$x/gridded.count$x)*100
+
+coordinates(gridded.count) <- ~X +Y
+spplot(gridded.count, "porcover")
+gridded.count <- data.frame(gridded.count)
+
+
+
+#map out percent cover:
+library(maps)
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c( "illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
+#map using ggplot
+ggplot(gridded.count, aes(x = X, y = Y, fill= porcover)) + geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
+
+#map the number of fia plots per grid cell on here
+ggplot(gridded.count, aes(x = X, y = Y, fill= x)) + geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
+
+# if all the plots are 24 ft fixed radius macroplots (DESIGNCD==1) (we know there are some other designs)
+# we can calculate % cover differently:
+
+plotarea.ft <- pi*24
+
+# calculate the crown area from crown width
+tree.sp$crownarea <- pi*(tree.sp$CROWNWIDTH/2.54)
+
+# only look a the cover of dominant trees. Otherwise we get crazy total crown areas per plot
+dom.codom <- tree.sp[tree.sp$CCLCD == 2, ]
+
+# add up all the crown areas by plot
+CA.plot <- aggregate(dom.codom$crownarea, by=list(Y =  dom.codom$LAT,X = dom.codom$LON), 
+                      FUN=sum, na.rm=TRUE)
+CA.plot$pctcover <- (CA.plot$x/plotarea.ft)*100
+hist(CA.plot$pctcover)
+ggplot(CA.plot, aes(x = X, y = Y, fill= pctcover)) + geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()

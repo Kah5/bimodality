@@ -1,6 +1,7 @@
 library(plyr)
 library(raster)
 library(data.table)
+library(rgdal)
 # read in and average prism data
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
@@ -76,7 +77,7 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 coordinates(spec.table) <- ~x + y
-
+yrs<- "1895-1905"
 years <- 1895:1905
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
@@ -111,5 +112,33 @@ avgs.df <- data.frame(extract(avgs, tree.dens[,c("x","y")]))
 avgs.df$x <- tree.dens$x
 avgs.df$y <- tree.dens$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_monthly_Prism_1895_1905.csv")
+write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_monthly_Prism_",yrs,".csv"))
+
+
+
+
+
+
+#setwd to data directory
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
+
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+coordinates(spec.table) <- ~x + y
+yrs<- "1895-1905"
+
+  s <- stack("PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil") #make all into a raster
+  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
+  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  colnames(y) <- c("x", "y", "prism30yr")
+  #y$year <- i
+  y$gridNumber <- cellFromXY(t, y[, 1:2])
+  # write.csv( ) ?
+
+spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
+  
+
+
+
+write.csv(y, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_Prism_30yr.csv"))
 

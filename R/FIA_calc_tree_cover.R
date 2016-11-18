@@ -5,6 +5,7 @@
 # initially, lets try Illinois Data: IL_plot and IL_Tree
 library(sp)
 library(ggplot2)
+library(raster)
 IL_PLOT <- read.csv( "data/IL_PLOT.csv" )
 IL_TREE <- read.csv("data/IL_TREE.csv")
 
@@ -26,7 +27,9 @@ PLOT.albers <- spTransform(IL_PLOT ,CRS("+init=epsg:3175"))
 PLOT.albers <- data.frame(PLOT.albers)
 
 tree.sp <- merge(x= IL_TREE, y=PLOT.albers, by.x="PLT_CN", by.y = "CN")
-                 
+#there are alot of NAs in the DIST column too, this is potentially problematic
+tree.sp <- tree.sp[!is.na(tree.sp$DIST),]
+
 feettometers <- 0.3048
 # need to make sure that the distances to trees are in meters, and we calculate xy coords of each tree in the plot, based on the xy coordiantes of the plot
 # and the azimuth, and distance to each tree. We also add 1/2 of the diameter (also in m) to the distance to account for the distance to center of the tree  
@@ -50,7 +53,7 @@ CW.table <- read.csv('data/FHM_paleon_crown_allometry_coeff.csv',
 
 form <- function(x){
   
-  eqn <- match(x$PalEON, CW.table[,2])
+  eqn <- match(x$PalEON.x, CW.table[,2])
   eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
   
   b0 <- CW.table[eqn,3]
@@ -79,7 +82,7 @@ tree.sp <- tree.sp[!is.na(tree.sp$DIST),]
 
 #now we need to code which trees have crown widths that extend greater than their distance to the center point
 tree.sp$coverscenter <- 0 #value if no trees cover center
-tree.sp[tree.sp$CROWNWIDTH < tree.sp$DIST, ]$coverscenter <- 1
+tree.sp[tree.sp$CROWNWIDTH < tree.sp$DIST**2.54, ]$coverscenter <- 1
 
 #next, we need to provide a value per plot that indicates if we have at least 1 tree covereing the FIA plot center
 

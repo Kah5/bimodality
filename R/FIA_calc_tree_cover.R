@@ -163,4 +163,24 @@ CA.plot <- aggregate(dom.codom$crownarea, by=list(Y =  dom.codom$LAT,X = dom.cod
                       FUN=sum, na.rm=TRUE)
 CA.plot$pctcover <- (CA.plot$x/plotarea.ft)*100
 hist(CA.plot$pctcover)
-ggplot(CA.plot, aes(x = X, y = Y, fill= pctcover)) + geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
+
+#need to fix the color of polygon so they will both plot together
+ggplot(CA.plot, aes(x = X, y = Y)) + geom_point(aes(colour= pctcover))#+#scale_color_gradient(low="blue", high="red")+
+   #geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
+
+##############
+#do the same for dominant and co-dominant trees
+# only look a the cover of dominant trees. Otherwise we get crazy total crown areas per plot
+dom.codom <- tree.sp[tree.sp$CCLCD == 2|3, ]
+
+# add up all the crown areas by plot
+CA.plot <- aggregate(dom.codom$crownarea, by=list(Y =  dom.codom$LAT,X = dom.codom$LON), 
+                     FUN=sum, na.rm=TRUE)
+CA.plot$pctcover <- (CA.plot$x/plotarea.ft)*100
+hist(CA.plot$pctcover)
+
+#need to fix the color of polygon so they will both plot together
+ggplot(CA.plot, aes(x = X, y = Y)) + geom_point(aes(colour= pctcover))#+#scale_color_gradient(low="blue", high="red")+
+#geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
+
+

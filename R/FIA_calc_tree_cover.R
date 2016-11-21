@@ -40,6 +40,10 @@ as_radians<- function(deg) {(deg * pi) / (180)}
 tree.sp$TreeX1 <- tree.sp$LON + cos(as_radians(tree.sp$AZIMUTH))*((tree.sp$DIST*feettometers) + (0.5*tree.sp$DIA*feettometers))
 tree.sp$TreeY1 <- tree.sp$LAT + sin(as_radians(tree.sp$AZIMUTH))*((tree.sp$DIST*feettometers) + (0.5*tree.sp$DIA*feettometers))
 
+#remove all trees with <8inches diameter
+summary(tree.sp$DIA)
+hist(tree.sp$DIA)
+tree.sp <- tree.sp[tree.sp$DIA > 8,]
 # now need to calculate a crown width for the trees in this plot
 # need to match up a species code
 spec.codes <- read.csv('data/FIA_conversion-SGD_remove_dups.csv', stringsAsFactor = FALSE)
@@ -82,7 +86,8 @@ tree.sp <- tree.sp[!is.na(tree.sp$DIST),]
 
 #now we need to code which trees have crown widths that extend greater than their distance to the center point
 tree.sp$coverscenter <- 0 #value if no trees cover center
-tree.sp[tree.sp$CROWNWIDTH < tree.sp$DIST**2.54, ]$coverscenter <- 1
+tree.sp[tree.sp$CROWNWIDTH/2 < tree.sp$DIST**2.54, ]$coverscenter <- 1
+#there are some trees that dont cover the center
 
 #next, we need to provide a value per plot that indicates if we have at least 1 tree covereing the FIA plot center
 
@@ -105,7 +110,9 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
                     ymn = 58000,  ymx = 1498000, nrows = 180,
                     crs = '+init=epsg:3175')
 coordinates(agg.plot)<- ~ x + y
-
+png("outputs/pct_tree_cover_FIA.png")
+hist(agg.plot$pctcover, main = "FIA % cover by plot", xlab = "% tree cover")
+dev.off()
 #create spatial object with agg.plot
 
 proj4string(agg.plot)<-CRS('+init=epsg:3175')
@@ -121,6 +128,7 @@ gridded.cells <- aggregate(gridded.plot$pctcover, by=list(Y =  gridded.plot$y,X 
                           FUN=sum, na.rm=TRUE)
 gridded.count <- aggregate(gridded.plot$count, by=list(Y =  gridded.plot$y,X = gridded.plot$x), 
                            FUN=sum, na.rm=TRUE)
+pdf("outputs/FIA_treecover_11.21.16.pdf")
 hist(gridded.cells$x/gridded.count$x)
 #okay there are alot of grid cells with only one plot per cell. We need an alternative
 gridded.count$porcover <- (gridded.cells$x/gridded.count$x)*100
@@ -153,7 +161,7 @@ ggplot(gridded.count, aes(x = X, y = Y, fill= x)) + geom_raster()+geom_polygon(d
 plotarea.ft <- pi*24
 
 # calculate the crown area from crown width
-tree.sp$crownarea <- pi*(tree.sp$CROWNWIDTH/2.54)
+tree.sp$crownarea <- pi*((tree.sp$CROWNWIDTH/2)*2.54)
 
 # only look a the cover of dominant trees. Otherwise we get crazy total crown areas per plot
 dom.codom <- tree.sp[tree.sp$CCLCD == 2, ]
@@ -168,6 +176,11 @@ hist(CA.plot$pctcover)
 ggplot(CA.plot, aes(x = X, y = Y)) + geom_point(aes(colour= pctcover))#+#scale_color_gradient(low="blue", high="red")+
    #geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
 
+
+one <- tree.sp[tree.sp$SUBP == 1, ]
+two<- tree.sp[tree.sp$SUBP == 2, ]
+three<- tree.sp[tree.sp$SUBP == 3, ]
+four<- tree.sp[tree.sp$SUBP == 4, ]
 ##############
 #do the same for dominant and co-dominant trees
 # only look a the cover of dominant trees. Otherwise we get crazy total crown areas per plot
@@ -177,10 +190,10 @@ dom.codom <- tree.sp[tree.sp$CCLCD == 2|3, ]
 CA.plot <- aggregate(dom.codom$crownarea, by=list(Y =  dom.codom$LAT,X = dom.codom$LON), 
                      FUN=sum, na.rm=TRUE)
 CA.plot$pctcover <- (CA.plot$x/plotarea.ft)*100
-hist(CA.plot$pctcover)
+hist(CA.plot$pctcover, breaks = 50)
 
 #need to fix the color of polygon so they will both plot together
 ggplot(CA.plot, aes(x = X, y = Y)) + geom_point(aes(colour= pctcover))#+#scale_color_gradient(low="blue", high="red")+
 #geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+theme_bw()
 
-
+dev.off()

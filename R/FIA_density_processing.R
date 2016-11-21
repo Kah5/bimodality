@@ -58,6 +58,7 @@ pls.inil <- rbind(pls.inil, umdw.new)
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
                   by = c('x', 'y', 'cell'))
 
+densitys <- densitys[densitys$PLSdensity > 14.87, ]
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
 #this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
@@ -206,7 +207,7 @@ plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern den
 plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
 plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 
-fia.dens.pr[is.na(fia.dens.pr)] <- 0
+#fia.dens.pr[is.na(fia.dens.pr)] <- 0
 
 #dens.pr <- merge(dens.pr, fia.dens.pr[,c('x', 'y', 'cell', 'FIAdensity')], by = c('x', 'y', 'cell'))
 

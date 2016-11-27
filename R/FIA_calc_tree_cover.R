@@ -137,7 +137,10 @@ coordinates(gridded.count) <- ~X +Y
 spplot(gridded.count, "porcover")
 gridded.count <- data.frame(gridded.count)
 
+agg.plot <- data.frame(agg.plot)
+write.csv(agg.plot, "outputs/FIA_plot_agg_fuzzed_alb.csv")
 
+write.csv(gridded.count, "outputs/FIA_plot_agg_grid_alb.csv")
 
 #map out percent cover:
 library(maps)

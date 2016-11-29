@@ -101,14 +101,18 @@ prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 #spec.table <- data.frame(spec.table)
 
 PLSpoints.agg <- dcast(PLSpoints, Pointx + Pointy~., sum, na.rm=TRUE, value.var = 'coverscenter')
+write.csv(PLSpoints.agg, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.csv")
+avg_hist_ppt <- read.csv("data/PLSpoints.agg.1900_1910prismppt.csv") # read in extract precip data
 
-PLSpoints$pr30yr <- extract(prism.alb, PLSpoints[,c("x","y")])
+PLSpoints$pr <- avg_hist_ppt$total_.
 
-write.csv(PLSpoints[,c('x', 'y', 'coverscenter', 'pr30yr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/PLS_point_cover_prism.csv')
+write.csv(PLSpoints[,c('x', 'y', 'coverscenter', 'pr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/PLS_point_cover_prism.csv')
 
-plot(PLSpoints$pr30yr, PLSpoints$coverscenter)
+plot(PLSpoints$pr, PLSpoints$coverscenter)
 
-mylogitpls <- glm(coverscenter ~ pr30yr, data = PLSpoints, family = "binomial")
+PLSpoints <- PLSpoints[!is.na(PLSpoints$pr),]
+
+mylogitpls <- glm(coverscenter ~ pr, data = PLSpoints, family = "binomial")
 
 #need to reduce the size of pls data to train on since R couldn't handle that large of a vector
 
@@ -123,17 +127,18 @@ cat(
   "model {
   for( i in 1 : N ) {
   PLS[i] ~ dbern(p[i])
-  logit(p[i]) <- b0 + b1*pr30yr[i]
-  #p[i] <- 1 / (1 + exp(-z[i]))
-  #z[i] <- b0 + b1 * pr30yr[i]
+  #logit(p[i]) <- b0 + b1*pr[i]
+  p[i] <- 1 / (1 + exp(-z[i]))
+  z[i] <- b0 + b1 * pr30yr[i]
   }             
-  b0 ~ dnorm( 0 , 1.0E-12 )
-  b1 ~ dnorm( 0 , 1.0E-12 )
+  
+  b0 ~ dnorm(0, .0001)
+  b1 ~ dnorm(0, .0001)
   }", file="logisticpls.bug"
     )
 
 
-dat2<-list(PLS=train$coverscenter, pr30yr=train$pr30yr, N=nrow(train))
+dat2<-list(PLS=train$coverscenter, pr30yr=train$pr, N=nrow(train))
 
 #to find the initial parameter estimates, use coeff from mLE logistic reg
 
@@ -151,17 +156,17 @@ library('R2jags')
 
 
 logmodpls<- jags(data = dat2,
-              inits = inits,
+              #inits = inits,
               parameters.to.save = parameters,
               model.file = "logisticpls.bug",
               n.chains = 2,
-              n.iter = 5000,
-              n.burnin = 2000,
+              n.iter = 500,
+              n.burnin = 200,
               n.thin = 1)
 
 logmodpls
 
-plot(as.mcmc(logmod))
+plot(as.mcmc(logmodpls))
 logmod.vars <- c( "b0", "b1")
 
 plot(dat2$pr30yr,dat2$PLS, pch=20)
@@ -174,3 +179,51 @@ reg2<-lm(low.ci~MAN)
 abline(reg2, col="red", lty="dashed")
 reg3<-lm(high.ci~MAN)
 abline(reg3, col="red", lty="dashed")
+
+
+
+#example logit from online
+N <- 1000
+x <- 1:N
+z <- 0.01 * x - 5
+y <- sapply(1 / (1 + exp(-z)), function(p) {rbinom(1, 1, p)})
+
+write.table(data.frame(X = x, Z = z, Y = y),
+            file = 'example3.data',
+            row.names = FALSE,
+            col.names = TRUE)
+
+plot(x, y)
+cat('model {
+  for (i in 1:N){
+    y[i] ~ dbern(p[i])
+    p[i] <- 1 / (1 + exp(-z[i]))
+    z[i] <- a + b * x[i]
+  }
+  a ~ dnorm(0, .0001)
+  b ~ dnorm(0, .0001)
+}', file="example3.bug")
+
+library('rjags')
+
+data1 = list('x' = x,
+            'y' = y,
+            'N' = N)
+
+jagstest <- jags(data = data1,
+                  model.file= 'example3.bug', 
+                   parameters.to.save = c('a', 'b', 'p'),
+                 n.chains = 2,
+                 n.iter = 5000,
+                 n.burnin = 2000,
+                 n.thin = 1)
+
+#update(jags, 1000)
+
+#jags.samples(jags,
+ #            c('a', 'b'),
+  #           1000)
+
+plot(as.mcmc(jagstest))
+plot(data1$x, data1$y)
+points(data1$x, jagstest$BUGSoutput$mean$p, col = 'red')

@@ -28,7 +28,7 @@ setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 coordinates(spec.table) <- ~x + y
 
-years <- 1900:1910
+years <- 1895:1905
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
@@ -48,10 +48,12 @@ spec.table <- data.frame(spec.table)
 
 y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
-
+y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
+          'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                              'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+
 
 #convert to rasterstack
 coordinates(full) <- ~x + y
@@ -61,11 +63,11 @@ avgs <- stack(full)
 plot(avgs) #plots averages
 
 #extract at the tree level for tree cover modeling
-PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/species_table_pls_coverscenter.csv")
+PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
 avgs.pts <- data.frame(extract(avgs, PLSpoints.agg[,c('Pointx', 'Pointy')]))
 avgs.pts$Pointx <- PLSpoints.agg$Pointx
 avgs.pts$Pointy <- PLSpoints.agg$Pointy
-write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.1900_1910prismppt.csv")
+write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.1895_1905prismppt.csv")
 
 avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x

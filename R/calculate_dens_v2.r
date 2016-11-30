@@ -208,15 +208,18 @@ spec.table$crown.area <- 0.25*pi*(CW^2) #crown area of each tree
 spec.table$crown.scaled <-(spec.table$crown.area*spec.table$density) #(crown area (m2))/tree)*(trees/hectare)
 
   #CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
-  
+
 
 
 
 
 spec.table <- spec.table[!is.na(spec.table$density), ]
+test.table <- spec.table
+spec.table <- spec.table[!is.na(spec.table$CW),]
 
-
-
+spec.table$coverscenter <- 0 #value if no trees cover center
+spec.table[spec.table$CW/2 > spec.table$dists, ]$coverscenter <- 1
+write.csv(spec.table, "outputs/species_table_pls_coverscenter.csv")
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
@@ -234,17 +237,23 @@ spec.table$CW [spec.table$CW > nine.nine.pct['CW']] <- nine.nine.pct['CW']
 write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.csv'))
 
 spec.table$covered <- 0
-spec.table$covered [spec.table$CW < spec.table$dists] <- 1
+spec.table$covered [spec.table$CW/2 > spec.table$dists] <- 1
 
 # These are not the full tables since the include only the cells with points in the database.
 #dcast rearranges the spec.table data by x, y and cell
 count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
 covered.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm = TRUE, value.var = 'covered')
 
+count.table.pt <- dcast(spec.table, Pointx + Pointy + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
+covered.table.pt <- dcast(spec.table, Pointx + Pointy  + cell ~ spec, sum, na.rm = TRUE, value.var = 'covered')
+
 covered.table.pt <- dcast(spec.table, Pointx + Pointy + cell ~ spec, sum, na.rm=TRUE, value.var = "covered")
 covered.table.pt$pct.cov <- rowSums(covered.table.pt[,4:36], na.rm = TRUE)
 covered.table.pt[,38:39] <- xyFromCell(base.rast, covered.table.pt$cell)
 colnames(covered.table.pt)[38:39] <- c('x', "y")
+covered.table.pt[covered.table.pt$pct.cov > 1, ]$pct.cov <- 1 # assign all the 2 values as 1
+
+write.csv(covered.table.pt, "outputs/PLS_pct_cov_by_pt_inil.csv")
 
 covered.table.cell <- dcast(covered.table.pt[,3:39], x + y + cell ~., sum, value.var = "pct.cov")
 

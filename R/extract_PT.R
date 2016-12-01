@@ -15,7 +15,8 @@ library(raster)
 library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1901:1935
+years <- 1951:2000
+yr <- "1951-2000"
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -51,26 +52,41 @@ plot(avgs) #plots averages
 projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
+##read in the FIA and PLS pct cover points that we are interested in 
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 #coordinates(spec.table) <- ~x + y
 #tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
-dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv')
+#dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv')
+FIAplots <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/FIA_plot_agg_fuzzed_alb.csv")
+PLSpoints.agg <- read.csv ("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
 
-precip.alb <- crop(avg.alb, extent(dens.table)) 
-spec.table <- data.frame(dens.table)
+#extract for FIA
+precip.alb <- crop(avg.alb, extent(FIAplots)) 
+spec.table <- data.frame(FIAplots)
 
-precip <- data.frame(extract(avg.alb, dens.table[,c('x', 'y')]))
-precip$x <- dens.table$x
-precip$y <- dens.table$y
+precip <- data.frame(extract(avg.alb, FIAplots[,c('x', 'y')]))
+precip$x <- FIAplots$x
+precip$y <- FIAplots$y
 
-write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1895_1935_GHCN.csv')
+write.csv(precip, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplots_pr_alb_',yrs,'_GHCN.csv'))
+
+#extract for PLS
+precip.alb <- crop(avg.alb, extent(PLSpoints)) 
+PLSpoints <- data.frame(PLSpoints)
+
+precip <- data.frame(extract(avg.alb, PLSpoints[,c('x', 'y')]))
+precip$x <- PLSpoints$x
+precip$y <- PLSpoints$y
+
+write.csv(precip, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_pr_alb_',yrs,'_GHCN.csv'))
 
 ######################
 ##For Temperature now
 #####################
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_2014/")
-years <- 1900:1910
+years <- 1951:2000
+yrs <- '1951_2000'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -104,24 +120,34 @@ projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-#coordinates(spec.table) <- ~x + y
+#extract for FIA
 
-air_temp.alb <- crop(avg.alb, extent(spec.table)) 
-spec.table <- data.frame(spec.table)
+air_temp.alb <- crop(avg.alb, extent(FIAplots)) 
+spec.table <- data.frame(FIAplots)
 
-air_temp <- data.frame(extract(air_temp.alb, tree.dens[,c('x', 'y')]))
-air_temp$x <- tree.dens$x
-air_temp$y <- tree.dens$y
+air_temp <- data.frame(extract(air_temp.alb, FIAplots[,c('x', 'y')]))
+air_temp$x <- FIAplots$x
+air_temp$y <- FIAplots$y
 
-write.csv(air_temp, 'C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_alb_2000_2011_GHCN.csv')
+write.csv(air_temp, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIA_air_temp_alb_',yrs,'_GHCN.csv'))
+
+#extract for PLS
+air_temp.alb <- crop(avg.alb, extent(PLSpoints)) 
+spec.table <- data.frame(PLSpoints)
+
+air_temp <- data.frame(extract(air_temp.alb, PLSpoints[,c('x', 'y')]))
+air_temp$x <- PLSpoints$x
+air_temp$y <- PLSpoints$y
+
+write.csv(air_temp, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_air_temp_alb_',yrs,'_GHCN.csv'))
 
 
 ######################
 ##For PET (Potential Evapotranspiation) now
 #####################
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/Eo150_2014/")
-years <- 1900:1910
+years <- 1900:1950
+yrs <- '1900-1950'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -138,7 +164,7 @@ y$annual <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
 #this averages for each month within each gridcell
-full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- dcast(setDT(y), Lon + Lat ~. , value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'annual'))
 
 #convert to rasterstack
@@ -151,24 +177,34 @@ projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-coordinates(spec.table) <- ~x + y
+#for FIA
 
-Eo150.alb <- crop(avg.alb, extent(spec.table)) 
-spec.table <- data.frame(spec.table)
+Eo150.alb <- crop(avg.alb, extent(FIAplots)) 
+spec.table <- data.frame(FIAplots)
 
-Eo150 <- data.frame(extract(Eo150.alb, tree.dens[,c('x', 'y')]))
-Eo150$x <- tree.dens$x
-Eo150$y <- tree.dens$y
+Eo150 <- data.frame(extract(Eo150.alb, FIAplots[,c('x', 'y')]))
+Eo150$x <- FIAplots$x
+Eo150$y <- FIAplots$y
 
-write.csv(Eo150, 'C:/Users/JMac/Documents/Kelly/biomodality/data/Eo150_alb_1900_1910_GHCN.csv')
+write.csv(Eo150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplots_Eo150_alb_',yrs,'_GHCN.csv'))
 
+#for PLS
+
+Eo150.alb <- crop(avg.alb, extent(PLSpoints)) 
+spec.table <- data.frame(PLSpoints)
+
+Eo150 <- data.frame(extract(Eo150.alb, PLSpoints[,c('x', 'y')]))
+Eo150$x <- PLSpoints$x
+Eo150$y <- PLSpoints$y
+
+write.csv(Eo150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_Eo150_alb_',yrs,'_GHCN.csv'))
 
 ######################
 ##For Actual Evapotranspiration now
 #####################
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
-years <- 1900:1910
+years <- 1950:2000
+yrs <-'1950_2000'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -184,6 +220,7 @@ for (i in years) {
 y$annual <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
 
+require(reshape2)
 #this averages for each month within each gridcell
 full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'annual'))
@@ -198,17 +235,27 @@ projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-coordinates(spec.table) <- ~x + y
+#for FIA
 
-E150.alb <- crop(avg.alb, extent(spec.table)) 
-spec.table <- data.frame(spec.table)
+E150.alb <- crop(avg.alb, extent(FIAplots)) 
+spec.table <- data.frame(FIAplots)
 
-E150 <- data.frame(extract(E150.alb, tree.dens[,c('x', 'y')]))
-E150$x <- tree.dens$x
-E150$y <- tree.dens$y
+E150 <- data.frame(extract(E150.alb, FIAplots[,c('x', 'y')]))
+E150$x <- FIAplots$x
+E150$y <- FIAplots$y
 
-write.csv(E150, 'C:/Users/JMac/Documents/Kelly/biomodality/data/E150_alb_1900_1910_GHCN.csv')
+write.csv(E150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplots_E150_alb_',yrs,'_GHCN.csv'))
+#for PLS
+
+E150.alb <- crop(avg.alb, extent(PLSpoints)) 
+spec.table <- data.frame(PLSpoints)
+
+E150 <- data.frame(extract(E150.alb, PLSpoints[,c('x', 'y')]))
+E150$x <- PLSpoints$x
+E150$y <- PLSpoints$y
+
+write.csv(E150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplotsPLSpoints_E150_alb_',yrs,'_GHCN.csv'))
+
 
 ############################################
 ##caculate the P-ET or effective rainfall
@@ -216,7 +263,8 @@ write.csv(E150, 'C:/Users/JMac/Documents/Kelly/biomodality/data/E150_alb_1900_19
 
 #extract ET again
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
-years <- 1900:1910
+years <- 1950:2000
+yrs <- '1950_2000'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -235,7 +283,7 @@ ET <- y
 
 #extract precip again
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1900:1910
+
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -281,17 +329,26 @@ projection(avgs) <- CRS("+init=epsg:4326") # assign the projection from GHCN
 avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes albers
 
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-coordinates(spec.table) <- ~x + y
 
-P.ET.alb <- crop(avg.alb, extent(spec.table)) 
-spec.table <- data.frame(spec.table)
+#for FIA
+P.ET.alb <- crop(avg.alb, extent(FIAplots)) 
+spec.table <- data.frame(FIAplots)
 
-PET <- data.frame(extract(P.ET.alb, tree.dens[,c('x', 'y')]))
-PET$x <- tree.dens$x
-PET$y <- tree.dens$y
+PET <- data.frame(extract(P.ET.alb, FIAplots[,c('x', 'y')]))
+PET$x <- FIAplots$x
+PET$y <- FIAplots$y
 
-write.csv(PET, 'C:/Users/JMac/Documents/Kelly/biomodality/data/PET_alb_1900_1910_GHCN.csv')
+write.csv(PET, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplots_PET_alb_',yrs,'_GHCN.csv'))
+
+#for FIA
+P.ET.alb <- crop(avg.alb, extent(PLSpoints)) 
+spec.table <- data.frame(PLSpoints)
+
+PET <- data.frame(extract(P.ET.alb, PLSpoints[,c('x', 'y')]))
+PET$x <- PLSpoints$x
+PET$y <- PLSpoints$y
+
+write.csv(PET, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_PET_alb_',yrs,'_GHCN.csv'))
 
 
 ##############################################################

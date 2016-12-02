@@ -1,3 +1,4 @@
+
 ##########################################
 #extracting precip & plotting Crown cover#
 #run calculate_dens_v2.r first
@@ -15,8 +16,8 @@ library(raster)
 library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1951:2000
-yr <- "1951-2000"
+years <- 1900:1950
+yr <- "1900_1950"
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -203,8 +204,8 @@ write.csv(Eo150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoint
 ##For Actual Evapotranspiration now
 #####################
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
-years <- 1950:2000
-yrs <-'1950_2000'
+years <- 1900:1950
+yrs <-'1900_1905'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -263,8 +264,8 @@ write.csv(E150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplotsP
 
 #extract ET again
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
-years <- 1950:2000
-yrs <- '1950_2000'
+years <- 1900:1950
+yrs <- '1900_1950'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 

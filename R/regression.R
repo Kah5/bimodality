@@ -111,6 +111,13 @@ avg_hist_ppt <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoin
 #avg_hist_ppt <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/")
 #PLS.ppt.merge <- merge(PLSpoints ,avg_hist_ppt, by = c('Pointx', 'Pointy'))
 PLSpoints$pr <- avg_hist_ppt$total_.
+avg_PPET <- read.csv(("C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_PET_alb_1900_1950_GHCN.csv"))
+PLSpoints$PET <- avg_PPET$total_.
+
+avg_TEMP <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_air_temp_alb_1900_1950_GHCN.csv")
+PLSpoints <- merge(PLSpoints, avg_TEMP[,c('x', "y", "total_.")], by = c("x", "y"))
+
+
 plot(avg_hist_ppt$total_., PLSpoints$pct.cov)
 
 write.csv(PLSpoints[,c('x', 'y', 'pct.cov', 'pr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/PLS_point_cover_prism.csv')
@@ -135,9 +142,20 @@ PLSpoints <- PLSpoints[!is.na(PLSpoints$pr),]
 #data_balanced_over <- ovun.sample(pct.cov ~ ., data = PLSpoints, method = "both",N = 10090)$data
 #table(data_balanced_over$pct.cov)
 
-mylogitpls <- glm(pct.cov ~ pr, data = PLSpoints, family = "binomial")
+mylogitpls <- glm(pct.cov ~ pr +PET +total_., data = PLSpoints, family = binomial (link = "logit"))
+summary(mylogitpls)
+
+newdata <- data.frame(pr = 1300, PET=700, total_. = )
+predict(mylogitpls, newdata, type="response")
+ 
+
+xweight <- seq(550, 2000, 0.01)
+
+
+yweight <- predict(mylogitpls, list(pr = xweight),type="response")
+
+lines(xweight, yweight)
 plot(PLSpoints$pr, PLSpoints$pct.cov)
-curve(predict(mylogitpls,data.frame(pr=x),type="resp"),add=TRUE, col = 'red') # draws a curve based on prediction from logistic regression model
 
 require(popbio)
 logi.hist.plot(data_balanced_over$pr, data_balanced_over$pct.cov,boxp=FALSE,type="hist",col="gray")

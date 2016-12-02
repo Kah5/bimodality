@@ -86,8 +86,8 @@ write.csv(precip, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoin
 ##For Temperature now
 #####################
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/air_temp_2014/")
-years <- 1951:2000
-yrs <- '1951_2000'
+years <- 1900:1950
+yrs <- '1900_1950'
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -262,7 +262,7 @@ write.csv(E150, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/FIAplotsP
 ##caculate the P-ET or effective rainfall
 ############################################
 
-#extract ET again
+#extract PET again
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/data/E150_2014/")
 years <- 1900:1950
 yrs <- '1900_1950'

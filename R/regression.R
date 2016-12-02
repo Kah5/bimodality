@@ -115,10 +115,11 @@ avg_PPET <- read.csv(("C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_
 PLSpoints$PET <- avg_PPET$total_.
 
 avg_TEMP <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_air_temp_alb_1900_1950_GHCN.csv")
-PLSpoints <- merge(PLSpoints, avg_TEMP[,c('x', "y", "total_.")], by = c("x", "y"))
+PLSpoints <- merge(PLSpoints, avg_TEMP[,c('x', "y", "annual_.", "range_.")], by = c("x", "y"))
 
 
-plot(avg_hist_ppt$total_., PLSpoints$pct.cov)
+plot(PLSpoints$annual_., PLSpoints$pct.cov)
+plot(PLSpoints$range_., PLSpoints$pct.cov)
 
 write.csv(PLSpoints[,c('x', 'y', 'pct.cov', 'pr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/PLS_point_cover_prism.csv')
 

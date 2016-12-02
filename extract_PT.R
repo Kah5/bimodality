@@ -15,7 +15,7 @@ library(raster)
 library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
-years <- 1895:1935
+years <- 1901:1935
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -63,8 +63,6 @@ spec.table <- data.frame(dens.table)
 precip <- data.frame(extract(avg.alb, dens.table[,c('x', 'y')]))
 precip$x <- dens.table$x
 precip$y <- dens.table$y
-
-
 
 write.csv(precip, 'C:/Users/JMac/Documents/Kelly/biomodality/data/pr_alb_1895_1935_GHCN.csv')
 

@@ -9,6 +9,8 @@
 # rasters were aggreated to 1km and 8km using the aggregate tool in arcgis (this was much faster than aggregating in R)
 
 library(raster)
+
+# SAND RASTERS
 sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 

@@ -35,7 +35,11 @@ plot(PLSpoints$sandpct, PLSpoints$pct.cov) # plot against percent cover
 
 #extract from the 1km grid 
 PLSpoints$sand1km <- extract(sand1km.alb, PLSpoints[,c('Pointx', 'Pointy')])
+plot(PLSpoints$sand1km, PLSpoints$pct.cov) # plot against percent cover
+
 FIAplots$sand1km <- extract(sand1km.alb, FIAplots[,c('x', 'y')])
+plot(FIAplots$sand1km, FIAplots$pctcover) #plot against % cover
+
 
 # save the PLS and FIA data sets with soils data:
 write.csv(FIAplots, "data/FIAplots_sand_soils.csv")

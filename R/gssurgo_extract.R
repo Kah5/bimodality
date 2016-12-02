@@ -15,5 +15,20 @@ plot(sand8km)
 sand1km <- raster("data/1km_UMW_sand1.tif")
 plot(sand1km)
 
+# need to project sand to great lakes albers coordinate system
+sand8km.alb <- projectRaster(sand8km, crs='+init=epsg:3175')
 
-#load
+# load in data to extract by
+FIAplots <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/FIA_plot_agg_fuzzed_alb.csv")
+PLSpoints.agg <- read.csv ("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+
+
+#extract and add to FIA data:
+
+FIAplots$sandpct <- extract(sand8km.alb, FIAplots[,c('x', 'y')])
+plot(FIAplots$sandpct, FIAplots$pctcover) #plot against % cover
+
+#extract and add to PLS data:
+PLSpoints$sandpct <- extract(sand8km.alb, PLSpoints[,c('Pointx', 'Pointy')])
+plot(PLSpoints$sandpct, PLSpoints$pct.cov) # plot against percent cover
+

@@ -207,14 +207,45 @@ plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern den
 plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
 plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 
-#fia.dens.pr[is.na(fia.dens.pr)] <- 0
+##########################
+#read in soils data
+sand8km <- raster("data/8km_UMW_sand1.tif")
+plot(sand8km)
 
-#dens.pr <- merge(dens.pr, fia.dens.pr[,c('x', 'y', 'cell', 'FIAdensity')], by = c('x', 'y', 'cell'))
+sand1km <- raster("data/1km_UMW_sand1.tif")
+plot(sand1km)
+
+# need to project sand to great lakes albers coordinate system
+sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
+sand1km.alb <- projectRaster(sand1km, crs = '+init=epsg:3175')
+
+
+#awc
+awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
+awc1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_awc1.tif")
+
+awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
+awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
+
+#ksat
+
+ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
+ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
+
+ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
+ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
+
+#extract soils data using FIA and ps points
+dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')])
+dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
+dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 
 
 
 summary(rowSums(dens.pr != 0, na.rm=TRUE))
 dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
+
+
   
 PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
 FIA.lm<- lm(dens.pr$FIAdensity ~dens.pr$MAP2011)
@@ -243,6 +274,38 @@ p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
 ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
 
+dev.off()
+
+sandfia <- ggplot(dens.pr, aes(sandpct, FIAdensity)) + geom_point() + theme_classic()+ xlab('% sand 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+awcfia <- ggplot(dens.pr, aes(awc, FIAdensity)) + geom_point() + theme_classic()+ xlab('awc 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+ksatfia <- ggplot(dens.pr, aes(ksat, FIAdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+png('outputs/FIA_sand.png')
+sandfia
+dev.off()
+png('outputs/FIA_awc.png')
+awcfia
+dev.off()
+png('outputs/FIA_ksat.png')
+ksatfia
+dev.off()
+sandpls <- ggplot(dens.pr, aes(sandpct, PLSdensity)) + geom_point() + theme_classic()+ xlab('% sand 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+awcpls <- ggplot(dens.pr, aes(awc, PLSdensity)) + geom_point() + theme_classic()+ xlab('AWC 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+ksatpls <- ggplot(dens.pr, aes(ksat, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+
+png('outputs/PLS_sand.png')
+sandpls
+dev.off()
+png('outputs/PLS_awc.png')
+awcpls
+dev.off()
+png('outputs/PLS_ksat.png')
+ksatpls
 dev.off()
 
 plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)')

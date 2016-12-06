@@ -35,10 +35,10 @@ y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 
 require(data.table)
 #this averages for each month within each gridcell
-full <- dcast(setDT(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- dcast(data.table(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total'))
-library(plyr)
-library(reshape2)
+#library(plyr)
+#library(reshape2)
 
 min.pr <- dcast(data.frame(y), Lon + Lat ~.,min , value.var= 'total')
 max.pr <-  dcast(data.frame(y), Lon + Lat ~.,max , value.var= 'total')
@@ -58,9 +58,10 @@ avg.alb <- projectRaster(avgs, crs='+init=epsg:3175') # project in great lakes a
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 #coordinates(spec.table) <- ~x + y
 #tree.dens <- dcast(spec.table, x+y~., mean, na.rm=TRUE, value.var = 'density')
-#dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv')
+dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 FIAplots <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/FIA_plot_agg_fuzzed_alb.csv")
 PLSpoints.agg <- read.csv ("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+
 
 #extract for FIA
 precip.alb <- crop(avg.alb, extent(FIAplots)) 
@@ -81,6 +82,17 @@ precip$x <- PLSpoints$x
 precip$y <- PLSpoints$y
 
 write.csv(precip, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_pr_alb_',yrs,'_GHCN.csv'))
+
+#extract for full pls density
+precip.alb <- crop(avg.alb, extent(dens.table)) 
+PLSpoints <- data.frame(dens.table)
+
+precip <- data.frame(extract(avg.alb, dens.table[,c('x', 'y')]))
+precip$x <- dens.table$x
+precip$y <- dens.table$y
+
+write.csv(precip, paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints_pr_alb_full',yrs,'_GHCN.csv'))
+
 
 ######################
 ##For Temperature now

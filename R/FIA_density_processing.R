@@ -58,7 +58,7 @@ pls.inil <- rbind(pls.inil, umdw.new)
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
                   by = c('x', 'y', 'cell'))
 
-densitys <- densitys[densitys$PLSdensity > 14.87, ]
+#densitys <- densitys[densitys$PLSdensity > 14.87, ]
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
 #this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
@@ -176,23 +176,23 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 #comparison of FIA and PLS datasets to climate
 ###############################################################
 
-#past.precip <- read.csv('data/pr_alb_1895_1935_GHCN.csv')
-#mod.precip <- read.csv('data/pr_alb_1975_2014_GHCN.csv')
+past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1910_GHCN.csv')
+mod.precip <- read.csv('data/pr_alb_1975_2014_GHCN.csv')
 
-past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
-mod.precip <- read.csv('data/spec_table_30yr_prism.csv')
+#past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv') #climate for indiana and il
+#mod.precip <- read.csv('data/spec_table_30yr_prism.csv') #climate for indiana and il
 
 
 dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
-dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
+dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'total_.')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
-fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
-fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(fia.dens.pr)[46:47] <- c( 'MAP1910', "MAP2011")
+#fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
+#fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
+#colnames(fia.dens.pr)[46:47] <- c( 'MAP1910', "MAP2011")
 
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
-write.csv(fia.dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb",version,".csv"))
+#write.csv(fia.dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
 #dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density
@@ -261,6 +261,7 @@ summary(diff.lm)
 
 library(ggExtra)
 library(ggplot2)
+
 png('outputs/PLS_precip_hist.png')
 #X11(width = 5)
 p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
@@ -329,26 +330,37 @@ contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
+library(hexbin)
 ####
 #plot denisity histograms binned by precipitation amount
+#100mm precipitation bins
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
+                         breaks=c(200,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
+                         breaks=c( 200,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+test<- dens.pr[!is.na(dens.pr),]
+melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat')) 
 
-dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
-dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('350-500mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),breaks=c(350, 500, 650, 700, 850, 1000, 1150, 1300))
-melted <- melt(dens.pr, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff')) 
 
 pdf("outputs/binned_histograms_pr.pdf")
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700) #+ facet_wrap(~plsprbins)
 ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700) #+ facet_wrap(~fiaprbins)
 
-ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 600)+ facet_wrap(~plsprbins)+
+hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
+plot(hbin)
+ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_hex()
+
+ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins)+
   scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white"))
 
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 
-ggplot(dens.pr, aes(x=PLSdensity, fill=plsprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
-ggplot(dens.pr, aes(x=FIAdensity, fill=fiaprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
+#ggplot(dens.pr, aes(x=PLSdensity, fill=plsprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
+#ggplot(dens.pr, aes(x=FIAdensity, fill=fiaprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
+
+ggplot(dens.pr, aes(x,y, fill = plsprbins))+geom_raster()
 #need to do this with species, dens.pr is now just densitys
 dev.off()
 

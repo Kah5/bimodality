@@ -17,7 +17,7 @@ library(ggplot2)
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
 years <- 1900:1950
-yr <- "1900_1950"
+yrs <- "1900_1950"
 month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
@@ -35,14 +35,14 @@ y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 
 require(data.table)
 #this averages for each month within each gridcell
-full <- dcast(data.table(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- dcast(data.frame(y), Lon + Lat ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total'))
 #library(plyr)
 #library(reshape2)
 
 min.pr <- dcast(data.frame(y), Lon + Lat ~.,min , value.var= 'total')
 max.pr <-  dcast(data.frame(y), Lon + Lat ~.,max , value.var= 'total')
-
+full <- dcast(data.frame(y), Lon + Lat ~.,mean , value.var= 'total')
 
 #convert to rasterstack
 coordinates(full) <- ~Lon + Lat

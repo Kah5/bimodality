@@ -5,11 +5,12 @@ library(rgdal)
 # read in and average prism data
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
-spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
+#spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 spec.table <- data.frame(spec.table)
 spec.table$pr30yr <- extract(prism.alb, spec.table[,c("x","y")])
 
-write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/spec_table_30yr_prism.csv')
+write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/spec_table_30yr_prism_full.csv')
 #try prims
 #install.packages('prism')
 #library(prism)
@@ -26,9 +27,10 @@ library(raster)
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 coordinates(spec.table) <- ~x + y
 
-years <- 1895:1905
+years <- 1900:1910
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
@@ -51,10 +53,10 @@ y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
           'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
 #this averages for each month within each gridcell
-full <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- dcast(data.frame(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                              'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
 
-
+full <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
 #convert to rasterstack
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE
@@ -73,7 +75,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1895_1905.csv")
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1910.csv")
 
 
 

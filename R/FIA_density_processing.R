@@ -175,16 +175,17 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 ################################################################
 #comparison of FIA and PLS datasets to climate
 ###############################################################
-
-past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1910_GHCN.csv')
-mod.precip <- read.csv('data/pr_alb_1975_2014_GHCN.csv')
-
-#past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv') #climate for indiana and il
+past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
+mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
+#past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1950_GHCN.csv') #climate for indiana and il
 #mod.precip <- read.csv('data/spec_table_30yr_prism.csv') #climate for indiana and il
 
 
-dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
-dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'total_.')], by = c('x', 'y'))
+#dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
+#dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip[,c('x', 'y', '.')], by =c('x', 'y'))
+dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
 #fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
@@ -262,7 +263,7 @@ summary(diff.lm)
 library(ggExtra)
 library(ggplot2)
 
-png('outputs/PLS_precip_hist.png')
+png('outputs/PLS_precip_hist_prism.png')
 #X11(width = 5)
 p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+
@@ -270,7 +271,7 @@ p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() 
 ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
 dev.off()
 
-png('outputs/FIA_precip_hist.png')
+png('outputs/FIA_precip_hist_prism.png')
 p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+ xlab('Mean Annual Precipitation (mm)') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
 ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
@@ -335,32 +336,136 @@ library(hexbin)
 #plot denisity histograms binned by precipitation amount
 #100mm precipitation bins
 dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
-                         breaks=c(200,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+                         breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
-                         breaks=c( 200,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+                         breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat')) 
 
+#map out 
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
 
-pdf("outputs/binned_histograms_pr.pdf")
+pdf("outputs/binned_histograms_pr_AGU_12_6_16.pdf")
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700) #+ facet_wrap(~plsprbins)
 ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700) #+ facet_wrap(~fiaprbins)
 
+hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
+plot(hbin)
+ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_hex(bins = 50) +ylim(0,600)
+
 hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_hex()
+ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_hex(bins = 50) +ylim(0,600)
 
-ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins)+
   scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white"))
 
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
+coeffs <- matrix(NA, 11, 1)
+bins <- as.character(unique(dens.pr$plsprbins))
+for (i in 1:11){
+coeffs[i]<- bimodality_coefficient(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
+}
+coef.bins<- cbind(coeffs, bins)
+
+coeffsfia <- matrix(NA, 11, 1)
+binsfia <- as.character(unique(dens.pr$plsprbins))
+for (i in 1:11){
+  coeffsfia[i]<- bimodality_coefficient(dens.pr[dens.pr$fiaprbins %in% binsfia[i],]$FIAdensity)
+}
+coef.bins.fia <- cbind(coeffsfia, binsfia)
+
+#merge together with dens.pr
+test <- merge(dens.pr, coef.bins, by.x = "plsprbins", by.y = 'bins')
+test$V1 <- as.numeric(as.character(test$V1))
+test$bimodal <- "Not Bimodal"
+test[test$V1 >  0.5 & test$MAP1910 < 1000, ]$bimodal <- "Bimodal"
+
+#for FIA
+test.f <- merge(dens.pr, coef.bins.fia, by.x = "fiaprbins", by.y = 'binsfia')
+test.f$V1 <- as.numeric(as.character(test.f$V1))
+test.f[is.na(test.f$V1),]$V1 <- 0
+test.f$bimodal <- "Not Bimodal"
+test.f[test.f$V1 >  0.5 & test.f$MAP2011 < 1000, ]$bimodal <- "Bimodal"
+
+
+#for FIA using pls climate that is bimodal
+test.f1 <- merge(dens.pr, coef.bins, by.x = "fiaprbins", by.y = 'bins')
+test.f1$V1 <- as.numeric(as.character(test.f1$V1))
+test.f1$V2 <- as.numeric(as.character(test.f1$V2))
+
+
+test.f1$bimodal <- "Not Bimodal"
+test.f1[test.f1$V1 >  0.5 & test.f1$MAP1910 < 1000, ]$bimodal <- "Bimodal"
 
 #ggplot(dens.pr, aes(x=PLSdensity, fill=plsprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
 #ggplot(dens.pr, aes(x=FIAdensity, fill=fiaprbins)) +xlim(0, 700)+ geom_density(alpha = 0.4)+scale_fill_brewer(palette = "Dark2")
 
-ggplot(dens.pr, aes(x,y, fill = plsprbins))+geom_raster()
+#map out where bimodality occurs on the modern landscape
+ggplot(test, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+ggplot(test.f, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+ggplot(test.f1, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+
+#using diptest statistics--Not sure how great this is:
+coeffs <- matrix(NA, 11, 2)
+bins <- as.character(unique(dens.pr$plsprbins))
+for (i in 1:11){
+  a <- dip.test(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
+  coeffs[i,1] <- a$statistic
+  coeffs[i,2] <- a$p.value
+}
+coef.bins<- cbind(coeffs, bins)
+
+coeffsfia <- matrix(NA, 11, 2)
+binsfia <- as.character(unique(dens.pr$plsprbins))
+for (i in 1:11){
+  a<- dip.test(dens.pr[dens.pr$fiaprbins %in% binsfia[i],]$FIAdensity)
+  coeffsfia[i,1] <- a$statistic
+  coeffsfia[i,2] <- a$p.value
+  }
+coef.bins.fia <- cbind(coeffsfia, binsfia)
+
+#merge together with dens.pr
+test <- merge(dens.pr, coef.bins, by.x = "plsprbins", by.y = 'bins')
+test$V1 <- as.numeric(as.character(test$V1))
+test$V2 <- as.numeric(as.character(test$V2))
+test$bimodal <- "Not Bimodal"
+test[test$V2 < 0.01& test$MAP1910 < 1000, ]$bimodal <- "Bimodal"
+
+#for FIA
+test.f <- merge(dens.pr, coef.bins.fia, by.x = "fiaprbins", by.y = 'binsfia')
+test.f$V1 <- as.numeric(as.character(test.f$V1))
+test.f$V2 <- as.numeric(as.character(test.f$V2))
+test.f[is.na(test.f$V1),]$V1 <- 1
+
+test.f$bimodal <- "Not Bimodal"
+test.f[test.f$V2 <  0.01 & test.f$MAP2011 < 1000, ]$bimodal <- "Bimodal"
+
+#for FIA using pls climate that is bimodal
+test.f1 <- merge(dens.pr, coef.bins, by.x = "fiaprbins", by.y = 'bins')
+test.f1$V1 <- as.numeric(as.character(test.f1$V1))
+test.f1$V2 <- as.numeric(as.character(test.f1$V2))
+
+
+test.f1$bimodal <- "Not Bimodal"
+test.f1[test.f1$V2 <  0.01 & test.f1$MAP1910 < 1000, ]$bimodal <- "Bimodal"
+
+ggplot(test, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+ggplot(test.f, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+ggplot(test.f1, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+
+
+ggplot(dens.pr, aes(x,y, fill = plsprbins))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+ggplot(dens.pr, aes(x,y, fill = fiaprbins))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)
+
 #need to do this with species, dens.pr is now just densitys
 dev.off()
 
@@ -373,20 +478,20 @@ library(stargazer)
 
 
 #basic linear models to get an idea of what is important
-PLS.silt<- lm(dens.soils$PLSdensity ~dens.soils$silt)
-plot(PLSdensity ~ silt, data=dens.soils)
-lines(lowess(dens.soils$silt ~ dens.soils$PLSdensity), col="red")
-abline(PLS.silt)
+#PLS.silt<- lm(dens.soils$PLSdensity ~dens.soils$silt)
+#plot(PLSdensity ~ silt, data=dens.soils)
+#lines(lowess(dens.soils$silt ~ dens.soils$PLSdensity), col="red")
+#abline(PLS.silt)
 
-PLS.sand<- lm(dens.soils$PLSdensity ~dens.soils$sand)
-PLS.clay<- lm(dens.soils$PLSdensity ~dens.soils$clay)
+PLS.sand<- lm(dens.soils$PLSdensity ~dens.soils$sandpct)
+#PLS.clay<- lm(dens.soils$PLSdensity ~dens.soils$clay)
 PLS.awc<- lm(dens.soils$PLSdensity ~dens.soils$awc)
-PLS.DEM<- lm(dens.soils$PLSdensity ~dens.soils$DEM)
+#PLS.DEM<- lm(dens.soils$PLSdensity ~dens.soils$DEM)
 PLS.ksat<- lm(dens.soils$PLSdensity ~dens.soils$ksat)
-summary(PLS.DEM)
-summary(PLS.silt)
+#summary(PLS.DEM)
+#summary(PLS.silt)
 summary(PLS.sand)
-summary(PLS.clay)
+#summary(PLS.clay)
 summary(PLS.awc)
 summary(PLS.ksat)
 stargazer(PLS.DEM, PLS.silt, PLS.sand, PLS.clay, PLS.awc, PLS.ksat, type="html",

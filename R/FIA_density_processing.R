@@ -335,10 +335,15 @@ library(hexbin)
 ####
 #plot denisity histograms binned by precipitation amount
 #100mm precipitation bins
-dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
-                         breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
-dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
-                         breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+#dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
+ #                        breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+#dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
+ #                        breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
+                         breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
+                         breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
+
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat')) 
 
@@ -351,7 +356,7 @@ proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
-pdf("outputs/binned_histograms_pr_AGU_12_6_16.pdf")
+pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700) #+ facet_wrap(~plsprbins)
 ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700) #+ facet_wrap(~fiaprbins)
 
@@ -364,8 +369,8 @@ plot(hbin)
 ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_hex(bins = 50) +ylim(0,600)
 
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins)+
-  scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white"))
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
+  scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
 
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 

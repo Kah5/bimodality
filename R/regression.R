@@ -96,7 +96,7 @@ summary( logmod )
 
 
 #for PLS plots:
-PLSpoints <- read.csv("outputs/PLS_pct_cov_by_pt_inil.csv")
+PLSpoints <- read.csv("data/PLSpoints_sand_soils.csv")
 
 #extract prism data for each plot
 # read in and average prism data
@@ -143,7 +143,7 @@ PLSpoints <- PLSpoints[!is.na(PLSpoints$pr),]
 #data_balanced_over <- ovun.sample(pct.cov ~ ., data = PLSpoints, method = "both",N = 10090)$data
 #table(data_balanced_over$pct.cov)
 
-mylogitpls <- glm(pct.cov ~ pr +PET +total_., data = PLSpoints, family = binomial (link = "logit"))
+mylogitpls <- glm(pct.cov ~ pr +PET +annual_.+sandpct, data = PLSpoints, family = binomial (link = "logit"))
 summary(mylogitpls)
 
 newdata <- data.frame(pr = 1300, PET=700, total_. = )

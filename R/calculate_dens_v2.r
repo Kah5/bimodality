@@ -111,8 +111,8 @@ stem.density$density[zero.trees] <- 0
 stem.density$basal[zero.trees] <- 0
 
 #desgnate all wet trees as 'NA'
-stem.density$density[wet.trees] <- NA
-stem.density$basal[wet.trees] <- NA
+stem.density$density[wet.trees] <- 0
+stem.density$basal[wet.trees] <- 0
 
 #fix the captalized "No tree" problem
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
@@ -157,7 +157,7 @@ for (i in 1:nrow(spec.table)) {
 
 # convert to Mg.
 spec.table$biom <- biomass * spec.table$density / 1000
-spec.table      <- spec.table[!is.na(spec.table$density), ]
+#spec.table      <- spec.table[!is.na(spec.table$density), ]
 
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 

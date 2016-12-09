@@ -16,7 +16,7 @@ density.FIA.table <- dcast(FIA.pal, x + y + cell ~ PalEON, mean, na.rm=TRUE, val
 density.FIA.table$FIAdensity <- rowSums(density.FIA.table[,5:24], na.rm = TRUE)
 summary(density.FIA.table$FIAdensity)
 hist(density.FIA.table$FIAdensity, breaks = 100)
-
+#coordinates(density.FIA.table) <- ~x +y
 
 #if you want to do a quick plot
 #coordinates(density.FIA.table) <- ~x + y
@@ -32,6 +32,7 @@ pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'de
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 hist(pls.inil$PLSdensity, xlim = c(0, 400),breaks = 100)
+
 
 #can aggregate by species
 #pls.spec<- read.csv(paste0('outputs/density_tables.csv'))
@@ -52,11 +53,58 @@ colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
 hist(umdw.new$PLSdensity)
 
 pls.inil <- rbind(pls.inil, umdw.new)
+#coordinates(pls.inil)<- ~x+y
+
+#test.ex<- extract(density.FIA.table, extent(pls.inil))
 #write.csv(pls.inil,C:/Users/JMac/Documents/Kelly/biomodality/outputs )
+#plot raw data
+
 
 #merge inil pls and inilFIA
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
-                  by = c('x', 'y', 'cell'))
+                  by = c('x', 'y', 'cell'), all.x = TRUE)
+
+#map out density:
+ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
+ggplot(densitys, aes(x,y,color = FIAdensity))+geom_point()
+
+
+
+#map out 
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+#################################
+#plot maps of tree density
+#################################
+#dens.pr<- data.frame(dens.pr)
+library(ggplot2)
+
+sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'grey')+
+  geom_raster(data=densitys, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)") +
+  coord_equal()+theme_bw()
+pls.map
+
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=densitys, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="FIA tree density") + 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+fia.map
+
+
 
 #densitys <- densitys[densitys$PLSdensity > 14.87, ]
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
@@ -751,12 +799,13 @@ pdf('outputs/maps_CHW_talk.pdf')
 pls.map
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
-
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 pls.map <- ggplot()+ geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
   labs(x="easting", y="northing", title="PLS tree density") + 
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat, colour= 'black'), fill = NA)+
-  scale_fill_gradientn(colours = rev(terrain.colors(4)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)") +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)") +
   coord_equal()
 pls.map
 

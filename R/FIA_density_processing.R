@@ -88,13 +88,16 @@ sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'grey')+
+
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=densitys, aes(x=x, y=y, fill = PLSdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)") +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+png("outputs/PLS_tree_density_map.png")
 pls.map
+dev.off()
 
 fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=densitys, aes(x=x, y=y, fill = FIAdensity))+
@@ -102,8 +105,9 @@ fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   labs(x="easting", y="northing", title="FIA tree density") + 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+png("outputs/FIA_tree_density_map.png")
 fia.map
-
+dev.off()
 
 
 #densitys <- densitys[densitys$PLSdensity > 14.87, ]

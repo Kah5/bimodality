@@ -408,17 +408,33 @@ proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
-pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700) #+ facet_wrap(~plsprbins)
-ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700) #+ facet_wrap(~fiaprbins)
+#pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
+png('outputs/PLS_density_histogrom.png')
+ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+  theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
+dev.off()
+png('outputs/FIA_density_histogram.png')
+ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
+  theme_bw(base_size = 25)#+ facet_wrap(~fiaprbins)
+dev.off()
+
+library(lattice)
+
+hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50, 
+           xlab = expression(alpha), ylab = expression(test), 
+           style = "nested.lattice",
+           panel = function(...) {
+             panel.hexbinplot(...)
+             panel.abline(h=0)
+           })
 
 hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_hex(bins = 50) +ylim(0,600)
+ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+scale_fill_gradient(low='blue', high='black')+theme_bw()
 
 hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_hex(bins = 50) +ylim(0,600)
+ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) +scale_fill_gradient(low='red', high='black')+theme_bw()
 
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+

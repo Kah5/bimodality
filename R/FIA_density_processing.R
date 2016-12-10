@@ -419,7 +419,7 @@ ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", co
 dev.off()
 
 library(lattice)
-
+#hexbin plots to show the density of points in precipitatoins
 hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50, 
            xlab = expression(alpha), ylab = expression(test), 
            style = "nested.lattice",
@@ -430,15 +430,29 @@ hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50,
 
 hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+scale_fill_gradient(low='blue', high='black')+theme_bw(base_size = 25)
+png('outputs/pls_precipitation_hexbin.png')
+ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+
+  scale_fill_gradient(low='blue', high='black')+theme_bw(base_size = 25)+
+  xlab('PRISM 1900-1910 Mean Annual Precipitation (mm)')
+dev.off()
+
 
 hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) +scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 25)
 
+
+png('outputs/fia_precipitation_hexbin.png')
+ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) +
+ scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 25)+
+  xlab('PRISM 1981-2011 Mean Annual Precipitation (mm)')
+dev.off()
+
+rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
+png('outputs/precipitation_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
-  scale_fill_brewer(palette = "Set1") + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
+  scale_color_manual(values = c("#999999", '#E69F00')) + theme_bw(base_size = 15)+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
+dev.off()
 
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 

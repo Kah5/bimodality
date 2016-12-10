@@ -430,11 +430,11 @@ hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50,
 
 hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+scale_fill_gradient(low='blue', high='black')+theme_bw()
+ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+scale_fill_gradient(low='blue', high='black')+theme_bw(base_size = 25)
 
 hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
 plot(hbin)
-ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) +scale_fill_gradient(low='red', high='black')+theme_bw()
+ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) +scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 25)
 
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+

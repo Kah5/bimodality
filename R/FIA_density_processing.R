@@ -383,6 +383,12 @@ contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
+#hex color options:
+#red and blue #ef8a62 and #67a9cf
+#purple and green #af8dc3 #7fbf7b
+#green and brown #d
+
+
 library(hexbin)
 ####
 #plot denisity histograms binned by precipitation amount
@@ -409,12 +415,13 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 #pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-png('outputs/PLS_density_histogrom.png')
-ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= 'red',color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+png('outputs/PLS_density_histogrom.png')#
+ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
   theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
 dev.off()
-png('outputs/FIA_density_histogram.png')
-ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill = "blue", color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
+
+png('outputs/FIA_density_histogram.png')#,
+ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
   theme_bw(base_size = 25)#+ facet_wrap(~fiaprbins)
 dev.off()
 
@@ -451,7 +458,7 @@ rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 png('outputs/precipitation_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 1, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
-  scale_color_manual(values = c("#999999", '#E69F00')) + theme_bw(base_size = 15)+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
 dev.off()
 
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")

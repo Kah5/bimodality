@@ -14,6 +14,25 @@ library(data.table)
 library(sp)
 library(raster)
 library(ggplot2)
+library(ncdf4)
+
+# extract data from north american drought atlas PDSI
+# data: ftp://ftp.ncdc.noaa.gov/pub/data/paleo/drought/NAmericanDroughtAtlas.v2/
+# this PDSI is just summer drought proxy and at 2.5degree resolution, so we likely wont use it
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/')
+NADA <- stack('data/NADAv2-2008.nc')
+NADA.alb <- projectRaster(NADA, crs='+init=epsg:3175')
+
+dens.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
+FIAplots <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/FIA_plot_agg_fuzzed_alb.csv")
+PLSpoints.agg <- read.csv ("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+
+
+NADA.df <- extract(NADA.alb, dens.table[,c("x", "y")])
+NADA.2006.1800<- rowMeans(NADA.df[,1:206], na.rm=TRUE)
+dens.table$NADA <- NADA.2006.1800
+#NADA.df$x <- dens.table$x
+#NADA.df$y <- dens.table$y
 
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/precip_2014/')
 years <- 1900:1950

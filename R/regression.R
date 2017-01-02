@@ -6,6 +6,9 @@ library(raster)
 library(data.table)
 library(rgdal)
 
+
+
+
 setwd("C:/Users/JMac/Documents/Kelly/biomodality/")
 FIAgrids <- read.csv("outputs/FIA_plot_agg_grid_alb.csv")
 FIAplots <- read.csv("outputs/FIA_plot_agg_fuzzed_alb.csv")

@@ -318,6 +318,24 @@ library(mgcv)
 PLS.gam <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 + dens.pr$sandpct + dens.pr$awc, method = "ML")
 summary(PLS.gam) # explains 15% of deviance
 
+PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 + dens.pr$sandpct, method = "ML")
+summary(PLS.gam1) #explains 1.4% deviance
+
+PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$awc , method = "ML")
+summary(PLS.gam3) #explains 12.5% of deviance
+
+PLS.gam4 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
+summary(PLS.gam4) #explains 12.5% of deviance
+
+PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +denjavascript:void(0)s.pr$sandpct , method = "ML")
+summary(PLS.gam5) #explains 14.9% of deviance
+
+PLS.gam2 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 , method = "ML")
+summary(PLS.gam2) #explains 0.004% deviance
+
+
+
+
 FIA.gam <- gam(dens.pr$FIAdensity ~ dens.pr$MAP2011 + dens.pr$sandpct + dens.pr$awc, method = "ML")
 summary(FIA.gam) # explains 4% of deviance
 
@@ -412,27 +430,28 @@ contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
-#hex color options:
-#red and blue #ef8a62 and #67a9cf
-#purple and green #af8dc3 #7fbf7b
-#green and brown #d
+
 
 
 library(hexbin)
-####
+#### 
 #plot denisity histograms binned by precipitation amount
 #100mm precipitation bins
 #dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
                       #   breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 #dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
                         # breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+#make cuts for sliding window plots
 dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
                          breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
                          breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
 
+dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
+dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
+
 test<- dens.pr[!is.na(dens.pr),]
-melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat')) 
+melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins')) 
 
 #map out 
 all_states <- map_data("state")
@@ -487,23 +506,30 @@ rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 png('outputs/precipitation_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('Mean Annual Precipitation (mm)')
+ scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
-
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+
+#plot by sandiness
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+
+#plot by ksat
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 
 #calculate bimodality coefficients
 library(modes)
-coeffs <- matrix(NA, 11, 1)
+coeffs <- matrix(NA, 8, 1)
 bins <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:11){
+for (i in 1:8){
 coeffs[i]<- bimodality_coefficient(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
 }
 coef.bins<- cbind(coeffs, bins)
 
 coeffsfia <- matrix(NA, 8, 1)
 binsfia <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:11){
+for (i in 1:8){
   coeffsfia[i]<- bimodality_coefficient(dens.pr[dens.pr$fiaprbins %in% binsfia[i],]$FIAdensity)
 }
 coef.bins.fia <- cbind(coeffsfia, binsfia)

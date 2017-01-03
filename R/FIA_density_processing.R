@@ -230,6 +230,10 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 #comparison of FIA and PLS datasets to climate
 ###############################################################
 past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
+past.precip$max <- apply(past.precip[ , 2:13], 1, max)
+past.precip$min <- apply(past.precip[ , 2:13], 1, min) 
+past.precip$deltaP <- (past.precip$max-past.precip$min)/(past.precip$max+past.precip$min)
+
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
 past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
 #past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1950_GHCN.csv') #climate for indiana and il
@@ -442,11 +446,12 @@ library(hexbin)
 #dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
                         # breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 #make cuts for sliding window plots
-dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
-                         breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
-dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
-                         breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
-
+#dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
+ #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
+#dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
+ #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50))
 dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
 
@@ -520,16 +525,16 @@ ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.
 
 #calculate bimodality coefficients
 library(modes)
-coeffs <- matrix(NA, 8, 1)
+coeffs <- matrix(NA, 22, 1)
 bins <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:8){
+for (i in 1:22){
 coeffs[i]<- bimodality_coefficient(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
 }
 coef.bins<- cbind(coeffs, bins)
 
-coeffsfia <- matrix(NA, 8, 1)
+coeffsfia <- matrix(NA, 22, 1)
 binsfia <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:8){
+for (i in 1:22){
   coeffsfia[i]<- bimodality_coefficient(dens.pr[dens.pr$fiaprbins %in% binsfia[i],]$FIAdensity)
 }
 coef.bins.fia <- cbind(coeffsfia, binsfia)

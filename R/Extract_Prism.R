@@ -16,7 +16,21 @@ write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/K
 #library(prism)
 #process_zip("data/PRISM_ppt_stable_4kmM2_189501_198012_bil")
 
-#get_prism_annual(type = 'ppt', years = 1901:1905, keepZip = FALSE)
+#get the monthly averages
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
+
+month <- sprintf("%02d", 1:12)
+for (i in month) {
+  filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
+  s <- stack(filenames) #make all into a raster
+  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
+  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  #colnames(y) <- c("x", "y", month.abb)
+  y$year <- i
+  y$gridNumber <- cellFromXY(t, y[, 1:2])
+  # write.csv( ) ?
+}
 
 
 

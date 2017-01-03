@@ -576,35 +576,36 @@ dev.off()
 
 #calculate bimodality coefficients
 library(modes)
-coeffs <- matrix(NA, 22, 1)
-bins <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:22){
-coeffs[i]<- bimodality_coefficient(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
+
+#this function uses the bimodality_coefficient funcition in the modes library to calculate the 
+#bimodality coefficient of the density (FIA or PLS) within a given set of bins (climate, sand, etc)
+
+calc.BC <- function(data, binby, density){
+bins <- as.character(unique(data[,binby]))
+coeffs <- matrix(NA, length(bins), 1)
+for (i in 1:length(bins)){
+coeffs[i]<- bimodality_coefficient(data[data[,binby] %in% bins[i], c(density)])
 }
 coef.bins<- cbind(coeffs, bins)
-
-coeffsfia <- matrix(NA, 22, 1)
-binsfia <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:22){
-  coeffsfia[i]<- bimodality_coefficient(dens.pr[dens.pr$fiaprbins %in% binsfia[i],]$FIAdensity)
+coef.bins
 }
-coef.bins.fia <- cbind(coeffsfia, binsfia)
-#colnames(coef.bins.fia) <- c("BC", "binsfia")
-coef.bins.fia <- data.frame(coef.bins.fia, stringsAsFactors = FALSE)
-coef.bins.fia$V1 <- as.numeric(coef.bins.fia$V1)
-#the first three values are NaN, we replace them with 0
-coef.bins.fia[1:3,] <- 0
-#merge together with dens.pr
+
+prpls.bins <- calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
+prfia.bins <- calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+prfia_withpls.bins <- calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 
 
-test <- merge(dens.pr, coef.bins, by.x = "plsprbins", by.y = 'bins', all.x = FALSE)
+test <- merge(dens.pr, prpls.bins, by.x = "plsprbins", by.y = 'bins', all.x = FALSE)
 is.na(test$V1) <- 0
 test$V1 <- as.numeric(as.character(test$V1))
 test$bimodal <- "Not Bimodal"
 test[test$V1 >  0.5 & test$MAP1910 < 1000, ]$bimodal <- "Bimodal"
 
 #for FIA
-test.f <- merge(dens.pr, coef.bins.fia, by.x = "fiaprbins", by.y = 'binsfia')
+test.f <- merge(dens.pr, prfia.bins, by.x = "fiaprbins", by.y = 'bins')
 #is.na(test.f$V1) <- 0
 
 test.f$coeffsfia <- as.numeric(as.character(test.f$coeffsfia))
@@ -614,7 +615,7 @@ test.f[test.f$coeffsfia >0.5 & test.f$MAP2011 < 1000, ]$bimodal <- "Bimodal"
 
 
 #for FIA using pls climate that is bimodal
-test.f1 <- merge(dens.pr, coef.bins, by.x = "fiaprbins", by.y = 'bins')
+test.f1 <- merge(dens.pr, prfia_withpls.bins, by.x = "fiaprbins", by.y = 'bins')
 test.f1$V1 <- as.numeric(as.character(test.f1$V1))
 test.f1$V2 <- as.numeric(as.character(test.f1$V2))
 
@@ -646,6 +647,7 @@ fp <- ggplot() + geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),
 png('outputs/modern_bimodal_climate.png')
 fp
 dev.off()
+
 #using diptest statistics--Not sure how great this is:
 coeffs <- matrix(NA, 11, 2)
 bins <- as.character(unique(dens.pr$plsprbins))

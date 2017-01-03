@@ -229,10 +229,16 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 ################################################################
 #comparison of FIA and PLS datasets to climate
 ###############################################################
-past.precip <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
-past.precip$max <- apply(past.precip[ , 2:13], 1, max)
-past.precip$min <- apply(past.precip[ , 2:13], 1, min) 
-past.precip$deltaP <- (past.precip$max-past.precip$min)/(past.precip$max+past.precip$min)
+past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
+past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
+past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
+past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
+
+mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms.csv')
+mod.precip.mo$max <- apply(mod.precip.mo[ , 3:14], 1, max)
+mod.precip.mo$min <- apply(mod.precip.mo[ , 3:14], 1, min) 
+mod.precip.mo$deltaP <- (mod.precip.mo$max-mod.precip.mo$min)/(mod.precip.mo$max+mod.precip.mo$min)
+mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
 past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
@@ -246,6 +252,10 @@ dens.pr <- merge(densitys, past.precip[,c('x', 'y', '.')], by =c('x', 'y'))
 dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
+#now add the precipitation seasonality to the dataframe
+dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
+colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 #fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 #fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 #colnames(fia.dens.pr)[46:47] <- c( 'MAP1910', "MAP2011")
@@ -263,8 +273,11 @@ hist(dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems
 #plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
 plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
-plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
-plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
+plot(dens.pr$pastdeltaP, dens.pr$PLSdensity, xlab = "Past P seasonality", ylab = "PLS density")
+plot(dens.pr$moderndeltaP, dens.pr$FIAdensity, xlab = "Modern P seasonality", ylab = "FIA density")
+
+#plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
+#plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 
 ##########################
 #read in soils data
@@ -331,11 +344,14 @@ summary(PLS.gam3) #explains 12.5% of deviance
 PLS.gam4 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
 summary(PLS.gam4) #explains 12.5% of deviance
 
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +denjavascript:void(0)s.pr$sandpct , method = "ML")
+PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct , method = "ML")
 summary(PLS.gam5) #explains 14.9% of deviance
 
 PLS.gam2 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 , method = "ML")
 summary(PLS.gam2) #explains 0.004% deviance
+
+PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
+summary(PLS.gam6) #explains 3.02% deviance
 
 
 
@@ -358,6 +374,22 @@ dev.off()
 png('outputs/FIA_precip_hist_prism.png')
 p <- ggplot(dens.pr, aes(MAP2011, FIAdensity)) + geom_point() + theme_classic()+ xlab('Mean Annual Precipitation (mm)') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
+ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
+
+dev.off()
+
+#make plots for precipitation seasonality
+png('outputs/PLS_delta_precip_hist_prism.png')
+#X11(width = 5)
+p <- ggplot(dens.pr, aes(pastdeltaP, PLSdensity)) + geom_point() + theme_classic() + xlab('Precipitation seasonality') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
+  xlim(0,1) + ylim(0, 800)+theme_bw()+
+  theme(text = element_text(size = 20))
+ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
+dev.off()
+
+png('outputs/FIA_delta_precip_hist_prism.png')
+p <- ggplot(dens.pr, aes(moderndeltaP, FIAdensity)) + geom_point() + theme_classic()+ xlab('Precipitation seasonality') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  xlim(0,1) + ylim(0, 800)+theme_bw()+theme(text = element_text(size = 20))
 ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#0072B2")
 
 dev.off()
@@ -454,9 +486,11 @@ dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50))
 dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
+dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10))
+dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10))
 
 test<- dens.pr[!is.na(dens.pr),]
-melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins')) 
+melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 'pastdeltaP', 'moddeltPbins', 'pastdeltPbins')) 
 
 #map out 
 all_states <- map_data("state")
@@ -509,6 +543,7 @@ dev.off()
 
 rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
+
 png('outputs/precipitation_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
@@ -516,12 +551,28 @@ dev.off()
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 #plot by sandiness
+png('outputs/sand_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
 
 #plot by ksat
+png('outputs/ksat_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
+
+#plot by past deltaPbins 
+png('outputs/pastDeltaP_by_bins.png')
+ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~pastdeltPbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
+
+#plot by mod deltaPbins
+png('outputs/moddeltaP_by_bins.png')
+ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~moddeltPbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
 
 #calculate bimodality coefficients
 library(modes)

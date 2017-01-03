@@ -45,11 +45,30 @@ oct<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_10_pr
 nov<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_11_precip.csv')
 dec<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_12_precip.csv')
 
-full.mo <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
-colnames(full.mo) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
+colnames(full) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May", 
                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
 
-write.csv(full.mo, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_allmonths_precip.csv")
+#plot(avgs) #plots averages
+
+#extract at the tree level for tree cover modeling
+PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+avgs.pts <- data.frame(extract(avgs, PLSpoints.agg[,c('Pointx', 'Pointy')]))
+avgs.pts$Pointx <- PLSpoints.agg$Pointx
+avgs.pts$Pointy <- PLSpoints.agg$Pointy
+write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.full_mo_modernPRISMP.csv")
+
+avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms.csv")
+
+
+#write.csv(full.mo, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_allmonths_precip.csv")
 #try this loop, takes awhile, but works
 
 library(raster)

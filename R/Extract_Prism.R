@@ -20,20 +20,36 @@ write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/K
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
 
 month <- sprintf("%02d", 1:12)
-for (i in month) {
-  filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
+for (i in 1:length(month)) {
+  filenames <- list.files(pattern=paste0(".*_", month[i],".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
   s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
   t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
   y <- data.frame(rasterToPoints(t)) #covert to dataframe
   #colnames(y) <- c("x", "y", month.abb)
-  y$year <- i
+  y$month <- month[i]
   y$gridNumber <- cellFromXY(t, y[, 1:2])
-  # write.csv( ) ?
+  write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_',month[i],'_precip.csv' )) 
 }
 
+jan<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_01_precip.csv')
+feb<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_02_precip.csv')
+mar<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_03_precip.csv')
+apr<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_04_precip.csv')
+may<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_05_precip.csv')
+jun<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_06_precip.csv')
+jul<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_07_precip.csv')
+aug<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_08_precip.csv')
+sep<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_09_precip.csv')
+oct<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_10_precip.csv')
+nov<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_11_precip.csv')
+dec<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_12_precip.csv')
 
+full.mo <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
+colnames(full.mo) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May", 
+                       'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
+write.csv(full.mo, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_allmonths_precip.csv")
 #try this loop, takes awhile, but works
 
 library(raster)

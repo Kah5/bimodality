@@ -648,6 +648,9 @@ png('outputs/modern_bimodal_climate.png')
 fp
 dev.off()
 
+
+
+#################################################
 #using diptest statistics--Not sure how great this is:
 coeffs <- matrix(NA, 11, 2)
 bins <- as.character(unique(dens.pr$plsprbins))

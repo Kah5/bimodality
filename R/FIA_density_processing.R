@@ -484,16 +484,17 @@ library(hexbin)
  #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
 #create multiple sets of bins for precipitation:
 
-dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50))
-dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50))
-dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100))
-dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100))
-dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75))
-dens.pr$fiaprbins75 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 75))
-dens.pr$plsprbins150 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 150))
-dens.pr$fiaprbins150 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 150))
-dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25))
-dens.pr$fiaprbins25 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 25))
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
+dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
+dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
+dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75), labels = seq(250, 1275, by = 75))
+dens.pr$fiaprbins75 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 75), labels = seq(250, 1275, by = 75))
+dens.pr$plsprbins150 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 150), labels = seq(250, 1250, by = 150))
+dens.pr$fiaprbins150 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 150), labels = seq(250, 1250, by = 150))
+dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25), labels = seq(250, 1325, by = 25))
+
+dens.pr$fiaprbins25 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 25), labels = seq(250, 1325, by = 25))
 
 dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
@@ -604,17 +605,54 @@ coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(den
 coef.bins<- data.frame(cbind(coeffs, bins))
 coef.bins$V1 <- as.numeric(as.character(coef.bins$V1))
 #coef.bins
-ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+theme(axis.text = element_text(angle = 90))
+coef.bins <- coef.bins[order(as.numeric(as.character(coef.bins$bins))),]
+coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeric(as.character(coef.bins$bins)))])# reorder so it plots well
+ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
+ geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+  theme(axis.text = element_text(angle = 90))+
+  xlab('bins') + ylab('Bimodality Coefficient')
 }
 
 calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+
 calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
 
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 
+
+#rolling BC
+rollBC_r = function(x,y,xout,width) {
+  out = numeric(length(xout))
+  for( i in seq_along(xout) ) {
+    window = x >= (xout[i]-width) & x <= (xout[i]+width)
+    out[i] = bimodality_coefficient( y[window] )
+  }
+  ggplot()+geom_point(aes(x = ordered$MAP1910, y = out))+
+    geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+    xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+}
+
+ordered <- dens.pr[order(dens.pr$MAP1910),]
+
+pdf('outputs/rolling_BC_plots.pdf')
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 200)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 300)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 250)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 100)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 75)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 50)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)
+dev.off()
 
 test <- merge(dens.pr, prpls.bins, by.x = "plsprbins", by.y = 'bins', all.x = FALSE)
 is.na(test$V1) <- 0

@@ -482,15 +482,30 @@ library(hexbin)
  #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
 #dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
  #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
+#create multiple sets of bins for precipitation:
+
 dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50))
+dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100))
+dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100))
+dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75))
+dens.pr$fiaprbins75 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 75))
+dens.pr$plsprbins150 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 150))
+dens.pr$fiaprbins150 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 150))
+dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25))
+dens.pr$fiaprbins25 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 25))
+
 dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10))
 
 test<- dens.pr[!is.na(dens.pr),]
-melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'MAP1910', "MAP2011", 'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 'pastdeltaP', 'moddeltPbins', 'pastdeltPbins')) 
+melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'plsprbins50', 'fiaprbins50','plsprbins75', 'fiaprbins75',
+                                 'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
+                                 'MAP1910', "MAP2011", 
+                                 'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
+                                 'pastdeltaP', 'moddeltPbins', 'pastdeltPbins')) 
 
 #map out 
 all_states <- map_data("state")
@@ -584,15 +599,18 @@ calc.BC <- function(data, binby, density){
 bins <- as.character(unique(data[,binby]))
 coeffs <- matrix(NA, length(bins), 1)
 for (i in 1:length(bins)){
-coeffs[i]<- bimodality_coefficient(data[data[,binby] %in% bins[i], c(density)])
+coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
 }
-coef.bins<- cbind(coeffs, bins)
-coef.bins
+coef.bins<- data.frame(cbind(coeffs, bins))
+coef.bins$V1 <- as.numeric(as.character(coef.bins$V1))
+#coef.bins
+ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+theme(axis.text = element_text(angle = 90))
 }
 
-prpls.bins <- calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
-prfia.bins <- calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
-prfia_withpls.bins <- calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")

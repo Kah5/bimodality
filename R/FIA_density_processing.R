@@ -610,9 +610,11 @@ coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeri
 ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
  geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
   theme(axis.text = element_text(angle = 90))+
-  xlab('bins') + ylab('Bimodality Coefficient')
+  xlab('bins') + ylab('Bimodality Coefficient')+
+  ggtitle(paste0('Bimodality coefficients for ', binby))
 }
 
+pdf('outputs/bimodality_coefficient_binplots.pdf')
 calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
@@ -627,7 +629,7 @@ calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
-
+dev.off()
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

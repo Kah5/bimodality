@@ -35,7 +35,12 @@ ui <- shinyUI(fluidPage(
                       "Sand Percentage",
                      min = 0,
                      max = 100,
-                    value = c(0,100))
+                    value = c(0,100)),
+        sliderInput("BC_interval",
+                    "Bimodality Coefficient Binwidth",
+                    min = 0,
+                    max = 1150,
+                    value = 150)
    
       ),
       # Show a plot of the generated distribution
@@ -69,7 +74,7 @@ server <- shinyServer(function(input, output) {
       # draw the histogram with the specified number of bins
       hist(x, breaks = bins, col = 'darkgray', border = 'white')
       
-      
+         
     
    }) 
    output$densityPlot <- renderPlot({filtered <-
@@ -91,12 +96,22 @@ server <- shinyServer(function(input, output) {
             sandpct >= input$sand[1],
             sandpct <= input$sand[2]
      )
-      x <- filtered$PLSdensity
-      bc <- bimodality_coefficient(x, FALSE)
-      plot(bc, ylim = c(0,1))
-      abline(a = 5/9, b = 0, col = 'red')})
+      
+      ordered <- filtered[order(filtered$MAP1910),]
+      
+      rollBC_r = function(x,y,xout,width) {
+        out = numeric(length(xout))
+        for( i in seq_along(xout) ) {
+          window = x >= (xout[i]-width) & x <= (xout[i]+width)
+          out[i] = bimodality_coefficient( y[window] )
+        }
+        ggplot()+geom_point(aes(x = ordered$MAP1910, y = out))+
+          geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+          xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+      }   
+      rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, input$BC_interval)
 })
-  
+})
 # Run the application 
 shinyApp(ui = ui, server = server)
 

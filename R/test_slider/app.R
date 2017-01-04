@@ -34,7 +34,8 @@ ui <- shinyUI(fluidPage(
       ),
       # Show a plot of the generated distribution
       mainPanel(
-         plotOutput("distPlot")
+         plotOutput("distPlot"),
+         plotOutput('bimodalPlot')
       )
    )
 )
@@ -60,7 +61,17 @@ server <- shinyServer(function(input, output) {
       
       
     
-   })
+   }) 
+   
+   output$bimodalPlot <- renderPlot({filtered <-
+     dens.pr %>%
+     filter(MAP1910 >= input$precip[1],
+            MAP1910 <= input$precip[2]
+     )
+      x <- filtered$PLSdensity
+      bc <- bimodality_coefficient(x, FALSE)
+      plot(bc, ylim = c(0,1))
+      abline(a = 5/9, b = 0, col = 'red')})
 })
 
 # Run the application 

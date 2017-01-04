@@ -308,7 +308,7 @@ ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
 ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #extract soils data using FIA and ps points
-dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')])
+dens.pr$sandpct <- extract(sand1km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
 dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 
@@ -649,7 +649,18 @@ fp
 dev.off()
 
 
+#using library MClust and Bimodality Index defined in Wang et al.
+#apparently BI>1.1 is bimodal...this says PLS data is not
+library(mclust)
+x.gmm = Mclust(dens.pr$PLSdensity, G = 2)
+summary(x.gmm)
+means<- x.gmm$parameters$mean
+sig <- (means[2] - means[1])/sd(dens.pr$PLSdensity)
+BI <- sqrt(x.gmm$parameters$pro[1]*(1-x.gmm$parameters$pro[1]))*sig
+BI <- sqrt(x.gmm$parameters$pro[1]*(1-x.gmm$parameters$pro[1]))*sig
+BI
 
+library(diptest)
 #################################################
 #using diptest statistics--Not sure how great this is:
 coeffs <- matrix(NA, 11, 2)

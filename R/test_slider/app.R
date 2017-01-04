@@ -22,24 +22,32 @@ ui <- shinyUI(fluidPage(
                      "Number of bins:",
                      min = 1,
                      max = 50,
-                     value = 30)
-      ),
+                     value = 30),
       
         sliderInput("precip",
                       "Precipitation",
                       min = 200,
                       max = 1350,
-                      value = c(250,400))
+                      value = c(250,400)),
 
+      
+        sliderInput("sand",
+                      "Sand Percentage",
+                     min = 0,
+                     max = 100,
+                    value = c(0,100))
+   
       ),
       # Show a plot of the generated distribution
       mainPanel(
          plotOutput("distPlot"),
+         plotOutput('densityPlot'),
          plotOutput('bimodalPlot')
+         
       )
    )
 )
-
+)
 
 
 # Define server logic required to draw a histogram
@@ -51,7 +59,9 @@ server <- shinyServer(function(input, output) {
       filtered <-
         dens.pr %>%
         filter(MAP1910 >= input$precip[1],
-               MAP1910 <= input$precip[2]
+               MAP1910 <= input$precip[2],
+               sandpct >= input$sand[1],
+               sandpct <= input$sand[2]
         )
       x    <- filtered$PLSdensity 
       bins <- seq(min(x), max(x), length.out = input$bins + 1)
@@ -62,18 +72,31 @@ server <- shinyServer(function(input, output) {
       
     
    }) 
+   output$densityPlot <- renderPlot({filtered <-
+     dens.pr %>%
+     filter(MAP1910 >= input$precip[1],
+            MAP1910 <= input$precip[2],
+            sandpct >= input$sand[1],
+            sandpct <= input$sand[2]
+     )
+   plot(density(filtered$PLSdensity, kernel="gaussian"), col = 'blue')
+   lines(density(filtered$PLSdensity, kernal = 'biweight'), col = 'grey')
+   
+   })
    
    output$bimodalPlot <- renderPlot({filtered <-
      dens.pr %>%
      filter(MAP1910 >= input$precip[1],
-            MAP1910 <= input$precip[2]
+            MAP1910 <= input$precip[2],
+            sandpct >= input$sand[1],
+            sandpct <= input$sand[2]
      )
       x <- filtered$PLSdensity
       bc <- bimodality_coefficient(x, FALSE)
       plot(bc, ylim = c(0,1))
       abline(a = 5/9, b = 0, col = 'red')})
 })
-
+  
 # Run the application 
 shinyApp(ui = ui, server = server)
 

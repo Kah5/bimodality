@@ -636,16 +636,17 @@ rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
   for( i in seq_along(xout) ) {
     window = x >= (xout[i]-width) & x <= (xout[i]+width)
-    out[i] = bimodality_coefficient( y[window] )
+    out[i] = bimodality_coefficient( y[window & y < 500] ) # what is the BC for places with less than 300 trees per hectare
   }
-  ggplot()+geom_point(aes(x = ordered$MAP1910, y = out))+
+  ggplot()+geom_point(aes(x = xout, y = out))+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
     xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
 }
 
 ordered <- dens.pr[order(dens.pr$MAP1910),]
+ordered$rownum <- 1:length(ordered$MAP1910)
 
-pdf('outputs/rolling_BC_plots.pdf')
+pdf('outputs/rolling_BC_plots_500_cutoff.pdf')
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 200)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 300)

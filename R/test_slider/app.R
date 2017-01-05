@@ -46,7 +46,9 @@ ui <- shinyUI(fluidPage(
       # Show a plot of the generated distribution
       mainPanel(
          plotOutput("distPlot"),
-         plotOutput('densityPlot'),
+         #plotOutput('densityPlot'),
+         plotOutput('mapPlot'),
+         plotOutput('precipPlot'),
          plotOutput('bimodalPlot')
          
       )
@@ -72,10 +74,47 @@ server <- shinyServer(function(input, output) {
       bins <- seq(min(x), max(x), length.out = input$bins + 1)
       
       # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
-      
+      hist(x, probability = TRUE ,breaks = bins, col = 'darkgray', border = 'white')
+      lines(density(x), col = 'darkblue')
          
     
+   }) 
+   output$precipPlot <- renderPlot({
+     # generate bins based on input$bins from ui.R
+     
+     filtered <-
+       dens.pr %>%
+       filter(MAP1910 >= input$precip[1],
+              MAP1910 <= input$precip[2],
+              sandpct >= input$sand[1],
+              sandpct <= input$sand[2]
+       )
+    
+     
+     # draw the histogram with the specified number of bins
+     ggplot(filtered, aes(MAP1910, PLSdensity))+geom_point()
+     
+     
+   }) 
+   output$mapPlot <- renderPlot({
+     # generate bins based on input$bins from ui.R
+     
+     filtered <-
+       dens.pr %>%
+       filter(MAP1910 >= input$precip[1],
+              MAP1910 <= input$precip[2],
+              sandpct >= input$sand[1],
+              sandpct <= input$sand[2]
+       )
+     cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+     ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+       geom_raster(data=filtered, aes(x=x, y=y, fill = PLSdensity))+
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+       labs(x="easting", y="northing", title="PLS tree density") + 
+       scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+       coord_equal()+theme_bw()
+     
+     
    }) 
    output$densityPlot <- renderPlot({filtered <-
      dens.pr %>%
@@ -99,18 +138,44 @@ server <- shinyServer(function(input, output) {
       
       ordered <- filtered[order(filtered$MAP1910),]
       
-      rollBC_r = function(x,y,xout,width) {
-        out = numeric(length(xout))
-        for( i in seq_along(xout) ) {
+      rollBC_by_10_r = function(x,y,xout,width) {
+        out = 1:length(seq(200, 1350, by = 10) )
+        for( i in 1:length(seq(200, 1350, by = 10))) {
           window = x >= (xout[i]-width) & x <= (xout[i]+width)
           out[i] = bimodality_coefficient( y[window] )
         }
-        ggplot()+geom_point(aes(x = ordered$MAP1910, y = out))+
+        ggplot()+geom_point(aes(x = xout, y = out))+
           geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
           xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
       }   
-      rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, input$BC_interval)
+      
+      rollBC_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10) , input$BC_interval)
 })
+   output$bimodalMAP <- renderPlot({filtered <-
+     dens.pr %>%
+     filter(MAP1910 >= input$precip[1],
+            MAP1910 <= input$precip[2],
+            sandpct >= input$sand[1],
+            sandpct <= input$sand[2]
+     )
+   
+   ordered <- filtered[order(filtered$MAP1910),]
+   
+   rollBC_by_10_r = function(x,y,xout,width) {
+     out = 1:length(seq(200, 1350, by = 10) )
+     for( i in 1:length(seq(200, 1350, by = 10))) {
+       window = x >= (xout[i]-width) & x <= (xout[i]+width)
+       out[i] = bimodality_coefficient( y[window] )
+     }
+     
+     
+     ggplot()+geom_point(aes(x = xout, y = out))+
+       geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+       xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+   }   
+   
+   rollBC_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10) , input$BC_interval)
+   })
 })
 # Run the application 
 shinyApp(ui = ui, server = server)

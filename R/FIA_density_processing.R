@@ -308,7 +308,7 @@ ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
 ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #extract soils data using FIA and ps points
-dens.pr$sandpct <- extract(sand1km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
+dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
 dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 
@@ -641,6 +641,7 @@ rollBC_r = function(x,y,xout,width) {
   ggplot()+geom_point(aes(x = xout, y = out))+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
     xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+  
 }
 
 ordered <- dens.pr[order(dens.pr$MAP1910),]
@@ -655,43 +656,65 @@ rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 100)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 75)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 50)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)
+rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 10)
 dev.off()
 
-test <- merge(dens.pr, prpls.bins, by.x = "plsprbins", by.y = 'bins', all.x = FALSE)
-is.na(test$V1) <- 0
-test$V1 <- as.numeric(as.character(test$V1))
-test$bimodal <- "Not Bimodal"
-test[test$V1 >  0.5 & test$MAP1910 < 1000, ]$bimodal <- "Bimodal"
-
-#for FIA
-test.f <- merge(dens.pr, prfia.bins, by.x = "fiaprbins", by.y = 'bins')
-#is.na(test.f$V1) <- 0
-
-test.f$coeffsfia <- as.numeric(as.character(test.f$coeffsfia))
-#test.f <- test.f[!is.na(test.f$V1),]
-test.f$bimodal <- "Not Bimodal"
-test.f[test.f$coeffsfia >0.5 & test.f$MAP2011 < 1000, ]$bimodal <- "Bimodal"
+#this version of roll_BC_by10 takes the BC every 10mm of preciptiation
+rollBC_by_10_r = function(x,y,xout,width) {
+  out = 1:length(seq(200, 1350, by = 10) )
+  for( i in 1:length(seq(200, 1350, by = 10))) {
+    window = x >= (xout[i]-width) & x <= (xout[i]+width)
+    out[i] = bimodality_coefficient( y[window] )
+  }
+  ggplot()+geom_point(aes(x = xout, y = out))+
+    geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+    xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+}   
+rollBC_by_10(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 
 
-#for FIA using pls climate that is bimodal
-test.f1 <- merge(dens.pr, prfia_withpls.bins, by.x = "fiaprbins", by.y = 'bins')
-test.f1$V1 <- as.numeric(as.character(test.f1$V1))
-test.f1$V2 <- as.numeric(as.character(test.f1$V2))
+rollBC_by_10 = function(x,y,xout,width) {
+  out = 1:length(seq(200, 1350, by = 10) )
+  for( i in 1:length(seq(200, 1350, by = 10))) {
+    window = x >= (xout[i]-width) & x <= (xout[i]+width)
+    out[i] = bimodality_coefficient( y[window] )
+  }
+  df <- data.frame(mid = xout, max = xout + width,min = xout - width,BC = out)
+  
+}
 
+BC_vals <- rollBC_by_10(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 
-test.f1$bimodal <- "Not Bimodal"
-test.f1[test.f1$V1 >  0.5 & test.f1$MAP1910 < 1000, ]$bimodal <- "Bimodal"
+BC_vals[BC_vals$BC >= 0.55,]
+nums <- BC_vals$min[1]: BC_vals$max[1]
 
-#clim.past <- merge(past.precip, coef.bins)
-ggplot(clim.past, aes(x, y, fill = .))+geom_point()
+xout <- seq(200, 1350, by = 10)
+
+# merge ordered with the bimodality coefficients
+rollBC_merge_r = function(x,y,xout,width) {
+  out = numeric(length(xout))
+  for( i in seq_along(xout) ) {
+    window = x >= (xout[i]-width) & x <= (xout[i]+width)
+    out[i] = bimodality_coefficient( y[window ] ) # what is the BC for places with less than 300 trees per hectare
+  }
+  ordered$BC <- out
+  ordered
+}
+
+dens_BC <- rollBC_merge_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)
+dens_BC <- dens_BC[!is.na(dens_BC$BC),]
+dens_BC$bimodal <- "Not Bimodal" #create a non-bimodal group
+dens_BC[dens_BC$BC >=  0.55, ]$bimodal <- "Bimodal" # assign bimodality to grid cells that have high BC
+#dens_BC[dens_BC$MAP1910 >= 500 & dens_BC$MAP1910 <= 1000, ]$bimodal <- "Bimodal" 
+summary(dens_BC)
 
 #map out where bimodality occurs on the modern landscape
 p<- ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data= test, aes(x = x, y= y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
+    geom_raster(data= dens_BC, aes(x = x, y= y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()
-png('outputs/pls_bimodal_climate.png')
+#png('outputs/pls_bimodal_climate.png')
 p
-dev.off()
+#dev.off()
 
 f <- ggplot() + geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey') + 
   geom_raster(data = test.f, aes(x = x,y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
@@ -711,8 +734,10 @@ dev.off()
 #using library MClust and Bimodality Index defined in Wang et al.
 #apparently BI>1.1 is bimodal...this says PLS data is not
 library(mclust)
-x.gmm = Mclust(dens.pr$PLSdensity, G = 2)
-summary(x.gmm)
+x.gmm2 = Mclust(dens.pr$PLSdensity, G = 2) # bimodal dist
+summary(x.gmm2)
+x.gmm1 = Mclust(dens.pr$PLSdensity, G = 1) # unimodal dist
+summary(x.gmm1)
 means<- x.gmm$parameters$mean
 sig <- (means[2] - means[1])/sd(dens.pr$PLSdensity)
 BI <- sqrt(x.gmm$parameters$pro[1]*(1-x.gmm$parameters$pro[1]))*sig
@@ -722,9 +747,9 @@ BI
 library(diptest)
 #################################################
 #using diptest statistics--Not sure how great this is:
-coeffs <- matrix(NA, 11, 2)
+coeffs <- matrix(NA, 22, 2)
 bins <- as.character(unique(dens.pr$plsprbins))
-for (i in 1:11){
+for (i in 1:22){
   a <- dip.test(dens.pr[dens.pr$plsprbins %in% bins[i],]$PLSdensity)
   coeffs[i,1] <- a$statistic
   coeffs[i,2] <- a$p.value

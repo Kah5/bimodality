@@ -135,12 +135,13 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 
 
 #setwd to data directory
-  setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
+  setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_stable_4kmM2_189501_198012_bil/')
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 coordinates(spec.table) <- ~x + y
-yrs<- "1895-1905"
-years <- 1895:1905
+  
+yrs<- "1900-1910"
+years <- 1900:1910
 for (i in years) {
   filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
@@ -162,7 +163,7 @@ y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 #this averages for each month within each gridcell
 full.t <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                                'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
-
+full.t <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
 #convert to rasterstack
 coordinates(full.t) <- ~x + y
 gridded(full.t) <- TRUE
@@ -170,19 +171,30 @@ avgs <- stack(full.t)
 
 plot(avgs) #plots averages
 
-avgs.df <- data.frame(extract(avgs, tree.dens[,c("x","y")]))
-avgs.df$x <- tree.dens$x
-avgs.df$y <- tree.dens$y
+avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_monthly_Prism_",yrs,".csv"))
-
-
+write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_yr_Prism_",yrs,".csv"))
 
 
 
+
+#now for the 30yr means
+# read in and average prism data
+prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil")
+prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+#spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
+spec.table <- data.frame(spec.table)
+temp30yr <- data.frame(extract(prism.alb, spec.table[,c("x","y")]))
+temp30yr$x <- spec.table$x
+temp30yr$y <- spec.table$y
+
+write.csv(temp30yr, 'C:/Users/JMac/Documents/Kelly/biomodality/data/tmean_30yr_prism.csv')
 
 #setwd to data directory
-setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRI')
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
 coordinates(spec.table) <- ~x + y

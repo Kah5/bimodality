@@ -242,6 +242,8 @@ mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
 past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
+mod.tmean <- read.csv('outputs/tmean_Prism_30yr.csv')
+past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
 #past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1950_GHCN.csv') #climate for indiana and il
 #mod.precip <- read.csv('data/spec_table_30yr_prism.csv') #climate for indiana and il
 
@@ -256,12 +258,13 @@ colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
 colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
-#fia.dens.pr <- merge(FIA.full, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
-#fia.dens.pr <- merge(fia.dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-#colnames(fia.dens.pr)[46:47] <- c( 'MAP1910', "MAP2011")
 
+#now add the mean temperature to the dataframe
+#dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', '.')], by = c('x', 'y') )
+colnames(dens.pr)[10] <- c('pasttmean')
+dens.pr$pasttmean<- dens.pr$pasttmean/10 # convert from C*10 to Celcius
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
-#write.csv(fia.dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_FIA_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
 #dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density
@@ -275,10 +278,10 @@ plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density'
 plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
 plot(dens.pr$pastdeltaP, dens.pr$PLSdensity, xlab = "Past P seasonality", ylab = "PLS density")
 plot(dens.pr$moderndeltaP, dens.pr$FIAdensity, xlab = "Modern P seasonality", ylab = "FIA density")
-
+plot(dens.pr$pasttmean, dens.pr$PLSdensity, xlab = 'Past Tmean', ylab = "PLSdensity")
 #plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
 #plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
-
+plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Precip")
 ##########################
 #read in soils data
 sand8km <- raster("data/8km_UMW_sand1.tif")
@@ -332,14 +335,14 @@ summary(FIA_pas.lm)
 summary(diff.lm)
 library(mgcv)
 #make gams 
-PLS.gam <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 + dens.pr$sandpct + dens.pr$awc, method = "ML")
-summary(PLS.gam) # explains 15% of deviance
+PLS.gam <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, method = "ML")
+summary(PLS.gam) # explains 41% of deviance
 
-PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 + dens.pr$sandpct, method = "ML")
-summary(PLS.gam1) #explains 1.4% deviance
+PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean+ dens.pr$sandpct, method = "ML")
+summary(PLS.gam1) #explains 39% deviance
 
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$awc , method = "ML")
-summary(PLS.gam3) #explains 12.5% of deviance
+PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , method = "ML")
+summary(PLS.gam3) #explains 41.3% of deviance
 
 PLS.gam4 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
 summary(PLS.gam4) #explains 12.5% of deviance
@@ -353,8 +356,9 @@ summary(PLS.gam2) #explains 0.004% deviance
 PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
 summary(PLS.gam6) #explains 3.02% deviance
 
-
-
+PLSgam7 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
+summary(PLSgam7) #explains 15.8% deviance
+plot(PLS.gam7, residuals = TRUE)
 
 FIA.gam <- gam(dens.pr$FIAdensity ~ dens.pr$MAP2011 + dens.pr$sandpct + dens.pr$awc, method = "ML")
 summary(FIA.gam) # explains 4% of deviance
@@ -572,6 +576,10 @@ ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
+#plot out climate space:
+ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey')
+
 #plot by ksat
 png('outputs/ksat_by_bins.png')
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
@@ -631,6 +639,9 @@ calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
+
+
+
 #rolling BC
 rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
@@ -685,10 +696,7 @@ rollBC_by_10 = function(x,y,xout,width) {
 
 BC_vals <- rollBC_by_10(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 
-BC_vals[BC_vals$BC >= 0.55,]
-nums <- BC_vals$min[1]: BC_vals$max[1]
-
-xout <- seq(200, 1350, by = 10)
+bc
 
 # merge ordered with the bimodality coefficients
 rollBC_merge_r = function(x,y,xout,width) {
@@ -707,6 +715,19 @@ dens_BC$bimodal <- "Not Bimodal" #create a non-bimodal group
 dens_BC[dens_BC$BC >=  0.55, ]$bimodal <- "Bimodal" # assign bimodality to grid cells that have high BC
 #dens_BC[dens_BC$MAP1910 >= 500 & dens_BC$MAP1910 <= 1000, ]$bimodal <- "Bimodal" 
 summary(dens_BC)
+plot(dens_BC$BC, dens_BC$PLSdensity, xlim=c(0,1))
+
+#plot relationship:
+ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity)) + geom_point()+ylim(0,400)+
+  stat_smooth()+facet_wrap(~plsprbins, scales = 'free_x')
+
+library(mgcv)
+glm1 = gam(PLSdensity~s(MAP1910),family=gaussian,data=dens.pr)
+plot.new()
+plot(dens.pr$MAP1910,fitted(glm1),col="springgreen",lwd=2)
+summary(glm1)
+
+#Create gam funciton over each of these bins to see if sand and precip can explain bimodality
 
 #map out where bimodality occurs on the modern landscape
 p<- ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+

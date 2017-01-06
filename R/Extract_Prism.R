@@ -157,8 +157,8 @@ for (i in years) {
 
 spec.table <- data.frame(spec.table)
 
-y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+y$mean <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])/12
 
 #this averages for each month within each gridcell
 full.t <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 

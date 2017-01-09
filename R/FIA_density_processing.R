@@ -477,10 +477,10 @@ library(hexbin)
 #### 
 #plot denisity histograms binned by precipitation amount
 #100mm precipitation bins
-#dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
-                      #   breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
-#dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
-                        # breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
+                         breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
+dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
+                         breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 #make cuts for sliding window plots
 #dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
  #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
@@ -488,8 +488,8 @@ library(hexbin)
  #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
 #create multiple sets of bins for precipitation:
 
-dens.pr$plsprbins <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
-dens.pr$fiaprbins <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
+dens.pr$plsprbins50 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
+dens.pr$fiaprbins50 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
 dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
 dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
 dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75), labels = seq(250, 1275, by = 75))
@@ -577,8 +577,10 @@ ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.
 dev.off()
 
 #plot out climate space:
+png('outputs/precip_vs_temp_pls.png')
 ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey')
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
 
 #plot by ksat
 png('outputs/ksat_by_bins.png')
@@ -639,7 +641,23 @@ calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
-
+map.bimodal <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+  }
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  merged$bimodal <- "Not bimodal"
+  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()+
+    ggtitle(paste0('Bimodal regions for ', binby))
+ 
+}
 
 
 #rolling BC
@@ -655,6 +673,7 @@ rollBC_r = function(x,y,xout,width) {
   
 }
 
+#need to order the 
 ordered <- dens.pr[order(dens.pr$MAP1910),]
 ordered$rownum <- 1:length(ordered$MAP1910)
 
@@ -681,7 +700,7 @@ rollBC_by_10_r = function(x,y,xout,width) {
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
     xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
 }   
-rollBC_by_10(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
+rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 
 
 rollBC_by_10 = function(x,y,xout,width) {

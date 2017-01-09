@@ -641,12 +641,15 @@ calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
+
+#this function maps out the region that is bimodal 
 map.bimodal <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 1)
   for (i in 1:length(bins)){
     coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
   }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
@@ -659,6 +662,21 @@ map.bimodal <- function(data, binby, density){
  
 }
 
+#map out bimodalities--note the region varies by bin size
+pdf('outputs/bimodal_maps.pdf')
+map.bimodal(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+dev.off()
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

@@ -76,7 +76,7 @@ library(raster)
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.5-2.csv')
 coordinates(spec.table) <- ~x + y
 
 years <- 1900:1910
@@ -102,7 +102,7 @@ y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
 y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
           'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
 #this averages for each month within each gridcell
-full <- dcast(data.frame(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+full <- dcast(data.frame(y), x + y ~., mean , value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
                                              'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
 
 full <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')

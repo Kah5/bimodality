@@ -3,7 +3,7 @@ library(ggplot2)
 
 LPJ.dens <- read.csv('C:/Users/Jmac/Box Sync/biomodality/data/LPJ-GUESS/LPJ-GUESS_annual_dens.csv')
 dens.1850 <- LPJ.dens[LPJ.dens$Year %in% 1850,]
-ggplot(dens.1850, aes(lon, lat, fill = Dens))+geom_raster() +coord_equal()+ facet_grid(PFT~.)
+ggplot(dens.1850, aes(lon, lat, fill = Dens)) + geom_raster() + coord_equal() + facet_grid(PFT~.)
 dens.1850.df <- dens.1850
 dens.1850 <- dens.1850[dens.1850$PFT %in% "Deciduous", ] # lets look at decidious only
 dens.1850.con <- dens.1850.df[dens.1850.df$PFT %in% "Evergreen", ] # lets look at decidious only
@@ -92,3 +92,51 @@ numbersoftrees.umw <- data.frame(names = colnames(umw[,4:32]),counts = colSums(u
 png(paste0('outputs/v',version,'counts_of_umw_spec.png'))
 ggplot() + geom_point(data = numbersoftrees.umw, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
 dev.off()
+
+
+#now specifically match transect 1
+coordinates(umw) <- ~x + y
+gridded(umw) <- TRUE
+proj4string(umw) <- CRS('+init=epsg:3175')
+umw.ll <- spTransform(umw, crs('+init=epsg:4326'))
+umw.ll <- data.frame(umw.ll)
+
+tran.1$lon
+# I am just subsetting these manually here:
+
+umw.ll <- umw.ll[umw.ll$x < max(tran.1$lon) & umw.ll$x > min(tran.1$lon),]
+umw.ll <- umw.ll[umw.ll$y > 45 & umw.ll$y < 46,]
+tran.umw <- data.frame(names = colnames(umw.ll[,2:30]),counts = colSums(umw.ll[,2:30]))
+
+png(paste0('outputs/v',version,'counts_of_transect1_spec.png'))
+ggplot() + geom_point(data = tran.umw, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
+dev.off()
+
+tran.umw <- tran.umw[rev(order(tran.umw$counts)),] #order so that the highest # of counts apprears first
+
+write.csv(tran.umw, "outputs/v1.6/transect1_taxa.csv")
+
+# now specifically match transect 2 in indiana and illinois
+coordinates(count.table) <- ~x + y
+gridded(count.table) <- TRUE
+proj4string(count.table) <- CRS('+init=epsg:3175')
+inil.ll <- spTransform(count.table, crs('+init=epsg:4326'))
+inil.ll <- data.frame(inil.ll)
+
+tran.2$lon
+# I am just subsetting these manually here:
+
+inil.ll <- inil.ll[inil.ll$x < max(tran.2$lon) & inil.ll$x > min(tran.2$lon),]
+inil.ll <- inil.ll[inil.ll$y > 40 & inil.ll$y < 41,]
+tran.inil <- data.frame(names = colnames(inil.ll[,2:34]),counts = colSums(inil.ll[,2:34]))
+
+png(paste0('outputs/v',version,'counts_of_transect2_spec.png'))
+ggplot() + geom_point(data = tran.inil, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
+dev.off()
+
+tran.inil <- tran.inil[rev(order(tran.inil$counts)),]
+write.csv(tran.inil, "outputs/v1.6/transect2_taxa.csv")
+
+tran2.m<- melt(tran.inil, id.vars = c('x', "y", "cell", 'total'))
+X11(width = 20)
+ggplot(data = tran2.m, aes(x = x, y = value, color = variable))+geom_point()+geom_smooth(se = FALSE, span = 0.8) 

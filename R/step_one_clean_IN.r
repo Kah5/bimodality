@@ -26,19 +26,22 @@
 #  Updated (1.4): Dec  8, 2014
 #  Kelly Heilman 1.5: April 14, 2015
 #  Updated (1.5-2: illinois georeferenced): October 24th, 2016
+#  Updated (v1.6: Illinois + Indiana georeferenced): Jan 7th, 2017
 library(sp)
 library(spdep)
 library(rgdal)
 library(raster)
 library(ggplot2)
 library(Rcpp)
+
+version <- "1.6"
 # Read in the data
-ind <- read.csv("data/IN v1.5-1 Georeferenced/ndinpls_v1.5-1.csv", stringsAsFactors = FALSE)
+ind <- read.csv("data/ndinpls_v1.6.csv", stringsAsFactors = FALSE) # version 1.6 
 
 # Read in the il data
-il <- read.csv("data/ndilpls_v1.5-2/ndilpls_v1.5-2.csv", stringsAsFactors = FALSE) # version 1.5-2
+il <- read.csv("data/ndilpls_v1.6.csv", stringsAsFactors = FALSE) # version 1.6
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
+ggplot(data = ind, aes(x = x, y = y, color = bearingdir)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 
@@ -87,9 +90,9 @@ ind$DIST4 <- as.numeric(ind$chainstree4)
 
 # there is something off about the chainstree labels that needs to be fixed in version 1.5-2 of illinios data
 il$DIST1 <- as.numeric(il$chainstree)
-il$DIST2 <- as.numeric(il$chainstr_1)
-il$DIST3 <- as.numeric(il$chainstr_2)
-il$DIST4 <- as.numeric(il$chainstr_3)
+il$DIST2 <- as.numeric(il$chainstree2)
+il$DIST3 <- as.numeric(il$chainstree3)
+il$DIST4 <- as.numeric(il$chainstree4)
 
 
 #this removes all points (including no trees) that dont have distances provided. 
@@ -428,4 +431,4 @@ summary(final.data)
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
 
 #write the data as a csv
-write.csv(final.data, "outputs/ndilinpls_for_density_v1.5-2.csv")
+write.csv(final.data, paste0("outputs/ndilinpls_for_density_v",version,".csv"))

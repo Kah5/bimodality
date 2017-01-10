@@ -1,7 +1,7 @@
 # PLS_full_density_processing.R
 # This script performs many of the bimodality funcitons that FIA_density_processing.R does, but 
 # this script includes all of the PLS data, not just the data that overlaps with FIA
-version <- "1.5-2"
+version <- "1.6"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
@@ -13,7 +13,7 @@ pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
-hist(pls.inil$PLSdensity, xlim = c(0, 400),breaks = 100)
+hist(pls.inil$PLSdensity, xlim = c(0, 400),breaks = 50)
 
 
 #can aggregate by species
@@ -56,7 +56,7 @@ mapdata <- data.frame(mapdata)
 #plot maps of tree density
 #################################
 #dens.pr<- data.frame(dens.pr)
-library(ggplot2)
+
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
@@ -69,7 +69,7 @@ pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   labs(x="easting", y="northing", title="PLS tree density") + 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
-png("outputs/PLS__full_tree_density_map.png")
+png(paste0("outputs/v",version,"/PLS__full_tree_density_map.png"))
 pls.map
 dev.off()
 
@@ -81,7 +81,7 @@ write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwe
 ###############################################################
 
 #create variable for precipitation seasonality
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
+past.precip.mo <- read.csv(paste0('outputs/pr_monthly_Prism_1895_1905.csv'))
 past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
 past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
 past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
@@ -204,7 +204,7 @@ plot(PLS.gam7, residuals = TRUE)
 library(ggExtra)
 library(ggplot2)
 
-png('outputs/PLS_full_precip_hist_prism.png')
+png(paste0('outputs/v',version,'PLS_full_precip_hist_prism.png'))
 #X11(width = 5)
 p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+
@@ -212,7 +212,7 @@ p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() 
 ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
 dev.off()
 
-png('outputs/PLS__full_delta_precip_hist_prism.png')
+png(paste0('outputs/v',version,'/PLS__full_delta_precip_hist_prism.png'))
 #X11(width = 5)
 p <- ggplot(dens.pr, aes(pastdeltaP, PLSdensity)) + geom_point() + theme_classic() + xlab('Precipitation seasonality') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
   xlim(0,1) + ylim(0, 800)+theme_bw()+
@@ -227,13 +227,13 @@ awcpls <- ggplot(dens.pr, aes(awc, PLSdensity)) + geom_point() + theme_classic()
 ksatpls <- ggplot(dens.pr, aes(ksat, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
 
-png('outputs/PLS_full_sand.png')
+png(paste0('outputs/v',version,'/PLS_full_sand.png'))
 sandpls
 dev.off()
-png('outputs/PLS_full_awc.png')
+png(paste0('outputs/v',version,'/PLS_full_awc.png'))
 awcpls
 dev.off()
-png('outputs/PLS_full_ksat.png')
+png(paste0('outputs/v',version,'/PLS_full_ksat.png'))
 ksatpls
 dev.off()
 
@@ -286,7 +286,7 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 #pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-png('outputs/PLS_full_density_histogrom.png')#
+png(paste0('outputs/v',version,'/PLS_full_density_histogrom.png'))#
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
   theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
 dev.off()
@@ -296,7 +296,7 @@ dev.off()
 library(lattice)
 #hexbin plots to show the density of points in precipitatoins
 
-png('outputs/PLS_full_precipitation_hexbin.png')
+png(paste0('outputs/v',version,'/PLS_full_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) + xlim(400, 1400)+
   scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 20)+
   xlab('Mean Annual Precipitation (mm) \n PRISM 1900-1910') + ylab("PLS Tree Density (stems/ha)")
@@ -305,38 +305,38 @@ dev.off()
 rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 
-png('outputs/precipitation_full_by_bins.png')
+png(paste0('outputs/v',version,'/precipitation_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 #plot by sandiness
-png('outputs/sand_full_by_bins.png')
+png(paste0('outputs/v',version,'/sand_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
 #plot out climate space:
-png('outputs/precip_vs_temp_full_pls.png')
+png(paste0('outputs/v',version,'/precip_vs_temp_full_pls.png'))
 ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
 
 #plot by ksat
-png('outputs/ksat_full_by_bins.png')
+png(paste0('outputs/v',version,'/ksat_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
 #plot by past deltaPbins 
-png('outputs/pastDeltaP_full_by_bins.png')
+png(paste0('outputs/v',version,'/pastDeltaP_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~pastdeltPbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
 #plot by mod deltaPbins
-png('outputs/moddeltaP_full_by_bins.png')
+png(paste0('outputs/v',version,'/moddeltaP_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~moddeltPbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
@@ -365,7 +365,7 @@ calc.BC <- function(data, binby, density){
     ggtitle(paste0('Bimodality coefficients for ', binby))
 }
 
-pdf('outputs/bimodality_coefficient_full_pls_binplots.pdf')
+pdf(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_binplots.pdf'))
 calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
 #calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
@@ -396,7 +396,7 @@ map.bimodal <- function(data, binby, density){
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   merged$bimodal <- "Not bimodal"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
-  write.csv(merged, paste0("outputs/PLS_full_bimodal_", binby,".csv"))
+  write.csv(merged, paste0('outputs/v',version,'/PLS_full_bimodal_', binby,'.csv'))
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
     geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
@@ -405,7 +405,7 @@ map.bimodal <- function(data, binby, density){
 }
 
 #map out bimodalities--note the region varies by bin size
-pdf('outputs/bimodal_maps.pdf')
+pdf(paste0('outputs/v',version,'/bimodal_maps.pdf'))
 map.bimodal(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
 map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
@@ -437,7 +437,7 @@ rollBC_r = function(x,y,xout,width) {
 ordered <- dens.pr[order(dens.pr$MAP1910),]
 ordered$rownum <- 1:length(ordered$MAP1910)
 
-pdf('outputs/rolling_BC_plots_500_cutoff.pdf')
+pdf(paste0('outputs/v',version,'/rolling_BC_plots_500_cutoff.pdf'))
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 200)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 300)

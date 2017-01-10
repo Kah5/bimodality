@@ -6,6 +6,7 @@
 ##############################
 library(plyr)
 library(reshape2)
+library(raster)
 version <- "1.6"
 
 #read in final.data from the step_one_clean_IN.r script:
@@ -87,6 +88,7 @@ numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
 
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
+final.data <- data.frame(final.data)
 final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 
 #create dataframe with stem density, speceies
@@ -127,6 +129,7 @@ spec.table$density[spec.table$spec == 'No tree'] <- 0
 spec.table$Pointx <- spec.table$PointX
 spec.table$Pointy <- spec.table$PointY
 spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
+
 
 biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
                        stringsAsFactors = FALSE)

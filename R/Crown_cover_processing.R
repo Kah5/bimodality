@@ -339,3 +339,33 @@ map.bimodal(data = cover, binby = 'sandbins', val = "pct_half")
 map.bimodal(data = cover, binby = 'ksatbins', val = "pct_half")
 map.bimodal(data = cover, binby = 'pastdeltPbins', val = "pct_half")
 dev.off()
+
+
+#rolling BC
+rollBC_r = function(x,y,xout,width) {
+  out = numeric(length(xout))
+  for( i in seq_along(xout) ) {
+    window = x >= (xout[i]-width) & x <= (xout[i]+width)
+    out[i] = bimodality_coefficient( y[window & y < 500] ) # what is the BC for places with less than 300 trees per hectare
+  }
+  ggplot()+geom_point(aes(x = xout, y = out))+
+    geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+    xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+  
+}
+
+#need to order the 
+ordered <- cover[order(cover$MAP1910),]
+ordered$rownum <- 1:length(ordered$MAP1910)
+
+pdf(paste0('outputs/v',version,'/rolling_BC_plots_PLS_cover_500_cutoff.pdf'))
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 150)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 200)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 300)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 250)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 100)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 75)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 50)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 25)
+rollBC_r(ordered$MAP1910, ordered$pct_half, ordered$MAP1910, 10)
+dev.off()

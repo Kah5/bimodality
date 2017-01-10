@@ -60,3 +60,35 @@ tran.2 <- data.frame(lon = Transect2.lon, lat = 40.75)
 tran.2$transect <- 'two'
 transects <- rbind(tran.1, tran.2)
 write.csv(transects, "outputs/LPJ_potential_transects.csv")
+
+
+#now lets see what taxa are represented in these regions & transects:
+library(ggplot2)
+library(raster)
+library(reshape2)
+library(dplyr)
+version <- "1.6"
+
+# read in file
+spec.table <- read.csv("outputs/species_table_pls_coverscenter.csv")
+
+# spec.table lists each xy tree coordinate and is given a 1 if the tree's crown covers the PLS point, and a 0 if the trees crown does not cover the PLS point
+X11(width = 12)
+ggplot(spec.table, aes(x = Pointx, y = Pointy, color = spec))+geom_point()
+
+
+count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
+count.table$total <- rowSums(count.table[,4:36], na.rm = TRUE)
+numbersoftrees <- data.frame(names = colnames(count.table[,4:36]),counts = colSums(count.table[,4:36]))
+
+png(paste0('outputs/v',version,'counts_of_inil_spec.png'))
+ggplot() + geom_point(data = numbersoftrees, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
+dev.off()
+
+umw <- read.csv("data/plss_plots_taxa_alb_v0.9-10.csv")
+numbersoftrees.umw <- data.frame(names = colnames(umw[,4:32]),counts = colSums(umw[,4:32]))
+
+
+png(paste0('outputs/v',version,'counts_of_umw_spec.png'))
+ggplot() + geom_point(data = numbersoftrees.umw, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
+dev.off()

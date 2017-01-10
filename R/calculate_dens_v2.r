@@ -6,9 +6,10 @@
 ##############################
 library(plyr)
 library(reshape2)
-version <- "1.5-2"
+version <- "1.6"
 
-final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFactors = FALSE)
+#read in final.data from the step_one_clean_IN.r script:
+final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 # calculate stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
 
@@ -86,7 +87,7 @@ numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
 
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
-final.data <- read.csv("outputs/ndilinpls_for_density_v1.5-2.csv", stringsAsFactors = FALSE)
+final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 
 #create dataframe with stem density, speceies
 spec.table <- data.frame(PointX = final.data$PointX, 
@@ -253,7 +254,7 @@ covered.table.pt[,38:39] <- xyFromCell(base.rast, covered.table.pt$cell)
 colnames(covered.table.pt)[38:39] <- c('x', "y")
 covered.table.pt[covered.table.pt$pct.cov > 1, ]$pct.cov <- 1 # assign all the 2 values as 1
 
-write.csv(covered.table.pt, "outputs/PLS_pct_cov_by_pt_inil.csv")
+write.csv(covered.table.pt, paste0("outputs/PLS_pct_cov_by_pt_inil",version,".csv"))
 
 covered.table.cell <- dcast(covered.table.pt[,3:39], x + y + cell ~., sum, value.var = "pct.cov")
 
@@ -274,14 +275,14 @@ pct.covered.trees <- data.frame(x = covered.table.cell$x,
                                  y = covered.table.cell$y, 
                                  cell = covered.table.cell$cell, 
                                  treecover = covered.table.cell[,4]/count.table[,37])
-hist(pct.covered.trees$treecover, breaks = 10)
+hist(pct.covered.trees$treecover, breaks = 50)
 
-# pct.covered. points is calculated differently, but they give the same answer
+# pct.covered. points is calculated differently, but they give similar answers
 pct.covered.points <- data.frame(x = covered.table.cell$x, 
                                  y = covered.table.cell$y, 
                                  cell = covered.table.cell$cell, 
                                  treecover = covered.table[,37]/count.table[,37])
-hist(pct.covered.points$treecover)
+hist(pct.covered.points$treecover, breaks = 50)
 
 #save tree cover estimates, histogram, and graphs:
 

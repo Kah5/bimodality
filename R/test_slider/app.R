@@ -174,7 +174,7 @@ server <- shinyServer(function(input, output) {
        xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
    }   
    
-   rollBC_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10) , input$BC_interval)
+   rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10) , input$BC_interval)
    })
 })
 # Run the application 

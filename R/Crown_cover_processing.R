@@ -331,11 +331,15 @@ map.bimodal <- function(data, binby, val){
 
 #map out bimodalities--note the region varies by bin size
 pdf(paste0('outputs/v',version,'/bimodal_maps_cover_inil.pdf'))
+
+
 map.bimodal(data = cover, binby = 'plsprbins50', val = "pct_half")
 #map.bimodal(data = cover, binby = 'fiaprbins', cover = "FIAcover")
 map.bimodal(data = cover, binby = 'plsprbins100', val = "pct_half")
 #map.bimodal(data = cover, binby = 'fiaprbins100', cover = "FIAcover")
+png(paste0('outputs/v',version,'/PLS_BC_cover_map75.png'))
 map.bimodal(data = cover, binby = 'plsprbins75', val = "pct_half")
+dev.off()
 #map.bimodal(data = cover, binby = 'fiaprbins75', cover = "FIAcover")
 map.bimodal(data = cover, binby = 'plsprbins25', val = "pct_half")
 #map.bimodal(data = cover, binby = 'fiaprbins25', cover = "FIAcover")

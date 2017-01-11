@@ -678,6 +678,27 @@ map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
+png(paste0('outputs/v',version,'/PLS_BC_map_100.png'))
+map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+dev.off()
+png(paste0('outputs/v',version,'/FIA_BC_map_100.png'))
+map.bimodal(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
+dev.off()
+
+png(paste0('outputs/v',version,'/PLS_BC_map_75.png'))
+map.bimodal(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+dev.off()
+
+png(paste0('outputs/v',version,'/FIA_BC_map_75.png'))
+map.bimodal(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+dev.off()
+png(paste0('outputs/v',version,'/PLS_BC_map_25.png'))
+map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+dev.off()
+png(paste0('outputs/v',version,'/FIA_BC_map_25.png'))
+map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+dev.off()
+
 #rolling BC
 rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
@@ -722,11 +743,12 @@ rollBC_by_10_r = function(x,y,xout,width) {
 png(paste0('outputs/v',version,'/rolling_BC_plots_100.png'))
 rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 dev.off()
+
 png(paste0('outputs/v',version,'/rolling_BC_plots_75.png'))
 rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 75)
 dev.off()
 
-png(paste0('outputs/v',version,'/rolling_BC_plots_100.png'))
+png(paste0('outputs/v',version,'/rolling_BC_plots_25.png'))
 rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 25)
 dev.off()
 

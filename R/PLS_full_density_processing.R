@@ -451,7 +451,7 @@ rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
   for( i in seq_along(xout) ) {
     window = x >= (xout[i]-width) & x <= (xout[i]+width)
-    out[i] = bimodality_coefficient( y[window & y < 500] ) # what is the BC for places with less than 300 trees per hectare
+    out[i] = bimodality_coefficient( y[window ] ) # what is the BC for places with less than 300 trees per hectare
   }
   ggplot()+geom_point(aes(x = xout, y = out))+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+

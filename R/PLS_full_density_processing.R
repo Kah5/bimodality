@@ -358,21 +358,32 @@ calc.BC <- function(data, binby, density){
   #coef.bins
   coef.bins <- coef.bins[order(as.numeric(as.character(coef.bins$bins))),]
   coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeric(as.character(coef.bins$bins)))])# reorder so it plots well
-  ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
+    a <- ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
     theme(axis.text = element_text(angle = 90))+
-    xlab('bins') + ylab('Bimodality Coefficient')+
+    xlab('Mean annual Precipitaiton range (mm/yr)') + ylab('Bimodality Coefficient')+
     ggtitle(paste0('Bimodality coefficients for ', binby))
+  a
+ 
 }
 
-pdf(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_binplots.pdf'))
+#pdf(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_binplots.pdf'))
+png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_pls_prbins.png'))
 calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
+dev.off()
 #calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_100bins.png'))
 calc.BC(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+dev.off()
+png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_75bins.png'))
 #calc.BC(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+dev.off()
 #calc.BC(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_25bins.png'))
 calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+dev.off()
+
 #calc.BC(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
 
 #calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
@@ -380,7 +391,7 @@ calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
-dev.off()
+#dev.off()
 
 
 #this function maps out the region that is bimodal 
@@ -393,12 +404,27 @@ map.bimodal <- function(data, binby, density){
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  
+  bins <- as.character(unique(data[,binby]))
+  diptest <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    a <- dip.test(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    diptest[i] <- a$p.value  
+   
+    }
+  diptest.bins <- data.frame(cbind(diptest, bins))
+  colnames(diptest.bins) <- c('pval', 'bins')
+  diptest.bins$pval <- as.numeric(as.character(diptest.bins$pval))
+  #merge the criteria together:
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  merged <- merge(diptest.bins, merged, by = 'bins')
   merged$bimodal <- "Not bimodal"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
-  write.csv(merged, paste0('outputs/v',version,'/PLS_full_bimodal_', binby,'.csv'))
+  merged[merged$BC >=0.5 & merged$pval <= 0.05,]$bimodal <- 'Significantly Bimodal'
+  #write.csv(merged, paste0('outputs/v',version,'/PLS_full_bimodal_', binby,'.csv'))
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
+    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen', 'red'))+theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0('Bimodal regions for ', binby))
   
@@ -438,7 +464,12 @@ ordered <- dens.pr[order(dens.pr$MAP1910),]
 ordered$rownum <- 1:length(ordered$MAP1910)
 
 pdf(paste0('outputs/v',version,'/rolling_BC_plots_500_cutoff.pdf'))
+
+png(paste0('outputs/v',version,'/bimodality_coefficient_roll_pls_25bins.png'))
+
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
+dev.off()
+
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 200)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 300)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 250)

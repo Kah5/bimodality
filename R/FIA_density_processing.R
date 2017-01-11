@@ -683,8 +683,9 @@ rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
   for( i in seq_along(xout) ) {
     window = x >= (xout[i]-width) & x <= (xout[i]+width)
-    out[i] = bimodality_coefficient( y[window & y < 500] ) # what is the BC for places with less than 300 trees per hectare
+    out[i] = bimodality_coefficient( y[window & y] ) # what is the BC for places with less than 300 trees per hectare
   }
+  
   ggplot()+geom_point(aes(x = xout, y = out))+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
     xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
@@ -716,10 +717,18 @@ rollBC_by_10_r = function(x,y,xout,width) {
   }
   ggplot()+geom_point(aes(x = xout, y = out))+
     geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
-    xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+    xlab('Precipiation @ interval center (mm)') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
 }   
+png(paste0('outputs/v',version,'/rolling_BC_plots_100.png'))
 rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
+dev.off()
+png(paste0('outputs/v',version,'/rolling_BC_plots_75.png'))
+rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 75)
+dev.off()
 
+png(paste0('outputs/v',version,'/rolling_BC_plots_100.png'))
+rollBC_by_10_r(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 25)
+dev.off()
 
 rollBC_by_10 = function(x,y,xout,width) {
   out = 1:length(seq(200, 1350, by = 10) )

@@ -16,6 +16,11 @@ ggplot(spec.table, aes(x = Pointx, y = Pointy, color = spec))+geom_point()
 
 count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
 count.table$total <- rowSums(count.table[,4:36], na.rm = TRUE)
+numbersoftrees <- data.frame(names = colnames(count.table[,4:36]),counts = colSums(count.table[,4:36]))
+
+png(paste0('outputs/v',version,'counts_of_inil_spec.png'))
+ggplot() + geom_point(data = numbersoftrees, aes(x = names, y = counts))+theme_bw()+theme(axis.text = element_text(angle = 90))
+dev.off()
 
 covered.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm = TRUE, value.var = 'coverscenter')
 covered.table$total <- rowSums(covered.table[,4:36], na.rm = TRUE)

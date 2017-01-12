@@ -9,21 +9,34 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Bimodality Figures
+#Bimodality Figures Updates:
 ##Updated: January 10th, 2017
 
 #### Overall Distributions of density & tree cover
-#### We know that pls tree density is bimodal and fia tree density is not:
+#### We know that PLS tree density is bimodal and FIA tree density is not:
 ![PLS density](outputs/PLS_density_histogrom.png) 
 ![FIA density](outputs/FIA_density_histogram.png)
 
-#### PLS % canopy cover also appears slightly bimodal:
+#### PLS % canopy cover also might be slightly bimodal, but it is not that informative:
 ![PLS cover](outputs/v1.6/PLS_cover_histogrom.png)
 
 #### The past climate space of the Midwest is broad spans a large range of precipitation and temperature. Neither one of these parameters fully explains the distribution in tree density:
 ![Temperature vs Precip](outputs/v1.6/precip_vs_temp_full_pls.png)
 
 ##Progress to date on Key Bimodality paper Figures:
+We discussed some key analyses and figures that we wanted to show. Basically, we want to demonstrate that PLS is bimodal in terms of tree density, and the modern landscape is not bimodal. 
+
+We want to demonstrate that the distribution in tree density is not well contstrained/predicted by the generally hypothesized drivers of tree density and the prairie-savanna-forest ecotone.
+  *Moisture 
+  *Drought
+  *Soil type / soil texture (Danz 2010)
+  *Temperature
+  *seasonality of temperature
+  *seasonality of precipitaiton
+  *slope/elevation (firebreaks and soil moisture)
+
+Next we want to quantify the climate/environmental spaces where the bimodality is most prominant. This is important because it will tell us where the forests could switch to savannas and where savannas could actually become forests. We want to have an 'index of bimodality' that indicates the degree to which a density distribution is bimodal. 
+
 
 ###Figure 1: 
 PLS, FIA density and  % cover plotted as a function of precipitation, The density of overlapping points is displayed using shading by the "count". 

@@ -80,8 +80,12 @@ spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_p
 coordinates(spec.table) <- ~x + y
 
 years <- 1900:1910
-for (i in years) {
-  filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
+
+#for (i in years) {
+ # filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
+#}
+
+filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
   s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
   t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
@@ -90,7 +94,7 @@ for (i in years) {
   y$year <- i
   y$gridNumber <- cellFromXY(t, y[, 1:2])
   # write.csv( ) ?
-}
+
 
 
 
@@ -161,9 +165,9 @@ y$mean <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May",
                         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])/12
 
 #this averages for each month within each gridcell
-full.t <- dcast(setDT(y), x + y ~ ., value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
-full.t <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
+full.t <- dcast(setDT(y), x + y ~ year, mean)
+full.t <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'mean')
+ # for monthly dataset
 #convert to rasterstack
 coordinates(full.t) <- ~x + y
 gridded(full.t) <- TRUE
@@ -211,8 +215,9 @@ yrs<- "1895-1905"
 
 spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
   
-
-
-
 write.csv(y, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_Prism_30yr.csv"))
+
+
+
+
 

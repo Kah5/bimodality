@@ -90,30 +90,64 @@ filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
   t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
   y <- data.frame(rasterToPoints(t)) #covert to dataframe
-  colnames(y) <- c("x", "y", month.abb)
-  y$year <- i
-  y$gridNumber <- cellFromXY(t, y[, 1:2])
+  years <- rep(1900:1909, each = 12)
+  mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
+              'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
+  monthly <- y
+  yearly <- y
+  colnames(monthly)<- c('x', 'y', mo)
+  colnames(yearly) <- c('x', 'y', years)
+  
+ melted.mo <- melt(monthly, id.var = c('x', 'y'))
+ melted.yr <- melt(yearly, id.var = c('x', 'y'))
+ write.csv(melted.mo, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/temporary_melted_1900_1909.csv")
+ total <- dcast(melted.yr, x + y ~variable, sum, value.var = 'value', na.rm = TRUE)
+ coordinates(total) <- ~x + y
+ gridded(total) <- TRUE
+ avgs <- stack(total) 
+ 
+ PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+ avgs.pts <- data.frame(extract(avgs, PLSpoints.agg[,c('Pointx', 'Pointy')]))
+ avgs.pts$Pointx <- PLSpoints.agg$Pointx
+ avgs.pts$Pointy <- PLSpoints.agg$Pointy
+ write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.1895_1905prismppt_total.csv")
+ 
+ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
+ avgs.df$x <- spec.table$x
+ avgs.df$y <- spec.table$y
+ 
+ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_total_Prism_1900_1909.csv")
+ 
+ 
+ 
+ #do the same for the monthly variables
+ full<- dcast(melted.mo, x + y ~ variable, mean , value.var='value', na.rm = TRUE)
+ 
+ coordinates(full) <- ~x + y
+ gridded(full) <- TRUE
+ avgs <- stack(full) 
+  #colnames(y) <- c("x", "y", month.abb)
+  #y$year <- i
+  #y$gridNumber <- cellFromXY(t, y[, 1:2])
   # write.csv( ) ?
-
-
 
 
 spec.table <- data.frame(spec.table)
 
 
-y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
-y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
-          'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
+#y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+  #                      'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
+#y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
+ #         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
 #this averages for each month within each gridcell
-full <- dcast(data.frame(y), x + y ~., mean , value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                                             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
+#full <- dcast(data.frame(y), x + y ~., mean , value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
+ #                                            'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
 
-full <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
+#full <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
 #convert to rasterstack
-coordinates(full) <- ~x + y
+#coordinates(full) <- ~x + y
 gridded(full) <- TRUE
-avgs <- stack(full) 
+avgs <- brick(full) 
 
 plot(avgs) #plots averages
 
@@ -128,7 +162,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1910.csv")
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1909.csv")
 
 
 

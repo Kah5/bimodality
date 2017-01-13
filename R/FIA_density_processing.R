@@ -768,8 +768,14 @@ dev.off()
 ordered.t <- dens.pr[order(dens.pr$pasttmean),]
 ordered.t$rownum <- 1:length(ordered.t$pasttmean)
 
-#plot out 
-rollBC_r(ordered.t$MAP1910, ordered.t$PLSdensity, ordered.t$MAP1910, 150)
+#plot out rolling BC plots for past mean annual temperature:
+pdf(paste0('outputs/v', version,'rolling_BC_plots_tmean.pdf'))
+rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.1)
+rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.5)
+rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 1)
+rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.25)
+rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.01)
+dev.off()
 
 #this version of roll_BC_by10 takes the BC every 10mm of preciptiation
 rollBC_by_10_r = function(x,y,xout,width) {

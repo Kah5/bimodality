@@ -527,14 +527,14 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10))
-dens.pr$pasttmean <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1))
+dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1))
 
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'plsprbins50', 'fiaprbins50','plsprbins75', 'fiaprbins75',
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP', 'moddeltPbins', 'pastdeltPbins')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean')) 
 
 #map out 
 all_states <- map_data("state")
@@ -585,8 +585,15 @@ ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) + xl
   xlab('Mean Annual Precipitation (mm) \n PRISM 1900-1910') + ylab("PLS Tree Density (stems/ha)")
 dev.off()
 
+png(paste0('outputs/v',version,'/PLS_tmean_hexbin.png'))
+ggplot(dens.pr, aes(pasttmean,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) + xlim(0,20)+
+  scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 20)+
+  xlab('Mean Annual Temperature (degC)') + ylab("PLS Tree Density (stems/ha)")
+dev.off()
+
+
 rbpalette <- c('red', "blue")
-ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
+#ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 
 png(paste0('outputs/v',version,'/precipitation_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
@@ -600,11 +607,12 @@ ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
-#plot out climate space:
-png(paste0('outputs/v',version,'/precip_vs_temp_pls.png'))
-ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
-  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+#plot by tmean
+png(paste0('outputs/v',version,'/tmean_by_bins.png'))
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)+ xlim(0, 400) + facet_wrap(~pasttmeanbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
+
 
 #plot by ksat
 png(paste0('outputs/v',version,'/ksat_by_bins.png'))
@@ -663,6 +671,8 @@ calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
+
 dev.off()
 
 
@@ -700,6 +710,7 @@ map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
 dev.off()
 
 png(paste0('outputs/v',version,'/PLS_BC_map_100.png'))
@@ -728,7 +739,7 @@ rollBC_r = function(x,y,xout,width) {
   out = numeric(length(xout))
   for( i in seq_along(xout) ) {
     window = x >= (xout[i]-width) & x <= (xout[i]+width)
-    out[i] = bimodality_coefficient( y[window & y] ) # what is the BC for places with less than 300 trees per hectare
+    out[i] = bimodality_coefficient( y[window ] ) # what is the BC for places with less than 300 trees per hectare
   }
   
   ggplot()+geom_point(aes(x = xout, y = out))+
@@ -741,7 +752,7 @@ rollBC_r = function(x,y,xout,width) {
 ordered <- dens.pr[order(dens.pr$MAP1910),]
 ordered$rownum <- 1:length(ordered$MAP1910)
 
-pdf(paste0('outputs/v',version,'/rolling_BC_plots_500_cutoff.pdf'))
+pdf(paste0('outputs/v',version,'/rolling_BC_plots_precip.pdf'))
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 200)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 300)
@@ -752,6 +763,13 @@ rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 50)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 10)
 dev.off()
+
+#create rolling BC plots for past mean annual temperature plots 
+ordered.t <- dens.pr[order(dens.pr$pasttmean),]
+ordered.t$rownum <- 1:length(ordered.t$pasttmean)
+
+#plot out 
+rollBC_r(ordered.t$MAP1910, ordered.t$PLSdensity, ordered.t$MAP1910, 150)
 
 #this version of roll_BC_by10 takes the BC every 10mm of preciptiation
 rollBC_by_10_r = function(x,y,xout,width) {

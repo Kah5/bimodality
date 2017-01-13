@@ -81,10 +81,6 @@ coordinates(spec.table) <- ~x + y
 
 years <- 1900:1910
 
-#for (i in years) {
- # filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
-#}
-
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
   s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
@@ -181,19 +177,41 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 coordinates(spec.table) <- ~x + y
   
-yrs<- "1900-1910"
+
+#spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.5-2.csv')
+coordinates(spec.table) <- ~x + y
+
 years <- 1900:1910
-for (i in years) {
-  filenames <- list.files(pattern=paste(".*_",i,".*\\.bil$", sep = ""))
-  s <- stack(filenames) #make all into a raster
-  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
-  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
-  y <- data.frame(rasterToPoints(t)) #covert to dataframe
-  colnames(y) <- c("x", "y", month.abb)
-  y$year <- i
-  y$gridNumber <- cellFromXY(t, y[, 1:2])
-  # write.csv( ) ?
-}
+
+filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
+s <- stack(filenames) #make all into a raster
+s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
+t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+y <- data.frame(rasterToPoints(t)) #covert to dataframe
+years <- rep(1900:1909, each = 12)
+mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
+            'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
+
+
+#add 1910 to this
+yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
+yr1910 <- projectRaster(yr1910, crs='+init=epsg:3175')
+t2 <- crop(yr1910, extent(spec.table)) #crop to the extent of indiana & illinois 
+y2 <- data.frame(rasterToPoints(t2)) 
+
+test <- cbind(y, y2[,3:14])
+monthly <- test
+yearly <- test
+
+melted.mo <- melt(monthly, id.var = c('x', 'y'))
+melted.mo$yrs <- substring(melted.mo$variable, first = 24, last = 27)
+melted.mo$mos <- substring(melted.mo$variable, first = 28, last = 29)
+full<- dcast(melted.mo, x + y ~ mos, mean , value.var='value', na.rm = TRUE)
+full$total <- rowSums(full[,3:14])
+colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
+                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')
+
 
 
 spec.table <- data.frame(spec.table)

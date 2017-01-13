@@ -274,7 +274,6 @@ colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[10:11] <- c('pasttmean', 'deltaT')
 
-
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 
 
@@ -291,6 +290,9 @@ plot(dens.pr$pasttmean, dens.pr$PLSdensity, xlab = 'Past Tmean', ylab = "PLSdens
 #plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
 #plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Precip")
+
+
+
 ##########################
 #read in soils data
 sand8km <- raster("data/8km_UMW_sand1.tif")
@@ -407,6 +409,18 @@ ggExtra::ggMarginal(p, type = "histogram", size = 3, colour = 'black', fill = "#
 
 dev.off()
 
+#plot out climate space for PLS:
+png(paste0('outputs/v',version,'/precip_vs_temp_pls.png'))
+ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
+
+#plot out climate space for FIA:
+png(paste0('outputs/v',version,'/precip_vs_temp_FIA.png'))
+ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = FIAdensity))+geom_point()+
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
+
 sandfia <- ggplot(dens.pr, aes(sandpct, FIAdensity)) + geom_point() + theme_classic()+ xlab('% sand 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
 awcfia <- ggplot(dens.pr, aes(awc, FIAdensity)) + geom_point() + theme_classic()+ xlab('awc 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
@@ -513,6 +527,7 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10))
+dens.pr$pasttmean <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1))
 
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'plsprbins50', 'fiaprbins50','plsprbins75', 'fiaprbins75',

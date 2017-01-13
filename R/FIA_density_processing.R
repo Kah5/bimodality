@@ -251,8 +251,11 @@ past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
 #read in mean annual temperature for modern and the past:
 mod.tmean <- read.csv('outputs/tmean_Prism_30yr.csv')
 past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
-#past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1950_GHCN.csv') #climate for indiana and il
-#mod.precip <- read.csv('data/spec_table_30yr_prism.csv') #climate for indiana and il
+
+#calculate seasonality from tmean:
+past.tmean$max <- apply(past.tmean[ , 2:13], 1, max) + 273.15 # convert to kelvin
+past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvin
+past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
 
 
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
@@ -268,13 +271,12 @@ colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 
 #now add the mean temperature to the dataframe
 #dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
-dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', '.')], by = c('x', 'y') )
-colnames(dens.pr)[10] <- c('pasttmean')
-dens.pr$pasttmean<- dens.pr$pasttmean/10 # convert from C*10 to Celcius
+dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
+colnames(dens.pr)[10:11] <- c('pasttmean', 'deltaT')
+
+
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 
-#nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
-#dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density
 
 #plot histograms
 hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,550), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
@@ -610,7 +612,7 @@ dev.off()
 #calculate bimodality coefficients
 library(modes)
 
-#this function uses the bimodality_coefficient funcition in the modes library to calculate the 
+# this function uses the bimodality_coefficient funcition in the modes library to calculate the 
 #bimodality coefficient of the density (FIA or PLS) within a given set of bins (climate, sand, etc)
 
 calc.BC <- function(data, binby, density){

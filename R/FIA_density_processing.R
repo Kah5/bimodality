@@ -229,19 +229,26 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 ################################################################
 #comparison of FIA and PLS datasets to climate
 ###############################################################
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895_1905.csv')
+past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+
+#calculate past precipitation seasonality:
 past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
 past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
 past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
 
 mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms.csv')
+
+#calculate modern precipitation seasonality:
 mod.precip.mo$max <- apply(mod.precip.mo[ , 3:14], 1, max)
 mod.precip.mo$min <- apply(mod.precip.mo[ , 3:14], 1, min) 
 mod.precip.mo$deltaP <- (mod.precip.mo$max-mod.precip.mo$min)/(mod.precip.mo$max+mod.precip.mo$min)
 mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
+#read in mean annual precipitaiton for modern and past
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
-past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+
+#read in mean annual temperature for modern and the past:
 mod.tmean <- read.csv('outputs/tmean_Prism_30yr.csv')
 past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
 #past.precip <- read.csv('data/PLSpoints_pr_alb_full1900_1950_GHCN.csv') #climate for indiana and il
@@ -250,7 +257,7 @@ past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
 
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
-dens.pr <- merge(densitys, past.precip[,c('x', 'y', '.')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
 dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 

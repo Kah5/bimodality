@@ -12,6 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 #Bimodality Figures Updates:
 ##Updated: January 10th, 2017
 
+###To DO:
+  *PCA of envtl variables?
+  *solidify list of envtl variables
+  *calculate bimodality coefiicient over bins of the PC1?
+  *check veil lines
+
+
+
 #### Overall Distributions of density & tree cover
 #### We know that PLS tree density is bimodal and FIA tree density is not:
 ![PLS density](outputs/PLS_density_histogrom.png) 
@@ -34,8 +42,17 @@ We want to demonstrate that the distribution in tree density is not well contstr
   *seasonality of temperature
   *seasonality of precipitaiton
   *slope/elevation (firebreaks and soil moisture)
+  *VPD ??
 
-Next we want to quantify the climate/environmental spaces where the bimodality is most prominant. This is important because it will tell us where the forests could switch to savannas and where savannas could actually become forests. We want to have an 'index of bimodality' that indicates the degree to which a density distribution is bimodal. 
+Next we want to quantify the climate/environmental spaces where the bimodality is most prominant. This is important because it will tell us where the forests could switch to savannas and where savannas could actually become forests. We want to have an 'index of bimodality' that indicates the degree to which a density distribution is bimodal. Here it is plotted as a function of precipitation, be we are also interested in the relationship of tree density to other environmental variables. We should look at the relationship between density and a Principal component of the environmental variables. 
+
+If we know the environmental space where places were bimdal in the past, we can ask...are they still bimoda? How have those places changed?
+
+
+
+
+
+
 
 
 ###Figure 1: 

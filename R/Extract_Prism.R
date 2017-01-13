@@ -83,9 +83,9 @@ years <- 1900:1910
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
-  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
   t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
-  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+  y <- data.frame(rasterToPoints(s)) #covert to dataframe
   years <- rep(1900:1909, each = 12)
   mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
@@ -172,23 +172,27 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 
 
 #setwd to data directory
-  setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_stable_4kmM2_189501_198012_bil/')
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_stable_4kmM2_189501_198012_bil/')
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
 coordinates(spec.table) <- ~x + y
   
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.5-2.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.6.csv')
 coordinates(spec.table) <- ~x + y
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
 years <- 1900:1910
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
 s <- stack(filenames) #make all into a raster
-s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
-t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
-y <- data.frame(rasterToPoints(t)) #covert to dataframe
+t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
+
+s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+
+y <- data.frame(rasterToPoints(s)) #covert to dataframe
 years <- rep(1900:1909, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
@@ -196,37 +200,38 @@ mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May",
 
 #add 1910 to this
 yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
-yr1910 <- projectRaster(yr1910, crs='+init=epsg:3175')
-t2 <- crop(yr1910, extent(spec.table)) #crop to the extent of indiana & illinois 
-y2 <- data.frame(rasterToPoints(t2)) 
+t2 <- crop(yr1910, extent(spec.lat)) #crop to the extent of indiana & illinois 
+
+yr1910 <- projectRaster(t2, crs='+init=epsg:3175')
+y2 <- data.frame(rasterToPoints(yr1910)) 
 
 test <- cbind(y, y2[,3:14])
 monthly <- test
 yearly <- test
 
 melted.mo <- melt(monthly, id.var = c('x', 'y'))
-melted.mo$yrs <- substring(melted.mo$variable, first = 24, last = 27)
-melted.mo$mos <- substring(melted.mo$variable, first = 28, last = 29)
+melted.mo$yrs <- substring(melted.mo$variable, first = 26, last = 29)
+melted.mo$mos <- substring(melted.mo$variable, first = 30, last = 31)
 full<- dcast(melted.mo, x + y ~ mos, mean , value.var='value', na.rm = TRUE)
-full$total <- rowSums(full[,3:14])
+full$Mean <- rowMeans(full[,3:14])
 colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
-                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')
+                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
 
 
 
 spec.table <- data.frame(spec.table)
 
-y$mean <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
-                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])/12
+#y$mean <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
+ #                       'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])/12
 
 #this averages for each month within each gridcell
-full.t <- dcast(setDT(y), x + y ~ year, mean)
-full.t <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'mean')
+#full.t <- dcast(setDT(y), x + y ~ year, mean)
+#full.t <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'mean')
  # for monthly dataset
 #convert to rasterstack
-coordinates(full.t) <- ~x + y
-gridded(full.t) <- TRUE
-avgs <- stack(full.t) 
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
 
 plot(avgs) #plots averages
 

@@ -331,8 +331,46 @@ dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 summary(rowSums(dens.pr != 0, na.rm=TRUE))
 dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 
+#############################################
+# PCA analysis of environmental variables:
+############################################
+# log transform 
+dens.rm <- na.omit(dens.pr)
+scale.dens <- scale(dens.rm[, 6:14])
+dens.dens <- dens.rm[, 4]
 
-  
+# apply PCA - scale. = TRUE is highly 
+# advisable, but default is FALSE. 
+dens.pca <- princomp(scale.dens,
+                 center = TRUE,
+                 scale = TRUE) 
+scores <- data.frame(dens.pca$scores[,1:2])
+scores$PLS <- data.frame(dens.dens)
+
+ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()
+
+plot(dens.pca, type = "l")
+print(dens.pca)
+summary(dens.pca)
+biplot.default(dens.pca, dens.)
+
+library(rgl)
+plot3d(dens.pca$scores[,1:3])
+
+library(devtools)
+install_github("ggbiplot", "vqv")
+
+library(ggbiplot)
+g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, fill = dens.dens)
+g <- g + 
+g <- g + theme(legend.direction = 'horizontal', 
+               legend.position = 'top')
+print(g)
+
+
+########################################
+# testing basic Linear models
+#######################################
 PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
 FIA.lm<- lm(dens.pr$FIAdensity ~dens.pr$MAP2011)
 PLS_mod.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP2011)

@@ -249,7 +249,7 @@ mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
 past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
 
 #read in mean annual temperature for modern and the past:
-mod.tmean <- read.csv('outputs/tmean_Prism_30yr.csv')
+mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
 past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
 
 #calculate seasonality from tmean:
@@ -270,9 +270,9 @@ dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y
 colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 
 #now add the mean temperature to the dataframe
-#dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
-colnames(dens.pr)[10:11] <- c('pasttmean', 'deltaT')
+colnames(dens.pr)[10:12] <- c('modtmean','pasttmean', 'deltaT')
 
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 
@@ -575,7 +575,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'pl
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean')) 
 
 #map out 
 all_states <- map_data("state")
@@ -608,30 +608,31 @@ print(ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#007
 dev.off()
 
 
-library(lattice)
-#hexbin plots to show the density of points in precipitatoins
-hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50, 
-           xlab = expression(alpha), ylab = expression(test), 
-           style = "nested.lattice",
-           panel = function(...) {
-             panel.hexbinplot(...)
-             panel.abline(h=0)
-           })
-
-hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
-plot(hbin)
 
 #plot precipitaiton hexbins & write to a png file:
-png(height=800, width=500, filename="outputs/FIA_PLS_hexbinplots.png", type="cairo")
-pushViewport(viewport(layout = grid.layout(2, 1)))
+png(height=400, width=800, filename="outputs/FIA_PLS_hexbinplots.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
 
-print(ggplot(dens.pr, aes(MAP2011,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 15)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab(' Mean Annual Precipitation (mm) \n PRISM') +ylab(" Modern Tree Density (stems/ha)") + ggtitle('Modern Tree density across precipitaiton gradient'),  vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(ggplot(dens.pr, aes(MAP2011,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab(' Mean Annual Precipitation (mm) \n PRISM') +ylab(" Modern Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 
-print(ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 15)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab(' Mean Annual Precipitation (mm) \n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)")+ ggtitle('Past Tree density across precipitaiton gradient'),  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab(' Mean Annual Precipitation (mm) \n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)"),  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 dev.off()
 
+# now write both hexbin plots for temperature to a file
+png(height=400, width=800, filename="outputs/FIA_PLS_temp_hexbinplots.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
+
+print(ggplot(dens.pr, aes(modtmean,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(0,15) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Mean Annual Temperature (degC) \n PRISM') +ylab(" Modern Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+
+print(ggplot(dens.pr, aes(pasttmean, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,15) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Mean Annual Temperature (degC)\n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
+
+
+#make individual hexbin plots
 png(paste0('outputs/v',version,'/fia_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+ xlim(400,1400)+
   scale_fill_gradient(low='blue', high='black')+theme_bw(base_size = 20)+

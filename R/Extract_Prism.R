@@ -255,7 +255,7 @@ temp30yr <- data.frame(extract(prism.alb, spec.table[,c("x","y")]))
 temp30yr$x <- spec.table$x
 temp30yr$y <- spec.table$y
 colnames(temp30yr) <- c('modtmean', 'x', 'y')
-write.csv(temp30yr, 'C:/Users/JMac/Documents/Kelly/biomodality/data/tmean_30yr_prism.csv')
+write.csv(temp30yr, 'C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_30yr_prism.csv')
 
 #setwd to data directory
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRI')

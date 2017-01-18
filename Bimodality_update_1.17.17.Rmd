@@ -31,7 +31,7 @@ In this paper, we hypothesize that the distribution of vegetation in the past is
 ##Key questions we aim to answer in this analysis:
 1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
 2. Does climate explain the distribution of tree density in either the past or the modern landscape?
-3. Do soil factors/elevation explain tree denisity in either the past or the modern landscape?
+3. Do soil factors/elevation explain tree density in either the past or the modern landscape?
 4. What is the climate/soil/environmental space where the past had alternative stable density states? How bimodal is the distribution? Where is this located within the N. American Midwest?
 5. Based on this climate/soil/environmental space, where should this bimodality be observed? (acknowledging that climate has changed over the last century)
 
@@ -39,9 +39,9 @@ We use the density data from the places where we have both Public Land Survey da
 
 ![](outputs/v1.6/tree_density_maps_PLS_FIA.png)
 
-#### 1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
+## Q1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
 
-A. Public land survey tree density is bimodal and FIA tree density is not:
+Ans. Public land survey tree density is bimodal and FIA tree density is not:
 
 ![](outputs/FIA_PLS_hists.png) 
 
@@ -51,7 +51,7 @@ Additionally, places that historically had low tree density in the past now have
 ![](outputs/v1.6/density_difference_plot.png)
 
 
-#### 2. Does climate explain the distribution of tree density in either the past or the modern landscape?
+## Q2. Does climate explain the distribution of tree density in either the past or the modern landscape?
 
 The past and modern climate space of the Midwest is broad spans a large range of precipitation and temperature. 
 
@@ -66,11 +66,9 @@ PLS & FIA density are not obviously explained as a function of mean annual tempe
 ![](outputs/FIA_PLS_temp_hexbinplots.png)
 
 
+##Q3. Do soil factors/elevation explain tree density in either the past or the modern landscape?
 
-
-###3. Do soil factors/elevation explain tree denisity in either the past or the modern landscape?
-
-A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. Additionally, doing a PCA on the environmental dataset and using PC1 and PC2 as explanatory variables do not explain tree density.
+Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. Additionally, doing a PCA on the environmental dataset and using PC1 and PC2 as explanatory variables do not explain tree density.
 
 
 ![](outputs/v1.6/sand_vs_dens_FIA_PLS.png)
@@ -80,63 +78,76 @@ A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (
 
 
 
-###4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
+## Q4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
 
-Ans. 
-### We can look at bins of precipitation to get an idea of where this bimodality coefficient is likely to be highest:
+Ans. We can look at bins of precipitation to get an idea of where this bimodality coefficient is likely to be highest:
 
 ![](outputs/v1.6/precipitation_by_bins_100.png)
 
-### We can look at the bins of temperature to get an idea of where the BC is likely to be highest:
+We can look at the bins of temperature to get an idea of where the BC is likely to be highest:
 ![](outputs/v1.6/tmean_by_bins.png)
 
-### We can also look at the density distribution with bins of the first Principal Component of the environmental data:
+We can also look at the density distribution with bins of the first Principal Component of the environmental data:
 
 ![](outputs/v1.6/PC1_by_bins.png)
 
-### We can also look at the density distribution with bins of the second Principal Component of the environmental data:
+We can also look at the density distribution with bins of the second Principal Component of the environmental data:
 
 ![](outputs/v1.6/PC2_by_bins.png)
 
-To answer this, we have to define a bimodality index. There are a few options for this:
-  + Dip Test (null = unimodal distribution)
-  + Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
-  + BC > 0.556 suggests bimodality
-  + BC is calculated with be calculated in the R package modes
+####To fully answer this question of how bimodal the density is, we have to define a bimodality index. There are a few options for this:
+  * Dip Test (null = unimodal distribution)
+  * Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
+  * BC > 0.556 suggests bimodality
+  * BC is calculated with be calculated in the R package modes
   
-## Bimodality coefficient is calculated from a distribuiton of data as follows:
+Bimodality coefficient is calculated from a distribuiton of data as follows:
 
 BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
 
-## Here we calculated the BC for different bin sizes of precipitation:
+Here we calculated the BC for different bin sizes of precipitation:
 
-#### Bin range of 25, non-overlapping bins:
+Bin range of 25, non-overlapping bins:
 
 ![](outputs/v1.6/bimodality_coefficient_full_pls_25bins.png) 
 
-#### Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
+Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
 
-##Bin range of 25, overlapping bins:
+Bin range of 25, overlapping bins:
 ![](outputs/v1.6/rolling_BC_plots_25.png)
 
 
-####we can do the same for Bins of the Principal components (this is not as easily interpretable as binning by precipitation):
+We can do the same for Bins of the Principal components (this is not as easily interpretable as binning by precipitation):
 ![](outputs/v1.6/PC1_by_bins.png)
 ![](outputs/v1.6/PC2_by_bins.png)
 
-##Where is the bimodality located within the N. American Midwest?
+## Where is the bimodality located within the N. American Midwest?
 
-### We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm 
+We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm 
 
 ![](outputs/v1.6/PLS_FIA_precip_BC_map.png)
 
-### We can also make maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
+We can also make maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
 
 ![](outputs/v1.6/PLS_PC1_PC2_map.png)
 
-### maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
+Maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
 
 ![](outputs/v1.6/FIA_PC1_PC2_map.png)
+
+
+## Summary:
+  * PLS density is bimodal, while the modern density is not
+  * We may be able to explain some of the distribution in tree density using envrionmental variables (above, and see GAM table)
+  * However, none of the environmental variables here track the bimodality in the PLS data
+  * We demonstrate that a large region of the midwest historically could have been either savanna or forest alternative states that are not predicted by climate.
+  * Athough historically, this region supported both savanna and forest states, the modern landscape has vitually no bimodal regions. This suggests that fire suppression, land use, and environmental changes that have occurred over the last ~ 150 years may have played a role in the decline of alternative savanna & forest states in the region. 
+
+## Questions/things to work on:
+  * Are there other variables that we should include?
+  * Figure predicting where the Midwest could be bimodal based on future climate
+  * In terms of framing the paper, I need to discuss the regional environmental changes (fire suppresion, land use) in a way that makes it clear that these changes could have removed the endogenous vegetation feedbacks that are important for maintaining alt. stable states.
+  
 
 ```{r, echo = FALSE}
 

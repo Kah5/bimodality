@@ -347,26 +347,29 @@ dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 ############################################
 # remove the NA values and scale
 dens.rm <- na.omit(dens.pr)
+dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, 6:14]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
 dens.pca <- princomp(scale.dens,
-                 center = TRUE,
-                 scale = TRUE) 
+                 na.rm=TRUE) 
 
 plot(dens.pca)
 dens.pca$loadings
 scores <- data.frame(dens.pca$scores[,1:2])
-scores$PLS <- data.frame(dens.dens)
+scores$PLS <- dens.dens
 
 dens.rm$PC1 <- scores[,1]
 dens.rm$PC2 <- scores[,2]
+dens.rm <- data.frame(dens.rm)
 
 #plot scores by tree density in trees per hectare
+png(paste0("ouputs/v", version,"/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
 
 plot(dens.pca, type = "l")
 print(dens.pca)
@@ -381,9 +384,11 @@ g <- g + theme(legend.direction = 'horizontal',
 print(g)
 
 # add the scores from pca to the dens.pr data frame
+#this merge is not working
+test1 <- merge(dens.pr,dens.rm[,c('cell', 'PC1', 'PC2')],  by = c('cell'))
 
-dens.pr <- merge(dens.pr, dens.rm[,c('x', 'y', "PC1", "PC2")], by = c('x', 'y'))
-
+#convert dens.rm to the new dens.pr---we only lose ~150 grid cells
+dens.pr <- dens.rm
 ########################################
 # testing basic Linear models
 #######################################
@@ -635,8 +640,8 @@ dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = lab
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1), labels = label.breaks(0,13, 1))
-dens.pr$PC1bins <- cut(dens.pr$pasttmean, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
-dens.pr$PC2bins <- cut(dens.pr$pasttmean, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
+dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
+dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -644,7 +649,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'pl
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', 'PC1bins', 'PC2bins')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', "PC1", "PC2",'PC1bins', 'PC2bins')) 
 
 #map out 
 all_states <- map_data("state")
@@ -700,6 +705,27 @@ print(ggplot(dens.pr, aes(pasttmean, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(
         xlab(' Mean Annual Temperature (degC)\n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 dev.off()
 
+#make hexbin plots for PC1
+png(height=400, width=800, filename="outputs/v1.6/FIA_PLS_PC1_hexbinplots.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
+
+print(ggplot(dens.pr, aes(PC1,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(-9,5) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Principal component 1') +ylab(" Modern Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+
+print(ggplot(dens.pr, aes(PC1, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-9,5) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Principal component 1') +ylab(" Past Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
+
+#make hexbin plots for PC2
+png(height=400, width=800, filename="outputs/v1.6/FIA_PLS_PC2_hexbinplots.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
+
+print(ggplot(dens.pr, aes(PC2,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(-4,3) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Principal component 2') +ylab(" Modern Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+
+print(ggplot(dens.pr, aes(PC2, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-4,3) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+        xlab(' Principal component 2') +ylab(" Past Tree Density (stems/ha)") ,  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
 
 #make individual hexbin plots
 png(paste0('outputs/v',version,'/fia_precipitation_hexbin.png'))
@@ -739,6 +765,16 @@ ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, a
  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 #ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+
+png(width = 600, height = 600, paste0('outputs/v',version,'/PC1_by_bins.png'))
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~PC1bins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
+
+png(width = 600, height = 600, paste0('outputs/v',version,'/PC2_by_bins.png'))
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~PC2bins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+dev.off()
 
 #plot by sandiness
 png(paste0('outputs/v',version,'/sand_by_bins.png'))
@@ -792,7 +828,7 @@ ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
  geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
   theme(axis.text = element_text(angle = 90))+
   xlab('bins') + ylab('Bimodality Coefficient')+
-  ggtitle(paste0('Bimodality coefficients for ', binby))
+  ggtitle(paste0('Bimodality coefficients for ', binby,' ', density))
 }
 
 pdf(paste0('outputs/v',version,'/bimodality_coefficient_binplots.pdf'))
@@ -804,13 +840,16 @@ calc.BC(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
-
 calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
-
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
+
 
 dev.off()
 
@@ -831,7 +870,7 @@ map.bimodal <- function(data, binby, density){
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
     geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0('Bimodal regions for ', binby))
+    ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
  
 }
 
@@ -850,7 +889,32 @@ map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+map.bimodal(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
+
 dev.off()
+
+png(height = 400, width = 800, paste0('outputs/v',version,'/PLS_PC1_PC2_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('Bimodal Regions for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'PC2bins', density = "PLSdensity") + ggtitle('Bimodal Regions for PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
+
+png(height = 400, width = 800, paste0('outputs/v',version,'/FIA_PC1_PC2_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")+ ggtitle('Bimodal Regions for PC1 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('Bimodal Regions for PC2 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
+png(height = 400, width = 800, paste0('outputs/v',version,'/PLS_FIA_precip_BC_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")+ ggtitle('Bimodal Regions for precip PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity") + ggtitle('Bimodal Regions for precip FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
 
 png(paste0('outputs/v',version,'/PLS_BC_map_100.png'))
 map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
@@ -872,6 +936,8 @@ dev.off()
 png(paste0('outputs/v',version,'/FIA_BC_map_25.png'))
 map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
 dev.off()
+
+
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {
@@ -916,6 +982,15 @@ rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.25)
 rollBC_r(ordered.t$pasttmean, ordered.t$PLSdensity, ordered.t$pasttmean, 0.01)
 dev.off()
 
+#create rolling BC plots for PC1 
+ordered.pc <- dens.pr[order(dens.pr$PC1),]
+ordered.pc$rownum <- 1:length(ordered.t$PC1)
+
+rollBC_r(ordered.pc$PC1, ordered.pc$PLSdensity, ordered.pc$PC1, 0.5)
+rollBC_r(ordered.pc$PC1, ordered.pc$PLSdensity, ordered.pc$PC1, 0.25)
+rollBC_r(ordered.pc$PC1, ordered.pc$PLSdensity, ordered.pc$PC1, 1)
+rollBC_r(ordered.pc$PC1, ordered.pc$PLSdensity, ordered.pc$PC1, 2)
+
 #this version of roll_BC_by10 takes the BC every 10mm of preciptiation
 rollBC_by_10_r = function(x,y,xout,width) {
   out = 1:length(seq(200, 1350, by = 10) )
@@ -951,7 +1026,7 @@ rollBC_by_10 = function(x,y,xout,width) {
 
 BC_vals <- rollBC_by_10(ordered$MAP1910, ordered$PLSdensity, seq(200, 1350, by = 10)  , 100)
 
-bc
+
 
 # merge ordered with the bimodality coefficients
 rollBC_merge_r = function(x,y,xout,width) {

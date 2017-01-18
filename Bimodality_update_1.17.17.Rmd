@@ -70,25 +70,19 @@ PLS & FIA density are not obviously explained as a function of mean annual tempe
 
 ###3. Do soil factors/elevation explain tree denisity in either the past or the modern landscape?
 
-A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. 
+A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. Additionally, doing a PCA on the environmental dataset and using PC1 and PC2 as explanatory variables do not explain tree density.
 
 
 ![](outputs/v1.6/sand_vs_dens_FIA_PLS.png)
 ![](outputs/v1.6/awc_vs_dens_FIA_PLS.png)
 ![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
+![](outputs/v1.6/FIA_PLS_PC1_hexbinplots.png)
+
 
 
 ###4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
 
-A. To answer this, we have to define a bimodality index. There are a few options for this:
-  + Dip Test (null = unimodal distribution)
-  + Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
-  + BC > 0.556 suggests bimodality
-  + BC is calculated with be calculated in the R package modes
-  
-BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
-
-
+Ans. 
 ### We can look at bins of precipitation to get an idea of where this bimodality coefficient is likely to be highest:
 
 ![](outputs/v1.6/precipitation_by_bins_100.png)
@@ -96,41 +90,53 @@ BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
 ### We can look at the bins of temperature to get an idea of where the BC is likely to be highest:
 ![](outputs/v1.6/tmean_by_bins.png)
 
-####Notably, looking at different binwidths of mean annual precipitation gives us a slightly different answer for the index of bimodality at each precipitation range:
+### We can also look at the density distribution with bins of the first Principal Component of the environmental data:
 
-####Bin range of 100, non-overlapping bins:
-![](outputs/v1.6/bimodality_coefficient_full_pls_100bins.png) 
+![](outputs/v1.6/PC1_by_bins.png)
 
-####Bin range of 75, non-overlapping bins:
-![](outputs/v1.6/bimodality_coefficient_full_pls_75bins.png) 
+### We can also look at the density distribution with bins of the second Principal Component of the environmental data:
 
-####Bin range of 25, non-overlapping bins:
+![](outputs/v1.6/PC2_by_bins.png)
+
+To answer this, we have to define a bimodality index. There are a few options for this:
+  + Dip Test (null = unimodal distribution)
+  + Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
+  + BC > 0.556 suggests bimodality
+  + BC is calculated with be calculated in the R package modes
+  
+## Bimodality coefficient is calculated from a distribuiton of data as follows:
+
+BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
+
+## Here we calculated the BC for different bin sizes of precipitation:
+
+#### Bin range of 25, non-overlapping bins:
+
 ![](outputs/v1.6/bimodality_coefficient_full_pls_25bins.png) 
 
 #### Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
-####Bin range of 100, overlapping bins:
-![](outputs/v1.6/rolling_BC_plots_100.png)
-####Bin range of 75, overlapping bins:
-![](outputs/v1.6/rolling_BC_plots_75.png)
+
 ##Bin range of 25, overlapping bins:
 ![](outputs/v1.6/rolling_BC_plots_25.png)
 
 
-####we can do the same for FIA plots & cover (not shown here)
+####we can do the same for Bins of the Principal components (this is not as easily interpretable as binning by precipitation):
+![](outputs/v1.6/PC1_by_bins.png)
+![](outputs/v1.6/PC2_by_bins.png)
 
-### Figure 3: Plot of Bimodality index vs. Density (not sure how to do this, since a high BC inherently means that we have both high and low densities)
+##Where is the bimodality located within the N. American Midwest?
 
-### Figure 4:
-We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm in Figure 2:
+### We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm 
 
-#### Map of bimodality for PLS:
-![](outputs/v1.6/PLS_BC_map_75.png)
+![](outputs/v1.6/PLS_FIA_precip_BC_map.png)
 
-### Map of bimodality for FIA:
-![](outputs/v1.6/FIA_BC_map_75.png)
+### We can also make maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
 
-### The map for PLS density bimodality does roughly match with the Map of bimodality for PLS % cover estimates (which makes sense)
-![](outputs/v1.6/PLS_BC_cover_map75.png)
+![](outputs/v1.6/PLS_PC1_PC2_map.png)
+
+### maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
+
+![](outputs/v1.6/FIA_PC1_PC2_map.png)
 
 ```{r, echo = FALSE}
 

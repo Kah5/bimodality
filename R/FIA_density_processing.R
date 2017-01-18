@@ -621,9 +621,16 @@ hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50,
 hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
 plot(hbin)
 
-#plot precipitaiton hexbins:
-ggplot(dens.pr, aes(MAP2011,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw()+scale_fill_distiller(palette = "Spectral")
-ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw()+scale_fill_distiller(palette = "Spectral")
+#plot precipitaiton hexbins & write to a png file:
+png(height=800, width=500, filename="outputs/FIA_PLS_hexbinplots.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(2, 1)))
+
+print(ggplot(dens.pr, aes(MAP2011,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 15)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab(' Mean Annual Precipitation (mm) \n PRISM') +ylab(" Modern Tree Density (stems/ha)") + ggtitle('Modern Tree density across precipitaiton gradient'),  vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+
+print(ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw(base_size = 15)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab(' Mean Annual Precipitation (mm) \n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)")+ ggtitle('Past Tree density across precipitaiton gradient'),  vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
 
 png(paste0('outputs/v',version,'/fia_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+ xlim(400,1400)+

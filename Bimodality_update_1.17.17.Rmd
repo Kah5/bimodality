@@ -78,39 +78,42 @@ A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (
 ![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
 
 
+###4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
 
-
-
-
-
-
-
-###Figure 2: 
-Bimodality Index for PLS and FIA (i.e. how bimodal the data is) in different sliding windows or different bins of precipitation (OR water balance OR Principal Component 1)
-* Still working on calculating a “Bimodality index,” some options we may have for this:
+A. To answer this, we have to define a bimodality index. There are a few options for this:
   + Dip Test (null = unimodal distribution)
   + Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
   + BC > 0.556 suggests bimodality
-  + BC can be calculated in the R package modes 
+  + BC is calculated with be calculated in the R package modes
+  
+BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
+
+
+### We can look at bins of precipitation to get an idea of where this bimodality coefficient is likely to be highest:
+
+![](outputs/v1.6/precipitation_by_bins_100.png)
+
+### We can look at the bins of temperature to get an idea of where the BC is likely to be highest:
+![](outputs/v1.6/tmean_by_bins.png)
 
 ####Notably, looking at different binwidths of mean annual precipitation gives us a slightly different answer for the index of bimodality at each precipitation range:
 
 ####Bin range of 100, non-overlapping bins:
-![PLS 100 bins](outputs/v1.6/bimodality_coefficient_full_pls_100bins.png) 
+![](outputs/v1.6/bimodality_coefficient_full_pls_100bins.png) 
 
 ####Bin range of 75, non-overlapping bins:
-![PLS 75 bins](outputs/v1.6/bimodality_coefficient_full_pls_75bins.png) 
+![](outputs/v1.6/bimodality_coefficient_full_pls_75bins.png) 
 
 ####Bin range of 25, non-overlapping bins:
-![PLS 25 bins](outputs/v1.6/bimodality_coefficient_full_pls_25bins.png) 
+![](outputs/v1.6/bimodality_coefficient_full_pls_25bins.png) 
 
 #### Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
 ####Bin range of 100, overlapping bins:
-![PLS 100 bins](outputs/v1.6/rolling_BC_plots_100.png)
+![](outputs/v1.6/rolling_BC_plots_100.png)
 ####Bin range of 75, overlapping bins:
-![PLS 75 bins](outputs/v1.6/rolling_BC_plots_75.png)
+![](outputs/v1.6/rolling_BC_plots_75.png)
 ##Bin range of 25, overlapping bins:
-![PLS 25 bins](outputs/v1.6/rolling_BC_plots_25.png)
+![](outputs/v1.6/rolling_BC_plots_25.png)
 
 
 ####we can do the same for FIA plots & cover (not shown here)
@@ -120,12 +123,14 @@ Bimodality Index for PLS and FIA (i.e. how bimodal the data is) in different sli
 ### Figure 4:
 We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm in Figure 2:
 
-#### Map of bimodality for PLS:![PLS 75 bins](outputs/v1.6/PLS_BC_map_75.png)
+#### Map of bimodality for PLS:
+![](outputs/v1.6/PLS_BC_map_75.png)
 
-### Map of bimodality for FIA:![PLS 75 bins](outputs/v1.6/FIA_BC_map_75.png)
+### Map of bimodality for FIA:
+![](outputs/v1.6/FIA_BC_map_75.png)
 
 ### The map for PLS density bimodality does roughly match with the Map of bimodality for PLS % cover estimates (which makes sense)
-![PLS 75 bins](outputs/v1.6/PLS_BC_cover_map75.png)
+![](outputs/v1.6/PLS_BC_cover_map75.png)
 
 ```{r, echo = FALSE}
 

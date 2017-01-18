@@ -345,42 +345,44 @@ dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 #############################################
 # PCA analysis of environmental variables:
 ############################################
-# log transform 
+# remove the NA values and scale
 dens.rm <- na.omit(dens.pr)
-scale.dens <- scale(dens.rm[, 6:14])
-dens.dens <- dens.rm[, 4]
+scale.dens <- scale(dens.rm[, 6:14]) #PC all but ksat and diff
+dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
 dens.pca <- princomp(scale.dens,
                  center = TRUE,
                  scale = TRUE) 
+
+plot(dens.pca)
+dens.pca$loadings
 scores <- data.frame(dens.pca$scores[,1:2])
 scores$PLS <- data.frame(dens.dens)
+
+dens.rm$PC1 <- scores[,1]
+dens.rm$PC2 <- scores[,2]
 
 #plot scores by tree density in trees per hectare
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
- 
 
 plot(dens.pca, type = "l")
 print(dens.pca)
 summary(dens.pca)
-biplot.default(dens.pca, dens.)
+biplot(dens.pca)
 
-library(rgl)
-plot3d(dens.pca$scores[,1:3])
-
-library(devtools)
-install_github("ggbiplot", "vqv")
-
+# using biplot
 library(ggbiplot)
 g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, fill = dens.dens)
-g <- g + 
 g <- g + theme(legend.direction = 'horizontal', 
                legend.position = 'top')
 print(g)
 
+# add the scores from pca to the dens.pr data frame
+
+dens.pr <- merge(dens.pr, dens.rm[,c('x', 'y', "PC1", "PC2")], by = c('x', 'y'))
 
 ########################################
 # testing basic Linear models
@@ -609,37 +611,40 @@ dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', 
                          breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
 dens.pr$fiaprbins <- cut(dens.pr$MAP2011, #labels = c('350-400mm', '500-650mm', '650-700mm', '700-850mm', '850-1000mm', '1000-1150mm', '1150-1300mm'),
                          breaks=c( 200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
-#make cuts for sliding window plots
-#dens.pr$plsprbins <- cut(dens.pr$MAP1910, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
- #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
-#dens.pr$fiaprbins <- cut(dens.pr$MAP2011, labels = c('200-400mm', '400-550mm', '550-600mm', '600-850mm', '850-1000mm','1000-1150mm','1150-1300mm','1300-1450mm'),
- #                        breaks=c(200,400,550,700,850, 1000,1150,1300, 1450))
-#create multiple sets of bins for precipitation:
 
-dens.pr$plsprbins50 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
-dens.pr$fiaprbins50 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = seq(250, 1300, by = 50))
-dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
-dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100), labels = seq(250, 1250, by = 100))
-dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75), labels = seq(250, 1275, by = 75))
-dens.pr$fiaprbins75 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 75), labels = seq(250, 1275, by = 75))
-dens.pr$plsprbins150 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 150), labels = seq(250, 1250, by = 150))
-dens.pr$fiaprbins150 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 150), labels = seq(250, 1250, by = 150))
-dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25), labels = seq(250, 1325, by = 25))
+# create labeling function that takes the beginning of var range, end of var range, and the value to split by:
+label.breaks <- function(beg, end, splitby){
+labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+labels.test <- paste (labels.test$first, '-' , labels.test$second)
+labels.test
+}
+dens.pr$plsprbins50 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = label.breaks(250, 1300, 50))
+dens.pr$fiaprbins50 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = label.breaks(250, 1300, 50))
+dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = label.breaks(250, 1250, 100))
+dens.pr$fiaprbins100 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 100), labels = label.breaks(250, 1250,  100))
+dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75), labels = label.breaks(250, 1275, 75))
+dens.pr$fiaprbins75 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 75), labels = label.breaks(250, 1275, 75))
+dens.pr$plsprbins150 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 150), labels = label.breaks(250, 1250, 150))
+dens.pr$fiaprbins150 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 150), labels = label.breaks(250, 1250, 150))
+dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25), labels = label.breaks(250, 1325,  25))
 
-dens.pr$fiaprbins25 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 25), labels = seq(250, 1325, by = 25))
+dens.pr$fiaprbins25 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 25), labels = label.breaks(250, 1325,  25))
 
-dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10))
-dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10))
-dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10))
-dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10))
-dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1))
+dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels = label.breaks(0,90, 10))
+dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
+dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1), labels = label.breaks(0,13, 1))
+dens.pr$PC1bins <- cut(dens.pr$pasttmean, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
+dens.pr$PC2bins <- cut(dens.pr$pasttmean, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
+
 
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'plsprbins50', 'fiaprbins50','plsprbins75', 'fiaprbins75',
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', 'PC1bins', 'PC2bins')) 
 
 #map out 
 all_states <- map_data("state")
@@ -724,11 +729,16 @@ dev.off()
 rbpalette <- c('red', "blue")
 #ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 
-png(paste0('outputs/v',version,'/precipitation_by_bins.png'))
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
+
+######################################################
+# plot out density distributions binned by climate
+######################################################
+
+png(width = 600, height = 600, paste0('outputs/v',version,'/precipitation_by_bins_100.png'))
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins100, scales = 'free_y')+
  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
-ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
+#ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 #plot by sandiness
 png(paste0('outputs/v',version,'/sand_by_bins.png'))
@@ -737,8 +747,8 @@ ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.
 dev.off()
 
 #plot by tmean
-png(paste0('outputs/v',version,'/tmean_by_bins.png'))
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)+ xlim(0, 400) + facet_wrap(~pasttmeanbins, scales = 'free_y')+
+png(width = 600, height = 600,paste0('outputs/v',version,'/tmean_by_bins.png'))
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)+ xlim(0, 400) + facet_wrap(~pasttmeanbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 

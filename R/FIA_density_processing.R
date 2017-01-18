@@ -347,7 +347,10 @@ dens.pca <- princomp(scale.dens,
 scores <- data.frame(dens.pca$scores[,1:2])
 scores$PLS <- data.frame(dens.dens)
 
-ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()
+#plot scores by tree density in trees per hectare
+ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+ 
 
 plot(dens.pca, type = "l")
 print(dens.pca)
@@ -594,6 +597,17 @@ ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2", 
   theme_bw(base_size = 25)#+ facet_wrap(~fiaprbins)
 dev.off()
 
+#plot histograms side by side
+png(height=800, width=500, filename="outputs/FIA_PLS_hists.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(2, 1)))
+print(ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+  theme_bw(base_size = 25), vp = viewport(layout.pos.row = 1, layout.pos.col = 1))#+ facet_wrap(~plsprbins)
+print(ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
+  theme_bw(base_size = 25),vp = viewport(layout.pos.row = 2, layout.pos.col = 1))#+ facet_wrap(~fiaprbins)
+
+dev.off()
+
+
 library(lattice)
 #hexbin plots to show the density of points in precipitatoins
 hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50, 
@@ -606,6 +620,11 @@ hexbinplot(dens.pr$FIAdensity~ dens.pr$MAP2011, aspect = 1, bins=50,
 
 hbin <- hexbin(dens.pr$MAP2011, dens.pr$FIAdensity, xbins = 100)
 plot(hbin)
+
+#plot precipitaiton hexbins:
+ggplot(dens.pr, aes(MAP2011,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw()+scale_fill_distiller(palette = "Spectral")
+ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + theme_bw()+scale_fill_distiller(palette = "Spectral")
+
 png(paste0('outputs/v',version,'/fia_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+ xlim(400,1400)+
   scale_fill_gradient(low='blue', high='black')+theme_bw(base_size = 20)+

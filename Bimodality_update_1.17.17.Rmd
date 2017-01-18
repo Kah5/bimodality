@@ -1,7 +1,7 @@
 ---
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
-date: "January 10, 2017"
+date: "January 17, 2017"
 output: html_document
 ---
 
@@ -108,18 +108,9 @@ Bimodality coefficient is calculated from a distribuiton of data as follows:
 
 BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
 
-Here we calculated the BC for different bin sizes of precipitation:
+Here we calculated the BC for a bin range of 25mm of precipitation, with non-overlapping and overlapping bins:
 
-Bin range of 25, non-overlapping bins:
-
-![](outputs/v1.6/bimodality_coefficient_full_pls_25bins.png) 
-
-Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
-
-Bin range of 25, overlapping bins:
-
-![](outputs/v1.6/rolling_BC_plots_25.png)
-
+![](outputs/v1.6/PLS_FIA_precip_roll_nonroll_BC_bins.png)
 
 We can also calculate BC of the Principal components (this is not as easily interpretable as binning by precipitation):
 ![](outputs/v1.6/PLS_FIA_PC1_PC2_BC_bins.png)

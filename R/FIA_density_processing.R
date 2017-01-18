@@ -997,6 +997,20 @@ rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 10)
 dev.off()
 
+
+ordered.f <- dens.pr[order(dens.pr$MAP2011),]
+ordered.f$rownum <- 1:length(ordered.f$MAP2011)
+
+#make figure with both rolling and non rolling bc calculations
+png(height = 400, width = 800, paste0('outputs/v',version,'/PLS_FIA_precip_25_BC_bins.png'))
+pushViewport(viewport(layout = grid.layout(2, 2)))
+print(calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")+ ggtitle('BC for Precip PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(calc.BC(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity") + ggtitle('BC for Precip FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 25)+ ggtitle('overlapping BC for PrecipPLS'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(rollBC_r(ordered.f$MAP2011, ordered.f$FIAdensity, ordered$MAP2011, 25) + ggtitle('overlapping BC for Precip FIA'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
+dev.off()
+
+
 #create rolling BC plots for past mean annual temperature plots 
 ordered.t <- dens.pr[order(dens.pr$pasttmean),]
 ordered.t$rownum <- 1:length(ordered.t$pasttmean)

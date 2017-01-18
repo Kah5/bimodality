@@ -9,69 +9,71 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-To DO:
-  *PCA of envtl variables?
-  *solidify list of envtl variables
-  *calculate bimodality coefiicient over bins of the PC1?
-  *check veil lines
-
 Biome theory overview:
 Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain.  
 
-Savannas in biome theory & midwest:
+Savannas in biome theory:
 Biomes that can switch between Savanna and forest systems are an example of alternative states that are not directly predictable from climate and environental factors. In large areas of the tropics climate and edaphic factors are uninformative in predicting distribution of tree cover, but tree cover may be a result of disturbance-vegetation feedbacks. Fire is linked to open savanna regions within intermediate climates, where high grassy fuel loads promote fire spread. However at these same climates, closed forests may be present but light limition in the understory prevents fuel buildup, suppressing the likelihood of fire. The association of open savannas regions with high fire frequencies suggest that disturbance-vegetation feedbacks play a role in maintaining savanna & forest as alternative stable states (Staver et al.). The existence of alternative states is demonstrated by a bimodal distribution in tree density that is not well predicted by climate, but could be attributed to endogenous feedbacks.
 
-Savanna and forest alternative states have been well documented in the tropics(Staver et al. 2011, Hoffmann et al. 2012, Dantas 2016), but have not been well documented elsewhere on the landscape. While the Upper Midwest in North American is largely forested or agricultural land use today, historical vegetation surveys documented open savanna regions in the region before the time of European settlement (Grimm 1984, Danz et al. 2011, Goring et al. 2016). Several alternative hypotheses for the existance of open savanna ecosystems in the mesic/temperate midwest have been proposed: A declining moisture/precipitation gradient from east to west results in regions with low available moisture that cannot support closed forests (Danz et al. 2011). This moisture gradient has been attributed to mean annual climate water balance (P-PET) as well as year-to-year oscillations in westerly wind speeds (Danz et al. 2011, Bryson 1964, Booth and Bryson 2006). However, soil type may also play a role in water balance, sandy soil textures tend to have high infiltration and lose water faster than other textures, high tree cover may not be supported sandy soils (Danz et al. 2011).
-
-  
-  *Temperature
+Savanna and forest alternative states have been well documented in the tropics(Staver et al. 2011, Hoffmann et al. 2012, Dantas 2016), but have not been well documented elsewhere on the landscape. While the Upper Midwest in North American is largely forested or agricultural land use today, historical vegetation surveys documented open savanna regions in the region before the time of European settlement (Grimm 1984, Danz et al. 2011, Goring et al. 2016). Several alternative hypotheses for the existance of open savanna ecosystems in the mesic/temperate midwest have been proposed: 
+  *Moisture gradient limits tree growth
+  *soil drainage can limit tree growth
+  *Higher Temperatures create drought conditions
   *seasonality of temperature
   *seasonality of precipitaiton
   *slope/elevation (firebreaks and soil moisture)
-  *VPD (dont have this but could include it)
+  *VPD 
+  
+In this paper, we hypothesize that the distribution of vegetation in the past is bimodal with respect to climate, and that the commonly cited hypothesized drivers do not predict the distribution of vegetation in the past. 
 
-Key questions we aim to answer:
-1. Were north American landscapes from pre-euro settlement bimodal in terms of tree cover/tree density?
+
+
+##Key questions we aim to answer in this analysis:
+1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
 2. Does climate explain the distribution of tree density in either the past or the modern landscape?
 3. Do soil factors/elevation explain tree denisity in either the past or the modern landscape?
-4. What is the climate/soil/environmental space where the past had alternative stable density states? Where is this located within the N. American Midwest?
+4. What is the climate/soil/environmental space where the past had alternative stable density states? How bimodal is the distribution? Where is this located within the N. American Midwest?
 5. Based on this climate/soil/environmental space, where should this bimodality be observed? (acknowledging that climate has changed over the last century)
 
-#### Overall Distributions of density & tree cover
-#### We know that PLS tree density is bimodal and FIA tree density is not:
+We use the density data from the places where we have both Public Land Survey data (past), and Forest Inventory Analysis data (modern) across the upper midwest:
+
+![](outputs/v1.6/tree_density_maps_PLS_FIA.png)
+
+#### 1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
+
+A. Public land survey tree density is bimodal and FIA tree density is not:
 
 ![](outputs/FIA_PLS_hists.png) 
 
+Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density:
 
-#### The past climate space of the Midwest is broad spans a large range of precipitation and temperature. Neither one of these parameters fully explains the distribution in tree density:
-![](outputs/v1.6/precip_vs_temp_full_pls.png)
 
-##Progress to date on Key Bimodality paper Figures:
-We discussed some key analyses and figures that we wanted to show. Basically, we want to demonstrate that PLS is bimodal in terms of tree density, and the modern landscape is not bimodal. 
+![](outputs/v1.6/density_difference_plot.png)
 
-We want to demonstrate that the distribution in tree density is not well contstrained/predicted by the generally hypothesized drivers of tree density and the prairie-savanna-forest ecotone.
-  *Moisture 
-  *Drought
-  *Soil type / soil texture (Danz 2010)
-  *Temperature
-  *seasonality of temperature
-  *seasonality of precipitaiton
-  *slope/elevation (firebreaks and soil moisture)
-  *VPD (dont have this but could include it)
+
+#### 2. Does climate explain the distribution of tree density in either the past or the modern landscape?
+
+The past and modern climate space of the Midwest is broad spans a large range of precipitation and temperature. 
+
+![](outputs/v1.6/precip_vs_temp_FIA_PLS.png)
+
+PLS & FIA tree density are not readily explained by the gradient in Precipitation, but tree denisty bimodality appears to occur between 600-900 mm/year in the past. 
+
+![](outputs/FIA_PLS_hexbinplots.png) 
+
+PLS & FIA density are not obviously explained as a function of mean annual temperature, but the bimodality in tree density appears to occur between 0-10 DegC in the past:
+
+![](outputs/FIA_PLS_temp_hexbinplots.png)
+
+
+
+
 
 Next we want to quantify the climate/environmental spaces where the bimodality is most prominant. This is important because it will tell us where the forests could switch to savannas and where savannas could actually become forests. We want to have an 'index of bimodality' that indicates the degree to which a density distribution is bimodal. Here it is plotted as a function of precipitation, be we are also interested in the relationship of tree density to other environmental variables. We should look at the relationship between density and a Principal component of the environmental variables. 
 
-If we know the environmental space where places were bimdal in the past, we can ask...are they still bimodal? How have those places changed?
 
 
-###Figure 1: 
-##PLS, FIA density and  % cover plotted as a function of precipitation, The density of overlapping points is displayed using shading by the "count". 
-![](outputs/FIA_PLS_hexbinplots.png) 
 
-##PLS, FIA density and  % cover plotted as a function of mean annual temperature:
-
-![](outputs/FIA_PLS_temp_hexbinplots.png)
 
 
 ###Figure 2: 

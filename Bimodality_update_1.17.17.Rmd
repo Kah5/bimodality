@@ -68,8 +68,17 @@ PLS & FIA density are not obviously explained as a function of mean annual tempe
 
 
 
+###3. Do soil factors/elevation explain tree denisity in either the past or the modern landscape?
 
-Next we want to quantify the climate/environmental spaces where the bimodality is most prominant. This is important because it will tell us where the forests could switch to savannas and where savannas could actually become forests. We want to have an 'index of bimodality' that indicates the degree to which a density distribution is bimodal. Here it is plotted as a function of precipitation, be we are also interested in the relationship of tree density to other environmental variables. We should look at the relationship between density and a Principal component of the environmental variables. 
+A. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. 
+
+
+![](outputs/v1.6/sand_vs_dens_FIA_PLS.png)
+![](outputs/v1.6/awc_vs_dens_FIA_PLS.png)
+![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
+
+
+
 
 
 

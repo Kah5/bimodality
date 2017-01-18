@@ -115,6 +115,12 @@ png(paste0('outputs/v',version,'/FIA_tree_density_map.png'))
 fia.map
 dev.off()
 
+#map PLS and fia side by side
+png(height=400, width=800,paste0('outputs/v', version, '/tree_density_maps_PLS_FIA.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(pls.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(fia.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
 #densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
  #                 by = c('x', 'y', 'cell'))
 #densitys <- densitys[densitys$PLSdensity > 14.87, ]
@@ -458,14 +464,31 @@ dev.off()
 #plot out climate space for PLS:
 png(paste0('outputs/v',version,'/precip_vs_temp_pls.png'))
 ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
+  xlab('Past Mean Annual Prism Precipitation (mm/yr)') + ylab('Past Mean annual temperature (DegC)')+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
 
 #plot out climate space for FIA:
 png(paste0('outputs/v',version,'/precip_vs_temp_FIA.png'))
 ggplot(dens.pr, aes(x = MAP2011, y = modtmean, colour = FIAdensity))+geom_point()+
+  xlab('Modern Mean Annual Prism Precipitation (mm/yr)') + ylab('Modern Mean annual temperature (DegC)')+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
+
+#plot climate space for modern and FIA side by side:
+png(width = 800, height = 400, paste0('outputs/v',version,'/precip_vs_temp_FIA_PLS.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point()+
+        xlab('Past Mean Annual Prism Precipitation (mm/yr)') + ylab('Past Mean annual temperature (DegC)')+ggtitle('Past climate space')+
+        scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(ggplot(dens.pr, aes(x = MAP2011, y = modtmean, colour = FIAdensity))+geom_point()+
+        xlab('Modern Mean Annual Prism Precipitation (mm/yr)') + ylab('Modern Mean annual temperature (DegC)')+ggtitle('Modern climate space')+
+        scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(), 
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
+
 
 sandfia <- ggplot(dens.pr, aes(sandpct, FIAdensity)) + geom_point() + theme_classic()+ xlab('% sand 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
@@ -499,7 +522,40 @@ png(paste0('outputs/v',version,'/PLS_ksat.png'))
 ksatpls
 dev.off()
 
-plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', ylab='increase in density since PLS (trees/ha)')
+#print sand characteristics side by side
+png(width = 800, height = 400, paste0('outputs/v',version,'/sand_vs_dens_FIA_PLS.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(ggplot(dens.pr, aes(sandpct,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(0,100) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab(' % sand') +ylab(" Modern Tree Density (stems/ha)") +ggtitle('Modern')+ theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(ggplot(dens.pr, aes(sandpct, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,100) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab(' % sand') +ylab(" Modern Tree Density (stems/ha)")+ggtitle('Past') + theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
+
+#print awc characteristics side by side
+png(width = 800, height = 400, paste0('outputs/v',version,'/awc_vs_dens_FIA_PLS.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(ggplot(dens.pr, aes(awc,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(0,0.25) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab(' AWC') +ylab(" Modern Tree Density (stems/ha)") +ggtitle('Modern')+ theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(ggplot(dens.pr, aes(awc, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,0.25) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab(' AWC') +ylab(" Modern Tree Density (stems/ha)")+ggtitle('Past') + theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
+
+#print ksat characteristics side by side
+png(width = 800, height = 400, paste0('outputs/v',version,'/ksat_vs_dens_FIA_PLS.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(ggplot(dens.pr, aes(ksat,FIAdensity)) +geom_hex()+ylim(0,600)+ xlim(0,250) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab('ksat') +ylab(" Modern Tree Density (stems/ha)") +ggtitle('Modern')+ theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(ggplot(dens.pr, aes(ksat, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,250) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+        xlab('ksat') +ylab(" Modern Tree Density (stems/ha)")+ggtitle('Past') + theme_bw(base_size = 15)
+      , vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+dev.off()
+
+
 
 #linear regression model for sand
 sand.lm <- lm(dens.pr$sandpct ~dens.pr$PLSdensity)
@@ -534,13 +590,16 @@ my.cols <- rev(brewer.pal(k, "RdYlBu"))
 ## compute 2D kernel density, see MASS book, pp. 130-131
 z <- kde2d(dens.pr$PLSdensity, dens.pr$diff, n=50)
 
-plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', xlim= c(0,800),ylim = c(-1000, 1000),ylab='increase in density since PLS (trees/ha)', pch=19, cex=.4)
+plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', xlim= c(0,600),ylim = c(-1000, 1000),ylab='increase in density since PLS (trees/ha)', pch=19, cex=.4)
 contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
-
-
+#make same plot with ggplot:
+png(paste0('outputs/v', version, '/density_difference_plot.png'))
+ggplot(dens.pr, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
+  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), size = 5)
+dev.off()
 
 library(hexbin)
 #### 

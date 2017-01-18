@@ -76,6 +76,9 @@ Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity
 ![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
 ![](outputs/v1.6/FIA_PLS_PC1_hexbinplots.png)
 
+Additionally, the biplot for the Principal Components Analysis:
+![](outputs/v1.6/pca_biplot.png)
+
 
 
 ## Q4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
@@ -114,12 +117,13 @@ Bin range of 25, non-overlapping bins:
 Additionally, we can have overlapping bins, where each new "bin of precpitation" is offset by 10mm/year, which also present a slightly different picture.
 
 Bin range of 25, overlapping bins:
+
 ![](outputs/v1.6/rolling_BC_plots_25.png)
 
 
-We can do the same for Bins of the Principal components (this is not as easily interpretable as binning by precipitation):
-![](outputs/v1.6/PC1_by_bins.png)
-![](outputs/v1.6/PC2_by_bins.png)
+We can also calculate BC of the Principal components (this is not as easily interpretable as binning by precipitation):
+![](outputs/v1.6/PLS_FIA_PC1_PC2_BC_bins.png)
+
 
 ## Where is the bimodality located within the N. American Midwest?
 

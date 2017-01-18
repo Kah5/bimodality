@@ -364,12 +364,15 @@ scores$PLS <- dens.dens
 dens.rm$PC1 <- scores[,1]
 dens.rm$PC2 <- scores[,2]
 dens.rm <- data.frame(dens.rm)
-
+PC <- dens.pca
 #plot scores by tree density in trees per hectare
 png(paste0("ouputs/v", version,"/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
+
+data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
+ggbiplot(dens.pca)
 
 plot(dens.pca, type = "l")
 print(dens.pca)
@@ -378,10 +381,21 @@ biplot(dens.pca)
 
 # using biplot
 library(ggbiplot)
-g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, fill = dens.dens)
-g <- g + theme(legend.direction = 'horizontal', 
-               legend.position = 'top')
-print(g)
+g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+= 20,alpha = 0)
+
+#g <- g + geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS))+ scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw() 
+
+# layer the points from pls underneath the pca biplot
+# using a clever trick to manipulate the layers
+g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
+
+g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
+
+#write to png
+png(width = 800, height = 400,"outputs/v1.6/pca_biplot.png")
+g + ggtitle('PCA biplot with PLS tree density')
+dev.off()
 
 # add the scores from pca to the dens.pr data frame
 #this merge is not working
@@ -852,6 +866,20 @@ calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
 
 
 dev.off()
+
+#make a png with PC1 and PC2 for PLS and FIA
+png(height = 400, width = 800, paste0('outputs/v',version,'/PLS_FIA_PC1_PC2_BC_bins.png'))
+pushViewport(viewport(layout = grid.layout(2, 2)))
+print(calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('BC for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(calc.BC(data = dens.pr, binby = 'PC1bins', density = "FIAdensity") + ggtitle('BC for PC1 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")+ ggtitle('BC for PC2  PLS'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('BC for PC2 FIA'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
+dev.off()
+
+calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
 
 
 #this function maps out the region that is bimodal 

@@ -20,11 +20,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Overall Distributions of density & tree cover
 #### We know that PLS tree density is bimodal and FIA tree density is not:
-![PLS density](outputs/FIA_PLS_hists.png) 
+![](outputs/FIA_PLS_hists.png) 
 
 
 #### The past climate space of the Midwest is broad spans a large range of precipitation and temperature. Neither one of these parameters fully explains the distribution in tree density:
-![Temperature vs Precip](outputs/v1.6/precip_vs_temp_full_pls.png)
+![](outputs/v1.6/precip_vs_temp_full_pls.png)
 
 ##Progress to date on Key Bimodality paper Figures:
 We discussed some key analyses and figures that we wanted to show. Basically, we want to demonstrate that PLS is bimodal in terms of tree density, and the modern landscape is not bimodal. 
@@ -45,12 +45,12 @@ If we know the environmental space where places were bimdal in the past, we can 
 
 
 ###Figure 1: 
-PLS, FIA density and  % cover plotted as a function of precipitation, The density of overlapping points is displayed using shading by the "count". 
-![PLS vs precip](outputs/FIA_PLS_hexbinplots.png) 
+##PLS, FIA density and  % cover plotted as a function of precipitation, The density of overlapping points is displayed using shading by the "count". 
+![](outputs/FIA_PLS_hexbinplots.png) 
 
-PLS, FIA density and  % cover plotted as a function of mean annual temperature:
+##PLS, FIA density and  % cover plotted as a function of mean annual temperature:
 
-![PLS vs precip](outputs/FIA_PLS_temp_hexbinplots.png)
+![](outputs/FIA_PLS_temp_hexbinplots.png)
 
 
 ###Figure 2: 

@@ -458,7 +458,7 @@ dev.off()
 
 #plot out climate space for FIA:
 png(paste0('outputs/v',version,'/precip_vs_temp_FIA.png'))
-ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = FIAdensity))+geom_point()+
+ggplot(dens.pr, aes(x = MAP2011, y = modtmean, colour = FIAdensity))+geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
 
@@ -598,12 +598,12 @@ ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2", 
 dev.off()
 
 #plot histograms side by side
-png(height=800, width=500, filename="outputs/FIA_PLS_hists.png", type="cairo")
-pushViewport(viewport(layout = grid.layout(2, 1)))
+png(height=400, width=800, filename="outputs/FIA_PLS_hists.png", type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
 print(ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
-  theme_bw(base_size = 25), vp = viewport(layout.pos.row = 1, layout.pos.col = 1))#+ facet_wrap(~plsprbins)
+  theme_bw(base_size = 20), vp = viewport(layout.pos.row = 1, layout.pos.col = 1))#+ facet_wrap(~plsprbins)
 print(ggplot(dens.pr, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
-  theme_bw(base_size = 25),vp = viewport(layout.pos.row = 2, layout.pos.col = 1))#+ facet_wrap(~fiaprbins)
+  theme_bw(base_size = 20),vp = viewport(layout.pos.row = 1, layout.pos.col = 2))#+ facet_wrap(~fiaprbins)
 
 dev.off()
 

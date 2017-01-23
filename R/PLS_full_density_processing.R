@@ -343,6 +343,7 @@ label.breaks <- function(beg, end, splitby){
   labels.test <- paste (labels.test$first, '-' , labels.test$second)
   labels.test
 }
+# use the label.breaks function and cut to cut environmental data up into different bins
 dens.pr$plsprbins50 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = label.breaks(250, 1300, 50))
 dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = label.breaks(250, 1250, 100))
 dens.pr$plsprbins75 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 75), labels = label.breaks(250, 1275, 75))
@@ -373,30 +374,53 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 #pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-png(paste0('outputs/v',version,'/full/PLS_full_density_histogrom.png'))#
+png(paste0('outputs/v',version,'/full/PLS_full_density_histogram.png'))#
 ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
   theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
 dev.off()
 
-
+#####################################################
+# CREATE HEXBIN PLOTS of Density vs. envtl variables#
+#####################################################
 
 library(lattice)
-#hexbin plots to show the density of points in precipitatoins
 
-png(paste0('outputs/v',version,'/full/PLS_full_precipitation_hexbin.png'))
-ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) + xlim(400, 1400)+
-  scale_fill_gradient(low='red', high='black')+theme_bw(base_size = 20)+
-  xlab('Mean Annual Precipitation (mm) \n PRISM 1900-1910') + ylab("PLS Tree Density (stems/ha)")
+# for precipitation
+png(paste0('outputs/v',version,'/full/PLS_precipitation_hexbin.png'))
+ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + 
+  theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab(' Mean Annual Precipitation (mm) \n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)")
+dev.off()
+
+#for tmean
+png(paste0('outputs/v',version,'/full/PLS_tmean_hexbin.png'))
+ggplot(dens.pr, aes(pasttmean, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,15) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Mean Annual Temperature (degC)\n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)") 
+dev.off()
+
+#for PC1
+png(paste0('outputs/v',version,'/full/PLS_PC1_hexbin.png'))
+ggplot(dens.pr, aes(PC1, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,9) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Principal component 1') +ylab(" Past Tree Density (stems/ha)") 
+dev.off()
+
+#for PC2
+png(paste0('outputs/v',version,'/full/PLS_PC2_hexbin.png'))
+ggplot(dens.pr, aes(PC2, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,5) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Principal component 2') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
 rbpalette <- c('red', "blue")
 ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 
+##################################################
+#plot out denisty distriburions binned by envt#
+##################################################
+
 png(paste0('outputs/v',version,'/full/precipitation_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
-ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 #plot by sandiness
 png(paste0('outputs/v',version,'/full/sand_full_by_bins.png'))
@@ -428,7 +452,9 @@ ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
-#calculate bimodality coefficients
+###################################
+#calculate bimodality coefficients#
+####################################
 library(modes)
 
 #this function uses the bimodality_coefficient funcition in the modes library to calculate the 
@@ -454,21 +480,23 @@ calc.BC <- function(data, binby, density){
  
 }
 
-#pdf(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_binplots.pdf'))
-png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_pls_prbins.png'))
+pdf(paste0('outputs/v',version,'/bimodality_coefficient_binplots.pdf'))
 calc.BC(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")
-dev.off()
-#calc.BC(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
-png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_100bins.png'))
 calc.BC(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
-dev.off()
-png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_75bins.png'))
-#calc.BC(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
-dev.off()
-#calc.BC(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
-png(paste0('outputs/v',version,'/bimodality_coefficient_full_pls_25bins.png'))
 calc.BC(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+dev.off()
+
+png(height = 400, width = 400, paste0('outputs/v',version,'/full/PLS_PC1_PC2_BC_bins.png'))
+pushViewport(viewport(layout = grid.layout(2, 1)))
+print(calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('BC for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")+ ggtitle('BC for PC2  PLS'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
 dev.off()
 
 #calc.BC(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
@@ -491,34 +519,32 @@ map.bimodal <- function(data, binby, density){
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  
-  bins <- as.character(unique(data[,binby]))
-  diptest <- matrix(NA, length(bins), 1)
-  for (i in 1:length(bins)){
-    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    a <- dip.test(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    diptest[i] <- a$p.value  
-   
-    }
-  diptest.bins <- data.frame(cbind(diptest, bins))
-  colnames(diptest.bins) <- c('pval', 'bins')
-  diptest.bins$pval <- as.numeric(as.character(diptest.bins$pval))
-  #merge the criteria together:
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
-  merged <- merge(diptest.bins, merged, by = 'bins')
-  merged$bimodal <- "Not bimodal"
+  #define bimodality
+  merged$bimodal <- "Stable"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
-  merged[merged$BC >=0.5 & merged$pval <= 0.05,]$bimodal <- 'Significantly Bimodal'
-  #write.csv(merged, paste0('outputs/v',version,'/PLS_full_bimodal_', binby,'.csv'))
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen', 'red'))+theme_bw()+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+                                                                                                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
+    theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0('Bimodal regions for ', binby))
+    ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
   
 }
 
+
 #map out bimodalities--note the region varies by bin size
-pdf(paste0('outputs/v',version,'/bimodal_maps.pdf'))
+pdf(paste0('outputs/v',version,'/full/bimodal_maps.pdf'))
 map.bimodal(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
 map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
@@ -550,9 +576,9 @@ rollBC_r = function(x,y,xout,width) {
 ordered <- dens.pr[order(dens.pr$MAP1910),]
 ordered$rownum <- 1:length(ordered$MAP1910)
 
-pdf(paste0('outputs/v',version,'/rolling_BC_plots_500_cutoff.pdf'))
+pdf(paste0('outputs/v',version,'/full/rolling_BC_plots_500_cutoff.pdf'))
 
-png(paste0('outputs/v',version,'/bimodality_coefficient_roll_pls_25bins.png'))
+png(paste0('outputs/v',version,'/full/bimodality_coefficient_roll_pls_25bins.png'))
 
 rollBC_r(ordered$MAP1910, ordered$PLSdensity, ordered$MAP1910, 150)
 dev.off()

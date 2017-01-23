@@ -7,7 +7,7 @@
 library(plyr)
 library(reshape2)
 library(raster)
-version <- "1.6"
+version <- "1.6-5"
 
 #read in final.data from the step_one_clean_IN.r script:
 final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
@@ -38,7 +38,7 @@ summary(stem.density)
 summary(basal.area)
 
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, 'outputs/IN_ILdensestimates_v1.5-2.csv')
+write.csv(stem.density, paste0('outputs/IN_ILdensestimates_v',version,'.csv'))
 
 
 ## maximum Stem density estimates decreases when you remove trees below 8 cm veil line
@@ -63,6 +63,11 @@ summary(basal.area.v)
 ##need to regrid the density estimates onto the paleon centroids
 
 ##create base raster that is extent of midwest domain
+
+# created a new function that calculates the canopy cover based on formulaiton of density in 
+# citation: Law et al. (1994): https://www.nrs.fs.fed.us/pubs/tb/tb2/techbrf2.html
+estimates.scc <- SCC(final.data, correction.factor, veil = TRUE)
+
 
 base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
                   ymn = 58000,  ymx = 1498000, nrows = 180,

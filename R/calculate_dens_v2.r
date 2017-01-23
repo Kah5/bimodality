@@ -86,6 +86,7 @@ coordinates(final.data)<- ~PointX+PointY
 stem.density <- SpatialPointsDataFrame(coordinates(final.data), 
                                        data=data.frame(density = estimates[[1]],
                                                        basal   = estimates[[2]],
+                                                       SCC = estimates.scc[[3]],
                                                        diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54))
 
 proj4string(stem.density)<-CRS('+init=epsg:3175')
@@ -108,7 +109,7 @@ spec.table <- data.frame(PointX = final.data$PointX,
                          basal =  rep(stem.density$basal/2, 2),
                          diams = c(final.data$diam1, final.data$diam2),
                          dists = c(final.data$dist1, final.data$dist2),
-                         stringsAsFactors = FALSE)
+                         scc = stem.density$SCC,stringsAsFactors = FALSE)
 
 #classify trees as zero or as wet trees
 zero.trees <- is.na(stem.density$density) & (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
@@ -318,7 +319,10 @@ density.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.
 basal.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'basal')
 biomass.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'biom')
 diam.table <-  dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'diams')
+SCC.table <- dcast(spec.table, x + y + cell ~ spec, mean, na.rm = TRUE, value.var = 'scc')
+SCC.table$total <- rowSums(SCC.table[,4:36], na.rm = TRUE)
 
+ggplot(SCC.table, aes(x = x, y=y, color = total))+geom_point()
 
 
 #calculate standard deviations of density, basal area, biomass, and diameters

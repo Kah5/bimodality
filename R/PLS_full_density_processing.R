@@ -1,7 +1,7 @@
 # PLS_full_density_processing.R
 # This script performs many of the bimodality funcitons that FIA_density_processing.R does, but 
 # this script includes all of the PLS data, not just the data that overlaps with FIA
-version <- "1.6"
+version <- "1.6-5"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
@@ -87,12 +87,19 @@ past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min)
 past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
 
 
+#read in mean annual precipitaiton for modern and past
 
-past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1910.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+
 past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
 
+#calculate seasonality from tmean:
+past.tmean$max <- apply(past.tmean[ , 2:13], 1, max) + 273.15 # convert to kelvin
+past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvin
+past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
 
-dens.pr <- merge(densitys, past.precip[,c('x', 'y', '.')], by =c('x', 'y'))
+
+dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
 #dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[5] <- c('MAP1910')
 
@@ -103,9 +110,9 @@ colnames(dens.pr)[6]<- c( 'pastdeltaP')
 
 #now add the mean temperature to the dataframe
 #dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
-dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', '.')], by = c('x', 'y') )
-colnames(dens.pr)[7] <- c('pasttmean')
-dens.pr$pasttmean<- dens.pr$pasttmean/10 # convert from C*10 to Celcius
+dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', "deltaT")], by = c('x', 'y') )
+colnames(dens.pr)[7:8] <- c('pasttmean', "pastdeltaT")
+
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
@@ -236,6 +243,22 @@ dev.off()
 png(paste0('outputs/v',version,'/PLS_full_ksat.png'))
 ksatpls
 dev.off()
+
+##########################################################
+# assign density classificaitons of savanna, forests, etc#
+##########################################################
+
+#Using the Rheumtella Classification scheme:
+# prairie (<0.5 trees/ha)
+# savanna (0.5-47 trees/ha)
+# forest cover (>47 trees/ha)
+
+dens.pr$ecotype<- 'test'
+dens.pr[dens.pr$PLSdensity > 47, ]$ecotype <-  "forest"
+dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "savanna" 
+dens.pr[dens.pr$PLSdensity < 0.5, ]$ecotype <-  "prairie"
+
+ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
 
 

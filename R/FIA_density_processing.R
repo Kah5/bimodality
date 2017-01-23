@@ -1,6 +1,6 @@
 #read in FIA from Sean's repository
 # set pls version to use
-version <- "1.6"
+version <- "1.6-5"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
@@ -121,11 +121,8 @@ pushViewport(viewport(layout = grid.layout(1, 2)))
 print(pls.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(fia.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
-#densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
- #                 by = c('x', 'y', 'cell'))
-#densitys <- densitys[densitys$PLSdensity > 14.87, ]
+
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
-#this merge yields only 457 grid cells across indiana and illinois where we have both PLS and FIA data
 
 #this is to join the species tables
 pls.names<- colnames(pls.spec)

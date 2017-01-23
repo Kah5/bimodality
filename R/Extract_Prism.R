@@ -2,6 +2,8 @@ library(plyr)
 library(raster)
 library(data.table)
 library(rgdal)
+version <- "1.6-2"
+
 # read in and average prism data
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')

@@ -385,6 +385,7 @@ plot(dens.pca)
 dens.pca$loadings
 scores <- data.frame(dens.pca$scores[,1:2])
 scores$PLS <- dens.dens
+scores$ecotype <- dens.rm$ecotype
 
 dens.rm$PC1 <- scores[,1]
 dens.rm$PC2 <- scores[,2]
@@ -408,7 +409,6 @@ biplot(dens.pca)
 library(ggbiplot)
 g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
 = 20,alpha = 0)
-#g <- g + geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS))+ scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw() 
 # layer the points from pls underneath the pca biplot
 # using a clever trick to manipulate the layers
 g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
@@ -417,6 +417,17 @@ g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,70
 #write to png
 png(width = 800, height = 400,"outputs/v1.6/pca_biplot.png")
 g + ggtitle('PCA biplot with PLS tree density')
+dev.off()
+
+#now plot biplot with the classification colors
+g2 <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+              = 20,alpha = 0)
+# layer the points from pls underneath the pca biplot
+# using a clever trick to manipulate the layers
+g2$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = ecotype)), g2$layers)
+
+png(width = 800, height = 400,"outputs/v1.6/pca_biplot_class.png")
+g2 + ggtitle('PCA biplot with Rheumtell density classification')
 dev.off()
 
 # add the scores from pca to the dens.pr data frame
@@ -685,7 +696,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'pl
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', "PC1", "PC2",'PC1bins', 'PC2bins')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', "PC1", "PC2",'PC1bins', 'PC2bins', 'ecotype', 'fiaecotype')) 
 
 #map out 
 all_states <- map_data("state")
@@ -904,6 +915,8 @@ calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
 
 
+
+
 #this function maps out the region that is bimodal 
 map.bimodal <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
@@ -915,10 +928,15 @@ map.bimodal <- function(data, binby, density){
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  #define bimodality
   merged$bimodal <- "Not bimodal"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  merged$classification <- "test"
+  merged$classification <- paste(merged$bimodal, merged$ecotype)
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c('purple', 'forestgreen'))+theme_bw()+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c('purple', 'forestgreen', "blue", "green", "black", "red"))+theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
  

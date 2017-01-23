@@ -83,7 +83,7 @@ library(raster)
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb1.6-5.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 coordinates(spec.table) <- ~x + y
 
 years <- 1900:1910
@@ -100,8 +100,8 @@ filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   
   #add 1910 to this
   yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
-  yr1910 <- projectRaster(yr1910, crs='+init=epsg:3175')
-  t2 <- crop(yr1910, extent(spec.table)) #crop to the extent of indiana & illinois 
+  t2 <- crop(yr1910, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
+  t2 <- projectRaster(t2, crs='+init=epsg:3175')
   y2 <- data.frame(rasterToPoints(t2)) 
   
   test <- cbind(y, y2[,3:14])
@@ -141,19 +141,6 @@ filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
 spec.table <- data.frame(spec.table)
 
 
-#y$total <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 
-  #                      'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")])
-#y.t <- y[,c('x','y', 'total','year','Jan', 'Feb', 'Mar', "Apr", "May", 
- #         'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")]
-#this averages for each month within each gridcell
-#full <- dcast(data.frame(y), x + y ~., mean , value.var=c('Jan', 'Feb', 'Mar', "Apr", "May", 
- #                                            'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec", 'total'))
-
-#full <- dcast(data.frame(y), x + y ~ ., mean, value.var = 'total')
-#convert to rasterstack
-#coordinates(full) <- ~x + y
-#gridded(full) <- TRUE
-#avgs <- brick(full) 
 
 plot(avgs) #plots averages
 
@@ -168,7 +155,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1909.csv")
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1909_full.csv")
 
 
 
@@ -181,13 +168,10 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 #setwd to data directory
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_stable_4kmM2_189501_198012_bil/')
 
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 coordinates(spec.table) <- ~x + y
   
 
-#spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.6.csv')
-coordinates(spec.table) <- ~x + y
 proj4string(spec.table) <- '+init=epsg:3175'
 spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
@@ -246,7 +230,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_yr_Prism_",yrs,".csv"))
+write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_yr_Prism_",yrs,"_full.csv"))
 
 
 

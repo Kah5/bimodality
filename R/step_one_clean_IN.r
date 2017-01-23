@@ -34,14 +34,14 @@ library(raster)
 library(ggplot2)
 library(Rcpp)
 
-version <- "1.6"
+version <- "1.6-5" # version using 1.7 IL data and 1.6 IN data
 # Read in the data
 ind <- read.csv("data/ndinpls_v1.6.csv", stringsAsFactors = FALSE) # version 1.6 
 
 # Read in the il data
-il <- read.csv("data/ndilpls_v1.6.csv", stringsAsFactors = FALSE) # version 1.6
+il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-ggplot(data = ind, aes(x = x, y = y, color = bearingdir)) + geom_point()
+ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
 

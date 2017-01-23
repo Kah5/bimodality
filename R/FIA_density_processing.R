@@ -342,6 +342,31 @@ dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 summary(rowSums(dens.pr != 0, na.rm=TRUE))
 dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 
+##########################################################
+# assign density classificaitons of savanna, forests, etc#
+##########################################################
+
+#Using the Rheumtella Classification scheme:
+# prairie (<0.5 trees/ha)
+# savanna (0.5-47 trees/ha)
+# forest cover (>47 trees/ha)
+
+dens.pr$ecotype<- 'test'
+dens.pr[dens.pr$PLSdensity > 47, ]$ecotype <-  "forest"
+dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "savanna" 
+dens.pr[dens.pr$PLSdensity < 0.5, ]$ecotype <-  "prairie"
+
+ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
+
+#define ecotype for closed forests
+dens.pr$fiaecotype<- 'test'
+dens.pr[dens.pr$FIAdensity > 47, ]$fiaecotype <-  "forest"
+dens.pr[dens.pr$FIAdensity < 47, ]$fiaecotype <-  "savanna" 
+dens.pr[dens.pr$FIAdensity < 0.5, ]$fiaecotype <-  "prairie"
+
+ggplot(data = dens.pr, aes(x = x, y = y, color = fiaecotype)) + geom_point()
+
+
 #############################################
 # PCA analysis of environmental variables:
 ############################################
@@ -383,13 +408,10 @@ biplot(dens.pca)
 library(ggbiplot)
 g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
 = 20,alpha = 0)
-
 #g <- g + geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS))+ scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw() 
-
 # layer the points from pls underneath the pca biplot
 # using a clever trick to manipulate the layers
 g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
-
 g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
 
 #write to png

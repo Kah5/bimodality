@@ -8,7 +8,7 @@ version <- "1.6-2"
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 #spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.5-2.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 spec.table <- data.frame(spec.table)
 spec.table$pr30yr <- extract(prism.alb, spec.table[,c("x","y")])
 
@@ -20,13 +20,17 @@ write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/K
 
 #get the monthly averages
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
+coordinates(spec.table) <- ~x +y
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
 month <- sprintf("%02d", 1:12)
 for (i in 1:length(month)) {
   filenames <- list.files(pattern=paste0(".*_", month[i],".*\\.bil$", sep = ""))
-  s <- stack(filenames) #make all into a raster
-  s <- projectRaster(s, crs='+init=epsg:3175') # project in great lakes albers
-  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+  s <- stack(filenames)
+  t <- crop(s, extent(spec.table.ll))#make all into a raster
+  s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+   #crop to the extent of indiana & illinois 
   y <- data.frame(rasterToPoints(t)) #covert to dataframe
   #colnames(y) <- c("x", "y", month.abb)
   y$month <- month[i]
@@ -63,11 +67,12 @@ avgs.pts$Pointx <- PLSpoints.agg$Pointx
 avgs.pts$Pointy <- PLSpoints.agg$Pointy
 write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.full_mo_modernPRISMP.csv")
 
+spec.table <- data.frame(spec.table)
 avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms.csv")
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
 
 
 #write.csv(full.mo, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_allmonths_precip.csv")
@@ -78,14 +83,14 @@ library(raster)
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189501_198012_bil/')
 
 #spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/spec.table.csv')
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb1.5-2.csv')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb1.6-5.csv')
 coordinates(spec.table) <- ~x + y
 
 years <- 1900:1910
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
-  t <- crop(s, extent(spec.table)) #crop to the extent of indiana & illinois 
+  t <- crop(s, extent(spec.table.ll)) 
   s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
   y <- data.frame(rasterToPoints(s)) #covert to dataframe
   years <- rep(1900:1909, each = 12)

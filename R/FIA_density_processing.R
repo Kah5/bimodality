@@ -929,14 +929,22 @@ map.bimodal <- function(data, binby, density){
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
-  merged$bimodal <- "Not bimodal"
+  merged$bimodal <- "Stable"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
-  merged$classification <- "test"
-  merged$classification <- paste(merged$bimodal, merged$ecotype)
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c('purple', 'forestgreen', "blue", "green", "black", "red"))+theme_bw()+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+    "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
+    theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
  

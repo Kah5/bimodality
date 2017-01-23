@@ -81,7 +81,7 @@ write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwe
 ###############################################################
 
 #create variable for precipitation seasonality
-past.precip.mo <- read.csv(paste0('outputs/pr_monthly_Prism_1895_1905.csv'))
+past.precip.mo <- read.csv(paste0('outputs/pr_monthly_Prism_1900_1909_full.csv'))
 past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
 past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
 past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
@@ -89,9 +89,9 @@ past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo
 
 #read in mean annual precipitaiton for modern and past
 
-past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909_full.csv')
 
-past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
+past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910_full.csv')
 
 #calculate seasonality from tmean:
 past.tmean$max <- apply(past.tmean[ , 2:13], 1, max) + 273.15 # convert to kelvin
@@ -99,14 +99,14 @@ past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvi
 past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
 
 
-dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip.mo[,c('x', 'y', 'total', 'deltaP')], by =c('x', 'y'))
 #dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(dens.pr)[5] <- c('MAP1910')
+colnames(dens.pr)[5:6] <- c('MAP1910', 'pastdeltaP')
 
 #now add the precipitation seasonality to the dataframe
 #dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
-dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y'), all.x = TRUE)
-colnames(dens.pr)[6]<- c( 'pastdeltaP')
+#dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y'), all.x = TRUE)
+#colnames(dens.pr)[6]<- c( )
 
 #now add the mean temperature to the dataframe
 #dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
@@ -136,28 +136,28 @@ plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Preci
 sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 
-sand1km <- raster("data/1km_UMW_sand1.tif")
-plot(sand1km)
+#sand1km <- raster("data/1km_UMW_sand1.tif")
+#plot(sand1km)
 
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
-sand1km.alb <- projectRaster(sand1km, crs = '+init=epsg:3175')
+#sand1km.alb <- projectRaster(sand1km, crs = '+init=epsg:3175')
 
 
 #awc
 awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
-awc1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_awc1.tif")
+#awc1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_awc1.tif")
 
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
-awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
+#awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
 
 #ksat
 
 ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
-ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
+#ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
 
 ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
-ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
+#ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #extract soils data using FIA and ps points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
@@ -172,10 +172,7 @@ summary(rowSums(dens.pr != 0, na.rm=TRUE))
 
 
 PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
-#FIA.lm<- lm(dens.pr$FIAdensity ~dens.pr$MAP2011)
-#PLS_mod.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP2011)
-#FIA_pas.lm <- lm(dens.pr$FIAdensity~dens.pr$MAP1910)
-#diff.lm <- lm(dens.pr$diff ~dens.pr$PLSdensity)
+
 
 summary(PLS.lm)
 
@@ -509,7 +506,7 @@ calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 #dev.off()
 
 
-#this function maps out the region that is bimodal 
+#this function maps out the region that is bimodal & uses the ecotypes to classify this
 map.bimodal <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 1)
@@ -558,6 +555,28 @@ map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
+
+png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('Bimodal Regions for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'PC2bins', density = "PLSdensity") + ggtitle('Bimodal Regions for PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_Precip_25_50_75_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 3)))
+print(map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")+ ggtitle('Bimodal Regions for Precip25 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity") + ggtitle('Bimodal Regions for  Precip50 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(map.bimodal(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity") + ggtitle('Bimodal Regions for  Precip75 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
+dev.off()
+
+
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_tmean_delta_p_map.png'))
+pushViewport(viewport(layout = grid.layout(1, 3)))
+print(map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")+ ggtitle('Bimodal Regions for deltaP PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('Bimodal Regions for  tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity") + ggtitle('Bimodal Regions for sand PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
+dev.off()
+
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

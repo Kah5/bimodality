@@ -938,14 +938,20 @@ map.bimodal <- function(data, binby, density){
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
     
   }
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
-    "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641', # dark green
+      '#fdae61', # light orange
+      '#a6d96a', # light green
+      '#d7191c', # red
+      '#fee08b', # tan
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Bimodal prairie', 'Stable prairie') )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
- 
+    ggtitle(paste0(binby, ' for ',density))
+  
 }
+
 
 #map out bimodalities--note the region varies by bin size
 pdf(paste0('outputs/v',version,'/bimodal_maps.pdf'))

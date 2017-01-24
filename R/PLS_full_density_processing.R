@@ -628,9 +628,41 @@ map.bimodal.5c <- function(data, binby, density){
   
 }
 
+pdf(paste0('outputs/v',version,'/full/bimodal_maps_5col.pdf'))
 map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
+#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+dev.off()
+
+png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map_5col.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle(' PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "PLSdensity") + ggtitle('PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
+
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_Precip_25_50_75_map_5col.png'))
+pushViewport(viewport(layout = grid.layout(1, 3)))
+print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")+ ggtitle(' Precip25 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity") + ggtitle('Precip50 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity") + ggtitle('Precip75 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
+dev.off()
 
 
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_tmean_delta_p_map_5col.png'))
+pushViewport(viewport(layout = grid.layout(1, 3)))
+print(map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")+ ggtitle('deltaP PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity") + ggtitle('sand PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
+dev.off()
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

@@ -352,7 +352,7 @@ dens.pr$plsprbins25 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 25), la
 dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels = label.breaks(0,90, 10))
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
-dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1), labels = label.breaks(0,13, 1))
+dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 
@@ -427,6 +427,10 @@ png(paste0('outputs/v',version,'/full/sand_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
+
+ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~pasttmeanbins, scales = 'free_y')+
+  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+
 
 #plot out climate space:
 png(paste0('outputs/v',version,'/full/precip_vs_temp_full_pls.png'))
@@ -606,22 +610,23 @@ map.bimodal.5c <- function(data, binby, density){
   if(density == "PLSdensity"){
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$ecotype)
-  }else{
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+    }else{
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
     
   }
   
-  merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-  merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
     geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#1a9641', # dark green
-      '#fdae61', # light orange
-      '#a6d96a', # light green
-      '#d7191c', # red
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
       '#fee08b', # tan
-      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Prairie') )+
+      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0(binby, ' for ',density))
@@ -631,6 +636,7 @@ map.bimodal.5c <- function(data, binby, density){
 pdf(paste0('outputs/v',version,'/full/bimodal_maps_5col.pdf'))
 map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 #map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
 map.bimodal.5c(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
 #map.bimodal.5c(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
 map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
@@ -663,6 +669,9 @@ print(map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdens
 print(map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity") + ggtitle('sand PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 dev.off()
+
+
+write.csv(dens.pr, "outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

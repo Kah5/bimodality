@@ -16,9 +16,13 @@ for(v in names(LBDA$var)){
   LBDA.out[[v]] <- ncvar_get(LBDA, v)  
 }
 
+PDSI <- LBDA.out$pdsi
+
+new.data <- aperm(PDSI, c(2,3,1))
+
 #test plot the LBDA
 test<- raster(LBDA.out$pdsi[1850,138:1,1:237])
 plot(test)
               
 # lets make a raster brick of this
-LBDAbrick<- brick(LBDA.out$pdsi[1750:2006,138:1,1:237])
+LBDAbrick<- brick(LBDA.out$pdsi[, 138:1, 1:237])

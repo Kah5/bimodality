@@ -1027,7 +1027,7 @@ map.bimodal.5c <- function(data, binby, density){
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
   merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
@@ -1074,7 +1074,28 @@ map.bimodal.5c(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
+write.csv(dens.pr, "outputs/v1.6-5/dens_pr_FIA_PLS_df.csv")
 
+#read in the data from PLS full density processing.R
+dens.full <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
+
+library(grid)
+library(gridExtra)
+source('R/grid_arrange_shared_legend.R')
+a <- map.bimodal.5c(data = dens.full, binby = 'plsprbins25', density = "PLSdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_precip_25_BC_map.png')
+grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
+dev.off()
+
+a <- map.bimodal.5c(data = dens.full, binby = 'PC1', density = "PLSdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'PC1', density = "FIAdensity")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_precip_25_BC_map.png')
+grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
+dev.off()
+#read in the df from PLS full density procession
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

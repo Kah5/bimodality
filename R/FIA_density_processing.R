@@ -349,16 +349,16 @@ dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
 # forest cover (>47 trees/ha)
 
 dens.pr$ecotype<- 'test'
-dens.pr[dens.pr$PLSdensity > 47, ]$ecotype <-  "forest"
-dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "savanna" 
+dens.pr[dens.pr$PLSdensity > 47, ]$ecotype <-  "Forest"
+dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "Savanna" 
 dens.pr[dens.pr$PLSdensity < 0.5, ]$ecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
 #define ecotype for closed forests
 dens.pr$fiaecotype<- 'test'
-dens.pr[dens.pr$FIAdensity > 47, ]$fiaecotype <-  "forest"
-dens.pr[dens.pr$FIAdensity < 47, ]$fiaecotype <-  "savanna" 
+dens.pr[dens.pr$FIAdensity > 47, ]$fiaecotype <-  "Forest"
+dens.pr[dens.pr$FIAdensity < 47, ]$fiaecotype <-  "Savanna" 
 dens.pr[dens.pr$FIAdensity < 0.5, ]$fiaecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = fiaecotype)) + geom_point()
@@ -429,10 +429,10 @@ dev.off()
 
 # add the scores from pca to the dens.pr data frame
 #this merge is not working
-test1 <- merge(dens.pr,dens.rm[,c('cell', 'PC1', 'PC2')],  by = c('cell'))
+test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by = c('x','y','cell'))
 
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
-dens.pr <- dens.rm
+dens.pr <- test1
 ########################################
 # testing basic Linear models
 #######################################
@@ -1014,6 +1014,63 @@ map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
 dev.off()
 png(paste0('outputs/v',version,'/FIA_BC_map_25.png'))
 map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+dev.off()
+
+
+#make alternative maps that only plot prairie as one type of prairie:
+map.bimodal.5c <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  #define bimodality
+  merged$bimodal <- "Stable"
+  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+  merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641', # dark green
+      '#fdae61', # light orange
+      '#a6d96a', # light green
+      '#d7191c', # red
+      '#fee08b', # tan
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()+
+    ggtitle(paste0(binby, ' for ',density))
+  
+}
+
+pdf(paste0('outputs/v',version,'/full/bimodal_maps_5col.pdf'))
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
+map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
 

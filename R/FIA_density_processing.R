@@ -429,7 +429,7 @@ dev.off()
 
 # add the scores from pca to the dens.pr data frame
 #this merge is not working
-test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by = c('x','y','cell'))
+test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by = c('x','y','cell'), all.x = T)
 
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
@@ -1036,15 +1036,16 @@ map.bimodal.5c <- function(data, binby, density){
   if(density == "PLSdensity"){
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$ecotype)
-  }else{
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+    }else{
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
     
   }
   
-  merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-  merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
     geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
       '#1a9641', # dark green
       '#fdae61', # light orange

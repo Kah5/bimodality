@@ -99,7 +99,7 @@ past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvi
 past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
 
 
-dens.pr <- merge(densitys, past.precip.mo[,c('x', 'y', 'total', 'deltaP')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip.mo[,c('x', 'y', 'total', 'deltaP')], by =c('x', 'y'), all.x = F)
 #dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[5:6] <- c('MAP1910', 'pastdeltaP')
 
@@ -110,7 +110,7 @@ colnames(dens.pr)[5:6] <- c('MAP1910', 'pastdeltaP')
 
 #now add the mean temperature to the dataframe
 #dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
-dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', "deltaT")], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', "deltaT")], by = c('x', 'y'), all.x = F)
 colnames(dens.pr)[7:8] <- c('pasttmean', "pastdeltaT")
 
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
@@ -251,16 +251,16 @@ dev.off()
 # forest cover (>47 trees/ha)
 
 dens.pr$ecotype<- 'test'
-dens.pr[dens.pr$PLSdensity > 47, ]$ecotype <-  "forest"
-dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "savanna" 
-dens.pr[dens.pr$PLSdensity < 0.5, ]$ecotype <-  "prairie"
+dens.pr[dens.pr$PLSdensity >= 47, ]$ecotype <-  "Forest"
+dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "Savanna" 
+dens.pr[dens.pr$PLSdensity == 0, ]$ecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
 ####################################################
 #PCA analysis
 #####################################################
-dens.rm <- na.omit(dens.pr)
+dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, 5:11]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
@@ -320,13 +320,16 @@ g2 + ggtitle('PCA biplot with Rheumtell density classification')
 dev.off()
 
 # add the scores from pca to the dens.pr data frame
-#this merge is not working
-test1 <- merge(dens.pr,dens.rm[,c('cell', 'PC1', 'PC2')],  by = c('cell'))
+coordinates(dens.rm) ~x + y
+gridded(dens.rm) <- TRUE
+proj4string(dens.rm) <- '+init=epsg:3175'
+pca <- raster(dens.rm)
 
+test1 <- merge(dens.pr,unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x','y'), all.x= T)
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
-dens.pr <- dens.rm
+dens.pr <- test1
 
-
+ggplot(dens.pr, aes(x = x, y = y, color= ecotype))+geom_point()
 #################################################################################################
 #separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
 #################################################################################################
@@ -530,12 +533,17 @@ map.bimodal <- function(data, binby, density){
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
     
   }
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'grey')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
-                                                                                                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))+
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641', # dark green
+      '#fdae61', # light orange
+      '#a6d96a', # light green
+      '#d7191c', # red
+      '#fee08b', # tan
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Bimodal prairie', 'Stable prairie') )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0('Bimodal regions for ', binby, ' for ',density))
+    ggtitle(paste0(binby, ' for ',density))
   
 }
 
@@ -576,6 +584,52 @@ print(map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity
 print(map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('Bimodal Regions for  tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity") + ggtitle('Bimodal Regions for sand PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 dev.off()
+
+
+
+#make alternative maps that only plot prairie as one type of prairie:
+map.bimodal.5c <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  #define bimodality
+  merged$bimodal <- "Stable"
+  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+  merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641', # dark green
+      '#fdae61', # light orange
+      '#a6d96a', # light green
+      '#d7191c', # red
+      '#fee08b', # tan
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()+
+    ggtitle(paste0(binby, ' for ',density))
+  
+}
+
+map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
+
 
 
 #rolling BC

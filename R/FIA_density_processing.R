@@ -363,7 +363,10 @@ dens.pr[dens.pr$FIAdensity < 0.5, ]$fiaecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = fiaecotype)) + geom_point()
 
-
+#or we could use kmeans clustering on the PLS density variable, but this gives us two high density modes
+fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
+dens.pr$kmeans <- fit.km$cluster
+plot(dens.pr$kmeans, dens.pr$PLSdensity)
 #############################################
 # PCA analysis of environmental variables:
 ############################################
@@ -1079,9 +1082,35 @@ write.csv(dens.pr, "outputs/v1.6-5/dens_pr_FIA_PLS_df.csv")
 #read in the data from PLS full density processing.R
 dens.full <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 
+#first lets plot out the ecotypes in FIA and PLS
+ecotype.p <- ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+  geom_raster(data = dens.full, aes(x = x, y = y, fill = ecotype))+ scale_fill_manual(values = c(
+    '#1b7837',
+    '#b2df8a',
+    '#d8b365',
+    '#5ab4ac'), limits = c("Forest" , 'Savanna', 'prairie') )+
+  theme_bw()+
+  xlab("easting") + ylab("northing") +coord_equal()+ggtitle('PLS ecotypes')
+
+ecotype.f <- ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+  geom_raster(data = dens.pr, aes(x = x, y = y, fill = fiaecotype))+ scale_fill_manual(values = c(
+    '#1b7837',
+    '#b2df8a',
+    '#d8b365',
+    '#5ab4ac'), limits = c("Forest" , 'Savanna', 'prairie') )+
+  theme_bw()+
+  xlab("easting") + ylab("northing") +coord_equal() +ggtitle('FIA ecotypes')
+
 library(grid)
 library(gridExtra)
 source('R/grid_arrange_shared_legend.R')
+#plot the ecotypes side by side
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_ecotype_map.png')
+grid_arrange_shared_legend(ecotype.p,ecotype.f,nrow = 1, ncol = 2 )
+dev.off()
+
+
+#output full PLS density and limited FIA density plots
 a <- map.bimodal.5c(data = dens.full, binby = 'plsprbins25', density = "PLSdensity")
 b <- map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
 
@@ -1089,12 +1118,22 @@ png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_prec
 grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
 dev.off()
 
-a <- map.bimodal.5c(data = dens.full, binby = 'PC1', density = "PLSdensity")
-b <- map.bimodal.5c(data = dens.pr, binby = 'PC1', density = "FIAdensity")
+#do the same for PC1 (climate)
+a <- map.bimodal.5c(data = dens.full, binby = 'PC1bins', density = "PLSdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
 
-png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_precip_25_BC_map.png')
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_PC1_BC_map.png')
 grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
 dev.off()
+
+# outputs for PC2 (soils)
+a <- map.bimodal.5c(data = dens.full, binby = 'PC2bins', density = "PLSdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_PC2_BC_map.png')
+grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
+dev.off()
+
 #read in the df from PLS full density procession
 
 #rolling BC

@@ -257,6 +257,13 @@ dens.pr[dens.pr$PLSdensity == 0, ]$ecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
+# we could also do kmeans clustering, but this results in some overlap between clusters
+fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
+dens.pr$kmeans <- fit.km$cluster
+plot(fit.km$cluster, dens.pr$PLSdensity)
+
+ggplot(dens.full, aes(x = kmeans, y = PLSdensity, group = kmeans))+geom_boxplot()
+
 ####################################################
 #PCA analysis
 #####################################################

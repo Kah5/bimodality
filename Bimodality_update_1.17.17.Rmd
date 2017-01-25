@@ -146,13 +146,22 @@ pander(df, split.cells = 30)
 ![](outputs/v1.6-5/PLS_FIA_precip_BC_map.png)
 
 ### Where is the temperature range where PLS and FIA densities are bimodal?
-  * 
+  * Places that are bimodal across temperature ranges (i.e. not linearly predicted by temperature) are mostly located in southern WI, and Indiana and Illinois.
+  * This might suggest that some of the bimodality that occurs at intermediate preicipitation could be due to differences in temperature
+  * The temperature range where tree density is bimodal is 7-10 degC.
+  
+![](outputs/v1.6-5/PLS_FIA_temp_1.5_deg_BC_map.png) 
 
-We can also make maps of the 1st Principal Component Climate space where BC > 5.5 for PLS:
+### What is the 'climate space' in terms of Principal components where PLS and FIA density is bimodal?
+  * Temperature and Precipitation dominate loadings of the PC1 
+  * PC1 shows a similar region of bimodal savanna and forests as the temperature map
+  * soil factors (sand, ksat) dominate the loadings of PC2
+  * PC2 predicts stable savannas in regions with sandy soils, but the PC2 has bimodalities elsewhere in the midwest
+
 
 ![](outputs/v1.6-5/PLS_FIA_PC1_BC_map.png)
 
-Maps of the 2nd Principal Component Climate space where BC > 5.5 for PLS:
+
 
 ![](outputs/v1.6-5/PLS_FIA_PC2_BC_map.png)
 

@@ -2,7 +2,7 @@
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
 date: "January 24, 2017"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}

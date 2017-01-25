@@ -73,8 +73,23 @@ densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.tabl
 ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 ggplot(densitys, aes(x,y,color = FIAdensity))+geom_point()
 
+#print out the histograms here
+png(height=4, width=8, units = 'in',res = 300, paste0("outputs/v",version,"/FIA_PLS_hists.png"), type="cairo")
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(ggplot(densitys, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+        theme_bw(base_size = 10), vp = viewport(layout.pos.row = 1, layout.pos.col = 1))#+ facet_wrap(~plsprbins)
+print(ggplot(densitys, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
+        theme_bw(base_size = 10),vp = viewport(layout.pos.row = 1, layout.pos.col = 2))#+ facet_wrap(~fiaprbins)
 
+dev.off()
 
+#make difference plot with ggplot:
+dens <- densitys
+dens$diff <- dens$FIAdensity - dens$PLSdensity
+png(width = 4, height = 3,units = 'in', res = 300, paste0('outputs/v', version, '/density_difference_plot.png'))
+ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
+  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), size = 5)
+dev.off()
 
 #map out 
 all_states <- map_data("state")
@@ -649,11 +664,7 @@ contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
 abline(a = 0, b = 0, col = 'red')
 legend("topleft", paste("R=", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), bty="n")
 
-#make same plot with ggplot:
-png(paste0('outputs/v', version, '/density_difference_plot.png'))
-ggplot(dens.pr, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
-  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), size = 5)
-dev.off()
+
 
 library(hexbin)
 #### 
@@ -686,7 +697,8 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels =
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
-dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,14, by = 1), labels = label.breaks(0,13, 1))
+dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
+dens.pr$modtmeanbins <- cut(dens.pr$modtmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 
@@ -696,7 +708,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'pl
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean', "PC1", "PC2",'PC1bins', 'PC2bins', 'ecotype', 'fiaecotype')) 
+                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean','modtmeanbins', "PC1", "PC2",'PC1bins', 'PC2bins', 'ecotype', 'fiaecotype')) 
 
 #map out 
 all_states <- map_data("state")
@@ -1146,11 +1158,23 @@ png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_ecot
 grid_arrange_shared_legend(ecotypecw.p,ecotypecw.f,nrow = 1, ncol = 2 )
 dev.off()
 
+#################################
+# side by side PLS and FIAOutput of bimodality ~ ecotypes
 #output full PLS density and limited FIA density plots
+###################################
+#for precipitation space
 a <- map.bimodal.5c(data = dens.full, binby = 'plsprbins25', density = "PLSdensity")
 b <- map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
 
 png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_precip_25_BC_map.png')
+grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
+dev.off()
+
+#for temperature space
+a <- map.bimodal.5c(data = dens.full, binby = 'pasttmeanbins', density = "PLSdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'modtmeanbins', density = "FIAdensity")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_temp_1.5_deg_BC_map.png')
 grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
 dev.off()
 
@@ -1170,7 +1194,68 @@ png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_PC2_
 grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
 dev.off()
 
-#read in the df from PLS full density procession
+##############################################
+# function for plotting regions that ar bimodal in two climate spaces
+##############################################
+map.bimodal.two.5c <- function(data, binby, binby2, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
+  
+  #do the same for binby2
+  bins <- as.character(unique(data[,binby2]))
+  coeffs <- matrix(NA, length(bins), 1)
+  for (i in 1:length(bins)){
+    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby2] %in% bins[i], c(density)]))
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC2 <- as.numeric(as.character(coef.bins$V1))
+  merged <- merge(coef.bins, merged, by.x = "bins",by.y = binby2)
+  
+  #define bimodality
+  merged$bimodal <- "Stable"
+  merged[merged$BC >= 0.5 & merged$BC2 >= 0.5, ]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641', # dark green
+      '#fdae61', # light orange
+      '#a6d96a', # light green
+      '#d7191c', # red
+      '#fee08b', # tan
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()+
+    ggtitle(paste0(binby,' & ',binby2,' for ',density))
+  
+}
+
+a<- map.bimodal.two.5c(data = dens.full, binby = 'PC2bins', binby2 = 'PC1bins', density = "PLSdensity")
+b <- map.bimodal.two.5c(data = dens.pr, binby = 'PC2bins', binby2 = 'PC1bins', density = "FIAdensity")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_PC1_PC2_BC_map.png')
+grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )
+dev.off()
 
 #rolling BC
 rollBC_r = function(x,y,xout,width) {

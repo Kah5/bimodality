@@ -1,7 +1,7 @@
 ---
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
-date: "January 17, 2017"
+date: "January 24, 2017"
 output: html_document
 ---
 
@@ -68,7 +68,7 @@ PLS & FIA density are not obviously explained as a function of mean annual tempe
 
 ##Q3. Do soil factors/elevation explain tree density in either the past or the modern landscape?
 
-Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density well. Additionally, doing a PCA on the environmental dataset and using PC1 and PC2 as explanatory variables do not explain tree density.
+Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density overall on their own. Additionally, PC1 and PC2 from a Principle Components Analysis do not explain tree density.
 
 
 ![](outputs/v1.6/sand_vs_dens_FIA_PLS.png)
@@ -113,22 +113,48 @@ Here we calculated the BC for a bin range of 25mm of precipitation, with non-ove
 ![](outputs/v1.6/PLS_FIA_precip_roll_nonroll_BC_bins.png)
 
 We can also calculate BC of the Principal components (this is not as easily interpretable as binning by precipitation):
-![](outputs/v1.6/PLS_FIA_PC1_PC2_BC_bins.png)
+![](outputs/v1.6-5/PLS_FIA_PC1_PC2_BC_bins.png)
 
 
 ## Where is the bimodality located within the N. American Midwest?
 
-We can make maps of the precipitation climate space where BC > 5.5 from the BC values of non-overlapping bins of width = 75mm 
+Within the places that were bimodal in the past, and that are bimodal now, we want to know which were savannas and which were forests. We use a classificaiton scheme from Rheumtella et al. (), However there are alternate classificaitons that we could use, such as the scheme Chicago Wilderness has used. We could also make our own classification schemes using kmeans clustering.  
 
-![](outputs/v1.6/PLS_FIA_precip_BC_map.png)
+```{r, echo = FALSE, fig.cap = 'Table 1: Site table with highest correlation, year cored, and species present.'}
 
-We can also make maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
+library(knitr)
+library(pander)
 
-![](outputs/v1.6/PLS_PC1_PC2_map.png)
+df <- data.frame(Ecotype = c("Forest", "Savanna", "Prairie"),
+                 Rheumtella = c("> 47 trees/ha", "0.5-47 trees/ha", "< 0.5 trees/ha"), ChicagoWilderness = c("> 100 trees/ha", "10-100 trees/ha", "< 10 trees/ha"))
 
-Maps of the 1st and 2nd Principal Component Climate space where BC > 5.5 for PLS:
+pander(df, split.cells = 30)
+```
 
-![](outputs/v1.6/FIA_PC1_PC2_map.png)
+### Ecotypes using the Rheumtella et al. classificaiton
+![](outputs/v1.6-5/PLS_FIA_ecotype_map.png)
+
+### Ecotypes using the Chicago Wilderness classification
+![](outputs/v1.6-5/PLS_FIA_ecotype_cw_map.png)
+
+### Where is the precipitation range where PLS and FIA densities are bimodal?
+  * Precipitation climate space where BC > 5.5 
+  * Using the BC values of non-overlapping bins of width = 25mm 
+  * Bimodality occurs at both Low precipitation (525-600mm/year) and intermediate precipitation (800-1125 mm/year) in the past
+  * Bimodality occurs less frequently on the modern landscape, but also at some low precipitations (575-625 mm/year) and some intemediate precipitations(975 - 1150 mm/year ) on the modern landscape. 
+
+![](outputs/v1.6-5/PLS_FIA_precip_BC_map.png)
+
+### Where is the temperature range where PLS and FIA densities are bimodal?
+  * 
+
+We can also make maps of the 1st Principal Component Climate space where BC > 5.5 for PLS:
+
+![](outputs/v1.6-5/PLS_FIA_PC1_BC_map.png)
+
+Maps of the 2nd Principal Component Climate space where BC > 5.5 for PLS:
+
+![](outputs/v1.6-5/PLS_FIA_PC2_BC_map.png)
 
 
 ## Summary:

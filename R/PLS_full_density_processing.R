@@ -8,6 +8,8 @@ library(reshape2)
 library(dtplyr)
 library(ggplot2)
 library(hexbin)
+library(grid)
+library(gridExtra)
 
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
@@ -32,17 +34,30 @@ umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
 
 
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
-hist(umdw.new$PLSdensity)
+hist(umdw.new$PLSdensity, breaks = 25)
 
 densitys <- rbind(pls.inil, umdw.new)
 #coordinates(pls.inil)<- ~x+y
 
-#test.ex<- extract(density.FIA.table, extent(pls.inil))
-#write.csv(pls.inil,C:/Users/JMac/Documents/Kelly/biomodality/outputs )
-#plot raw data
+#note that for some reason, 1 grid cell is duplicated
+nodups <- densitys[!duplicated(densitys$cell),] # remove dups
+dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
+#test <- rbind(nodups, dup)
+densitys <- nodups
+
+hist(densitys$PLSdensity, breaks = 50)
 #map out density:
 ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 
+
+#keep only the 99th percentile of densitys---this is also what simon does
+nine.nine.pct <- quantile(densitys[,4], probs = 0.995, na.rm=TRUE )
+densitys$PLSdensity[densitys$PLSdensity > nine.nine.pct['99.5%']] <- nine.nine.pct['99.5%']
+
+summary(densitys)
+
+hist(densitys$PLSdensity, breaks = 50)
+hist(densitys[densitys$PLSdensity > 0.5,]$PLSdensity, breaks = 50)
 
 #map out 
 all_states <- map_data("state")
@@ -113,7 +128,9 @@ colnames(dens.pr)[5:6] <- c('MAP1910', 'pastdeltaP')
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', "deltaT")], by = c('x', 'y'), all.x = F)
 colnames(dens.pr)[7:8] <- c('pasttmean', "pastdeltaT")
 
-write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+hist(nodups$PLSdensity, breaks =50)
+write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
 #dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density

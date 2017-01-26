@@ -22,7 +22,7 @@ density ~ MAP + temp + soil
 
 Generalized additive model: allows for non-linearities...
 
-Alternatively, we could us the classification scheme of savanna and forest, this isnt as great, but it would allow us to use a logistic model
+Alternatively, we could us the classification scheme of savanna and forest, this isnt as great, but it would allow us to use a logistic model:
 
 Cross Validation Options:
 
@@ -50,7 +50,7 @@ train <- dens.pr[msk,]
 test <- dens.pr[!msk,]
 
 
-PLS.gam1 <-gam(PLSdensity ~ MAP1910 + pasttmean + pastdeltaP, data = train)
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
 summary(PLS.gam1) #explains 0.004% deviance
 
 preds <- predict(PLS.gam1, newdata = test)
@@ -65,11 +65,12 @@ plot(test$MAP1910, preds)
 test$po <- preds - test$PLSdensity
 ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(low = "red", high="green")
 
-ggplot(test, aes(x = PLSdensity, y = preds)) + geom_point()
+ggplot(test, aes(x = PLSdensity, y = preds, color = ecotype)) + geom_point()
 
 plot(train$MAP1910, train$PLSdensity)
 
 
+#lets try for logistic regression
 
 
 

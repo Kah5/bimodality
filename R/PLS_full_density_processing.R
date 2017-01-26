@@ -274,6 +274,7 @@ dens.pr[dens.pr$PLSdensity == 0, ]$ecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
+write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
 # we could also do kmeans clustering, but this results in some overlap between clusters
 fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
 dens.pr$kmeans <- fit.km$cluster

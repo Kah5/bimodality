@@ -6,6 +6,8 @@ library(data.table)
 library(reshape2)
 library(dtplyr)
 library(ggplot2)
+library(grid)
+library(gridExtra)
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
@@ -48,14 +50,14 @@ hist(pls.spec$total)
 pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
 colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
 
-umdw <- read.csv('data/plss_density_alb_v0.9-6.csv')
+umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
 #umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
-umdw$total <- rowSums(umdw[,5:33], na.rm= TRUE)
+umdw$total <- rowSums(umdw[,4:32], na.rm= TRUE)
 umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
 
 
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
-hist(umdw.new$PLSdensity)
+hist(umdw.new$PLSdensity, breaks = 25)
 
 pls.inil <- rbind(pls.inil, umdw.new)
 #coordinates(pls.inil)<- ~x+y
@@ -75,10 +77,20 @@ dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
 #test <- rbind(nodups, dup)
 densitys <- nodups
 
+hist(densitys$PLSdensity, breaks = 50)
 #map out density:
 ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 ggplot(densitys, aes(x,y,color = FIAdensity))+geom_point()
 
+#keep only the 99th percentile of densitys---this is also what simon does
+nine.nine.pct <- apply(densitys[,4:ncol(densitys)], 2, quantile, probs = 0.995, na.rm=TRUE)
+densitys$PLSdensity[densitys$PLSdensity > nine.nine.pct['PLSdensity']] <- nine.nine.pct['PLSdensity']
+densitys$FIAdensity[densitys$FIAdensity > nine.nine.pct['FIAdensity']] <- nine.nine.pct['FIAdensity']
+
+summary(densitys)
+
+hist(densitys$PLSdensity, breaks = 25)
+hist(densitys$FIAdensity, breaks = 25)
 #print out the histograms here
 png(height=4, width=8, units = 'in',res = 300, paste0("outputs/v",version,"/FIA_PLS_hists.png"), type="cairo")
 pushViewport(viewport(layout = grid.layout(1, 2)))

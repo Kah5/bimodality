@@ -69,6 +69,12 @@ pls.inil <- rbind(pls.inil, umdw.new)
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
                   by = c('x', 'y', 'cell'))
 
+#note that for some reason, 1 grid cell is duplicated
+nodups <- densitys[!duplicated(densitys$cell),] # remove dups
+dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
+#test <- rbind(nodups, dup)
+densitys <- nodups
+
 #map out density:
 ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 ggplot(densitys, aes(x,y,color = FIAdensity))+geom_point()
@@ -297,7 +303,9 @@ dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') 
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[10:12] <- c('modtmean','pasttmean', 'deltaT')
 
-write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+hist(nodups$PLSdensity, breaks =50)
+write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 
 
 #plot histograms

@@ -28,7 +28,7 @@ plot(PDSI.brk$X1936)
               
 for(y in 1:dim(LBDA.out$pdsi)[3]){
   print(paste0(" ---- Lat: ", y, " ---- "))
-  dat.temp <- stack(data.frame(LBDA.out$pdsi[,y,]))
+  dat.temp <- stack(data.frame(PDSI[,y,]))
   names(dat.temp) <- c("pdsi", "Year")
   dat.temp$Year <- as.numeric(substr(dat.temp$Year,2,nchar(paste(dat.temp$Year))))
   dat.temp$lat  <- LBDA.out$lat[y]
@@ -36,8 +36,9 @@ for(y in 1:dim(LBDA.out$pdsi)[3]){
   
   if(y==1) lbda.pdsi <- dat.temp else lbda.pdsi <- rbind(lbda.pdsi, dat.temp)
 }
+#naven't gotten the above function to run for lbda.pdsi years over 1 and 2
 
-ggplot(data=lbda.pdsi[lbda.pdsi$Year %in% c(1890,2006),]) +
+ggplot(data=lbda.pdsi[lbda.pdsi$Year %in% 119,]) +
   facet_grid(Year~.) +
   geom_raster(aes(x=lon, y=lat, fill=pdsi)) +
   scale_y_continuous(name="Latitude", expand=c(0,0)) +

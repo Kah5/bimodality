@@ -12,19 +12,20 @@ library(rgdal)
 dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 hist(dens.pr$PLSdensity, breaks = 50)
 
+
 dens.pr <- dens.pr[complete.cases(dens.pr),]
 dens.pr$ecocode <- 0
-dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
-#dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+dens.pr[dens.pr$PLSdensity >=100, ]$ecocode <- 1
+dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
 plot(dens.pr$MAP1910, dens.pr$ecocode)
 
-mylogit <- glm(ecocode ~ MAP1910, data = dens.pr, family = "binomial")
+mylogit <- gam(ecocode ~ MAP1910 + MAP1910^2, data = dens.pr, family = binomial(link = "logit"))
 
 cat(
   "model {
   for( i in 1 : N ) {
   PLS[i] ~ dbern(p[i])
-  logit(p[i]) <- b0 + b1*MAP1910[i]+ b2*pasttmean[i]
+  logit(p[i]) <- b0 + b1*MAP1910[i]+ b2*(MAP1910[i]^2)
   #p[i] <- 1 / (1 + exp(-z[i]))
 	#z[i] <- b0 + b1 * pr30yr[i]
   }             
@@ -36,7 +37,7 @@ cat(
     )
 
 
-dat1<-list(PLS=dens.pr$ecocode, MAP1910 = dens.pr$MAP1910, pasttmean = dens.pr$pasttmean, N=nrow(dens.pr))
+dat1<-list(PLS=dens.pr$ecocode, MAP1910 = dens.pr$MAP1910/100,  N=nrow(dens.pr))
 
 #to find the initial parameter estimates, use coeff from mLE logistic reg
 
@@ -44,17 +45,17 @@ estInits<-with(dens.pr, glm(ecocode~MAP1910, family=binomial(logit)))
 estInits
 
 inits<-list(
-  list(b0=estInits$coef[1]-2, b1=estInits$coef[2]-2, b2 = estInits$coef[3]-2),#, b3 = estInits$coef[3]-2),
-  list(b0=estInits$coef[1]-1.2, b1=estInits$coef[2]+2, b2 = estInits$coef[3]+2)#, b3 = estInits$coef[3]+2) 
+  list(b0=estInits$coef[1]-2, b1=estInits$coef[2]-1, b2 = estInits$coef[3]-0.22),#, b3 = estInits$coef[3]-2),
+  list(b0=estInits$coef[1]-1.2, b1=estInits$coef[2]+1, b2 = estInits$coef[3]+0.22)#, b3 = estInits$coef[3]+2) 
 )
 
-parameters<- c("b0", "b1","b2",'p')
+parameters<- c("b0", "b1","b2", 'p')
 
 library('R2jags')
 
 
 logmod<- jags(data = dat1,
-             #inits = inits,
+             inits = inits,
               parameters.to.save = parameters,
               model.file = "logistic.bug",
               n.chains = 2,

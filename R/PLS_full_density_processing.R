@@ -11,6 +11,9 @@ library(hexbin)
 library(grid)
 library(gridExtra)
 
+
+hist(diams$Oak, breaks = 25)
+
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 

@@ -29,13 +29,37 @@ z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE
 
 zSort <- Sort(z, by = "mu")
 
+#plot mcmc and estimates of mu
 plot(z, variables = "mu")
 
 zSort
+
+#plot posterior estimates
 BMMposteriori(zSort)
 
 # this estimates 2 modes with a mean of 11.0 and 191.5
 # this 
+
+
+################
+#test mixture regression
+library(mixtools)
+data('CO2data')
+attach(CO2data)
+CO2reg <- regmixEM(CO2, GNP, lambda = c(1, 3) / 4,
+ beta = matrix(c(8, -1, 1, 1), 2, 2), sigma = c(2, 1))
+
+summary(CO2reg)
+plot(CO2reg, density = TRUE, alpha = 0.01)
+
+#try for training datasets
+#CO2reg <- regmixEM(train$PLSdensity, train$pasttmean
+ #                  , lambda = c(1, 3) / 4,
+ #beta = matrix(c(10, -10, 15, 1), 2, 2), sigma = c(2, 1))
+
+#summary(CO2reg)
+#plot(CO2reg, density = TRUE, alpha = 0.01)
+
 ```
 
 
@@ -66,6 +90,7 @@ Or just use information criterion AIC
 library(stargazer)
 library(mgcv)
 library(caTools)
+library(ggplot2)
 
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
@@ -82,7 +107,7 @@ test <- dens.pr[!msk,]
 
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910) +s(pasttmean), data = train)
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910) +s(pasttmean) +s(sandpct) , data = train)
 summary(PLS.gam1) #explains 0.004% deviance
 
 preds <- predict(PLS.gam1, newdata = test)
@@ -103,8 +128,12 @@ test[test$preds <47,]$predeco <- "Savanna"
 test[test$preds <0.5,]$predeco <- "prairie"
 
 plot(test$MAP1910, preds)
+plot(test$pasttmean, preds)
+plot(test$sandpct, preds)
 test$po <- preds - test$PLSdensity
 ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(low = "red", high="green")
+
+ggplot(test, aes(x = MAP1910, y = pasttmean, color = preds))+geom_point()+scale_color_gradient(low = "red", high="green")
 
 ggplot(test, aes(x = x, y = y, color = predeco))+geom_point()
 
@@ -132,11 +161,11 @@ test <- dens.pr[!msk,]
 
 plot(dens.pr$sandpct, dens.pr$ecotype)
 
-logmod<- gam(ecocode ~ s(MAP1910), family = binomial, data = train)
+logmod<- gam(ecocode ~ s(MAP1910) + s(MAP1910)^2, family = binomial, data = train)
 summary(logmod)
 
 ypred <- predict(logmod, newdata = test, type="response")
-plot(test$MAP1910, ypred, pch = 16, xlab = "predicted", ylab = "map")
+plot(test$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
 
 
 lm.test <- glm(dens.pr$PLSdensity ~ dens.pr$MAP1910)

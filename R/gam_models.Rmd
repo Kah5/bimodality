@@ -9,20 +9,50 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+Estimating the Mixture model
+```{r, echo = FALSE}
+library(bayesmix)
+
+data(faithful)
+hist(train$PLSdensity, breaks = 25)
+
+
+# we want a mixture model with two components 
+bayesmod <- BMMmodel(train$PLSdensity, k=2, priors=list(kind = "independence", parameter = "priorsUncertain", hierarchical = NULL)) # k=2 for two components
+
+#assign controls for Jags
+jcontrol <- JAGScontrol(variables = c("mu", "tau", "eta", "S"), burn.in = 1000, n.iter = 10000, seed = 10)
+
+#run
+z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE, cleanup = TRUE)
+
+zSort <- Sort(z, by = "mu")
+
+plot(z, variables = "mu")
+
+zSort
+BMMposteriori(zSort)
+
+# this estimates 2 modes with a mean of 11.0 and 191.5
+# this 
+```
+
+
 ## Thinking about model design:
 
 model density ~ f(environmental variables)
-density ~ MAP (in previous versions, climate was negative correlated with density??)
-density ~ temp
-density ~ soil/sand
-density ~ precip. seasonality
-density ~ temp. seasonality
-density ~ MAP + temp
-density ~ MAP + temp + soil
+density ~ smooth(MAP) (in previous versions, climate was negative correlated with density??)
+density ~ smooth(temp)
+density ~ smooth(soil/sand)
+density ~ smooth(precip. seasonality)
+density ~ smooth(temp. seasonality)
+density ~ smooth(MAP + temp)
+density ~ smooth(MAP) + smooth(temp) + smooth(soil)
 
 Generalized additive model: allows for non-linearities...
 
-Alternatively, we could us the classification scheme of savanna and forest, this isnt as great, but it would allow us to use a logistic model:
+Alternatively, we could us the classification scheme of savanna and forest; this isn't as great, but it would allow us to use a logistic model:
 
 Cross Validation Options:
 
@@ -37,7 +67,7 @@ library(stargazer)
 library(mgcv)
 library(caTools)
 
-dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 hist(dens.pr$PLSdensity, breaks = 50)
 

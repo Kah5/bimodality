@@ -9,66 +9,57 @@ library(rgdal)
 
 
 
-setwd("C:/Users/JMac/Documents/Kelly/biomodality/")
-FIAgrids <- read.csv("outputs/FIA_plot_agg_grid_alb.csv")
-FIAplots <- read.csv("outputs/FIA_plot_agg_fuzzed_alb.csv")
+dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+hist(dens.pr$PLSdensity, breaks = 50)
 
-#read in GHCN precipitation data
+dens.pr <- dens.pr[complete.cases(dens.pr),]
+dens.pr$ecocode <- 0
+dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
+#dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+plot(dens.pr$MAP1910, dens.pr$ecocode)
 
-#extract prism data for each plot
-# read in and average prism data
-#prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
-#prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
-#spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
-#spec.table <- data.frame(spec.table)
-modprecip <- read.csv("data/FIAplots_pr_alb_1980-2011_GHCN.csv")
-
-FIAplots <- merge(FIAplots, modprecip, by = c('x','y'))
-
-write.csv(FIAplots[,c('x', 'y', 'coverscenter','pctcover', 'total_.')], 'C:/Users/JMac/Documents/Kelly/biomodality/data/FIA_plot_cover_prism.csv')
-
-plot(FIAplots$total_., FIAplots$pctcover)
-
-mylogit <- glm(pctcover ~ total_., data = FIAplots, family = "binomial")
+mylogit <- glm(ecocode ~ MAP1910, data = dens.pr, family = "binomial")
 
 cat(
   "model {
   for( i in 1 : N ) {
-  FIA[i] ~ dbern(p[i])
-  logit(p[i]) <- b0 + b1*pr30yr[i] 
+  PLS[i] ~ dbern(p[i])
+  logit(p[i]) <- b0 + b1*MAP1910[i]+ b2*pasttmean[i]
   #p[i] <- 1 / (1 + exp(-z[i]))
 	#z[i] <- b0 + b1 * pr30yr[i]
   }             
   b0 ~ dnorm( 0 , 1.0E-12 )
   b1 ~ dnorm( 0 , 1.0E-12 )
+  b2 ~ dnorm( 0 , 1.0E-12 )
+  #b3 ~ dnorm( 0 , 1.0E-12 )
   }", file="logistic.bug"
     )
 
 
-dat1<-list(FIA=FIAplots$pctcover, pr30yr=FIAplots$total_., N=nrow(FIAplots))
+dat1<-list(PLS=dens.pr$ecocode, MAP1910 = dens.pr$MAP1910, pasttmean = dens.pr$pasttmean, N=nrow(dens.pr))
 
 #to find the initial parameter estimates, use coeff from mLE logistic reg
 
-estInits<-with(FIAplots, glm(pctcover~pr30yr, family=binomial(logit)))
+estInits<-with(dens.pr, glm(ecocode~MAP1910, family=binomial(logit)))
 estInits
 
 inits<-list(
-  list(b0=estInits$coef[1]-1.2, b1=estInits$coef[2]+0.001),
-  list(b0=estInits$coef[1]+1.2, b1=estInits$coef[2]-0.001)        
+  list(b0=estInits$coef[1]-2, b1=estInits$coef[2]-2, b2 = estInits$coef[3]-2),#, b3 = estInits$coef[3]-2),
+  list(b0=estInits$coef[1]-1.2, b1=estInits$coef[2]+2, b2 = estInits$coef[3]+2)#, b3 = estInits$coef[3]+2) 
 )
 
-parameters<- c("b0", "b1",'p')
+parameters<- c("b0", "b1","b2",'p')
 
 library('R2jags')
 
 
 logmod<- jags(data = dat1,
-             # inits = inits,
+             #inits = inits,
               parameters.to.save = parameters,
               model.file = "logistic.bug",
               n.chains = 2,
-              n.iter = 5000,
-              n.burnin = 2000,
+              n.iter = 500,
+              n.burnin = 200,
               n.thin = 1)
 
 logmod
@@ -76,8 +67,8 @@ logmod
 plot(as.mcmc(logmod))
 logmod.vars <- c( "b0", "b1")
 
-plot(dat1$pr30yr,dat1$FIA, pch=20)
-points(dat1$pr30yr,logmod$BUGSoutput$mean$p,col="red", pch=20)
+plot(dat1$MAP1910,dat1$PLS, pch=20)
+points(dat1$MAP1910,logmod$BUGSoutput$mean$p,col="red", pch=20)
 #reg<-lm(m1$BUGSoutput$mean$mu~MAN)
 #abline(mylogit, col="red")
 #low.ci<-logmod$BUGSoutput$summary[6:28,3]

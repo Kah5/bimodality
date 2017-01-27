@@ -50,22 +50,36 @@ train <- dens.pr[msk,]
 test <- dens.pr[!msk,]
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
+
+
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910) +s(pasttmean), data = train)
 summary(PLS.gam1) #explains 0.004% deviance
 
 preds <- predict(PLS.gam1, newdata = test)
 
 plot(preds, test$PLSdensity)
 
+
+
 test$preds <- preds
 ggplot(test, aes(x = x, y = y, color = preds))+geom_point()+scale_color_gradient(low = "red", high="green")
 
 plot(preds, test$PLSdensity, xlim = c(0,700), ylim=c(0,700))
+test[is.na(test$preds),]$preds<- 0 
+
+test$predeco <- 0
+test[test$preds >=47,]$predeco <- "Forest"
+test[test$preds <47,]$predeco <- "Savanna"
+test[test$preds <0.5,]$predeco <- "prairie"
+
 plot(test$MAP1910, preds)
 test$po <- preds - test$PLSdensity
 ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(low = "red", high="green")
 
-ggplot(test, aes(x = PLSdensity, y = preds, color = ecotype)) + geom_point()
+ggplot(test, aes(x = x, y = y, color = predeco))+geom_point()
+
+
+ggplot(test, aes(x = PLSdensity, y = preds, color = predeco)) + geom_point()
 
 plot(train$MAP1910, train$PLSdensity)
 
@@ -73,8 +87,31 @@ plot(train$MAP1910, train$PLSdensity)
 #lets try for logistic regression
 
 
+# dummyvariables for logistic regression:
+dens.pr$ecocode <- 0
+dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
+dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+#split training and testing
+Y <- dens.pr$PLSdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+train <- dens.pr[msk,]
+test <- dens.pr[!msk,]
+
+
+plot(dens.pr$sandpct, dens.pr$ecotype)
+
+logmod<- gam(ecocode ~ s(MAP1910), family = binomial, data = train)
+summary(logmod)
+
+ypred <- predict(logmod, newdata = test, type="response")
+plot(test$MAP1910, ypred, pch = 16, xlab = "predicted", ylab = "map")
+
 
 lm.test <- glm(dens.pr$PLSdensity ~ dens.pr$MAP1910)
+
+
 
 PLS.gam2 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
 #summary(PLS.gam2) #explains 15.8% deviance

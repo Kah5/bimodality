@@ -42,7 +42,7 @@ library(caTools)
 library(ggplot2)
 
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
-dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 hist(dens.pr$PLSdensity, breaks = 50)
 
 pls.new <- dens.pr[dens.pr$PLSdensity > 0,] # remove all 0 values for now
@@ -71,9 +71,9 @@ ggplot(test, aes(x = x, y = y, color = preds))+geom_point()+scale_color_gradient
 plot(preds, test$PLSdensity, xlim = c(0,700), ylim=c(0,700))
 test[is.na(test$preds),]$preds<- 0 
 
-test$predeco <- 0
-test[test$preds >=47,]$predeco <- "Forest"
-test[test$preds <47,]$predeco <- "Savanna"
+#test$predeco <- 0
+#test[test$preds >=47,]$predeco <- "Forest"
+#test[test$preds <47,]$predeco <- "Savanna"
 #test[test$preds <0.5,]$predeco <- "prairie"
 
 plot(test$MAP1910, preds) # plot predicted vs map function
@@ -84,10 +84,10 @@ ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(lo
 
 ggplot(test, aes(x = MAP1910, y = pasttmean, color = preds))+geom_point()+scale_color_gradient(low = "red", high="green")
 
-ggplot(test, aes(x = x, y = y, color = predeco))+geom_point()
+#ggplot(test, aes(x = x, y = y, color = predeco))+geom_point()
 
 
-ggplot(test, aes(x = PLSdensity, y = preds, color = predeco)) + geom_point()
+#ggplot(test, aes(x = PLSdensity, y = preds, color = predeco)) + geom_point()
 
 plot(train$MAP1910, train$PLSdensity)
 
@@ -117,10 +117,10 @@ summary(PLS.gam6) #explains 39% deviance
 #plot(PLS.gam6)
 
 
-PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , family = Gamma())
+PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc )
 #summary(PLS.gam7) #explains 41.3% of deviance
 
-PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, family = Gamma())
+PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc)
 #summary(PLS.gam8) # explains 41% of deviance
 ```
 
@@ -193,11 +193,11 @@ AIC(logmod, logmod2, logmod3, logmod4, logmod5)
 
 ```{r, echo = FALSE, results = 'asis'}
 
-stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
-          title            = "GAM model results",dep.var.labels.include = FALSE,
-          covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
-          dep.var.caption  = "Pre-settlement tree density",
-          dep.var.labels   = "Tree density (trees/ha)")
+#stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
+ #         title            = "GAM model results",dep.var.labels.include = FALSE,
+  #        covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
+   #       dep.var.caption  = "Pre-settlement tree density",
+    #      dep.var.labels   = "Tree density (trees/ha)")
 
 
 ```

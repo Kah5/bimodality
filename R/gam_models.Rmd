@@ -96,6 +96,8 @@ library(ggplot2)
 dens.pr <- read.csv("data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 hist(dens.pr$PLSdensity, breaks = 50)
 
+pls.new <- dens.pr[dens.pr$PLSdensity > 0,] # remove all 0 values for now
+dens.pr <- pls.new 
 # split into test and training datasets:
 Y <- dens.pr$PLSdensity
 msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
@@ -107,13 +109,11 @@ test <- dens.pr[!msk,]
 
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910) +s(pasttmean) +s(sandpct) , data = train)
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train, family = Gamma())
 summary(PLS.gam1) #explains 0.004% deviance
-
 preds <- predict(PLS.gam1, newdata = test)
-
 plot(preds, test$PLSdensity)
-
+plot(PLS.gam1)
 
 
 test$preds <- preds
@@ -127,9 +127,9 @@ test[test$preds >=47,]$predeco <- "Forest"
 test[test$preds <47,]$predeco <- "Savanna"
 test[test$preds <0.5,]$predeco <- "prairie"
 
-plot(test$MAP1910, preds)
-plot(test$pasttmean, preds)
-plot(test$sandpct, preds)
+plot(test$MAP1910, preds) # plot predicted vs map function
+plot(test$pasttmean, preds) # plot predicted vs past tmean function
+plot(test$sandpct, preds) # plot precicted vs. sand function
 test$po <- preds - test$PLSdensity
 ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(low = "red", high="green")
 
@@ -146,6 +146,39 @@ plot(train$MAP1910, train$PLSdensity)
 #lets try for logistic regression
 
 
+
+
+PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) ,data = dens.pr, family = Gamma())
+summary(PLS.gam2) #explains 15.8% deviance
+plot(PLS.gam2)
+
+PLS.gam3 <- gam(dens.pr$PLSdensity ~ s(dens.pr$pastdeltaP), family = Gamma() )
+summary(PLS.gam3) #explains 3.02% deviance
+
+PLS.gam4 <- gam(dens.pr$PLSdensity ~ s(dens.pr$awc), family = Gamma())
+summary(PLS.gam4) #explains 12.5% of deviance
+
+
+PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(pastdeltaP) ,  data = dens.pr, family = Gamma())
+summary(PLS.gam4) #explains 35% deviance
+
+PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct ,family = Gamma()
+#summary(PLS.gam5) #explains 14.9% of deviance
+
+PLS.gam6 <- gam(dens.pr$PLSdensity ~ s(dens.pr$MAP1910) + s(dens.pr$pasttmean) + s(dens.pr$sandpct), family = Gamma())
+summary(PLS.gam6) #explains 39% deviance
+plot(PLS.gam6)
+
+
+PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , family = Gamma())
+#summary(PLS.gam7) #explains 41.3% of deviance
+
+PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, family = Gamma())
+#summary(PLS.gam8) # explains 41% of deviance
+
+
+
+#test logistic regressoin
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
@@ -161,41 +194,31 @@ test <- dens.pr[!msk,]
 
 plot(dens.pr$sandpct, dens.pr$ecotype)
 
-logmod<- gam(ecocode ~ s(MAP1910) + s(MAP1910)^2, family = binomial, data = train)
+
+# logmod 
+logmod<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
 summary(logmod)
+plot(logmod)
 
 ypred <- predict(logmod, newdata = test, type="response")
 plot(test$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
 
-
-lm.test <- glm(dens.pr$PLSdensity ~ dens.pr$MAP1910)
-
+plot(test$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
 
 
-PLS.gam2 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
-#summary(PLS.gam2) #explains 15.8% deviance
+logmod2<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
+summary(logmod2)
+plot(logmod2)
 
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
-#summary(PLS.gam3) #explains 3.02% deviance
+logmod3<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), family = binomial, data = train)
+summary(logmod3)
+plot(logmod3)
 
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
-#summary(PLS.gam3) #explains 12.5% of deviance
+logmod4<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct), family = binomial, data = train)
+summary(logmod4)
+plot(logmod4)
 
-
-PLS.gam4 <- gam(PLSdensity ~ pasttmean + pastdeltaP , method = "ML", data = dens.pr)
-#summary(PLS.gam4) #explains 35% deviance
-
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct , method = "ML")
-#summary(PLS.gam5) #explains 14.9% of deviance
-
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean+ dens.pr$sandpct, method = "ML")
-#summary(PLS.gam6) #explains 39% deviance
-
-PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , method = "ML")
-#summary(PLS.gam7) #explains 41.3% of deviance
-
-PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, method = "ML")
-#summary(PLS.gam8) # explains 41% of deviance
+AIC(logmod, logmod2, logmod3, logmod4)
 
 
 ```

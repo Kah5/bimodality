@@ -10,57 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-Estimating the Mixture model
-```{r, echo = FALSE}
-library(bayesmix)
 
-data(faithful)
-hist(train$PLSdensity, breaks = 25)
-
-
-# we want a mixture model with two components 
-bayesmod <- BMMmodel(train$PLSdensity, k=2, priors=list(kind = "independence", parameter = "priorsUncertain", hierarchical = NULL)) # k=2 for two components
-
-#assign controls for Jags
-jcontrol <- JAGScontrol(variables = c("mu", "tau", "eta", "S"), burn.in = 1000, n.iter = 10000, seed = 10)
-
-#run
-z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE, cleanup = TRUE)
-
-zSort <- Sort(z, by = "mu")
-
-#plot mcmc and estimates of mu
-plot(z, variables = "mu")
-
-zSort
-
-#plot posterior estimates
-BMMposteriori(zSort)
-
-# this estimates 2 modes with a mean of 11.0 and 191.5
-# this 
-
-
-################
-#test mixture regression
-library(mixtools)
-data('CO2data')
-attach(CO2data)
-CO2reg <- regmixEM(CO2, GNP, lambda = c(1, 3) / 4,
- beta = matrix(c(8, -1, 1, 1), 2, 2), sigma = c(2, 1))
-
-summary(CO2reg)
-plot(CO2reg, density = TRUE, alpha = 0.01)
-
-#try for training datasets
-#CO2reg <- regmixEM(train$PLSdensity, train$pasttmean
- #                  , lambda = c(1, 3) / 4,
- #beta = matrix(c(10, -10, 15, 1), 2, 2), sigma = c(2, 1))
-
-#summary(CO2reg)
-#plot(CO2reg, density = TRUE, alpha = 0.01)
-
-```
 
 
 ## Thinking about model design:
@@ -86,7 +36,6 @@ Cross Validation Options:
 Or just use information criterion AIC
 
 ```{r, echo = FALSE}
-
 library(stargazer)
 library(mgcv)
 library(caTools)
@@ -125,7 +74,7 @@ test[is.na(test$preds),]$preds<- 0
 test$predeco <- 0
 test[test$preds >=47,]$predeco <- "Forest"
 test[test$preds <47,]$predeco <- "Savanna"
-test[test$preds <0.5,]$predeco <- "prairie"
+#test[test$preds <0.5,]$predeco <- "prairie"
 
 plot(test$MAP1910, preds) # plot predicted vs map function
 plot(test$pasttmean, preds) # plot predicted vs past tmean function
@@ -142,8 +91,6 @@ ggplot(test, aes(x = PLSdensity, y = preds, color = predeco)) + geom_point()
 
 plot(train$MAP1910, train$PLSdensity)
 
-
-#lets try for logistic regression
 
 
 
@@ -162,12 +109,12 @@ summary(PLS.gam4) #explains 12.5% of deviance
 PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(pastdeltaP) ,  data = dens.pr, family = Gamma())
 summary(PLS.gam4) #explains 35% deviance
 
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct ,family = Gamma()
+PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct ,family = Gamma())
 #summary(PLS.gam5) #explains 14.9% of deviance
 
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ s(dens.pr$MAP1910) + s(dens.pr$pasttmean) + s(dens.pr$sandpct), family = Gamma())
+PLS.gam6 <- gam(dens.pr$PLSdensity ~ s(dens.pr$MAP1910) + s(dens.pr$pasttmean) + s(dens.pr$sandpct))
 summary(PLS.gam6) #explains 39% deviance
-plot(PLS.gam6)
+#plot(PLS.gam6)
 
 
 PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , family = Gamma())
@@ -175,9 +122,12 @@ PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr
 
 PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, family = Gamma())
 #summary(PLS.gam8) # explains 41% of deviance
+```
 
 
+The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna(ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. We develop these models below
 
+```{r echo = FALSE}
 #test logistic regressoin
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
@@ -252,3 +202,55 @@ stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, P
 
 ```
 
+
+Estimating the Mixture model
+```{r, echo = FALSE}
+library(bayesmix)
+
+data(faithful)
+hist(train$PLSdensity, breaks = 25)
+
+
+# we want a mixture model with two components 
+bayesmod <- BMMmodel(train$PLSdensity, k=2, priors=list(kind = "independence", parameter = "priorsUncertain", hierarchical = NULL)) # k=2 for two components
+
+#assign controls for Jags
+jcontrol <- JAGScontrol(variables = c("mu", "tau", "eta", "S"), burn.in = 1000, n.iter = 10000, seed = 10)
+
+#run
+z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE, cleanup = TRUE)
+
+zSort <- Sort(z, by = "mu")
+
+#plot mcmc and estimates of mu
+plot(z, variables = "mu")
+
+zSort
+
+#plot posterior estimates
+BMMposteriori(zSort)
+
+# this estimates 2 modes with a mean of 11.0 and 191.5
+# this 
+
+
+################
+#test mixture regression
+library(mixtools)
+data('CO2data')
+attach(CO2data)
+CO2reg <- regmixEM(CO2, GNP, lambda = c(1, 3) / 4,
+ beta = matrix(c(8, -1, 1, 1), 2, 2), sigma = c(2, 1))
+
+summary(CO2reg)
+plot(CO2reg, density = TRUE, alpha = 0.01)
+
+#try for training datasets
+#CO2reg <- regmixEM(train$PLSdensity, train$pasttmean
+ #                  , lambda = c(1, 3) / 4,
+ #beta = matrix(c(10, -10, 15, 1), 2, 2), sigma = c(2, 1))
+
+#summary(CO2reg)
+#plot(CO2reg, density = TRUE, alpha = 0.01)
+
+```

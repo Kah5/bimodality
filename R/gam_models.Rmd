@@ -214,11 +214,27 @@ logmod3<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), f
 summary(logmod3)
 plot(logmod3)
 
+ypred3 <- predict(logmod3, newdata = test, type="response")
+plot(test$MAP1910, ypred3, pch = 16, xlab = "MAP", ylab = "Predicted")
+
 logmod4<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct), family = binomial, data = train)
 summary(logmod4)
 plot(logmod4)
 
-AIC(logmod, logmod2, logmod3, logmod4)
+ypred4 <- predict(logmod4, newdata = test, type="response")
+plot(test$MAP1910, ypred4, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+logmod5<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct) + s(awc), family = binomial, data = train)
+summary(logmod5)
+plot(logmod5)
+
+ypred5 <- predict(logmod5, newdata = test, type="response")
+plot(test$MAP1910, ypred5, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+#plot predicted probabiliy of forest vs. observed tree density
+plot(test$PLSdensity, ypred5, pch = 16, xlab = "obs", ylab = "Predicted")
+
+AIC(logmod, logmod2, logmod3, logmod4, logmod5)
 
 
 ```

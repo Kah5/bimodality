@@ -30,10 +30,10 @@ Alternatively, we could us the classification scheme of savanna and forest; this
 
 Cross Validation Options:
 
-* leave one out CV
-* split into test and training 30/60 or 50/50?
-
-Or just use information criterion AIC
+* leave one out CV (for gam's, the GCV value is similar), it may not be feasible to do this for our # of data points
+* for now, we split into test and training 50/50
+* Use information criterion AIC (min)
+* Model prediction on PLS density or on PLS classification (savanna vs. forest?)
 
 ```{r, echo = FALSE}
 library(stargazer)
@@ -62,7 +62,9 @@ PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 summary(PLS.gam1) #explains 0.004% deviance
 preds <- predict(PLS.gam1, newdata = test)
+predsL <- predict(PLS.gam1L, newdata = test)
 plot(preds, test$PLSdensity)
+plot(predsL, test$PLSdensity)
 plot(PLS.gam1)
 
 
@@ -78,6 +80,7 @@ test[is.na(test$preds),]$preds<- 0
 #test[test$preds <0.5,]$predeco <- "prairie"
 
 plot(test$MAP1910, preds) # plot predicted vs map function
+plot(test$MAP1910, predsL)
 plot(test$pasttmean, preds) # plot predicted vs past tmean function
 plot(test$sandpct, preds) # plot precicted vs. sand function
 test$po <- preds - test$PLSdensity
@@ -103,21 +106,21 @@ plot(PLS.gam2)
 
 PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP), data = train)
 PLS.gam3L <- gam(PLSdensity ~ pastdeltaP, data = train)
-summary(PLS.gam3) #explains 3.02% deviance
+summary(PLS.gam3) #explains 6.07% deviance
 
 PLS.gam9 <- gam(PLSdensity ~ s(awc), data = train)
 PLS.gam9L <- gam(PLSdensity ~ awc, data = train)
 summary(PLS.gam9) #explains 12.5% of deviance
 
 
-PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(pastdeltaP) ,  data = train)
-PLS.gam4L <- gam(PLSdensity ~ pasttmean + pastdeltaP ,  data = train)
-summary(PLS.gam4) #explains 35% deviance
-summary(PLS.gam4L) 
+PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) ,  data = train)
+PLS.gam4L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
+summary(PLS.gam4) #explains 41% deviance
+summary(PLS.gam4L) # explains 19.6%
 
 PLS.gam5 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
 PLS.gam5L <- gam(PLSdensity ~ awc + sandpct, data = train )
-#summary(PLS.gam5) #explains 14.9% of deviance
+summary(PLS.gam5) #explains 28% of deviance
 
 PLS.gam6 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
 PLS.gam6L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
@@ -134,10 +137,12 @@ plot(PLS.gam7)
 
 PLS.gam8 <- gam(PLSdensity ~ s(MAP1910)  +s(dens.pr$pasttmean) +s(sandpct) + s(awc), data = train)
 PLS.gam8L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
+
 #summary(PLS.gam8) # explains 41% of deviance
+PLS.gam10 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
+PLS.gam10L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-
-AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9, PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L)
+AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L)
 
 ```
 
@@ -163,9 +168,9 @@ plot(dens.pr$sandpct, dens.pr$ecotype)
 
 
 # logmod 
-logmod<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
+logmod<- gam(ecocode ~ s(MAP1910) , family = binomial, data = train)
 
-logmodL <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = binomial, data = train)
+logmodL <- gam(ecocode ~ MAP1910 , family = binomial, data = train)
 summary(logmod)
 plot(logmod)
 

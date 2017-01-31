@@ -10,9 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-
-
-
 ## Thinking about model design:
 
 model density ~ f(environmental variables)
@@ -33,7 +30,7 @@ Cross Validation Options:
 * leave one out CV (for gam's, the GCV value is similar), it may not be feasible to do this for our # of data points
 * for now, we split into test and training 50/50
 * Use information criterion AIC (min)
-* Model prediction on PLS density or on PLS classification (savanna vs. forest?)
+* Need to decide whether Model prediction should be on PLS density or on PLS classification (savanna vs. forest)?
 
 ```{r, echo = FALSE}
 library(stargazer)
@@ -108,41 +105,61 @@ PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP), data = train)
 PLS.gam3L <- gam(PLSdensity ~ pastdeltaP, data = train)
 summary(PLS.gam3) #explains 6.07% deviance
 
-PLS.gam9 <- gam(PLSdensity ~ s(awc), data = train)
-PLS.gam9L <- gam(PLSdensity ~ awc, data = train)
-summary(PLS.gam9) #explains 12.5% of deviance
+PLS.gam4 <- gam(PLSdensity ~ s(pastdeltaT), data = train)
+PLS.gam4L <- gam(PLSdensity ~ pastdeltaT, data = train)
+summary(PLS.gam4) #explains 6.07% deviance
+
+PLS.gam5 <- gam(PLSdensity ~ s(awc), data = train)
+PLS.gam5L <- gam(PLSdensity ~ awc, data = train)
+summary(PLS.gam5) #explains 12.5% of deviance
+
+PLS.gam6 <- gam(PLSdensity ~ s(sandpct), data = train)
+PLS.gam6L <- gam(PLSdensity ~ sandpct, data = train)
+summary(PLS.gam6) #explains 12.5% of deviance
 
 
-PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) ,  data = train)
-PLS.gam4L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
-summary(PLS.gam4) #explains 41% deviance
-summary(PLS.gam4L) # explains 19.6%
 
-PLS.gam5 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
-PLS.gam5L <- gam(PLSdensity ~ awc + sandpct, data = train )
-summary(PLS.gam5) #explains 28% of deviance
+PLS.gam7 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) ,  data = train)
+PLS.gam7L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
+summary(PLS.gam7) #explains 41% deviance
+summary(PLS.gam7L) # explains 19.6%
 
-PLS.gam6 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
-PLS.gam6L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
-summary(PLS.gam6) #explains 39% deviance
-summary(PLS.gam6L)
+PLS.gam8 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
+PLS.gam8L <- gam(PLSdensity ~ awc + sandpct, data = train )
+summary(PLS.gam8) #explains 28% of deviance
+
+PLS.gam9 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
+PLS.gam9L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
+summary(PLS.gam9) #explains 39% deviance
+summary(PLS.gam9L)
 #plot(PLS.gam6)
 
 
-PLS.gam7 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train)
-PLS.gam7L <- gam(PLSdensity ~ MAP1910 + pasttmean + awc, data = train)
+PLS.gam10 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train)
+PLS.gam10L <- gam(PLSdensity ~ MAP1910 + pasttmean + awc, data = train)
 
-summary(PLS.gam7) #explains 41.3% of deviance
-plot(PLS.gam7)
+summary(PLS.gam10) #explains 41.3% of deviance
+plot(PLS.gam10)
 
-PLS.gam8 <- gam(PLSdensity ~ s(MAP1910)  +s(dens.pr$pasttmean) +s(sandpct) + s(awc), data = train)
-PLS.gam8L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
+PLS.gam11 <- gam(PLSdensity ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = train)
+PLS.gam11L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
 
 #summary(PLS.gam8) # explains 41% of deviance
-PLS.gam10 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
-PLS.gam10L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
+PLS.gam12 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
+PLS.gam12L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L)
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
+
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT, data = train)
+
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), data = train)
+PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, data = train)
+
+AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
+
+
 
 ```
 
@@ -174,10 +191,7 @@ logmodL <- gam(ecocode ~ MAP1910 , family = binomial, data = train)
 summary(logmod)
 plot(logmod)
 
-ypred <- predict(logmod, newdata = test, type="response")
-plot(test$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
 
-plot(test$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
 
 
 logmod2<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
@@ -186,7 +200,7 @@ logmod2L<- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = binomial, data 
 
 summary(logmod2)
 summary(logmod2L)
-plot(logmod2)
+#plot(logmod2)
 
 logmod3 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), family = binomial, data = train)
 
@@ -194,7 +208,7 @@ logmod3L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ sandpct, family = bi
 
 summary(logmod3L)
 summary(logmod3)
-plot(logmod3)
+#plot(logmod3)
 
 ypred3 <- predict(logmod3, newdata = test, type="response")
 plot(test$MAP1910, ypred3, pch = 16, xlab = "MAP", ylab = "Predicted")
@@ -204,7 +218,7 @@ logmod4 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT
 logmod4L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ pastdeltaT + sandpct, family = binomial, data = train)
 
 summary(logmod4)
-plot(logmod4)
+#plot(logmod4)
 
 ypred4 <- predict(logmod4, newdata = test, type="response")
 plot(test$MAP1910, ypred4, pch = 16, xlab = "MAP", ylab = "Predicted")
@@ -238,6 +252,44 @@ stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, P
           dep.var.caption  = "Pre-settlement tree density",
           dep.var.labels   = "Tree density (trees/ha)")
 
+
+```
+
+lets map out the probability of forest based on model with the lowest AIC value:
+```{r}
+map.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
+
+testdata$ypred <- ypred
+ggplot(testdata, aes(x = x, y = y, color = ypred))+geom_point() + theme_bw() +ggtitle ('Probability of forest') 
+#outdata <- testdata
+}
+
+get.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+
+testdata$ypred <- ypred
+
+testdata
+}
+
+map.preds(logmod5, test)
+map.preds(logmod5L, test)
+map.preds(logmod4L, test)
+map.preds(logmod3L, test)
+map.preds(logmod2L, test)
+
+preds.df <- get.preds(logmod5, test)
+hist(preds.df$ypred, breaks = 25)
+summary(preds.df$ypred)
+
+preds.df <- preds.df[preds.df$ypred < 0.55,]
+preds.df<- preds.df[preds.df$ypred > 0.45,]
+
+ggplot(preds.df, aes(x, y)) + geom_point() + theme_bw()
 
 ```
 

@@ -58,7 +58,8 @@ test <- dens.pr[!msk,]
 
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train, family = Gamma())
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
+PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 summary(PLS.gam1) #explains 0.004% deviance
 preds <- predict(PLS.gam1, newdata = test)
 plot(preds, test$PLSdensity)
@@ -95,33 +96,49 @@ plot(train$MAP1910, train$PLSdensity)
 
 
 
-PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) ,data = dens.pr, family = Gamma())
+PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
+PLS.gam2L <- gam(PLSdensity ~ pasttmean , data = train)
 summary(PLS.gam2) #explains 15.8% deviance
 plot(PLS.gam2)
 
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ s(dens.pr$pastdeltaP), family = Gamma() )
+PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP), data = train)
+PLS.gam3L <- gam(PLSdensity ~ pastdeltaP, data = train)
 summary(PLS.gam3) #explains 3.02% deviance
 
-PLS.gam4 <- gam(dens.pr$PLSdensity ~ s(dens.pr$awc), family = Gamma())
-summary(PLS.gam4) #explains 12.5% of deviance
+PLS.gam9 <- gam(PLSdensity ~ s(awc), data = train)
+PLS.gam9L <- gam(PLSdensity ~ awc, data = train)
+summary(PLS.gam9) #explains 12.5% of deviance
 
 
-PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(pastdeltaP) ,  data = dens.pr, family = Gamma())
+PLS.gam4 <- gam(PLSdensity ~ s(pasttmean) + s(pastdeltaP) ,  data = train)
+PLS.gam4L <- gam(PLSdensity ~ pasttmean + pastdeltaP ,  data = train)
 summary(PLS.gam4) #explains 35% deviance
+summary(PLS.gam4L) 
 
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct ,family = Gamma())
+PLS.gam5 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
+PLS.gam5L <- gam(PLSdensity ~ awc + sandpct, data = train )
 #summary(PLS.gam5) #explains 14.9% of deviance
 
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ s(dens.pr$MAP1910) + s(dens.pr$pasttmean) + s(dens.pr$sandpct))
+PLS.gam6 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
+PLS.gam6L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
 summary(PLS.gam6) #explains 39% deviance
+summary(PLS.gam6L)
 #plot(PLS.gam6)
 
 
-PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc )
-#summary(PLS.gam7) #explains 41.3% of deviance
+PLS.gam7 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train)
+PLS.gam7L <- gam(PLSdensity ~ MAP1910 + pasttmean + awc, data = train)
 
-PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc)
+summary(PLS.gam7) #explains 41.3% of deviance
+plot(PLS.gam7)
+
+PLS.gam8 <- gam(PLSdensity ~ s(MAP1910)  +s(dens.pr$pasttmean) +s(sandpct) + s(awc), data = train)
+PLS.gam8L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
 #summary(PLS.gam8) # explains 41% of deviance
+
+
+AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9, PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L)
+
 ```
 
 
@@ -147,6 +164,8 @@ plot(dens.pr$sandpct, dens.pr$ecotype)
 
 # logmod 
 logmod<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
+
+logmodL <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = binomial, data = train)
 summary(logmod)
 plot(logmod)
 
@@ -157,17 +176,28 @@ plot(test$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
 
 
 logmod2<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
+
+logmod2L<- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = binomial, data = train)
+
 summary(logmod2)
+summary(logmod2L)
 plot(logmod2)
 
-logmod3<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), family = binomial, data = train)
+logmod3 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), family = binomial, data = train)
+
+logmod3L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ sandpct, family = binomial, data = train)
+
+summary(logmod3L)
 summary(logmod3)
 plot(logmod3)
 
 ypred3 <- predict(logmod3, newdata = test, type="response")
 plot(test$MAP1910, ypred3, pch = 16, xlab = "MAP", ylab = "Predicted")
 
-logmod4<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct), family = binomial, data = train)
+logmod4 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct), family = binomial, data = train)
+
+logmod4L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ pastdeltaT + sandpct, family = binomial, data = train)
+
 summary(logmod4)
 plot(logmod4)
 
@@ -175,6 +205,9 @@ ypred4 <- predict(logmod4, newdata = test, type="response")
 plot(test$MAP1910, ypred4, pch = 16, xlab = "MAP", ylab = "Predicted")
 
 logmod5<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct) + s(awc), family = binomial, data = train)
+
+logmod5L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ pastdeltaT + sandpct + awc, family = binomial, data = train)
+
 summary(logmod5)
 plot(logmod5)
 
@@ -184,7 +217,8 @@ plot(test$MAP1910, ypred5, pch = 16, xlab = "MAP", ylab = "Predicted")
 #plot predicted probabiliy of forest vs. observed tree density
 plot(test$PLSdensity, ypred5, pch = 16, xlab = "obs", ylab = "Predicted")
 
-AIC(logmod, logmod2, logmod3, logmod4, logmod5)
+AIC(logmod, logmod2, logmod3, logmod4, logmod5, 
+    logmodL, logmod2L, logmod3L, logmod4L, logmod5L)
 
 
 ```
@@ -193,11 +227,11 @@ AIC(logmod, logmod2, logmod3, logmod4, logmod5)
 
 ```{r, echo = FALSE, results = 'asis'}
 
-#stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
- #         title            = "GAM model results",dep.var.labels.include = FALSE,
-  #        covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
-   #       dep.var.caption  = "Pre-settlement tree density",
-    #      dep.var.labels   = "Tree density (trees/ha)")
+stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
+          title            = "GAM model results",dep.var.labels.include = FALSE,
+   #       covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
+          dep.var.caption  = "Pre-settlement tree density",
+          dep.var.labels   = "Tree density (trees/ha)")
 
 
 ```
@@ -205,30 +239,30 @@ AIC(logmod, logmod2, logmod3, logmod4, logmod5)
 
 Estimating the Mixture model
 ```{r, echo = FALSE}
-library(bayesmix)
+#library(bayesmix)
 
-data(faithful)
-hist(train$PLSdensity, breaks = 25)
+#data(faithful)
+#hist(train$PLSdensity, breaks = 25)
 
 
 # we want a mixture model with two components 
-bayesmod <- BMMmodel(train$PLSdensity, k=2, priors=list(kind = "independence", parameter = "priorsUncertain", hierarchical = NULL)) # k=2 for two components
+#bayesmod <- BMMmodel(train$PLSdensity, k=2, priors=list(kind = "independence", parameter = "priorsUncertain", hierarchical = NULL)) # k=2 for two components
 
 #assign controls for Jags
-jcontrol <- JAGScontrol(variables = c("mu", "tau", "eta", "S"), burn.in = 1000, n.iter = 10000, seed = 10)
+#jcontrol <- JAGScontrol(variables = c("mu", "tau", "eta", "S"), burn.in = 1000, n.iter = 10000, seed = 10)
 
 #run
-z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE, cleanup = TRUE)
+#z <- JAGSrun(train$PLSdensity, model = bayesmod, control = jcontrol, tmp = FALSE, cleanup = TRUE)
 
-zSort <- Sort(z, by = "mu")
+#zSort <- Sort(z, by = "mu")
 
 #plot mcmc and estimates of mu
-plot(z, variables = "mu")
+#plot(z, variables = "mu")
 
-zSort
+#zSort
 
 #plot posterior estimates
-BMMposteriori(zSort)
+#BMMposteriori(zSort)
 
 # this estimates 2 modes with a mean of 11.0 and 191.5
 # this 
@@ -236,14 +270,14 @@ BMMposteriori(zSort)
 
 ################
 #test mixture regression
-library(mixtools)
-data('CO2data')
-attach(CO2data)
-CO2reg <- regmixEM(CO2, GNP, lambda = c(1, 3) / 4,
- beta = matrix(c(8, -1, 1, 1), 2, 2), sigma = c(2, 1))
+#library(mixtools)
+#data('CO2data')
+#attach(CO2data)
+#CO2reg <- regmixEM(CO2, GNP, lambda = c(1, 3) / 4,
+ #beta = matrix(c(8, -1, 1, 1), 2, 2), sigma = c(2, 1))
 
-summary(CO2reg)
-plot(CO2reg, density = TRUE, alpha = 0.01)
+#summary(CO2reg)
+#plot(CO2reg, density = TRUE, alpha = 0.01)
 
 #try for training datasets
 #CO2reg <- regmixEM(train$PLSdensity, train$pasttmean

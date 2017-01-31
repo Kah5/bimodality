@@ -234,6 +234,8 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 
 The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna(ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
 
+In this case we model 
+
 This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
 
 ```{r echo = FALSE}
@@ -254,7 +256,7 @@ test <- dens.pr[!msk,]
 plot(dens.pr$sandpct, dens.pr$ecotype)
 
 
-# logmod 
+# developing binomial gam models
 logmod<- gam(ecocode ~ s(MAP1910) , family = binomial, data = train)
 
 logmodL <- gam(ecocode ~ MAP1910 , family = binomial, data = train)
@@ -306,26 +308,24 @@ plot(test$MAP1910, ypred5, pch = 16, xlab = "MAP", ylab = "Predicted")
 #plot predicted probabiliy of forest vs. observed tree density
 plot(test$PLSdensity, ypred5, pch = 16, xlab = "obs", ylab = "Predicted")
 
-AIC(logmod, logmod2, logmod3, logmod4, logmod5, 
+AIC2.df<- AIC(logmod, logmod2, logmod3, logmod4, logmod5, 
     logmodL, logmod2L, logmod3L, logmod4L, logmod5L)
 
 
+
+AIC2.df$modeltype <- c(rep('smooth', 5), rep('linear', 5))
+AIC2.df$formula <- c(logmod$formula, logmod2$formula, logmod3$formula, logmod4$formula, logmod5$formula, 
+    logmodL$formula, logmod2L$formula, logmod3L$formula, logmod4L$formula, logmod5L$formula)
+
+library(knitr)
+library(pander)
+AIC2.df$model <- rownames(AIC2.df)
+
+
+pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
 ```
 
-## Results from Generalized additive models of PLS density with covariates:
-
-```{r, echo = FALSE, results = 'asis'}
-
-stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
-          title            = "GAM model results",dep.var.labels.include = FALSE,
-   #       covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
-          dep.var.caption  = "Pre-settlement tree density",
-          dep.var.labels   = "Tree density (trees/ha)")
-
-
-```
-
-lets map out the probability of forest based on model with the lowest AIC value:
+Lets map out the probability of forest based on model with the lowest AIC value:
 ```{r}
 
 library(visreg)

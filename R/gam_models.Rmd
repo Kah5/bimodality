@@ -159,7 +159,37 @@ PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, d
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
 
+AIC.df
+```
+# PLS gam 14 model that includes precipitation, mean temperature, Temp. seasonality, precipitation seasonality in in has lowest AIC value. How does this model predict the PLS test data?
 
+```{r}
+# plot the predicted response fields to these variables
+
+visreg2d(PLS.gam14, xvar='MAP1910', yvar='pasttmean', scale='response')
+visreg2d(PLS.gam14, xvar='MAP1910', yvar='pastdeltaP', scale='response')
+visreg2d(PLS.gam14, xvar='MAP1910', yvar='pastdeltaT', scale='response')
+
+map.pred.density <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
+
+testdata$ypred <- ypred
+ggplot(testdata, aes(x = x, y = y, color = ypred))+geom_point() + theme_bw() +ggtitle ('Predicted tree denisty') 
+#outdata <- testdata
+}
+
+get.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+
+testdata$ypred <- ypred
+
+testdata
+}
+
+map.preds(PLS.gam14, test)
 
 ```
 
@@ -257,6 +287,8 @@ stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, P
 
 lets map out the probability of forest based on model with the lowest AIC value:
 ```{r}
+
+library(visreg)
 map.preds <- function(model, testdata){
 ypred <- predict(model, newdata = testdata, type="response")
 plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
@@ -286,10 +318,20 @@ preds.df <- get.preds(logmod5, test)
 hist(preds.df$ypred, breaks = 25)
 summary(preds.df$ypred)
 
+# plot the predicted response to these variables
+
+visreg2d(logmod5, xvar='MAP1910', yvar='pasttmean', scale='response')
+visreg2d(logmod5, xvar='MAP1910', yvar='pastdeltaP', scale='response')
+visreg2d(logmod5, xvar='MAP1910', yvar='pastdeltaT', scale='response')
+visreg2d(logmod5, xvar='MAP1910', yvar='sandpct', scale='response')
+visreg2d(logmod5, xvar='MAP1910', yvar='awc', scale='response')
+
+
 preds.df <- preds.df[preds.df$ypred < 0.55,]
 preds.df<- preds.df[preds.df$ypred > 0.45,]
 
 ggplot(preds.df, aes(x, y)) + geom_point() + theme_bw()
+ggplot(preds.df, aes(ecocode,ypred))
 
 ```
 

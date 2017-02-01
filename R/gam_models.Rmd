@@ -222,6 +222,7 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 #outdata <- testdata
 }
 
+# make a function to extracted predictions from a model
 get.preds <- function(model, testdata){
 ypred <- predict(model, newdata = testdata, type="response")
 
@@ -232,6 +233,7 @@ testdata
 
 predicted <- get.preds(PLS.gam11, test)
 
+# plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -239,8 +241,35 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
   scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
 
+
+# plot predicted vs. observed (color by sand content)
 ggplot(predicted, aes(PLSdensity,ypred, color = sandpct)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 
+# calculate predicted - observed
+predicted$podiff <- predicted$ypred - predicted$PLSdensity
+
+# map out predicted - observed
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=predicted, aes(x=x, y=y, fill = podiff))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Predicted - Obs from Model 11") +  scale_fill_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+# plotting predicted - observed in different climate spaces
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+
+# histograms of soil variables
+hist(predicted$sandpct, breaks = 50)
+hist(predicted$awc, breaks = 50)
 
 ```
 

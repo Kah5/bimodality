@@ -351,6 +351,7 @@ ggplot() + geom_point(data = predicteda, aes(x= MAP1910, y = pasttmean, color = 
 
 
 ```
+So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. For exampl, there seems to be a high amount of overestimateion at low AWC & intermediate precipitation (and 4-7 degC mean annual temperature).
 
 ## Predicting Forest vs. Savanna (not density)
 

@@ -269,7 +269,86 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = podif
 
 # histograms of soil variables
 hist(predicted$sandpct, breaks = 50)
+
 hist(predicted$awc, breaks = 50)
+
+# break up the dataset by sand % 
+predicted$sandgroup <- '59-88%'
+predicted[predicted$sandpct <59.04,]$sandgroup <- '29-59%'
+predicted[predicted$sandpct < 29.52,]$sandgroup <- '0-29%'
+
+# plot 3 bins of sand:
+ggplot() + geom_histogram(data = predicted, aes(x= sandpct))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+# plot the predicted - obs by bins of sand
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+# plot the predicted by bins of sand
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ scale_color_gradientn(colours = rainbow(7), name ="Pred", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+
+
+# do the same for temperature:
+hist(predicted$pasttmean, breaks = 50)
+
+predictedt <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predictedt$tempgroup <- '9-14'
+predictedt[predictedt$pasttmean < 9,]$tempgroup <- '5-9'
+predictedt[predictedt$pasttmean < 5,]$tempgroup <- '0-5'
+
+# plot 3 bins of sand:
+ggplot() + geom_histogram(data = predictedt, aes(x= pasttmean))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+# plot the predicted - obs by bins of sand
+ggplot() + geom_point(data = predictedt, aes(x= sandpct, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+# plot the predicted - obs by bins of pasttmean
+ggplot() + geom_point(data = predictedt, aes(x= awc, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+
+
+
+# do the same for precipitation:
+hist(predicted$MAP1910, breaks = 50)
+
+predictedp <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predictedp$pgroup <- '900-1200'
+predictedp[predictedp$MAP1910 < 900,]$pgroup <- '700-900'
+predictedp[predictedp$MAP1910 < 700,]$pgroup <- '450-700'
+
+# plot 3 bins of precip:
+ggplot() + geom_histogram(data = predictedp, aes(x= MAP1910))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predictedp, aes(x= sandpct, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predictedp, aes(x= awc, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+
+# do the same for AWC:
+hist(predicted$awc, breaks = 50)
+
+predicteda <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predicteda$agroup <- '0.18-0.226'
+predicteda[predicteda$awc < 0.18,]$agroup <- '0.14-0.18'
+predicteda[predicteda$awc < 0.14,]$agroup <- '0-0.14'
+
+# plot 3 bins of precip:
+ggplot() + geom_histogram(data = predicteda, aes(x= awc))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~agroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predicteda, aes(x= sandpct, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~agroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predicteda, aes(x= MAP1910, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~agroup)
+
 
 ```
 

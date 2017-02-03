@@ -179,7 +179,41 @@ Well, there are a couple of things to think about:
 1. predictions are occassionally negative
 2. predication range is not as high as the observed range
 3. most models overestimate density at low density regions and underestimate density in high denisty regions
-4. Many of the above AIC's are very similar
+4. Many of the above AIC's are very similar, so the benefit of adding an additional term may be marginal.
+
+```{r}
+require(np)
+data(oecdpanel)
+
+dens.pr<- dens.pr[1:100,]
+# Compare predictive ability using five-fold CV
+nfolds <- nrow(dens.pr)
+case.folds <- rep(1:nfolds,length.out=nrow(dens.pr))
+    # divide the cases as evenly as possible
+case.folds <- sample(case.folds) # randomly permute the order
+#bandwidths <- (1:5)/10 # Evenly space bandwidths from 0.1 to 0.5
+fold.mses <- matrix(0,nrow=nfolds,ncol=1)
+#colnames(fold.mses) = as.character(bandwidths)
+   # By naming the columns, we'll won't have to keep track of which bandwidth
+   # is in which position
+for (fold in 1:nfolds) {
+  # What are the training cases and what are the test cases?
+  train <- dens.pr[case.folds!=fold,]
+  test <- dens.pr[case.folds==fold,]
+    # Fit to the training set
+    current.npr <- lm(PLSdensity ~ sandpct, data=train)
+    # Predict on the test set
+    predictions <- predict(current.npr, newdata=test)
+    # What's the mean-squared error?
+    fold.mses[fold,] <- mean((test$PLSdensity - predictions)^2)
+    # Using paste() here lets us access the column with the right name...
+  }
+
+# Average the MSEs
+head(fold.mses) 
+
+```
+
 
 ```{r, echo = FALSE}
 library(maps)
@@ -243,6 +277,29 @@ summary(predicted$ypred)
 predicted <- get.preds(PLS.gam14L, test)
 summary(predicted$ypred)
 
+#calcuated the squared error for each prediction
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+msqe(PLS.gam14L, test)
+msqe(PLS.gam13L, test)
+msqe(PLS.gam12L, test)
+msqe(PLS.gam11L, test)
+msqe(PLS.gam10L, test)
+
+msqe(PLS.gam14, test)
+msqe(PLS.gam13, test)
+msqe(PLS.gam12, test)
+msqe(PLS.gam11, test)
+msqe(PLS.gam10, test)
+
 
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -255,6 +312,8 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 
 # plot predicted vs. observed (color by sand content)
 ggplot(predicted, aes(PLSdensity,ypred, color = sandpct)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+
+
 
 # calculate predicted - observed
 predicted$podiff <- predicted$ypred - predicted$PLSdensity

@@ -175,6 +175,12 @@ pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30
 
 PLS gam 11 model has the lowest AIC includes precipitation, mean temperature, Temp. seasonality, precipitation seasonality in in has lowest AIC value. How does this model predict the PLS test data?
 
+Well, there are a couple of things to think about:
+1. predictions are occassionally negative
+2. predication range is not as high as the observed range
+3. most models overestimate density at low density regions and underestimate density in high denisty regions
+4. Many of the above AIC's are very similar
+
 ```{r, echo = FALSE}
 library(maps)
 library(sp)
@@ -232,6 +238,11 @@ testdata
 }
 
 predicted <- get.preds(PLS.gam11, test)
+summary(predicted$ypred)
+
+predicted <- get.preds(PLS.gam14L, test)
+summary(predicted$ypred)
+
 
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -351,7 +362,7 @@ ggplot() + geom_point(data = predicteda, aes(x= MAP1910, y = pasttmean, color = 
 
 
 ```
-So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. For exampl, there seems to be a high amount of overestimateion at low AWC & intermediate precipitation (and 4-7 degC mean annual temperature).
+So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. For example, there seems to be a high amount of overestimateion at low AWC & intermediate precipitation (and 4-7 degC mean annual temperature).
 
 ## Predicting Forest vs. Savanna (not density)
 

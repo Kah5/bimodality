@@ -11,25 +11,38 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Paper outline:
 1. Intro:
-  *Biome theory overview
-  *Savanna-grassland-forest alternative stable states and fire dominated regions defy biome theory & make it difficult to project into the future
-  *Alt. stable states have been well documented in the modern day tropics, but studies documenting alternative stable states in temperate regions of the world are scarce. However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression in N. America (Anderson mesophication paper) and Europe?? would have removed the vegetation-disturbance feedbacks from the landscape. 
-  *However, the existance of a large ecotone from open prairies and savannas to eastern closed forests in the North American Midwest might suggest otherwise. 
+  * Biome theory overview
+  * Savanna-grassland-forest alternative stable states and fire dominated regions defy biome theory & make it difficult to project into the future
+    + Bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors is a hallmark of alternative stable state. 
+  * Alt. stable states have been well documented in the modern day tropics, but studies documenting alternative stable states in temperate regions of the world are scarce. However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression in N. America (CITE Anderson mesophication paper) and Europe (CITE??) would have removed the vegetation-disturbance feedbacks from the landscape. 
+  * However, the existance of a large ecotone from open prairies and savannas to eastern closed forests in the North American Midwest might suggest otherwise. 
+  * recent digitatization of historical records of past vegetation in the North American midwest allows us to test for the characteristic bimodality in vegetation w.r.t. climate in the past. We hypothesize that regional fire suppression efforts contirbuted to the removal of vegetation-disturbance feedbacks, leading to an increase in forests in previously savanna and open areas. 
+  
+  
 2. Methods:
-  *PLS data
-  *FIA data
-  *Climatic/environmental data
+  * PLS data: Cite goring et al. 2015
+  * FIA data: Citation?
+  * Climatic/environmental data
+    + PRISM climate CITE
+    + gSSURGO soils data CITE (aggregation of data via SSURGO on demand)
+    + calcaulation of P and T seasonality
+    
 3. Results:
+  * Tree density is bimodal in the past with modes at 15 and 200 trees/ha, but density estimates from the FIA shows that it is unimodal today.
+  * The distribution in tree density is not well predicted by Mean annual precipitaiton or precipitation seasonallity (). 
+    + ID places that are low density predicted due to climate
+    + ID places that are high density determined by climate?
+    
 4. Discussion:
 
 
-
+### Start Paper Draft
 
 Biome theory overview:
-Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain.  
+Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain (CITE review paper).  
 
-Savannas in biome theory:
-Biomes that can switch between Savanna and forest systems are an example of alternative states that are not directly predictable from climate and environental factors. In large areas of the tropics climate and edaphic factors are uninformative in predicting distribution of tree cover, but tree cover may be a result of disturbance-vegetation feedbacks. Fire is linked to open savanna regions within intermediate climates, where high grassy fuel loads promote fire spread. However at these same climates, closed forests may be present but light limition in the understory prevents fuel buildup, suppressing the likelihood of fire. The association of open savannas regions with high fire frequencies suggest that disturbance-vegetation feedbacks play a role in maintaining savanna & forest as alternative stable states (Staver et al.). The existence of alternative states is demonstrated by a bimodal distribution in tree density that is not well predicted by climate, but could be attributed to endogenous feedbacks.
+
+  Biomes that can switch between Savanna and forest systems are an example of alternative states that are not directly predictable from climate and environental factors. In large areas of the tropics climate and edaphic factors are uninformative in predicting distribution of tree cover, but tree cover may be a result of disturbance-vegetation feedbacks(Staver et al. ). Fire is linked to open savanna regions within intermediate climates, where high grassy fuel loads promote fire spread. However at these same climates, closed forests may be present but light limition in the understory prevents fuel buildup, suppressing the likelihood of fire. The association of open savannas regions with high fire frequencies suggest that disturbance-vegetation feedbacks play a role in maintaining savanna & forest as alternative stable states (Staver et al.). The existence of alternative states is demonstrated by a bimodal distribution in tree density that is not well predicted by climate, but could be attributed to endogenous feedbacks.
 
 Savanna and forest alternative states have been well documented in the tropics(Staver et al. 2011, Hoffmann et al. 2012, Dantas 2016), but have not been well documented elsewhere on the landscape. While the Upper Midwest in North American is largely forested or agricultural land use today, historical vegetation surveys documented open savanna regions in the region before the time of European settlement (Grimm 1984, Danz et al. 2011, Goring et al. 2016). Several alternative hypotheses for the existance of open savanna ecosystems in the mesic/temperate midwest have been proposed: 
   *Moisture gradient limits tree growth

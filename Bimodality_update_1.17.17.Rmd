@@ -9,6 +9,22 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Paper outline:
+1. Intro:
+  *Biome theory overview
+  *Savanna-grassland-forest alternative stable states and fire dominated regions defy biome theory & make it difficult to project into the future
+  *Alt. stable states have been well documented in the modern day tropics, but studies documenting alternative stable states in temperate regions of the world are scarce. However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression in N. America (Anderson mesophication paper) and Europe?? would have removed the vegetation-disturbance feedbacks from the landscape. 
+  *However, the existance of a large ecotone from open prairies and savannas to eastern closed forests in the North American Midwest might suggest otherwise. 
+2. Methods:
+  *PLS data
+  *FIA data
+  *Climatic/environmental data
+3. Results:
+4. Discussion:
+
+
+
+
 Biome theory overview:
 Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain.  
 

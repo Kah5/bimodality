@@ -66,6 +66,7 @@ Add FIA data methods from Sean/Simon/Jack
 *gSSURGO soil data*
   * cite soil data
   * gSSURGO processing steps
+  Soils data are derived from statewide gSSURGO 10m raster data product (<https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=NRCS142P2_053628>).  The weighted averages from the top 30cm of the soil were calculated for % sand, available water content (awc), and saturated hydraulic conductivity (ksat) soil parameters using the gSSURGO On-Demand ArcGIS toolbox <https://github.com/ncss-tech/ssurgoOnDemand.git>. Weighted averages were calculated on the statewide soil raster datasets for Minnesota, Michigan, Wisconsin, Indiana, and Illinois, then weighted average rasters were mosaicked together to produce one single raster dataset. Maps of soil parameters were then aggregated to a 1km grid scale and an 8km Great Lakes St. Lawrence projected grid scale (PalEON dataset scale) in R.
   
 *Bimodality analysis*
   * Bimodality coefficient:

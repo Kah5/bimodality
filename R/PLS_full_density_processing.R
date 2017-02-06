@@ -171,13 +171,17 @@ awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
 #awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
 
-#ksat
 
 ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
 #ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
 
 ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
 #ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
+
+#write albers rasters to files
+writeRaster(awc8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awcalb.tif", overwrite = TRUE)
+writeRaster(sand8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_sandalb.tif", overwrite = TRUE)
+writeRaster(ksat8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksatalb.tif", overwrite = TRUE)
 
 #extract soils data using FIA and ps points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
@@ -759,3 +763,5 @@ rollBC_by_10 = function(x,y,xout,width) {
   
 }
 
+---
+  

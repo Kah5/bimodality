@@ -282,15 +282,45 @@ find_modes<- function(x) {
   return(modes)
 }
 
+
+
+get.modes <- function(x,bw,spar) {  
+  den <- density(x, kernel=c("gaussian"),bw=bw)
+  den.s <- smooth.spline(den$x, den$y, all.knots=TRUE, spar=spar)
+  s.1 <- predict(den.s, den.s$x, deriv=1)
+  s.0 <- predict(den.s, den.s$x, deriv=0)
+  den.sign <- sign(s.1$y)
+  a<-c(1,1+which(diff(den.sign)!=0))
+  b<-rle(den.sign)$values
+  df<-data.frame(a,b)
+  df = df[which(df$b %in% -1),]
+  modes<-s.1$x[df$a]
+  density<-s.0$y[df$a]
+  df2<-data.frame(modes,density)
+  df2<-df2[with(df2, order(-density)), ] # ordered by density
+  df2
+  #df2$modes
+}
+mm <- c(418, 527, 540, 553, 554, 558, 613, 630, 634, 636, 645, 648, 708, 714, 715, 725, 806, 807, 822, 823, 836, 837, 855, 903, 908, 910, 911, 913, 915, 923, 935, 945, 955, 957, 958, 1003, 1006, 1015, 1021, 1021, 1022, 1034, 1043, 1048, 1051, 1054, 1058, 1100, 1102, 1103, 1117, 1125, 1134, 1138, 1145, 1146, 1150, 1152, 1210, 1211, 1213, 1223, 1226, 1334)
+mmdf<-as.data.frame(mm)
+library(ggplot2)
+ggplot(dens.pr,aes(PLSdensity)) +geom_density(bw= "nrd0")
+ggplot(dens.pr,aes(FIAdensity)) +geom_density(bw= "nrd0")
+get.modes(dens.pr$PLSdensity,20,0.5)
+get.modes(dens.pr$FIAdensity,20,0.5)
+
 #find modes for pls density
-find_modes(density(dens.pr$PLSdensity)$y)
+find_modes(density(dens.pr[dens.pr$PLSdensity < 450,]$PLSdensity)$y)
+plot(density(dens.pr$PLSdensity))
 
 bimodality_coefficient(density(dens.pr$PLSdensity)$y)
-diptest::dip.test(density(dens.pr$PLSdensity)$y)
+diptest::dip.test(dens.pr$PLSdensity)
 
-find_modes(density(dens.pr$FIAdensity)$y)
-bimodality_coefficient(density(dens.pr$FIAdensity)$y)
-diptest::dip.test(density(dens.pr$FIAdensity)$y)
+find_modes(density(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)$y)
+plot(density(dens.pr$FIAdensity))
+
+bimodality_coefficient(density(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)$y)
+diptest::dip.test(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)
 
 ################################################################
 #comparison of FIA and PLS datasets to climate
@@ -410,7 +440,7 @@ dens.pr[dens.pr$PLSdensity < 0.5, ]$ecotype <-  "prairie"
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
-#define ecotype for closed forests
+#define ecotype for modern landscape
 dens.pr$fiaecotype<- 'test'
 dens.pr[dens.pr$FIAdensity > 47, ]$fiaecotype <-  "Forest"
 dens.pr[dens.pr$FIAdensity < 47, ]$fiaecotype <-  "Savanna" 
@@ -921,16 +951,19 @@ library(modes)
 
 calc.BC <- function(data, binby, density){
 bins <- as.character(unique(data[,binby]))
-coeffs <- matrix(NA, length(bins), 1)
+coeffs <- matrix(NA, length(bins), 2)
 for (i in 1:length(bins)){
-coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
 }
+
 coef.bins<- data.frame(cbind(coeffs, bins))
-coef.bins$V1 <- as.numeric(as.character(coef.bins$V1))
+coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
 #coef.bins
 coef.bins <- coef.bins[order(as.numeric(as.character(coef.bins$bins))),]
 coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeric(as.character(coef.bins$bins)))])# reorder so it plots well
-ggplot(coef.bins, aes(x = bins, y = V1))+geom_point()+
+ggplot(coef.bins, aes(x = bins, y = BC))+geom_point()+
  geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
   theme(axis.text = element_text(angle = 90))+
   xlab('bins') + ylab('Bimodality Coefficient')+
@@ -979,17 +1012,19 @@ calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
 #this function maps out the region that is bimodal 
 map.bimodal <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 1)
+  coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
-    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-  }
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    }
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.5 & merged$dipP >= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -1082,17 +1117,19 @@ dev.off()
 #make alternative maps that only plot prairie as one type of prairie:
 map.bimodal.5c <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 1)
+  coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
-    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
   }
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.5 & merged$dipP >= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){

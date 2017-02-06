@@ -263,9 +263,34 @@ FIA.full<- FIA.full %>%
 FIA.full$FIAdensity <- rowSums(FIA.full[,5:41], na.rm = TRUE)
 summary(FIA.full$FIAdensity)
 hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
+dens.pr <- dens.pr[dens.pr$FIAdensity < 650,]
 
+#estimating density of data
+plot(density(dens.pr$PLSdensity))
+plot(density(dens.pr$FIAdensity))
 
+find_modes<- function(x) {
+  modes <- NULL
+  for ( i in 2:(length(x)-1) ){
+    if ( (x[i] > x[i-1]) & (x[i] > x[i+1]) ) {
+      modes <- c(modes,i)
+    }
+  }
+  if ( length(modes) == 0 ) {
+    modes = 'This is a monotonic distribution'
+  }
+  return(modes)
+}
 
+#find modes for pls density
+find_modes(density(dens.pr$PLSdensity)$y)
+
+bimodality_coefficient(density(dens.pr$PLSdensity)$y)
+diptest::dip.test(density(dens.pr$PLSdensity)$y)
+
+find_modes(density(dens.pr$FIAdensity)$y)
+bimodality_coefficient(density(dens.pr$FIAdensity)$y)
+diptest::dip.test(density(dens.pr$FIAdensity)$y)
 
 ################################################################
 #comparison of FIA and PLS datasets to climate

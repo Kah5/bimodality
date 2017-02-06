@@ -66,7 +66,7 @@ Modern landscape is mostly forested with few savannas (@nowacki_2006), but large
 
 ##Methods:
 *Public Land Survey Data:*
-The Public Land Survey was commissioned by the U.S. General Land Office to assess the quality of land/timber and assign land titles for Euro-american settlers. The surveyors placed corner posts at every 1mile section corners in a grid within each township. At these section corners, and at 1/4 section corners, the surveyors would record the distance and azimuth from the corner to the nearest two trees, the species of the nearest two trees, and the diameter at breast height (DBH) of those trees. Afte these historic records are digitized (cite Mladenoff et al. ), we estimate the denisty and basal area at each corner point using the unbiased morista density estimator (@goring_2016, CITE Cogbill). Tree density is then averaged across 8km grid cells in the upper Midwest.
+The Public Land Survey was commissioned by the U.S. General Land Office to assess the quality of land/timber and assign land titles for Euro-american settlers. The surveyors placed corner posts at every 1mile section corners in a grid within each township. At these section corners, and at 1/4 section corners, the surveyors would record the distance and azimuth from the corner to the nearest two trees, the species of the nearest two trees, and the diameter at breast height (DBH) of those trees. Afte these historic records are digitized (cite Mladenoff et al. ), we estimate the denisty and basal area at each corner point using the unbiased morista density estimator (@goring_2016, CITE Cogbill). Tree density is averaged across 8km grid cells in the upper Midwest.
 
 *Forest Inventory Analysis Data:*
 Add FIA data methods from Sean/Simon/Jack
@@ -84,31 +84,33 @@ TSI = sd(m1....m12)/Tavgannual *100
   
 *gSSURGO soil data*
   Soils data are derived from statewide gSSURGO 10m raster data product (<https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=NRCS142P2_053628>).  The weighted averages from the top 30cm of the soil were calculated for % sand, available water content (awc), and saturated hydraulic conductivity (ksat) soil parameters using the gSSURGO On-Demand ArcGIS toolbox (<https://github.com/ncss-tech/ssurgoOnDemand.git>). Weighted averages were calculated on the statewide soil raster datasets for Minnesota, Michigan, Wisconsin, Indiana, and Illinois, then weighted average rasters were mosaicked together to produce one single raster dataset. Maps of soil parameters were then aggregated to a 1km grid scale and an 8km Great Lakes St. Lawrence projected grid scale (PalEON dataset scale).
-  
-*Bimodality analysis*
-  * Bimodality coefficient:
-  * Dip Test (null = unimodal distribution)
-  * Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
-  * BC > 0.556 suggests bimodality
-  * BC is calculated with be calculated in the R package modes
-  
-Bimodality coefficient is calculated from the distribuiton of data as follows:
-
-BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
-
-We calculated the BC for the datasets overall, and the BC within different bins of precipitation and bins of the 1st Principal Componenets. 
 
 *Pricipal Component Analysis*
 Since many climate and soils variables are often correlated, a pricipal components analysis was conducted to reduce dimensions and co-linearity in the environmental data. The 1st Principal component was then used as a covariate in the dataset
 
+  
+*Bimodality analysis*
+Criteria for bimodality uses a bimodality coefficient (BC). Bimodality Coefficient is calculated from size, skewness, and kurtosis of the distributions (Pfister et al. 2013). A BC greater than 0.556 suggests bimodality. Bimodality coefficient (BC) is calculated from the distribuiton of data as follows using the R package 'modes':
+
+BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
+
+Desnity distributions of the PLS and FIA data were estimated. We then calculated the BC for the on these smoothed density distribuitons for the PLS and FIA overall, and the BC within different bins of precipitation and the 1st Principal Component. This provides one BC value for a given range of precipitation/PC. These ranges are used to determine the climate space where savannas and closed forests coexist.  
+
+
 *Generalized Additive Models*
-Several generalized additive models (GAMs) were developed to determine if tree density can be deterministically predicted by climate and/or soils. 
+In addition to evaluating the BC for ranges of data, we developed several generalized additive models (GAMs) to determine if tree density can be deterministically predicted by climate and/or soils. GAMs were developed with both strictly additive terms and with flexible smooth terms. The full PLS data was separated into two random halves that make up the testing and training datasets. GAM's were developed with the training dataset, and prediction error was estimated using the test dataset. Model parsimony was evaluated basing on AIC values, and model fit was assessed using RMSE. 
 
 
 ##Results:
-Tree density in the past PLS is bimodal across the entire upper midwest, while the modern landscape is not. Precipitation or Temperature along do not deterimine the distribution of treee density across the PLS landscape.
 
+*Distribution of data*
+The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with prominant modes at 68 trees/ha and 205 trees/ha (Diptest p < 0.05, BC = 0.74306). The modern landscape does not have this same bimodal distribution.
 
+while the modern landscape is not. Precipitation or Temperature along do not deterimine the distribution of treee density across the PLS landscape.
+
+*Bimodality*
+
+*Predicting Tree density*
 
 
 We use the density data from the places where we have both Public Land Survey data (past), and Forest Inventory Analysis data (modern) across the upper midwest:

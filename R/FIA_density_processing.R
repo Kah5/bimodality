@@ -270,33 +270,28 @@ hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 ################################################################
 #comparison of FIA and PLS datasets to climate
 ###############################################################
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
-#calculate past precipitation seasonality:
-past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
-past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
-past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
+
+past.precip.mo$deltaP <- past.precip.mo$SI
 
 mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms.csv')
 
 #calculate modern precipitation seasonality:
-mod.precip.mo$max <- apply(mod.precip.mo[ , 3:14], 1, max)
-mod.precip.mo$min <- apply(mod.precip.mo[ , 3:14], 1, min) 
-mod.precip.mo$deltaP <- (mod.precip.mo$max-mod.precip.mo$min)/(mod.precip.mo$max+mod.precip.mo$min)
+
+mod.precip.mo$moddeltaP <- rowSums(abs(mod.precip.mo[,2:13]-(mod.precip.mo[,14]/12)))/mod.precip.mo[,14]
 mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 #read in mean annual precipitaiton for modern and past
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
-past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 #read in mean annual temperature for modern and the past:
 mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
-past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910.csv')
+past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
 
-#calculate seasonality from tmean:
-past.tmean$max <- apply(past.tmean[ , 2:13], 1, max) + 273.15 # convert to kelvin
-past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvin
-past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
+#rename temperature seasonality:
+past.tmean$deltaT <- past.tmean$cv
 
 
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
@@ -306,7 +301,7 @@ dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
 #now add the precipitation seasonality to the dataframe
-dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'moddeltaP')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
 colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 
@@ -561,6 +556,13 @@ dev.off()
 png(paste0('outputs/v',version,'/precip_vs_temp_FIA.png'))
 ggplot(dens.pr, aes(x = MAP2011, y = modtmean, colour = FIAdensity))+geom_point()+
   xlab('Modern Mean Annual Prism Precipitation (mm/yr)') + ylab('Modern Mean annual temperature (DegC)')+
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
+
+# plot out climate space in terms of Precip & Precip SI
+png(paste0('outputs/v',version,'/precip_vs_deltap_pls.png'))
+ggplot(dens.pr, aes(x = MAP1910, y = pastdeltaP, colour = PLSdensity))+geom_point()+
+  xlab('Past Mean Annual Prism Precipitation (mm/yr)') + ylab('Past Precipitation Seasonality Index')+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
 

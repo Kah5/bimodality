@@ -87,6 +87,7 @@ spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_p
 coordinates(spec.table) <- ~x + y
 
 years <- 1895:1925
+yrs <- "1895-1925"
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
@@ -160,7 +161,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_1900_1909_full.csv")
+write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
 
 

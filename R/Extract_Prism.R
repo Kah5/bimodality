@@ -2,7 +2,7 @@ library(plyr)
 library(raster)
 library(data.table)
 library(rgdal)
-version <- "1.6-2"
+version <- "1.6-5"
 
 # read in and average prism data
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
@@ -86,27 +86,29 @@ setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_stable_4kmM2_189
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 coordinates(spec.table) <- ~x + y
 
-years <- 1900:1910
+years <- 1895:1925
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
   s <- stack(filenames) #make all into a raster
   t <- crop(s, extent(spec.table.ll)) 
   s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
   y <- data.frame(rasterToPoints(s)) #covert to dataframe
-  years <- rep(1900:1909, each = 12)
+  years <- rep(1895:1924, each = 12)
   mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
               'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
   
   
   #add 1910 to this
-  yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
-  t2 <- crop(yr1910, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
-  t2 <- projectRaster(t2, crs='+init=epsg:3175')
-  y2 <- data.frame(rasterToPoints(t2)) 
+  #yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
+  #t2 <- crop(yr1910, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
+  #t2 <- projectRaster(t2, crs='+init=epsg:3175')
+  #y2 <- data.frame(rasterToPoints(t2)) 
   
-  test <- cbind(y, y2[,3:14])
-  monthly <- test
-  yearly <- test
+  #test <- cbind(y, y2[,3:14])
+  monthly <- y
+  yearly <- y
+  
+  
   
  melted.mo <- melt(monthly, id.var = c('x', 'y'))
  melted.mo$yrs <- substring(melted.mo$variable, first = 24, last = 27)
@@ -116,8 +118,11 @@ filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
  colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
                      'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')
  
+ 
+
+full$SI <- rowSums(abs(full[,3:14]-(full[,15]/12)))/full[,15]
  #melted.yr <- melt(yearly, id.var = c('x', 'y'))
- write.csv(full, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/temporary_melted_1900_1909.csv")
+ write.csv(full, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/temporary_melted_1895_1925.csv")
  #total <- dcast(melted.yr, x + y ~ variable, sum, value.var = 'value', na.rm = TRUE)
  #coordinates(total) <- ~x + y
  #gridded(total) <- TRUE
@@ -175,7 +180,8 @@ coordinates(spec.table) <- ~x + y
 proj4string(spec.table) <- '+init=epsg:3175'
 spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
-years <- 1900:1910
+years <- 1895:1925
+yrs <- "1895-1925"
 
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
 s <- stack(filenames) #make all into a raster
@@ -184,19 +190,12 @@ t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois
 s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
 
 y <- data.frame(rasterToPoints(s)) #covert to dataframe
-years <- rep(1900:1909, each = 12)
+years <- rep(years, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
 
 
-#add 1910 to this
-yr1910 <- stack(list.files(pattern=paste(".*_","1910",".*\\.bil$", sep = "")))
-t2 <- crop(yr1910, extent(spec.lat)) #crop to the extent of indiana & illinois 
-
-yr1910 <- projectRaster(t2, crs='+init=epsg:3175')
-y2 <- data.frame(rasterToPoints(yr1910)) 
-
-test <- cbind(y, y2[,3:14])
+test <- y
 monthly <- test
 yearly <- test
 
@@ -208,8 +207,11 @@ full$Mean <- rowMeans(full[,3:14])
 colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
 
-
-
+test <- full
+#calculate the CV temperature seasonality:
+#TSI = sd(m1....m12)/Tavgannual *100
+test$cv <- (apply(test[,3:14],1, sd, na.rm = TRUE)/test[,15])*100
+full <- test
 spec.table <- data.frame(spec.table)
 
 #y$mean <- rowSums(y[,c('Jan', 'Feb', 'Mar', "Apr", "May", 

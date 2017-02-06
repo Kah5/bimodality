@@ -19,11 +19,11 @@ Paper outline:
     + Bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors is a hallmark of alternative stable state. 
   * Alt. stable states have been well documented in the modern day tropics, but studies documenting alternative stable states in temperate regions of the world are scarce. However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression in N. America (@nowacki_2008) and Europe (CITE??) would have removed the vegetation-disturbance feedbacks from the landscape. 
   * However, the existance of a large ecotone from open prairies and savannas to eastern closed forests in the North American Midwest might suggest otherwise. 
-  * recent digitatization of historical records of past vegetation in the North American midwest allows us to test for the characteristic bimodality in vegetation w.r.t. climate in the past. We hypothesize that regional fire suppression efforts contirbuted to the removal of vegetation-disturbance feedbacks, leading to an increase in forests in previously savanna and open areas. 
+  * Recent digitatization of historical records of past vegetation in the North American midwest allows us to test for the characteristic bimodality in vegetation w.r.t. climate in the past. We hypothesize that regional fire suppression efforts contirbuted to the removal of vegetation-disturbance feedbacks, leading to an increase in forests in previously savanna and open areas. 
   
   
 2. Methods:
-  * PLS data: Cite goring et al. 2015
+  * PLS data: Density estimation as in goring et al. 2015
   * FIA data: Citation?
   * Climatic/environmental data
     + PRISM climate CITE
@@ -72,8 +72,15 @@ The Public Land Survey was commissioned by the U.S. General Land Office to asses
 Add FIA data methods from Sean/Simon/Jack
 
 *Prism Data*
-  * cite prism data
-  * add seasonality calculations
+  * Climate data come from Temperature and Precipitation PRISM datasets. Modern climate is the 30-year Normals dataset and Historical climate is estimated as the average annual Temperature and average annual Precipiation over the 1895-1910 period. 
+  * Precipitation seasonality was calculated from Monthly Prism datasets as follows: 
+  
+SI = sum 1-12(abs(mi - P/12))/P * 100
+
+Temperature is calculated using the coefficient of variation method
+TSI = sd(m1....m12)/Tavgannual *100
+ 
+
   
 *gSSURGO soil data*
   Soils data are derived from statewide gSSURGO 10m raster data product (<https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=NRCS142P2_053628>).  The weighted averages from the top 30cm of the soil were calculated for % sand, available water content (awc), and saturated hydraulic conductivity (ksat) soil parameters using the gSSURGO On-Demand ArcGIS toolbox (<https://github.com/ncss-tech/ssurgoOnDemand.git>). Weighted averages were calculated on the statewide soil raster datasets for Minnesota, Michigan, Wisconsin, Indiana, and Illinois, then weighted average rasters were mosaicked together to produce one single raster dataset. Maps of soil parameters were then aggregated to a 1km grid scale and an 8km Great Lakes St. Lawrence projected grid scale (PalEON dataset scale).

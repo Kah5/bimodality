@@ -157,7 +157,7 @@ sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 
 #sand1km <- raster("data/1km_UMW_sand1.tif")
-#plot(sand1km)
+
 
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
@@ -178,7 +178,7 @@ ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
 ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
 #ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
-#write albers rasters to files
+#write albers rasters to files:
 writeRaster(awc8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awcalb.tif", overwrite = TRUE)
 writeRaster(sand8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_sandalb.tif", overwrite = TRUE)
 writeRaster(ksat8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksatalb.tif", overwrite = TRUE)

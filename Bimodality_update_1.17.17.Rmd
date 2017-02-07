@@ -430,12 +430,14 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = e
 ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ ggtitle ('predictions by sand %') + facet_grid(~sandgroup)
 
 
-
 ```
 
 
-So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell.
+So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
 
+
+
+#text left over from previous update
 
 We use the density data from the places where we have both Public Land Survey data (past), and Forest Inventory Analysis data (modern) across the upper midwest:
 

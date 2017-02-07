@@ -12,7 +12,7 @@ library(grid)
 library(gridExtra)
 
 
-hist(diams$Oak, breaks = 25)
+
 
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
@@ -548,17 +548,20 @@ calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 #this function maps out the region that is bimodal & uses the ecotypes to classify this
 map.bimodal <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 1)
+  coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
-    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
   }
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -626,17 +629,19 @@ dev.off()
 #make alternative maps that only plot prairie as one type of prairie:
 map.bimodal.5c <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 1)
+  coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
-    coeffs[i]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
   }
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){

@@ -479,6 +479,7 @@ This method has the benefit of predicting the probability of forest (or the prob
 
 ```{r echo = FALSE}
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
+
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
@@ -509,8 +510,8 @@ PLS.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = train)
 PLS.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = train)
 #summary(PLS.lgr3) #explains 6.07% deviance
 
-PLS.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = train)
-PLS.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = train)
+PLS.lgr4 <- gam(ecocode ~ s(pastdeltaT), family = 'binomial',data = train)
+PLS.lgr4L <- gam(ecocode ~ pastdeltaT, family = 'binomial',data = train)
 #summary(PLS.lgr4) #explains 6.07% deviance
 
 PLS.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = train)
@@ -555,11 +556,11 @@ PLS.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomia
 PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = train)
 PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
 
-#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = train)
-#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = train)
+#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), family = 'binomial',data = train)
+#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaT, family = 'binomial',data = train)
 
-PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), family = 'binomial',data = train)
-PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
+PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), family = 'binomial',data = train)
+PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, family = 'binomial',data = train)
 
 AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
 
@@ -600,7 +601,7 @@ pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.c
 Looks like model number 14 with just Mean Annual Precipitation has lowest AIC for the logistic/binomial model. 
 Lets map out the probability of forest based on model with the lowest AIC value:
 
-forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
+forest type ~ s(MAP1910)+ s(pasttmean) + s(pastdeltaT) +   s(pastdeltaP)
 
 The smooth predictors in this model are the same as the smooth predictors in the denisty model
 ```{r, echo = FALSE}
@@ -831,58 +832,8 @@ Within precipiation ranges that have bistablity, differences in temperature may 
   * In terms of framing the paper, I need to discuss the regional environmental changes (fire suppresion, land use) in a way that makes it clear that these changes could have removed the endogenous vegetation feedbacks that are important for maintaining alt. stable states.
   
 
-## Thinking about model design
-```{r, echo = FALSE}
-
-library(stargazer)
-library(mgcv)
-dens.pr <- read.csv("outputs/v1.6/dens.pr.csv")
 
 
 
-PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 , method = "ML")
-#summary(PLS.gam1) #explains 0.004% deviance
-
-
-PLS.gam2 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
-#summary(PLS.gam2) #explains 15.8% deviance
-
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
-#summary(PLS.gam3) #explains 3.02% deviance
-
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
-#summary(PLS.gam3) #explains 12.5% of deviance
-
-
-PLS.gam4 <- gam(PLSdensity ~ pasttmean + pastdeltaP , method = "ML", data = dens.pr)
-#summary(PLS.gam4) #explains 35% deviance
-
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct , method = "ML")
-#summary(PLS.gam5) #explains 14.9% of deviance
-
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean+ dens.pr$sandpct, method = "ML")
-#summary(PLS.gam6) #explains 39% deviance
-
-PLS.gam7 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , method = "ML")
-#summary(PLS.gam7) #explains 41.3% of deviance
-
-PLS.gam8 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, method = "ML")
-#summary(PLS.gam8) # explains 41% of deviance
-
-
-```
-
-## Results from Generalized additive models of PLS density with covariates:
-
-```{r, echo = FALSE, results = 'asis'}
-
-stargazer(PLS.gam1,PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, type="html",
-          title            = "GAM model results",dep.var.labels.include = FALSE,
-          covariate.labels = c("Mean Annual Precipitation (mm)", "Mean Temperature (DegF)", "Mean Temperature (DegF)", "AWC", "Precipitaiton seasonality","% sand"),
-          dep.var.caption  = "Pre-settlement tree density",
-          dep.var.labels   = "Tree density (trees/ha)")
-
-
-```
 
 ### References

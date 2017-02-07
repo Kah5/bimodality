@@ -129,7 +129,7 @@ suppressMessages(library(ggplot2))
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 #hist(dens.pr$PLSdensity, breaks = 50)
-
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.6-5.csv")
 #pls.new <- dens.pr[dens.pr$PLSdensity > 0,] # remove all 0 values for now
 #dens.pr <- pls.new 
 # split into test and training datasets:
@@ -425,8 +425,10 @@ Sd = rep(0,length(predicted$podiff))
   ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+geom_raster(data = predicted, aes(x=x, y=y,fill=errordiscrete))+
     scale_fill_manual(values=gs.pal(9),drop=FALSE) + theme_bw() +
     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ggtitle("Predicted - Obs. discrete scale") + coord_equal() 
-  
+```
+This model also underestimates the northern WI & UP forests, and overstimates many regions in the prairie/savanna.
 
+```{r, echo = FALSE}
 
 # plotting predicted - observed in different climate spaces
 ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 

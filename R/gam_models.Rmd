@@ -172,6 +172,126 @@ AIC.df$model <- rownames(AIC.df)
 pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
 
 ```
+Do the same for FIA data, but FIA models do not explain very much of the vegetation data:
+
+```{r, echo = FALSE}
+
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
+
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+
+# split into test and training datasets:
+
+#split FIA data into test and training datasets
+Y <- fiadens$FIAdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+trainf <- dens.pr[msk,]
+testf <- dens.pr[!msk,]
+
+
+FIA.gam1 <-gam(FIAdensity ~  s(MAP2011), data = trainf)
+FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
+
+
+FIA.gam2 <- gam(FIAdensity ~ s(pasttmean) , data = trainf)
+FIA.gam2L <- gam(FIAdensity ~ pasttmean , data = trainf)
+#summary(FIA.gam2) #explains 15.8% deviance
+#plot(FIA.gam2)
+
+FIA.gam3 <- gam(FIAdensity ~ s(pastdeltaP), data = trainf)
+FIA.gam3L <- gam(FIAdensity ~ pastdeltaP, data = trainf)
+#summary(FIA.gam3) #explains 6.07% deviance
+
+FIA.gam4 <- gam(FIAdensity ~ s(deltaT), data = trainf)
+FIA.gam4L <- gam(FIAdensity ~ deltaT, data = trainf)
+#summary(FIA.gam4) #explains 6.07% deviance
+
+FIA.gam5 <- gam(FIAdensity ~ s(awc), data = trainf)
+FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
+#summary(FIA.gam5) #explains 12.5% of deviance
+
+FIA.gam6 <- gam(FIAdensity ~ s(sandpct), data = trainf)
+FIA.gam6L <- gam(FIAdensity ~ sandpct, data = trainf)
+#summary(FIA.gam6) #explains 12.5% of deviance
+
+
+
+FIA.gam7 <- gam(FIAdensity ~ s(pasttmean) + s(MAP2011) ,  data = trainf)
+FIA.gam7L <- gam(FIAdensity ~ pasttmean + MAP2011 ,  data = trainf)
+#summary(FIA.gam7) #explains 41% deviance
+#summary(FIA.gam7L) # explains 19.6%
+
+FIA.gam8 <- gam(FIAdensity ~ s(awc) +s(sandpct), data = trainf )
+FIA.gam8L <- gam(FIAdensity ~ awc + sandpct, data = trainf )
+#summary(FIA.gam8) #explains 28% of deviance
+
+FIA.gam9 <- gam(FIAdensity ~ s(MAP2011) + s(pasttmean) + s(sandpct), data = trainf)
+FIA.gam9L <- gam(FIAdensity ~ MAP2011 + pasttmean + sandpct, data = trainf)
+#summary(FIA.gam9) #explains 39% deviance
+#summary(FIA.gam9L)
+#plot(FIA.gam6)
+
+
+FIA.gam10 <- gam(FIAdensity ~ s(MAP2011) +s(pasttmean) + s(awc), data = trainf)
+FIA.gam10L <- gam(FIAdensity ~ MAP2011 + pasttmean + awc, data = trainf)
+
+#summary(FIA.gam10) #explains 41.3% of deviance
+#plot(FIA.gam10)
+
+FIA.gam11 <- gam(FIAdensity ~ s(MAP2011)  +s(pasttmean) +s(sandpct) + s(awc), data = trainf)
+FIA.gam11L <- gam(FIAdensity ~ MAP2011  + pasttmean + sandpct + awc, data = trainf)
+
+#summary(FIA.gam8) # explains 41% of deviance
+FIA.gam12 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(pastdeltaP), data = trainf)
+FIA.gam12L <- gam(FIAdensity ~ MAP2011  + pasttmean + pastdeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(pastdeltaP), data = trainf)
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + pasttmean + pastdeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(deltaT), data = trainf)
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + pasttmean + deltaT, data = trainf)
+
+FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = trainf)
+FIA.gam14L <- gam(FIAdensity ~ MAP2011  + pasttmean + deltaT + pastdeltaP, data = trainf)
+
+AIC.df<- AIC(FIA.gam1, FIA.gam2, FIA.gam3, FIA.gam4, FIA.gam5, FIA.gam6, FIA.gam7, FIA.gam8, FIA.gam9,FIA.gam10,FIA.gam11,FIA.gam12,FIA.gam13,FIA.gam14 , FIA.gam1L, FIA.gam2L, FIA.gam3L, FIA.gam4L, FIA.gam5L, FIA.gam6L, FIA.gam7L, FIA.gam8L, FIA.gam9L, FIA.gam10L,FIA.gam11L,FIA.gam12L,FIA.gam13L,FIA.gam14L)
+
+AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC.df$formula <- c(FIA.gam1$formula, FIA.gam2$formula, FIA.gam3$formula, FIA.gam4$formula, FIA.gam5$formula, FIA.gam6$formula, FIA.gam7$formula, FIA.gam8$formula, FIA.gam9$formula,FIA.gam10$formula,FIA.gam11$formula,FIA.gam12$formula,FIA.gam13$formula,FIA.gam14$formula , FIA.gam1L$formula, FIA.gam2L$formula, FIA.gam3L$formula, FIA.gam4L$formula, FIA.gam5L$formula, FIA.gam6L$formula, FIA.gam7L$formula, FIA.gam8L$formula, FIA.gam9L$formula, FIA.gam10L$formula,FIA.gam11L$formula,FIA.gam12L$formula,FIA.gam13L$formula, FIA.gam14L$formula )
+
+AIC.df<- AIC.df[order(AIC.df$AIC),]
+library(knitr)
+library(pander)
+AIC.df$model <- rownames(AIC.df)
+
+#calculate prediction error:
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$FIAdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC.df$model)){
+AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), testf)
+}
+pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+```
 
 PLS gam 11 model has the lowest AIC includes precipitation, mean temperature, Temp. seasonality, precipitation seasonality in in has lowest AIC value. How does this model predict the PLS test data?
 

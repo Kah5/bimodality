@@ -463,7 +463,9 @@ dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
-dens.pca <- princomp(scale.dens,
+dens.pca <- princomp(scale.dens[,c("MAP1910", "pastdeltaP", 
+                                   "pasttmean", "deltaT", 
+                                   "sandpct", "awc")],
                  na.rm=TRUE) 
 
 plot(dens.pca)
@@ -477,7 +479,7 @@ dens.rm$PC2 <- scores[,2]
 dens.rm <- data.frame(dens.rm)
 PC <- dens.pca
 #plot scores by tree density in trees per hectare
-png(paste0("ouputs/v", version,"/pca_no_loadings.png"))
+png(paste0("outputs/v", version,"/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
@@ -512,7 +514,7 @@ g2 <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
 g2$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = ecotype)), g2$layers)
 
 png(width = 800, height = 400,"outputs/v1.6/pca_biplot_class.png")
-g2 + ggtitle('PCA biplot with Rheumtell density classification')
+g2 + ggtitle('PCA biplot with Rheumtella density classification')
 dev.off()
 
 # add the scores from pca to the dens.pr data frame
@@ -521,6 +523,7 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by =
 
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
+write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
 ########################################
 # testing basic Linear models
 #######################################

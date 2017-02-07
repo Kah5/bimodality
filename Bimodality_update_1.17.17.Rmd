@@ -239,11 +239,11 @@ AIC.df$MSPE <- 1
 for (i in 1: length(AIC.df$model)){
 AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), test)
 }
-pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
+pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```
 
-
+Taking a closer look at PLS.GAM14:
 
 ```{r, echo = FALSE}
 suppressMessages(library(maps))
@@ -320,60 +320,78 @@ predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
 mean(predicted$sqerr, na.rm = TRUE)
 }
 
-#msqe(PLS.gam14L, test)
-#msqe(PLS.gam13L, test)
-#msqe(PLS.gam12L, test)
-#msqe(PLS.gam11L, test)
-#msqe(PLS.gam10L, test)
 
-#msqe(PLS.gam14, test)
-#msqe(PLS.gam13, test)
-#msqe(PLS.gam12, test)
-#msqe(PLS.gam11, test)
-#msqe(PLS.gam10, test)
 
-# plot predicted vs. observed (color by sand content)
+# plot predicted vs. observed 
 ggplot(predicted, aes(PLSdensity,ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 ```
-The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas.
+The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Note that the predictions here are overall much lower than the observations
 
-```{r}
+```{r, echo = FALSE}
 
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted tree density from Model 11") + 
+  labs(x="easting", y="northing", title="Predicted tree density from PLSgam.14") + 
   scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+```
 
+Mapping out predicted - observed for each grid cell in the test dataset. This  map also shows that the savannas are generally overestimated in terms of tree density, while the norther closed forests tend to be underestimated. 
+```{r, echo = FALSE}
 
+suppressMessages(library(RColorBrewer))
 # calculate predicted - observed
 predicted$podiff <- predicted$ypred - predicted$PLSdensity
 
-# map out predicted - observed
+Sd = rep(0,length(predicted$podiff))
+  Sd[which(predicted$podiff>0 & predicted$podiff<=10)] = 1
+  Sd[which(predicted$podiff>10 & predicted$podiff<=50)] = 2
+  
+  Sd[which(predicted$podiff>50 & predicted$podiff<=100)] = 3
+  Sd[which(predicted$podiff>100) ] = 4
+  Sd[which(predicted$podiff== 0)] = 0
+   Sd[which(predicted$podiff>=-10 & predicted$podiff<0)] = -1
+  Sd[which(predicted$podiff>-50 & predicted$podiff<=-10)] = -2
+  
+  Sd[which(predicted$podiff> -100 & predicted$podiff<=-50)] = -3
+  Sd[which(predicted$podiff< -100) ] = -4
+  Sd = factor(Sd,levels=-4:4)
+  levels(Sd) = c(">-100","(-100,-50]","(-50, -10]","(-10,0]",'0','(0,10]','(10,50]','(50, 100]','(100,200]')
+  
+  predicted$errordiscrete <- Sd
+  
+ gs.pal <- colorRampPalette(brewer.pal(11,"PRGn"))
+ 
+# map out predicted - observed using discrete scale
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=predicted, aes(x=x, y=y, fill = podiff))+
+  geom_raster(data=predicted, aes(x=x, y=y, fill = errordiscrete))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted - Obs from Model 14") +  scale_fill_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +
+  labs(x="easting", y="northing", title="Predicted - Obs from Model 14") +scale_fill_manual(values=gs.pal(9),drop=FALSE) +
   coord_equal()+theme_bw()
 
 # plotting predicted - observed in different climate spaces
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 
 ```
+Since PLS.GAM14 included terms only relating to climate and climate seasonality, we can look another model with a low AIC, but that includes soil parameters to see if soils impact prediction of PLS tree density in an ecologically meaningful way. 
+The next closest model is PLS.gam11:
 
-The next closest model is PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct) + s(awc)
+PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct) + s(awc)
+
+Here we plot the predicted vs. observed of for this model:
 ```{r, echo = FALSE}
 predicted <- get.preds(PLS.gam11, test)
-summary(predicted)
+#summary(predicted)
 
 ggplot(predicted, aes(PLSdensity,ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 ```
+
 This model also overestimates the low tree density regions and underestimates the high tree density regions. 
 
-```{r}
-suppressMessages(library(RColorBrewer))
+```{r, echo = FALSE}
+
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
@@ -408,15 +426,6 @@ Sd = rep(0,length(predicted$podiff))
     scale_fill_manual(values=gs.pal(9),drop=FALSE) + theme_bw() +
     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ggtitle("Predicted - Obs. discrete scale") + coord_equal() 
   
-# map out predicted - observed
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=predicted, aes(x=x, y=y, fill = podiff))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted - Obs from Model 11") +  scale_fill_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
-
-# plotting predicted - observed in different climate spaces
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) 
 
 
 # plotting predicted - observed in different climate spaces
@@ -449,7 +458,6 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = y
 
 
 ```
-
 
 So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
 

@@ -390,6 +390,9 @@ dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label
 
 
 test<- dens.pr[!is.na(dens.pr),]
+
+write.csv(dens.pr, "data/PLS_full_dens_pr_with_bins.csv")
+
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','plsprbins75', 
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  

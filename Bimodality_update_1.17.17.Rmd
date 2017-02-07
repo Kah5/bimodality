@@ -1,7 +1,7 @@
 ---
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
-date: "January 24, 2017"
+date: "February 7th, 2017"
 bibliography: bimodality.bib
 output: html_document
 ---
@@ -41,7 +41,7 @@ Paper outline:
 
 ### Start Paper Draft
 
-Biome theory overview:
+
 Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain (CITE review paper).  
 
 
@@ -54,7 +54,7 @@ While the Upper Midwest in North American is largely forested or agricultural la
 However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression and extensive land use change & fragmentation in N. America (@nowacki_2008, @rheumtella_2007) and Europe (CITE??) would have removed the vegetation-disturbance feedbacks from the landscape, making the alternative stable states in the temperate zone (should they exist) unobservable today. The recent digitization of pre-European settlement vegetation data in the N. American Upper Midest provides a glimpse into past vegetaton and allows us to test the hypothesis that the distribution of vegetation in the past is bimodal with respect to climate, and that the commonly cited hypothesized drivers do not predict the distribution of vegetation in the past (reword/develop the hypotheses so they are stronger).
 
 
-Modern landscape is mostly forested with few savannas (@nowacki_2006), but large scale fire suppression and land use have removed vegetation-disturbance feedbacks that were once on the landscape. Thus, we hypothesize that vegetation in the PLS era will have a bimodal distribution in tree denisty that is not predicted by climate. However, in the absence of fire and disturbances, tree density on the modern landscape will not be bimodal, but may be better predicted by climate.
+Modern landscape is mostly forested with few savannas (@nowacki_2006), but we hypothesize that large scale fire suppression and land use have removed vegetation-disturbance feedbacks that were once on the landscape. Thus, we hypothesize that vegetation in the PLS era will have a bimodal distribution in tree denisty (high frequency of low density and high density sites, few intermediates) that is not well predicted by climate. However, in the absence of fire and disturbances, we hypothesize that tree density on the modern landscape will not be bimodal, but may be better predicted by climate.
 
 
 ##Key questions we aim to answer in this analysis:
@@ -127,8 +127,10 @@ suppressMessages(library(caTools))
 suppressMessages(library(ggplot2))
 
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
-dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+#dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 #hist(dens.pr$PLSdensity, breaks = 50)
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+
 fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
 
 # split into test and training datasets:
@@ -246,10 +248,7 @@ pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.ce
 
 ```
 
-
-
-
-Taking a closer look at PLS.GAM14:
+Taking a closer look at PLS.GAM14, we see some overestimation in open savanna areas and underestimation in closed forestion regions.
 
 ```{r, echo = FALSE}
 suppressMessages(library(maps))
@@ -369,13 +368,85 @@ Sd = rep(0,length(predicted$podiff))
   predicted$errordiscrete <- Sd
   
  gs.pal <- colorRampPalette(brewer.pal(11,"PRGn"))
- 
+
+
 # map out predicted - observed using discrete scale
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = errordiscrete))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Predicted - Obs from Model 14") +scale_fill_manual(values=gs.pal(9),drop=FALSE) +
   coord_equal()+theme_bw()
+```
+
+When we compare the results from the above map to the map where PLS tree density is bimodal (according to Hartigan's diptest and bimodality coefficient), we see that the GAM model and the bimodality analysis converge on similar answers because the GAM model cannot predict the regions that are bimodal (have both savanna and forests) in PC1 climate space very well. 
+
+Specifically,the GAM model overestimates bimodal & stable savannas, slightly underestimates bimodal forests, and does okay at estimating some stable forests (boxplots & histograms).
+
+```{r}
+
+get.bimodal.5c <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  #define bimodality
+  merged$bimodal <- "Stable"
+  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+    }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+merged
+  
+}
+
+ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
+      '#fee08b', # tan
+      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()+
+    ggtitle(paste0(binby, ' for ',density))
+
+merged <- get.bimodal.5c(data = test, binby = "PC1bins", density = "PLSdensity")
+merged <- merge(merged, predicted[,c("x", "y", "ypred", "errordiscrete", "podiff")], by = c('x','y'))
+
+
+ggplot(merged, aes(x = classification, y = podiff))+geom_boxplot()+xlab("Predicted - Observed for different Bimodal regions")
+
+#ggplot(merged, aes(x = errordiscrete))+geom_bar()+facet_grid(classification~., scales = 'free')
+
+
+#plot historgram sof the data
+ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline(data = dfs, aes(xintercept=0), colour="red") +geom_histogram()+facet_grid(classification~., scales = 'free') + xlab("Predicted - Observed for different Bimodal regions")
+
+```
+
+```{r, echo = FALSE}
+
+
+
 
 # plotting predicted - observed in different climate spaces
 ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 

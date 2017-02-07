@@ -415,8 +415,8 @@ When we compare the results from the above map to the map where PLS tree density
 
 Specifically,the GAM model overestimates bimodal & stable savannas, slightly underestimates bimodal forests, and does okay at estimating some stable forests (boxplots & histograms).
 
-```{r}
-
+```{r, echo = FALSE}
+suppressMessages(library(modes))
 get.bimodal.5c <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
@@ -450,17 +450,7 @@ merged
   
 }
 
-ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#01665e', # light green
-      '#5ab4ac', # dark teal
-      '#8c510a', # red
-      '#d8b365', # light tan
-      '#fee08b', # tan
-      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+
-    xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0(binby, ' for ',density))
+test <- test[complete.cases(test),]
 
 merged <- get.bimodal.5c(data = test, binby = "PC1bins", density = "PLSdensity")
 merged <- merge(merged, predicted[,c("x", "y", "ypred", "errordiscrete", "podiff")], by = c('x','y'))
@@ -472,7 +462,7 @@ ggplot(merged, aes(x = classification, y = podiff))+geom_boxplot()+xlab("Predict
 
 
 #plot historgram sof the data
-ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline(data = dfs, aes(xintercept=0), colour="red") +geom_histogram()+facet_grid(classification~., scales = 'free') + xlab("Predicted - Observed for different Bimodal regions")
+ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline( aes(xintercept=0), colour="red") +geom_histogram()+facet_grid(classification~., scales = 'free') + xlab("Predicted - Observed for different Bimodal regions")
 
 ```
 
@@ -538,6 +528,7 @@ Sd = rep(0,length(predicted$podiff))
     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ggtitle("Predicted - Obs. discrete scale") + coord_equal() 
 ```
 This model also underestimates the northern WI & UP forests, and overstimates many regions in the prairie/savanna.
+So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
 
 ```{r, echo = FALSE}
 
@@ -554,9 +545,7 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = error
 
 
 # histograms of soil variables
-hist(predicted$sandpct, breaks = 50)
 
-hist(predicted$awc, breaks = 50)
 
 # break up the dataset by sand % 
 predicted$sandgroup <- '59-88%'
@@ -572,7 +561,7 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = y
 
 ```
 
-So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
+
 
 ## Predicting Forest vs. Savanna (not density)
 
@@ -730,11 +719,11 @@ testdata$ypred <- as.vector(ypred)
 testdata
 }
 
-map.preds(PLS.lgr14, test)
+#map.preds(PLS.lgr14, test)
 
 preds.df <- data.frame(get.preds(PLS.lgr14, test))
-hist(preds.df$ypred, breaks = 25)
-summary(preds.df$ypred)
+#hist(preds.df$ypred, breaks = 25)
+#summary(preds.df$ypred)
 
 # plot the predicted response to these variables
 

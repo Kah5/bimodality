@@ -106,7 +106,7 @@ dens <- densitys
 dens$diff <- dens$FIAdensity - dens$PLSdensity
 png(width = 4, height = 3,units = 'in', res = 300, paste0('outputs/v', version, '/density_difference_plot.png'))
 ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
-  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens.pr$PLSdensity, dens.pr$diff),2)), size = 5)
+  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens$PLSdensity, dens$diff),2)), size = 5)
 dev.off()
 
 #map out 

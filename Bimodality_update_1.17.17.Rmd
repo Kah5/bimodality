@@ -86,7 +86,7 @@ TSI = sd(m1....m12)/Tavgannual *100
   Soils data are derived from statewide gSSURGO 10m raster data product (<https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=NRCS142P2_053628>).  The weighted averages from the top 30cm of the soil were calculated for % sand, available water content (awc), and saturated hydraulic conductivity (ksat) soil parameters using the gSSURGO On-Demand ArcGIS toolbox (<https://github.com/ncss-tech/ssurgoOnDemand.git>). Weighted averages were calculated on the statewide soil raster datasets for Minnesota, Michigan, Wisconsin, Indiana, and Illinois, then weighted average rasters were mosaicked together to produce one single raster dataset. Maps of soil parameters were then aggregated to a 1km grid scale and an 8km Great Lakes St. Lawrence projected grid scale (PalEON dataset scale).
 
 *Pricipal Component Analysis*
-Since many climate and soils variables are often correlated, a pricipal components analysis was conducted to reduce dimensions and co-linearity in the environmental data. The 1st Principal component was then used as a covariate in the dataset
+Since many climate and soils variables are often correlated, a pricipal components analysis was conducted to reduce dimensions and co-linearity in the environmental data. PCA was coducted on the scaled variables of historic MAP, historic Mean temperature, historic Precipitation Seasonality Index, Historic Tempearture Seasonality, AWC, and %sand. The 1st Principal component was then used as a covariate when assessing bimodality. 
 
   
 *Bimodality analysis*
@@ -107,6 +107,7 @@ In addition to evaluating the BC for ranges of data, we developed several genera
 The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha).
 
 *PCA* 
+Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) explains 29% of the variance. Past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality and precipitation seasonality index both have negative loadings fro PC1. Sand has the strongest negative loading and AWC has strongest positive loading on PC2. Plotting density/vegetatation type in Principal component space does not separate vegeatation into savanna, prairie, and forest.  
 
 
 *Bimodality*
@@ -117,13 +118,13 @@ Gam model selection for the model with the lowest AIC value yeilded the model:
 
 PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP)
 
-While AIC suggests this is the best model, it only explains 61% of the Deviance and has high MSPE of 5976.366. 
+While AIC suggests this is the best model, it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). 
 
 ```{r, echo = FALSE}
 
-library(mgcv)
-library(caTools)
-library(ggplot2)
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
 
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
@@ -220,7 +221,24 @@ library(knitr)
 library(pander)
 AIC.df$model <- rownames(AIC.df)
 
+#calculate prediction error:
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
 
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC.df$model)){
+AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), test)
+}
 pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
 
 ```
@@ -228,10 +246,10 @@ pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30
 
 
 ```{r, echo = FALSE}
-library(maps)
-library(sp)
-library(rgeos)
-library(visreg)
+suppressMessages(library(maps))
+suppressMessages(library(sp))
+suppressMessages(library(rgeos))
+suppressMessages(library(visreg))
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states)<-~long+lat
@@ -355,7 +373,7 @@ ggplot(predicted, aes(PLSdensity,ypred, color = MAP1910)) +geom_point() + theme_
 This model also overestimates the low tree density regions and underestimates the high tree density regions. 
 
 ```{r}
-
+suppressMessages(library(RColorBrewer))
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
@@ -377,8 +395,8 @@ Sd = rep(0,length(predicted$podiff))
    Sd[which(predicted$podiff>=-10 & predicted$podiff<0)] = -1
   Sd[which(predicted$podiff>-50 & predicted$podiff<=-10)] = -2
   
-  Sd[which(predicted$podiff>-100 & predicted$podiff<=-50)] = -3
-  Sd[which(predicted$podiff<-100) ] = -4
+  Sd[which(predicted$podiff> -100 & predicted$podiff<=-50)] = -3
+  Sd[which(predicted$podiff< -100) ] = -4
   Sd = factor(Sd,levels=-4:4)
   levels(Sd) = c(">-100","(-100,-50]","(-50, -10]","(-10,0]",'0','(0,10]','(10,50]','(50, 100]','(100,200]')
   
@@ -406,7 +424,7 @@ ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = e
 
 ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
 
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = errordiscrete))+ +scale_color_manual(values=gs.pal(9),drop=FALSE)  
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
 
 ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) 
 

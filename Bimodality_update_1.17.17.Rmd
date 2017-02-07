@@ -37,7 +37,8 @@ Paper outline:
     + ID places that are high density determined by climate?
     
 4. Discussion:
-
+  *Discuss places that are bimodal
+  *Discuss comparison between PLS and modern landscape
 
 ### Start Paper Draft
 
@@ -69,9 +70,11 @@ Modern landscape is mostly forested with few savannas (@nowacki_2006), but we hy
 The Public Land Survey was commissioned by the U.S. General Land Office to assess the quality of land/timber and assign land titles for Euro-american settlers. The surveyors placed corner posts at every 1mile section corners in a grid within each township. At these section corners, and at 1/4 section corners, the surveyors would record the distance and azimuth from the corner to the nearest two trees, the species of the nearest two trees, and the diameter at breast height (DBH) of those trees. Afte these historic records are digitized (cite Mladenoff et al. ), we estimate the denisty and basal area at each corner point using the unbiased morista density estimator (@goring_2016, CITE Cogbill). Tree density is averaged across 8km grid cells in the upper Midwest.
 
 *Forest Inventory Analysis Data:*
+
 Add FIA data methods from Sean/Simon/Jack
 
 *Prism Data*
+
   * Climate data come from Temperature and Precipitation PRISM datasets. Modern climate is the 30-year Normals dataset and Historical climate is estimated as the average annual Temperature and average annual Precipiation over the 1895-1910 period. 
   * Precipitation seasonality was calculated from Monthly Prism datasets as follows: 
   
@@ -83,37 +86,67 @@ TSI = sd(m1....m12)/Tavgannual *100
 
   
 *gSSURGO soil data*
+
   Soils data are derived from statewide gSSURGO 10m raster data product (<https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/home/?cid=NRCS142P2_053628>).  The weighted averages from the top 30cm of the soil were calculated for % sand, available water content (awc), and saturated hydraulic conductivity (ksat) soil parameters using the gSSURGO On-Demand ArcGIS toolbox (<https://github.com/ncss-tech/ssurgoOnDemand.git>). Weighted averages were calculated on the statewide soil raster datasets for Minnesota, Michigan, Wisconsin, Indiana, and Illinois, then weighted average rasters were mosaicked together to produce one single raster dataset. Maps of soil parameters were then aggregated to a 1km grid scale and an 8km Great Lakes St. Lawrence projected grid scale (PalEON dataset scale).
 
 *Pricipal Component Analysis*
+
 Since many climate and soils variables are often correlated, a pricipal components analysis was conducted to reduce dimensions and co-linearity in the environmental data. PCA was coducted on the scaled variables of historic MAP, historic Mean temperature, historic Precipitation Seasonality Index, Historic Tempearture Seasonality, AWC, and %sand. The 1st Principal component was then used as a covariate when assessing bimodality. 
 
   
 *Bimodality analysis*
+
 Criteria for bimodality uses a both a bimodality coefficient (BC) and Hartigans Diptest for unimodality. Bimodality Coefficient is calculated from size, skewness, and kurtosis of the distributions (Pfister et al. 2013). A BC greater than 0.556 suggests bimodality. Bimodality coefficient (BC) is calculated from the distribuiton of data as follows using the R package 'modes':
 
 BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
 
-Desnity distributions of the PLS and FIA data were estimated. We then calculated the BC and performed Hartigan's diptest for unimodaltity for the on these smoothed density distribuitons for the PLS and FIA overall, and the BC within different bins of precipitation and the 1st Principal Component. This provides one BC value for a given range of precipitation/PC. These ranges are used to determine the climate space where savannas and closed forests coexist.  
+Desnity distributions of the PLS and FIA data were estimated. We then calculated the BC and performed Hartigan's diptest for unimodaltity for the on these smoothed density distribuitons for the PLS and FIA overall, and the BC within different bins of precipitation and the 1st Principal Component. This provides one BC value for a given range of precipitation/PC and whether the distribution is significantly different from a unimodal distribution. These ranges are used to determine the climate space where savannas and closed forests coexist.  
 
 
 *Generalized Additive Models*
+
 In addition to evaluating the BC for ranges of data, we developed several generalized additive models (GAMs) to determine if tree density can be deterministically predicted by climate and/or soils. GAMs were developed with both strictly additive terms and with flexible smooth terms. The full PLS data was separated into two random halves that make up the testing and training datasets. GAM's were developed with the training dataset, and prediction error was estimated using the test dataset. Model parsimony was evaluated basing on AIC values, and model fit was assessed using RMSE. 
 
 
 ##Results:
 
 *Distribution of data*
+
 The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha).
 
 *PCA* 
+
 Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) explains 29% of the variance. Past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality and precipitation seasonality index both have negative loadings fro PC1. Sand has the strongest negative loading and AWC has strongest positive loading on PC2. Plotting density/vegetatation type in Principal component space does not separate vegeatation into savanna, prairie, and forest.  
 
+Additionally, the biplot for the Principal Components Analysis:
+![](outputs/v1.6-5/full/pca_biplot.png)
 
 *Bimodality*
 
+![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
+![](outputs/v1.6-5/PLS__full_tree_density_map.png)
+
+## Q1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
+
+Ans. Public land survey tree density is bimodal and FIA tree density is not:
+
+![](outputs/v1.6-5/FIA_PLS_hists.png) 
+
+Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density:
+
+
+![](outputs/v1.6-5/density_difference_plot.png)
+
+Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
+
+![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
+
+Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
+
+![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 
 *Predicting Tree density (GAMs)*
+
 Gam model selection for the model with the lowest AIC value yeilded the model: 
 
 PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP)
@@ -446,11 +479,12 @@ ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline(data = dfs, 
 ```{r, echo = FALSE}
 
 
-
-
 # plotting predicted - observed in different climate spaces
 ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 
 ```
+
+## Looking at a model that includes soils as well:
+
 Since PLS.GAM14 included terms only relating to climate and climate seasonality, we can look another model with a low AIC, but that includes soil parameters to see if soils impact prediction of PLS tree density in an ecologically meaningful way. 
 The next closest model is PLS.gam11:
 
@@ -542,9 +576,8 @@ So far, the under and over estimation of the model doesn't appear systematic fro
 
 ## Predicting Forest vs. Savanna (not density)
 
-The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna(ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
+The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna (ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
 
-In this case we model 
 
 This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
 
@@ -745,27 +778,25 @@ ggplot(preds.df, aes(x = MAP1910, y = ypred, color = pasttmean)) + geom_point() 
 
 ```
 
+## It seems like we could make an argument for using the pls density GAMs or the PLS binomial family GAM models and that the analysis of both might end up in supplemental materials. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #text left over from previous update
-
-We use the density data from the places where we have both Public Land Survey data (past), and Forest Inventory Analysis data (modern) across the upper midwest:
-
-![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
-![](outputs/v1.6-5/PLS__full_tree_density_map.png)
-
-
-
-## Q1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
-
-Ans. Public land survey tree density is bimodal and FIA tree density is not:
-
-![](outputs/v1.6-5/FIA_PLS_hists.png) 
-
-Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density:
-
-
-![](outputs/v1.6-5/density_difference_plot.png)
-
 
 ## Q2. Does climate explain the distribution of tree density in either the past or the modern landscape?
 
@@ -792,8 +823,7 @@ Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity
 ![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
 ![](outputs/v1.6/FIA_PLS_PC1_hexbinplots.png)
 
-Additionally, the biplot for the Principal Components Analysis:
-![](outputs/v1.6/pca_biplot.png)
+
 
 
 

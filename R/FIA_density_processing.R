@@ -1132,8 +1132,11 @@ map.bimodal.5c <- function(data, binby, density){
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  
+  if(merged$BC >= 0.5 & merged$dipP <=0.05){
+  merged$bimodal <- "Bimodal"
+  }else{
+    merged$bimodal <- "Stable"
+  }
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
     merged$classification <- "test"
@@ -1154,7 +1157,7 @@ map.bimodal.5c <- function(data, binby, density){
       '#a6d96a', # light green
       '#d7191c', # red
       '#fee08b', # tan
-      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Prairie') )+
+      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna") )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0(binby, ' for ',density))
@@ -1177,6 +1180,13 @@ map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
 write.csv(dens.pr, "outputs/v1.6-5/dens_pr_FIA_PLS_df.csv")
+
+
+png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/FIA_PC1_PC2_map_5col.png'))
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")+ ggtitle(' PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+dev.off()
 
 #read in the data from PLS full density processing.R
 dens.full <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")

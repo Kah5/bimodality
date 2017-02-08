@@ -183,7 +183,7 @@ trainf <- dens.pr[msk,]
 testf <- dens.pr[!msk,]
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train, family = poisson(link = "log"))
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 
 
@@ -245,7 +245,7 @@ PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), data = train)
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), data = train, family = quasipoisson(link = "log"))
 PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
@@ -343,7 +343,7 @@ predicted <- get.preds(PLS.gam14L, test)
 #summary(predicted$ypred)
 
 predicted <- get.preds(PLS.gam14, test)
-#summary(predicted$ypred)
+summary(predicted$ypred)
 
 
 

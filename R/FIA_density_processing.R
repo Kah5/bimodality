@@ -334,7 +334,7 @@ mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms.csv')
 
 #calculate modern precipitation seasonality:
 
-mod.precip.mo$moddeltaP <- rowSums(abs(mod.precip.mo[,2:13]-(mod.precip.mo[,14]/12)))/mod.precip.mo[,14]
+#mod.precip.mo$moddeltaP <- rowSums(abs(mod.precip.mo[,2:13]-(mod.precip.mo[,14]/12)))/mod.precip.mo[,14]
 mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 #read in mean annual precipitaiton for modern and past

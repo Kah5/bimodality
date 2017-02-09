@@ -54,11 +54,14 @@ dec<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_12_pr
 full <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
 colnames(full) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May", 
                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+full$total<- rowSums(full[,4:15], na.rm=TRUE)
+full$SI <- rowSums(abs(full[,4:15]-(full[,16]/12)))/full[,16]
+
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE
 avgs <- stack(full) 
 
-#plot(avgs) #plots averages
+plot(avgs) #plots averages
 
 #extract at the tree level for tree cover modeling
 PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
@@ -234,6 +237,79 @@ avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
 write.csv(avgs.df, paste0("C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_yr_Prism_",yrs,"_full.csv"))
+
+
+#monthly seasonal temperature
+
+#get the monthly averages
+setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_30yr_normal_4kmM2_all_bil/')
+coordinates(spec.table) <- ~x +y
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+
+month <- sprintf("%02d", 1:12)
+for (i in 1:length(month)) {
+  filenames <- list.files(pattern=paste0(".*_", month[i],".*\\.bil$", sep = ""))
+  s <- stack(filenames)
+  t <- crop(s, extent(spec.table.ll))#make all into a raster
+  s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+  #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  #colnames(y) <- c("x", "y", month.abb)
+  y$month <- month[i]
+  y$gridNumber <- cellFromXY(t, y[, 1:2])
+  write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_',month[i],'_tmean.csv' )) 
+}
+
+jan<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_01_tmean.csv')
+feb<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_02_tmean.csv')
+mar<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_03_tmean.csv')
+apr<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_04_tmean.csv')
+may<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_05_tmean.csv')
+jun<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_06_tmean.csv')
+jul<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_07_tmean.csv')
+aug<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_08_tmean.csv')
+sep<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_09_tmean.csv')
+oct<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_10_tmean.csv')
+nov<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_11_tmean.csv')
+dec<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_12_tmean.csv')
+
+full <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
+colnames(full) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May", 
+                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+full$Mean <- rowMeans(full[,4:15])
+colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
+                    'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
+
+test <- full
+#calculate the CV temperature seasonality:
+#TSI = sd(m1....m12)/Tavgannual *100
+test$cv <- (apply(test[,4:15],1, sd, na.rm = TRUE)/test[,16])*100
+full <- test
+
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+plot(avgs) #plots averages
+
+#extract at the tree level for tree cover modeling
+PLSpoints.agg <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_pct_cov_by_pt_inil.csv")
+avgs.pts <- data.frame(extract(avgs, PLSpoints.agg[,c('Pointx', 'Pointy')]))
+avgs.pts$Pointx <- PLSpoints.agg$Pointx
+avgs.pts$Pointy <- PLSpoints.agg$Pointy
+write.csv(avgs.pts, "C:/Users/JMac/Documents/Kelly/biomodality/data/PLSpoints.agg.full_mo_modernPRISMP.csv")
+
+spec.table <- data.frame(spec.table)
+avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
+
+
+
+
 
 
 

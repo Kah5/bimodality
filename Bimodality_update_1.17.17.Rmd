@@ -37,7 +37,20 @@ Paper outline:
   
   
 1b. "Alternative Introb*" *Also no alternative facts
-  *
+  * Savanna biomes are important in temperate/tropics because
+    - high NPP contribution
+    - hotspots of biodiversity
+    - home to large amounts of global population
+    - important to the earths carbon cycle
+    - current and past environmental changes can alter the distribution and the function of savannas
+    - therefore, understanding the environmental controls of these ecosystems is key to predicting the resilience of these ecosystems future environmental changes 
+  * Savannna -forets as alternative states. 
+  * Environmental changes in both the tropics and temperate zone have already altered distribution and savanna function. 
+    -tropics (woody encroachment due to fire suppression & perhaps rising CO2)
+    -temperate zone (woody encroachment associated with fire suppression)
+  * These alterations might suggest changes in controls on vegetation. 
+    -if vegetatation is controlled by climate factors (shift in vegetation should be explained by any shifts in climate & vegetation should be a fucntion of climate)
+    -if vegetation was actually not deterministically driven by climate, and rather governed by latent fire/disturbance proceesses, then the shift in fire regime might have driven a shift in stability
   
 2. Methods:
   * PLS data: Density estimation as in goring et al. 2015

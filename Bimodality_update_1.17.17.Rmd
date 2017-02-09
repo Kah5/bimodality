@@ -36,6 +36,21 @@ Paper outline:
   * PLS data allows us to test this hypothesis that envtl. changes (e.g. fire suppression) have resulted in a stability transition over time (sav/forest -> stable closed forest).
   
   
+Intro:
+  - make the key point that we went from unstable to stable 
+  - also show what is going on in tropics
+  - but most show instablity with  fear of 
+  - our advantage is that we can see how this shift occurs
+  - and we can predict this based on climate and land use
+  - unstable praries? 
+  
+Methods
+  - Add in the ipcc climate data
+  - PLS-relationship with climate but with todays climate
+    + gets to the point of being able to see how unstable sites chnage
+    + sets us up for the future
+    
+  
 1b. "Alternative Introb*" *Also no alternative facts
   * Savanna biomes are important in temperate/tropics because
     - high NPP contribution

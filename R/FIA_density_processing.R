@@ -8,6 +8,7 @@ library(dtplyr)
 library(ggplot2)
 library(grid)
 library(gridExtra)
+library(modes)
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
@@ -330,7 +331,7 @@ past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 past.precip.mo$deltaP <- past.precip.mo$SI
 
-mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms.csv')
+mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms_full.csv')
 
 #calculate modern precipitation seasonality:
 
@@ -345,10 +346,12 @@ past.precip <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
 past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
 
+
+mod.tmean.mo <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
 #rename temperature seasonality:
 past.tmean$deltaT <- past.tmean$cv
 
-
+mod.tmean.mo$moddeltaT <- mod.tmean.mo$cv 
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
@@ -356,7 +359,7 @@ dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
 colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 
 #now add the precipitation seasonality to the dataframe
-dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'moddeltaP')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'SI')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
 colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
 
@@ -365,7 +368,12 @@ dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') 
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[10:12] <- c('modtmean','pasttmean', 'deltaT')
 
+dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
+
+
 nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+
+dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
 write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 

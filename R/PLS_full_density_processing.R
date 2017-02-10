@@ -465,7 +465,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  
                                   'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 
-                                 'pastdeltaP','pastdeltaT',  'pastdeltPbins', 'pasttmeanbins',
+                                 'pastdeltaP','deltaT',  'pastdeltPbins', 'pasttmeanbins',
                                  'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
                                  "PC1fiabins", "PC2fiabins",'ecotype')) 
 
@@ -758,6 +758,10 @@ map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal.5c(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
+
+map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "PLSdensity")
+
 
 png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map_5col.png'))
 pushViewport(viewport(layout = grid.layout(1, 2)))

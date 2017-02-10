@@ -1255,6 +1255,9 @@ print(map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")+
 print(map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 
+png(height = 6, width = 5, units= 'in',  res= 300, paste0('outputs/v',version,'/FIA_PC1_map_5col.png'))
+map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")+ ggtitle(' PC1 FIA')
+dev.off()
 #read in the data from PLS full density processing.R
 dens.full <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 

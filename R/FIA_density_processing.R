@@ -494,12 +494,6 @@ ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
 dev.off()
 
 data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
-ggbiplot(dens.pca)
-
-plot(dens.pca, type = "l")
-print(dens.pca)
-summary(dens.pca)
-biplot(dens.pca)
 
 # using biplot
 library(ggbiplot)
@@ -533,6 +527,62 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by =
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
+
+##################################################################
+# PCA on FIA dataset
+##################################################################
+dens.fia <- dens.rm[, c('FIAdensity')] # pls density
+
+# apply PCA - scale. = TRUE is highly 
+# advisable, but default is FALSE. 
+dens.pca <- princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
+                                   "modtmean", "moddeltaT", 
+                                   "sandpct", "awc")],
+                     na.rm=TRUE) 
+
+plot(dens.pca)
+dens.pca$loadings
+scores <- data.frame(dens.pca$scores[,1:2])
+scores$FIA <- dens.fia
+scores$ecotype <- dens.rm$fiaecotype
+
+dens.rm$PC1fia <- scores[,1]
+dens.rm$PC2fia <- scores[,2]
+dens.rm <- data.frame(dens.rm)
+PC <- dens.pca
+#plot scores by tree density in trees per hectare
+png(paste0("outputs/v", version,"/fia_pca_no_loadings.png"))
+ggplot(scores, aes(x = Comp.1, y = Comp.2, color = FIA)) +geom_point()+
+  scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
+dev.off()
+
+data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
+
+# using biplot
+library(ggbiplot)
+g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+              = 20,alpha = 0)
+# layer the points from pls underneath the pca biplot
+# using a clever trick to manipulate the layers
+g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = FIA)), g$layers)
+g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
+
+#write to png
+png(width = 800, height = 400,"outputs/v1.6/pca_fia_biplot.png")
+g + ggtitle('PCA biplot with PLS tree density')
+dev.off()
+
+
+
+# add the scores from pca to the dens.pr data frame
+#this merge is not working
+test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),  by = c('x','y','cell'), all.x = T)
+
+#convert dens.rm to the new dens.pr---we only lose ~150 grid cells
+dens.pr <- test1
+write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
+
+
 
 ########################################
 # testing basic Linear models
@@ -578,6 +628,9 @@ plot(PLS.gam7, residuals = TRUE)
 FIA.gam <- gam(dens.pr$FIAdensity ~ dens.pr$MAP2011 + dens.pr$sandpct + dens.pr$awc, method = "ML")
 summary(FIA.gam) # explains 4% of deviance
 
+###############################################################
+# Histogram plots
+##############################################################
 
 library(ggExtra)
 library(ggplot2)
@@ -788,13 +841,15 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels =
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
-dens.pr$moddeltTbins <- cut(dens.pr$moderndeltaT, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
-dens.pr$pastdeltTbins <- cut(dens.pr$pastdeltaT, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+dens.pr$moddeltTbins <- cut(dens.pr$moddeltaT, breaks = seq(0,7.5, by = .5), labels = label.breaks(0,7.0, 0.5))
+dens.pr$pastdeltTbins <- cut(dens.pr$deltaT, breaks = seq(0,7.5, by = .5), labels = label.breaks(0,7.0, 0.5))
 
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$modtmeanbins <- cut(dens.pr$modtmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
+dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
+dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -802,7 +857,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'pl
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
                                  'MAP1910', "MAP2011", 
                                  'diff', 'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 'moderndeltaP', 
-                                 'pastdeltaP','deltaT', 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean','modtmeanbins', "PC1", "PC2",'PC1bins', 'PC2bins', 'ecotype', 'fiaecotype')) 
+                                 'pastdeltaP','deltaT',"pastdeltTbins","moddeltTbins", 'moddeltPbins', 'pastdeltPbins', 'pasttmeanbins','pasttmean','modtmean','modtmeanbins', "PC1", "PC2",'PC1bins', 'PC2bins','PC1fiabins', 'PC2fiabins', 'ecotype', 'fiaecotype')) 
 
 #map out 
 all_states <- map_data("state")
@@ -1002,9 +1057,9 @@ calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
-calc.BC(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")
 calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
-calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
+calc.BC(data = dens.pr, binby = 'PC2fiabins', density = "FIAdensity")
 
 
 dev.off()
@@ -1084,8 +1139,8 @@ map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
 map.bimodal(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
-map.bimodal(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
-map.bimodal(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")
+map.bimodal(data = dens.pr, binby = 'PC2fiabins', density = "FIAdensity")
 
 dev.off()
 

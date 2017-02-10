@@ -323,7 +323,7 @@ ggplot(avgs.df, aes(x=x, y=y, color = Mean)) + geom_point()
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 #spec.table<- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb.csv")
-spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.6.csv')
+#spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.6.csv')
 spec.table <- data.frame(spec.table)
 temp30yr <- data.frame(extract(prism.alb, spec.table[,c("x","y")]))
 temp30yr$x <- spec.table$x

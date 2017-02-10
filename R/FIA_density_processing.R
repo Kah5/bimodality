@@ -328,13 +328,11 @@ diptest::dip.test(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)
 ###############################################################
 past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
-
 past.precip.mo$deltaP <- past.precip.mo$SI
 
 mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms_full.csv')
 
-#calculate modern precipitation seasonality:
-
+#read in modern precipitation seasonality:
 #mod.precip.mo$moddeltaP <- rowSums(abs(mod.precip.mo[,2:13]-(mod.precip.mo[,14]/12)))/mod.precip.mo[,14]
 mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 

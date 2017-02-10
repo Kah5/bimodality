@@ -98,41 +98,57 @@ write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwe
 #comparison of FIA and PLS datasets to climate
 ###############################################################
 
-#create variable for precipitation seasonality
-past.precip.mo <- read.csv(paste0('outputs/pr_monthly_Prism_1900_1909_full.csv'))
-past.precip.mo$max <- apply(past.precip.mo[ , 2:13], 1, max)
-past.precip.mo$min <- apply(past.precip.mo[ , 2:13], 1, min) 
-past.precip.mo$deltaP <- (past.precip.mo$max-past.precip.mo$min)/(past.precip.mo$max+past.precip.mo$min)
+past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
+past.precip.mo$deltaP <- past.precip.mo$SI
+
+mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms_full.csv')
+
+#read in modern precipitation seasonality:
+#mod.precip.mo$moddeltaP <- rowSums(abs(mod.precip.mo[,2:13]-(mod.precip.mo[,14]/12)))/mod.precip.mo[,14]
+mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 #read in mean annual precipitaiton for modern and past
+mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
+past.precip <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
-past.precip <- read.csv('outputs/pr_monthly_Prism_1900_1909_full.csv')
-
-past.tmean <- read.csv('outputs/tmean_yr_Prism_1900-1910_full.csv')
-
-#calculate seasonality from tmean:
-past.tmean$max <- apply(past.tmean[ , 2:13], 1, max) + 273.15 # convert to kelvin
-past.tmean$min <- apply(past.tmean[ , 2:13], 1, min) + 273.15 # convert to kelvin
-past.tmean$deltaT <- ((past.tmean$max-past.tmean$min)/(past.tmean$max+past.tmean$min))*100
+#read in mean annual temperature for modern and the past:
+mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
+past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
 
 
-dens.pr <- merge(densitys, past.precip.mo[,c('x', 'y', 'total', 'deltaP')], by =c('x', 'y'), all.x = F)
-#dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
-colnames(dens.pr)[5:6] <- c('MAP1910', 'pastdeltaP')
+mod.tmean.mo <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
+#rename temperature seasonality:
+past.tmean$deltaT <- past.tmean$cv/100
+
+mod.tmean.mo$moddeltaT <- mod.tmean.mo$cv/100 
+#dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
+#dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
+dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
+dens.pr <- merge(dens.pr, mod.precip[,c('x', 'y', 'pr30yr')], by = c('x', 'y'))
+colnames(dens.pr)[5:6] <- c('MAP1910', "MAP2011")
 
 #now add the precipitation seasonality to the dataframe
-#dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
-#dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y'), all.x = TRUE)
-#colnames(dens.pr)[6]<- c( )
+dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'SI')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
+colnames(dens.pr)[7:8]<- c('moderndeltaP', 'pastdeltaP')
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+
+dens.pr <- nodups
 
 #now add the mean temperature to the dataframe
-#dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'prism30yr')], by = c('x', 'y') )
-dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', "deltaT")], by = c('x', 'y'), all.x = F)
-colnames(dens.pr)[7:8] <- c('pasttmean', "pastdeltaT")
+dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
+colnames(dens.pr)[9:11] <- c('modtmean','pasttmean', 'deltaT')
+dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
+
 
 nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+
+dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
+
+
 write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
 
 #nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
@@ -294,12 +310,16 @@ ggplot(dens.full, aes(x = kmeans, y = PLSdensity, group = kmeans))+geom_boxplot(
 #####################################################
 dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
-scale.dens <- scale(dens.rm[, 5:11]) #PC all but ksat and diff
+scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
+                                "pastdeltaP", "modtmean", "pasttmean",
+                                "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
-dens.pca <- princomp(scale.dens,
+dens.pca <- princomp(scale.dens[,c('MAP1910',   
+                                   "pastdeltaP", "pasttmean",
+                                    "deltaT", "sandpct", "awc")],
                      na.rm=TRUE) 
 
 plot(dens.pca)
@@ -352,16 +372,62 @@ g2 + ggtitle('PCA biplot with Rheumtell density classification')
 dev.off()
 
 # add the scores from pca to the dens.pr data frame
-coordinates(dens.rm) ~x + y
-gridded(dens.rm) <- TRUE
-proj4string(dens.rm) <- '+init=epsg:3175'
-pca <- raster(dens.rm)
+
 
 test1 <- merge(dens.pr,unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x','y'), all.x= T)
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
 
-ggplot(dens.pr, aes(x = x, y = y, color= ecotype))+geom_point()
+##################################################################
+# PCA on FIA dataset
+##################################################################
+#dens.fia <- dens.rm[, c('FIAdensity')] # pls density
+
+# apply PCA - scale. = TRUE is highly 
+# advisable, but default is FALSE. 
+dens.pca <- princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
+                                   "modtmean", "moddeltaT", 
+                                   "sandpct", "awc")],
+                     na.rm=TRUE) 
+
+plot(dens.pca)
+dens.pca$loadings
+scores <- data.frame(dens.pca$scores[,1:2])
+#scores$FIA <- dens.fia
+#scores$ecotype <- dens.rm$fiaecotype
+
+dens.rm$PC1fia <- scores[,1]
+dens.rm$PC2fia <- scores[,2]
+dens.rm <- data.frame(dens.rm)
+PC <- dens.pca
+#plot scores by tree density in trees per hectare
+
+data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
+
+# using biplot
+library(ggbiplot)
+g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+              = 20,alpha = 0)
+# layer the points from pls underneath the pca biplot
+# using a clever trick to manipulate the layers
+g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = "black")), g$layers)
+g <- g #+ scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
+
+#write to png
+png(width = 800, height = 400,"outputs/v1.6/pca_fia_biplot.png")
+g + ggtitle('PCA biplot with PLS tree density')
+dev.off()
+
+
+
+# add the scores from pca to the dens.pr data frame
+#this merge is not working
+test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),  by = c('x','y','cell'), all.x = T)
+
+#convert dens.rm to the new dens.pr---we only lose ~150 grid cells
+dens.pr <- test1
+write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
+
 #################################################################################################
 #separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
 #################################################################################################
@@ -387,6 +453,8 @@ dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), la
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
+dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -397,7 +465,9 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  
                                   'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 
-                                 'pastdeltaP','pastdeltaT',  'pastdeltPbins', 'pasttmeanbins','pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 'ecotype')) 
+                                 'pastdeltaP','pastdeltaT',  'pastdeltPbins', 'pasttmeanbins',
+                                 'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
+                                 "PC1fiabins", "PC2fiabins",'ecotype')) 
 
 #load map data for future maps
 all_states <- map_data("state")

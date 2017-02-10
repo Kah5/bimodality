@@ -20,6 +20,7 @@ write.csv(spec.table[,c('x', 'y', 'cell', 'pr30yr')], 'C:/Users/JMac/Documents/K
 
 #get the monthly averages
 setwd('C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/')
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 coordinates(spec.table) <- ~x +y
 proj4string(spec.table) <- '+init=epsg:3175'
 spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
@@ -60,7 +61,8 @@ full$SI <- rowSums(abs(full[,4:15]-(full[,16]/12)))/full[,16]
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE
 avgs <- stack(full) 
-
+proj4string(avgs) <- crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 ')
+avgs<- projectRaster(avgs, crs='+init=epsg:3175')
 plot(avgs) #plots averages
 
 #extract at the tree level for tree cover modeling
@@ -304,11 +306,13 @@ spec.table <- data.frame(spec.table)
 avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
-
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
-
+avgs.df$cv <- (apply(avgs.df[,1:12],1, sd, na.rm = TRUE)/avgs.df[,13])*100
 
 
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_monthly_Prism_30yrnorms_full.csv")
+
+
+ggplot(avgs.df, aes(x=x, y=y, color = Mean)) + geom_point()
 
 
 

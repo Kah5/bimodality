@@ -349,9 +349,9 @@ past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
 
 mod.tmean.mo <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
 #rename temperature seasonality:
-past.tmean$deltaT <- past.tmean$cv
+past.tmean$deltaT <- past.tmean$cv/100
 
-mod.tmean.mo$moddeltaT <- mod.tmean.mo$cv 
+mod.tmean.mo$moddeltaT <- mod.tmean.mo$cv/100 
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'extract.avg.alb..dens.table...c..x....y....')], by =c('x', 'y'))
 #dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total_.')], by =c('x', 'y'))
 dens.pr <- merge(densitys, past.precip[,c('x', 'y', 'total')], by =c('x', 'y'))
@@ -368,13 +368,14 @@ dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') 
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[10:12] <- c('modtmean','pasttmean', 'deltaT')
 
-dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
 
 
 nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 
 dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
+dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
+
 write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
 
 
@@ -466,7 +467,7 @@ plot(dens.pr$kmeans, dens.pr$PLSdensity)
 # remove the NA values and scale
 dens.rm <- na.omit(dens.pr)
 dens.rm <- data.frame(dens.rm)
-scale.dens <- scale(dens.rm[, 6:14]) #PC all but ksat and diff
+scale.dens <- scale(dens.rm[, 6:15]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
@@ -532,6 +533,7 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1', 'PC2')]),  by =
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
+
 ########################################
 # testing basic Linear models
 #######################################
@@ -769,6 +771,7 @@ labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg
 labels.test <- paste (labels.test$first, '-' , labels.test$second)
 labels.test
 }
+
 dens.pr$plsprbins50 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 50), labels = label.breaks(250, 1300, 50))
 dens.pr$fiaprbins50 <- cut(dens.pr$MAP2011, breaks = seq(250, 1350, by = 50), labels = label.breaks(250, 1300, 50))
 dens.pr$plsprbins100 <- cut(dens.pr$MAP1910, breaks = seq(250, 1350, by = 100), labels = label.breaks(250, 1250, 100))
@@ -785,6 +788,9 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels =
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$moddeltPbins <- cut(dens.pr$moderndeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+dens.pr$moddeltTbins <- cut(dens.pr$moderndeltaT, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+dens.pr$pastdeltTbins <- cut(dens.pr$pastdeltaT, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
+
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$modtmeanbins <- cut(dens.pr$modtmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))

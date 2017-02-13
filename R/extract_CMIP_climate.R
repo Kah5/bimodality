@@ -53,7 +53,9 @@ full$total<- rowSums(full[,3:14], na.rm=TRUE)
 full$SI <- rowSums(abs(full[,3:14]-(full[,16]/12)))/full[,16]
 }else{
  full$mean <- rowMeans((full[,3:14]/10), na.rm = TRUE)
- full$SI <- (apply((full[,3:14]/10),1, sd, na.rm = TRUE)/(full[,16]/10))*100
+ mean.corr <- full$mean
+  mean.corr[abs(mean.corr) < 0.8 ] <- 0.8 # assign all mean values near 0 to 0.8 to avoid the cv blowing up
+ full$SI <- (abs(apply((full[,3:14]/10),1, sd, na.rm = TRUE))/abs((mean.corr)))
 }
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE

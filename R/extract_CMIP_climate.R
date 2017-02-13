@@ -114,33 +114,40 @@ reg.cols <- read.csv("data/bcsd5/bcsd5/COLS_PeriodStat.txt", header = F)
 reg.rows <- read.csv("data/bcsd5/bcsd5/ROWS_PeriodStat.txt", header = F)
 
 #read in the projections for avg precipitation rate precipitation from ccsm4, rcp scenario 2.6 
-ccsm4.26pr<- read.csv("data/bcsd5/bcsd5/pr_PeriodStat_mean.ccsm4.1.rcp26.csv", header = F)
-colnames(ccsm4.26pr) <- t(reg.cols) # assign cols
-rownames(ccsm4.26pr) <- t(reg.rows) # assign rows
-ccsm4.26pr$lat <- rownames(ccsm4.26pr) 
+ccsm4<- read.csv("data/bcsd5/bcsd5/pr_PeriodStat_mean.ccsm4.1.rcp26.csv", header = F)
 
-melted <- melt(ccsm4.26pr, id.vars = "lat")
+extract.rcps<- function(climate,rcp, cols, rows){
+ccsm4<- read.csv(paste0("data/bcsd5/bcsd5/",climate,"_PeriodStat_mean.ccsm4.1.",rcp,".csv"), header = F)
+  
+colnames(ccsm4) <- t(reg.cols) # assign cols
+rownames(ccsm4) <- t(reg.rows) # assign rows
+ccsm4$lat <- rownames(ccsm4) 
+
+melted <- melt(ccsm4, id.vars = "lat")
 colnames(melted) <- c("lat", "lon", "pr")
 melted$pr <- as.numeric(melted$pr)
 melted$lon <- as.numeric(as.character(melted$lon))
 melted$lat <- as.numeric(melted$lat)
 melted$lon <- melted$lon - 360
-ggplot(melted, aes(lon, lat, fill = pr)) + geom_raster()
-
+#ggplot(melted, aes(lon, lat, fill = pr)) + geom_raster()
+if(climate == 'pr'){
 melted$pr <- melted$pr*365.25 # crudely converting avg precipitation/day to total precip/year
+}else{
+  melted$pr <- melted$pr
+}
 coordinates(melted) <- ~lon +lat
 gridded(melted)<- TRUE
 
-ccsm4.26pr <- raster(melted) # rasterize
+ccsm4 <- raster(melted) # rasterize
 
 # assign projeciton to the raster (check this proj4string) 
 # should be lambert conformal conic (i think)
-#proj4string(ccsm4.26pr) <- '+init=epsg:3857' 
-proj4string(ccsm4.26pr) <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' 
+#proj4string(ccsm4) <- '+init=epsg:3857' 
+proj4string(ccsm4) <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' 
 
 #project raster to great lakes albers
-#ccsm4.26pr <- projectRaster(ccsm4.26pr, crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-ccsm4.26.alb <- projectRaster(ccsm4.26pr, crs = '+init=epsg:3175')
+#ccsm4 <- projectRaster(ccsm4, crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+ccsm4.26.alb <- projectRaster(ccsm4, crs = '+init=epsg:3175')
 
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
@@ -149,11 +156,32 @@ avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
 
 avgs.df$pr <- extract(ccsm4.26.alb, spec.table[,c("x","y")])
 
-colnames(avgs.df) <- c( "x", "y", 'pr_2070_rcp2.6')
-write.csv(avgs.df, 'C:/Users/JMac/Documents/Kelly/biomodality/data/ccsm4.26.alb_pr_full.csv')
+colnames(avgs.df) <- c( "x", "y", paste0(climate,'-',rcp))
+avgs.df
+
+}
+
+pr.rcp26 <- extract.rcps("pr", "rcp26", reg.cols, reg.rows)
+pr.rcp45 <- extract.rcps("pr", "rcp45", reg.cols, reg.rows)
+pr.rcp85 <- extract.rcps("pr", "rcp85", reg.cols, reg.rows)
+tas.rcp26 <- extract.rcps("tas", "rcp26", reg.cols, reg.rows)
+tas.rcp45 <- extract.rcps("tas", "rcp45", reg.cols, reg.rows)
+tas.rcp85 <- extract.rcps("tas", "rcp85", reg.cols, reg.rows)
+
+avgs.df <- data.frame(x = pr.rcp26$x,
+                      y = pr.rcp26$y, 
+                      pr.rcp26 = pr.rcp26[,3],
+                      pr.rcp45 = pr.rcp45[,3],
+                      pr.rcp85 = pr.rcp85[,3],
+                      tas.rcp26 = tas.rcp26[,3],
+                      tas.rcp45 = tas.rcp45[,3],
+                      tas.rcp85 = tas.rcp85[,3])
+write.csv(avgs.df, 'C:/Users/JMac/Documents/Kelly/biomodality/data/ccsm4_pr_tas_preds_full.csv')
 
 #read in temperature
-
+##########################
+#below code is deprecated
+######################
 #read in the projections for avg precipitation rate precipitation from ccsm4, rcp scenario 2.6 
 ccsm4.26t<- read.csv("data/bcsd5/bcsd5/tas_PeriodStat_mean.ccsm4.1.rcp26.csv", header = F)
 colnames(ccsm4.26t) <- t(reg.cols) # assign cols

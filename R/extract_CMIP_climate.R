@@ -17,10 +17,11 @@ library(reshape2)
 library(ncdf4)
 library(lubridate)
 
+# This section uses the world clim CMIP projections:
+#http://www.worldclim.org/CMIP5_2.5m
 
-
-
-test <- raster("data/cc26pr70/cc26pr701.tif")
+# for the initial tests of this, we use only the model projections from CCSM4
+# we  will likely want to use those from a variety of different models
 
 # This function extracts the rcps data from the Worldclim downscaled CMIP5 dataset
 # This convertes to paleon grid scale, calculates the SI an d the total 
@@ -51,8 +52,8 @@ if(climate == 'pr'){
 full$total<- rowSums(full[,3:14], na.rm=TRUE)
 full$SI <- rowSums(abs(full[,3:14]-(full[,16]/12)))/full[,16]
 }else{
- full$mean <- rowMeans(full[,3:14], na.rm = TRUE)
- full$SI <- (apply(test[,3:14],1, sd, na.rm = TRUE)/test[,16])*100
+ full$mean <- rowMeans((full[,3:14]/10), na.rm = TRUE)
+ full$SI <- (apply((full[,3:14]/10),1, sd, na.rm = TRUE)/(full[,16]/10))*100
 }
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE
@@ -63,19 +64,48 @@ avgs <- stack(full)
 
 spec.table <- data.frame(spec.table)
 avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
+if(climate == "pr"){
 avgs.df$total <- extract(avgs$total, spec.table[,c("x","y")])
 avgs.df$SI <- extract(avgs$SI, spec.table[,c("x","y")])
 colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'SI')) 
+}else{
+  avgs.df$mean <- extract(avgs$mean, spec.table[,c("x","y")])
+  avgs.df$SI <- extract(avgs$SI, spec.table[,c("x","y")])
+  colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'cv')) 
+  
+}
 avgs.df
 }
+
+# run this function for the different rcp scenarios (some of these may take along time):
 pr.rcp26 <- extract.rcps("pr", "26")
-pr.rcp26 <- extract.rcps("pr", "26")
+pr.rcp45 <- extract.rcps("pr", "45")
+pr.rcp60 <- extract.rcps("pr", "60")
+pr.rcp85 <- extract.rcps("pr", "85")
+t.rcp26 <- extract.rcps("tn", "26")
+t.rcp45 <- extract.rcps("tn", "45")
+t.rcp60 <- extract.rcps("tn", "60")
+t.rcp85 <- extract.rcps("tn", "85")
+
+
+avgs.df <- data.frame(x = pr.rcp26$x,
+                      y = pr.rcp26$y, 
+                      pr.rcp26[,3:4],
+                      pr.rcp45[,3:4],
+                      pr.rcp60[,3:4],
+                      pr.rcp85[,3:4],
+                      t.rcp26[,3:4],
+                      t.rcp45[,3:4],
+                      t.rcp85[,3:4])
+
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/CCSM4pr_t_2070_full.csv")
 
 
 
-
-#write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
-
+#####################################################################
+# code below for alternative verisons of downscaled climate--
+# deprecated
+####################################################################
 
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE

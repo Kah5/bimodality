@@ -431,8 +431,26 @@ write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 ##############################################
 # Read in CMIP 4 projections
 #############################################
-ccesm2.6 <- read.csv("data/ccsm4.26.alb_pr_tas_full.csv")
-dens.pr <- merge(dens.pr, ccesm2.6, by = c("x", "y"))
+ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
+dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
+
+
+# predict PCA with the diffrent projections:
+
+res<-princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
+                          "modtmean", "moddeltaT", 
+                          "sandpct", "awc")])
+
+cc <- scale(dens.pr[,c("pr.26", "pr.26SI", "tn.26", "tn.26cv", "sandpct","awc")])
+colnames(cc) <- c("MAP2011", "moderndeltaP", 
+                  "modtmean", "moddeltaT", 
+                  "sandpct", "awc")
+
+newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
+
+dens.pr$PC1_cc2.6 <- newscores[,1]
+dens.pr$PC2_cc2.6 <- newscores[,2]
+
 #################################################################################################
 #separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
 #################################################################################################
@@ -456,14 +474,12 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels =
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
-dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
+dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
 dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$pr2070_rcp2.6bins25 <- cut(dens.pr$pr_2070_rcp2.6, breaks =  seq(250, 1350, by = 25), labels = label.breaks(250, 1325,  25))
-dens.pr$tas2070_rcp2.6bins <- cut(dens.pr$tas_2070_rcp2.6, breaks = seq(3,15, by = 1), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$tsd2070_rcp2.6bins <- cut(dens.pr$tsd_2070_rcp2.6, breaks = seq(8,14, by = 1), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$tas_cvbins <- cut(dens.pr$tas_cv, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc2.6bins <- cut(dens.pr$PC1_cc2.6, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC2_cc2.6bins <- cut(dens.pr$PC2_cc2.6, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -476,7 +492,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','
                                   'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 
                                  'pastdeltaP','deltaT',  'pastdeltPbins', 'pasttmeanbins',
                                  'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
-                                 "PC1fiabins", "PC2fiabins",'ecotype')) 
+                                 "PC1fiabins", "PC2fiabins","PC1_cc2.6bins",'PC2_cc2.6bins','ecotype')) 
 
 #load map data for future maps
 all_states <- map_data("state")

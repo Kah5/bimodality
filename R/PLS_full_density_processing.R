@@ -441,15 +441,27 @@ res<-princomp(scale.dens[,c("MAP2011", "moderndeltaP",
                           "modtmean", "moddeltaT", 
                           "sandpct", "awc")])
 
-cc <- scale(dens.pr[,c("pr.26", "pr.26SI", "tn.26", "tn.26cv", "sandpct","awc")])
+#created a function to predict the PC scores for the different RCP's using the PCA from PLS
+predict.PCA<- function(rcp){
+cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
+                       paste0("pr.",rcp,"SI"), 
+                         paste0("tn.",rcp),
+                           paste0("tn.",rcp, "cv"),
+                                               "sandpct","awc")])
 colnames(cc) <- c("MAP2011", "moderndeltaP", 
                   "modtmean", "moddeltaT", 
                   "sandpct", "awc")
 
 newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
 
-dens.pr$PC1_cc2.6 <- newscores[,1]
-dens.pr$PC2_cc2.6 <- newscores[,2]
+dens.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
+dens.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
+dens.pr
+}
+
+dens.pr <- predict.PCA("26")
+dens.pr <- predict.PCA("45")
+dens.pr <- predict.PCA("85")
 
 #################################################################################################
 #separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
@@ -478,8 +490,12 @@ dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-5,5, by = 1), labels = label.b
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
 dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$PC1_cc2.6bins <- cut(dens.pr$PC1_cc2.6, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
-dens.pr$PC2_cc2.6bins <- cut(dens.pr$PC2_cc2.6, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc26bins <- cut(dens.pr$PC1_cc26, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC2_cc26bins <- cut(dens.pr$PC2_cc26, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc45bins <- cut(dens.pr$PC1_cc45, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC2_cc45bins <- cut(dens.pr$PC2_cc45, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC2_cc85bins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -818,7 +834,7 @@ dev.off()
 library(splitstackshape)
 
 
-bimodal.df <- function(data, binby, density, binby2){
+bimodal.future <- function(data, binby, density, binby2){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
@@ -857,24 +873,29 @@ bimodal.df <- function(data, binby, density, binby2){
     
   }
   
-  merged
+  #merged
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
+      '#fee08b', # tan
+      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
   
 }
 
-ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-  geom_raster(data = df.new, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-    '#01665e', # light green
-    '#5ab4ac', # dark teal
-    '#8c510a', # red
-    '#d8b365', # light tan
-    '#fee08b', # tan
-    'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-  theme_bw()+
-  xlab("easting") + ylab("northing") +coord_equal()+
-  ggtitle(paste0(binby, ' for ',density))
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc26bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )
 
-
-df.new <- bimodal.df(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity", binby2 = 'pr2070_rcp2.6bins25')
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc26bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc45bins' )
+bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc85bins' )
 
 ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = bimodal))+geom_point()
 

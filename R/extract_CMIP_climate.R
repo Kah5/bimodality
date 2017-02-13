@@ -72,8 +72,8 @@ dim(nc.out$pr)
 
 for(y in 1:dim(nc.out$pr)[2]){
   print(paste0(" ---- Lat: ", y, " ---- "))
-  dat.temp <- stack(data.frame(nc.out$pr[,y,,]))
-  names(dat.temp) <- c("NEE", "Year")
+  dat.temp <- stack(data.frame(nc.out$pr[,y,,1]))
+  names(dat.temp) <- c("pr", "Year")
   dat.temp$Year <- as_date(nc.out$Time[y])
   dat.temp$lat  <- nc.out$lat[y]
   dat.temp$lon  <- nc.out$lon
@@ -81,21 +81,25 @@ for(y in 1:dim(nc.out$pr)[2]){
   if(y==1) dat.pr <- dat.temp else dat.pr <- rbind(dat.pr, dat.temp)
 }
 
-#dat.pr$ <- dat.pr$NEE*sec2yr
+
+dat.pr$pr.yr <- strsplit(as.character(dat.pr$Year), split = '-')[1]
+
+dat.pr <- dat.pr[complete.cases(dat.pr),]
 summary(dat.pr)
 mean(dat.pr$NEE.yr, na.rm=T)
 max(dat.pr$NEE.yr, na.rm=T)
 
 mean(dat.pr$NEE, na.rm=T)
-
-summary(dat.pr[dat.pr$Year==2009,])
+dat.pr$yr <- year(dat.pr$Year)
+dat.pr$mo <- month(dat.pr$Year)
+summary(dat.pr[dat.pr$yr == 2075,])
 # Graphing
-ggplot(data=dat.pr[dat.pr$Year %in% c(850, 1850, 2000),]) +
-  facet_grid(Year~.) +
-  geom_raster(aes(x=lon, y=lat, fill=NEE.yr)) +
+ggplot(data=dat.pr[dat.pr$yr == 2075,]) +
+  facet_grid(mo~.) +
+  geom_point(aes(x=lon, y=lat, color=pr)) +
   scale_y_continuous(name="Latitude", expand=c(0,0)) +
   scale_x_continuous(name="Longitude", expand=c(0,0)) +
-  ggtitle("LPJ-GUESS") +
+  ggtitle("test_pr") +
   coord_equal(ratio=1)
 # -----------
 

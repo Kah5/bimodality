@@ -19,6 +19,7 @@ library(lubridate)
 
 # open the netcdf
 nc <- nc_open("data/hydro5.tar/hydro5/hydro5/Extraction_pr.nc")
+nc <- nc_open("data/Extraction_pr_hydro.nc")
 lon <- ncvar_get(nc,"longitude")
 nlon <- dim(lon)
 head(lon)
@@ -82,26 +83,28 @@ for(y in 1:dim(nc.out$pr)[2]){
 }
 
 
-dat.pr$pr.yr <- strsplit(as.character(dat.pr$Year), split = '-')[1]
 
-dat.pr <- dat.pr[complete.cases(dat.pr),]
+#dat.pr <- dat.pr[complete.cases(dat.pr),]
 summary(dat.pr)
-mean(dat.pr$NEE.yr, na.rm=T)
-max(dat.pr$NEE.yr, na.rm=T)
+#mean(dat.pr$NEE.yr, na.rm=T)
+#max(dat.pr$NEE.yr, na.rm=T)
 
-mean(dat.pr$NEE, na.rm=T)
+#mean(dat.pr$NEE, na.rm=T)
 dat.pr$yr <- year(dat.pr$Year)
 dat.pr$mo <- month(dat.pr$Year)
-summary(dat.pr[dat.pr$yr == 2075,])
+summary(dat.pr[dat.pr$yr == 2092,])
 # Graphing
-ggplot(data=dat.pr[dat.pr$yr == 2075,]) +
-  facet_grid(mo~.) +
-  geom_point(aes(x=lon, y=lat, color=pr)) +
+ggplot(data=dat.pr[dat.pr$yr == 2092,]) +
+  #facet_grid(mo~.) +
+  geom_raster(aes(x=lon, y=lat, fill=pr)) +
   scale_y_continuous(name="Latitude", expand=c(0,0)) +
   scale_x_continuous(name="Longitude", expand=c(0,0)) +
   ggtitle("test_pr") +
   coord_equal(ratio=1)
 # -----------
+
+# for some reason this extraction method is only resulting in years 2090-2100, not the full 2070-2099. 
+# additionally, it is not extracting the full spatial domain
 
 
 
@@ -142,11 +145,11 @@ ccsm4.26.alb <- projectRaster(ccsm4.26pr, crs = '+init=epsg:3175')
 
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 spec.table <- data.frame(spec.table)
+avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
 
-avgs.df <- data.frame(extract(ccsm4.26.alb, spec.table[,c("x","y")]))
-avgs.df$x <- spec.table$x
-avgs.df$y <- spec.table$y
-colnames(avgs.df) <- c('pr_2070_rcp2.6', "x", "y")
+avgs.df$pr <- extract(ccsm4.26.alb, spec.table[,c("x","y")])
+
+colnames(avgs.df) <- c( "x", "y", 'pr_2070_rcp2.6')
 write.csv(avgs.df, 'C:/Users/JMac/Documents/Kelly/biomodality/data/ccsm4.26.alb_pr_full.csv')
 
 #read in temperature
@@ -181,7 +184,7 @@ ccsm4.26t.alb <- projectRaster(ccsm4.26tas, crs = '+init=epsg:3175')
 spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
 spec.table <- data.frame(spec.table)
 
-avgs.df$tas <- data.frame(extract(ccsm4.26t.alb, spec.table[,c("x","y")]))
+avgs.df$tas <- extract(ccsm4.26t.alb, spec.table[,c("x","y")])
 #avgs.df$x <- spec.table$x
 #avgs.df$y <- spec.table$y
 colnames(avgs.df)[4] <-"tas_2070_rcp2.6" 
@@ -226,3 +229,4 @@ avgs.df$tsd <- extract(ccsm4.26tsd.alb, spec.table[,c("x","y")])
 colnames(avgs.df)[5] <-"tsd_2070_rcp2.6" 
 
 avgs.df$tas_cv <- avgs.df$tsd_2070_rcp2.6/avgs.df$tas_2070_rcp2.6
+write.csv(avgs.df, 'C:/Users/JMac/Documents/Kelly/biomodality/data/ccsm4.26.alb_pr_tas_full.csv')

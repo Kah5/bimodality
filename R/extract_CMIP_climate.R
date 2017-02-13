@@ -17,6 +17,73 @@ library(reshape2)
 library(ncdf4)
 library(lubridate)
 
+
+
+
+test <- raster("data/cc26pr70/cc26pr701.tif")
+
+# This function extracts the rcps data from the Worldclim downscaled CMIP5 dataset
+# This convertes to paleon grid scale, calculates the SI an d the total 
+extract.rcps<- function(climate, rcp){
+setwd(paste0('C:/Users/JMac/Documents/Kelly/biomodality/data/cc',rcp,climate,'70/'))
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
+coordinates(spec.table) <- ~x +y
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+
+month <- sprintf("%02d", 1:12)
+month.abb <- c('Jan', 'Feb', 'Mar', "Apr", "May", 
+                       'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
+  filenames <- list.files(pattern=paste0("cc",rcp,climate,"70",".*\\.tif$", sep = ""))
+  s <- stack(filenames)
+  t <- crop(s, extent(spec.table.ll))#make all into a raster
+  s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+  #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(s)) #covert to dataframe
+  #colnames(y) <- c("x", "y", month.abb)
+  colnames(y) <- c("x", "y", month.abb)
+  y$gridNumber <- cellFromXY(s, y[, 1:2])
+  #write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/ccsm4_2.6_precip.csv' ))
+  
+full <- y
+
+if(climate == 'pr'){
+full$total<- rowSums(full[,3:14], na.rm=TRUE)
+full$SI <- rowSums(abs(full[,3:14]-(full[,16]/12)))/full[,16]
+}else{
+ full$mean <- rowMeans(full[,3:14], na.rm = TRUE)
+ full$SI <- (apply(test[,3:14],1, sd, na.rm = TRUE)/test[,16])*100
+}
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+
+#plot(avgs) #plots averages
+
+spec.table <- data.frame(spec.table)
+avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
+avgs.df$total <- extract(avgs$total, spec.table[,c("x","y")])
+avgs.df$SI <- extract(avgs$SI, spec.table[,c("x","y")])
+colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'SI')) 
+avgs.df
+}
+pr.rcp26 <- extract.rcps("pr", "26")
+pr.rcp26 <- extract.rcps("pr", "26")
+
+
+
+
+#write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
+
+
+coordinates(full) <- ~x + y
+gridded(full) <- TRUE
+avgs <- stack(full) 
+proj4string(avgs) <- crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 ')
+avgs<- projectRaster(avgs, crs='+init=epsg:3175')
+plot(avgs) #plots averages
+
 # open the netcdf
 nc <- nc_open("data/hydro5.tar/hydro5/hydro5/Extraction_pr.nc")
 nc <- nc_open("data/Extraction_pr_hydro.nc")

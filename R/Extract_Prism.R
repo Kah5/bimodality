@@ -57,6 +57,8 @@ colnames(full) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May",
                        'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 full$total<- rowSums(full[,4:15], na.rm=TRUE)
 full$SI <- rowSums(abs(full[,4:15]-(full[,16]/12)))/full[,16]
+#full$cv <- ((apply(full[,4:15],1, sd, na.rm = TRUE)/full[,16]))*100
+
 
 coordinates(full) <- ~x + y
 gridded(full) <- TRUE

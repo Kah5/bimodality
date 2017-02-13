@@ -428,6 +428,11 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),
 dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 
+##############################################
+# Read in CMIP 4 projections
+#############################################
+ccesm2.6 <- read.csv("data/ccsm4.26.alb_pr_tas_full.csv")
+dens.pr <- merge(dens.pr, ccesm2.6, by = c("x", "y"))
 #################################################################################################
 #separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
 #################################################################################################
@@ -455,6 +460,10 @@ dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.b
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
 dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$pr2070_rcp2.6bins25 <- cut(dens.pr$pr_2070_rcp2.6, breaks =  seq(250, 1350, by = 25), labels = label.breaks(250, 1325,  25))
+dens.pr$tas2070_rcp2.6bins <- cut(dens.pr$tas_2070_rcp2.6, breaks = seq(3,15, by = 1), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$tsd2070_rcp2.6bins <- cut(dens.pr$tsd_2070_rcp2.6, breaks = seq(8,14, by = 1), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$tas_cvbins <- cut(dens.pr$tas_cv, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -789,8 +798,11 @@ print(map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdens
 print(map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity") + ggtitle('sand PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 dev.off()
 
+#function for plotting where bimodality would be under future climate (assuming pls relationship with cliamte)
+library(splitstackshape)
 
-bimodal.df <- function(data, binby, density){
+
+bimodal.df <- function(data, binby, density, binby2){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
@@ -801,9 +813,19 @@ bimodal.df <- function(data, binby, density){
   coef.bins<- data.frame(cbind(coeffs, bins))
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
   coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins iwth the second binby -> here is is future climate
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
+  
+  
   #define bimodality
   merged$bimodal <- "Stable"
+  #criteria for bimodality
   merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
@@ -823,7 +845,20 @@ bimodal.df <- function(data, binby, density){
   
 }
 
-df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+  geom_raster(data = df.new, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+    '#01665e', # light green
+    '#5ab4ac', # dark teal
+    '#8c510a', # red
+    '#d8b365', # light tan
+    '#fee08b', # tan
+    'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+  theme_bw()+
+  xlab("easting") + ylab("northing") +coord_equal()+
+  ggtitle(paste0(binby, ' for ',density))
+
+
+df.new <- bimodal.df(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity", binby2 = 'pr2070_rcp2.6bins25')
 
 ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = bimodal))+geom_point()
 

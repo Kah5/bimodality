@@ -116,8 +116,8 @@ reg.rows <- read.csv("data/bcsd5/bcsd5/ROWS_PeriodStat.txt", header = F)
 #read in the projections for avg precipitation rate precipitation from ccsm4, rcp scenario 2.6 
 ccsm4<- read.csv("data/bcsd5/bcsd5/pr_PeriodStat_mean.ccsm4.1.rcp26.csv", header = F)
 
-extract.rcps<- function(climate,rcp, cols, rows){
-ccsm4<- read.csv(paste0("data/bcsd5/bcsd5/",climate,"_PeriodStat_mean.ccsm4.1.",rcp,".csv"), header = F)
+extract.rcps<- function(climate,stat,rcp, cols, rows){
+ccsm4<- read.csv(paste0("data/bcsd5/bcsd5/",climate,"_PeriodStat_",stat,".ccsm4.1.",rcp,".csv"), header = F)
   
 colnames(ccsm4) <- t(reg.cols) # assign cols
 rownames(ccsm4) <- t(reg.rows) # assign rows
@@ -156,17 +156,22 @@ avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
 
 avgs.df$pr <- extract(ccsm4.26.alb, spec.table[,c("x","y")])
 
-colnames(avgs.df) <- c( "x", "y", paste0(climate,'-',rcp))
+colnames(avgs.df) <- c( "x", "y", paste0(climate,'-',rcp,'-',stat))
 avgs.df
 
 }
 
-pr.rcp26 <- extract.rcps("pr", "rcp26", reg.cols, reg.rows)
-pr.rcp45 <- extract.rcps("pr", "rcp45", reg.cols, reg.rows)
-pr.rcp85 <- extract.rcps("pr", "rcp85", reg.cols, reg.rows)
-tas.rcp26 <- extract.rcps("tas", "rcp26", reg.cols, reg.rows)
-tas.rcp45 <- extract.rcps("tas", "rcp45", reg.cols, reg.rows)
-tas.rcp85 <- extract.rcps("tas", "rcp85", reg.cols, reg.rows)
+pr.rcp26.sd <- extract.rcps("pr","stdev", "rcp26", reg.cols, reg.rows)
+pr.rcp26 <- extract.rcps("pr","mean", "rcp26", reg.cols, reg.rows)
+pr.rcp45 <- extract.rcps("pr","mean", "rcp45", reg.cols, reg.rows)
+pr.rcp85 <- extract.rcps("pr","mean", "rcp85", reg.cols, reg.rows)
+tas.rcp26 <- extract.rcps("tas","mean", "rcp26", reg.cols, reg.rows)
+tas.rcp45 <- extract.rcps("tas", "mean","rcp45", reg.cols, reg.rows)
+tas.rcp85 <- extract.rcps("tas","mean", "rcp85", reg.cols, reg.rows)
+
+tas.rcp26 <- extract.rcps("tas", "mean","rcp26", reg.cols, reg.rows)
+tas.rcp45 <- extract.rcps("tas", "mean","rcp45", reg.cols, reg.rows)
+tas.rcp85 <- extract.rcps("tas", "mean","rcp85", reg.cols, reg.rows)
 
 avgs.df <- data.frame(x = pr.rcp26$x,
                       y = pr.rcp26$y, 
@@ -176,6 +181,7 @@ avgs.df <- data.frame(x = pr.rcp26$x,
                       tas.rcp26 = tas.rcp26[,3],
                       tas.rcp45 = tas.rcp45[,3],
                       tas.rcp85 = tas.rcp85[,3])
+
 write.csv(avgs.df, 'C:/Users/JMac/Documents/Kelly/biomodality/data/ccsm4_pr_tas_preds_full.csv')
 
 #read in temperature

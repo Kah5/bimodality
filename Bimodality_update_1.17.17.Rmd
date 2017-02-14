@@ -2,7 +2,7 @@
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
 date: "February 14th, 2017"
-bibliography: bimodality.bib
+
 output: html_document
 ---
 
@@ -10,53 +10,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 Paper outline:
 
-
-1. Intro:
-  * Biome theory overview
-  * Savanna-grassland-forest alternative stable states and fire dominated regions defy biome theory & make it difficult to project into the future
-    + Bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors is a hallmark of alternative stable state. 
-  * Alt. stable states have been well documented in the modern day tropics, but studies documenting alternative stable states in temperate regions of the world are scarce. However, if fire/disturbance driven alternative stable states once existed in parts of the temperate zone, large scale fire suppression in N. America (@nowacki_2008) and Europe (CITE??) would have removed the vegetation-disturbance feedbacks from the landscape. 
-  * However, the existance of a large ecotone from open prairies and savannas to eastern closed forests in the North American Midwest might suggest otherwise. 
-  * Recent digitatization of historical records of past vegetation in the North American midwest allows us to test for the characteristic bimodality in vegetation w.r.t. climate in the past. We hypothesize that regional fire suppression efforts contirbuted to the removal of vegetation-disturbance feedbacks, leading to an increase in forests in previously savanna and open areas. 
   
   
-1a. "Alternative Intro" 
-  * Understanding forest response to environmental changes is a key challenge to predicting and planning for the future. Forest response may be deteriministic in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. In the tropics, alternative savanna and forest stable states coexist within the same climate due to vegetation-disturbance feedbacks(staver et al. ). These vegetation-disturbance feedbacks predict that increased disturbances (fire, logging, ungulates) would result in a a collapse of closed forests to the low tree density savanna state and suggest that there is large scale forest instability across the tropics (staver et al. ..).
+### Alternative Intro 
+  
+   Understanding forest response to environmental changes is a key challenge to predicting and planning for the future. Forest response may be deteriministic in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. In the tropics, alternative savanna and forest stable states coexist within the same climate due to vegetation-disturbance feedbacks(staver et al. ). These vegetation-disturbance feedbacks predict that increased disturbances (fire, logging, ungulates) would result in a a collapse of closed forests to the low tree density savanna state and suggest that there is large scale forest instability across the tropics (staver et al. ..).
+  
+  Savanna and forest vegetation have been proposed to be currently alternative stable states controlled by disturbance regimes in some regions of the globe (well studied in the tropics, where disturbance regimes are intact). While climate does not deterministically predict the vegetation state overall in these regions, precipitation amount, seasonality, and soil factors can all play a role. Particularly at a large regional scale, moisture gradients certainly have some control the distribution (deterministic high and low precip creates forests and savs./grasslands. respectively). However, vegetation-disturbance feedbacks are important at intermediate precipitation levels and in seasonally dry regions. In these intemediate climates, fire is associated with open savanna ecosystems, where high grassy fuel loads in open understory systems promote fire spread, which prevents understory trees from establishing. However at these same climates, closed forests may be present but light limition in the understory prevents fuel buildup, suppressing the likelihood of fire (@hoffmann_2012). These vegetation-disturbance feedbacks drive will drive regions of intermediate tree cover either towards a closed forest state in the absence of disturbance, or towards an open savanna state in the presence of disturbance. Thus, savanna and forest stable states in these regions often results in bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors.  
+  
+  The instability and stochastic nature of alternative stable states and disturbance feedbacks make it difficult to predict the outcome of these vegetation processes into the future. However, we can use historical vegetation responses to shifts disturbances, changes in climate, etc.to understand how resilient systems with alternative stable states may be to future environmental changes. In the North American temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape). This shift has occured over a time period of large scale fire supppression (at least since the 1930's Nowacki & abrams). Pre-European settlement vegetation data allows us to test the hypothesis that envtl. changes (e.g. fire suppression) have resulted in a stability transition over time (sav/forest -> stable closed forest).
   
   
-  Savanna and forest vegetation have been proposed to be currently alternative stable states controlled by disturbance regimes in some regions of the globe (mostly in the tropics). While climate does not deterministically predict the vegetation state overall in these regions, precipitation amount, seasonality, and soil factors can all play a role. Particularly at a large regional scale, moisture gradients certainly have some control the distribution (deterministic high and low precip creates forests and savs./grasslands. respectively). However, vegetation-disturbance feedbacks are important at intermediate precipitation levels and in seasonally dry regions. Specifically, fire is associated with open savanna ecosystems with intermediate climates, where high grassy fuel loads in open understory systems promote fire spread, which prevents understory trees from establishing. However at these same climates, closed forests may be present but light limition in the understory prevents fuel buildup, suppressing the likelihood of fire (@hoffmann_2012). These vegetation-disturbance feedbacks drive will drive regions of intermediate tree cover either towards a closed forest state in the absence of disturbance, or towards an open savanna state in the presence of disturbance. Disturbance maintains alternative open and closed states, Savanna and forest stable states in these regions often results in bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors.  
-  
-  The instability and stochastic nature of alternative stable states and disturbance feedbacks make it difficult to predict the outcome of these vegeation processes into the future. Therefore we look at historical shifts to understand how shifting disturbances, changes in climate, etc can affect systems with alternative stable states.
-  
-  
-  
-      - These controls maintain biotic diversity, have impacts on soil carbon storage/accumulation, as well as having metrological feedbacks on microclimate.
-(transition from tropics to temperate/our region )
-  * While tropical and temperate climates likely interact with vegetation in different ways, the importance of fire and disturbance in maintaining temperate savanna and treeless grasslands has also been recognized. However, there has been much debate on the overarching controls of historic vegetation in this region.
-    - the savanna and forest boundary in the temperate zone (PP) has been hypothesized to be controlled by climate (bryson, transeau)
-    - Soil factors + climate
-    - fire (grimm, nowacki & abrams)
-  * However, in the temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape). This transition has occured over a time period of large scale fire supppression (at least since the 1930's Nowacki & abrams).
-  * PLS data allows us to test this hypothesis that envtl. changes (e.g. fire suppression) have resulted in a stability transition over time (sav/forest -> stable closed forest).
-  
-  
-Intro:
-  * 
-  - make the key point that we went from unstable to stable 
-  - also show what is going on in tropics
-  - but most show instablity with  fear of 
-  - our advantage is that we can see how this shift occurs
-  - and we can predict this based on climate and land use
-  - unstable praries? 
-  
-Methods
-  - Add in the ipcc climate data
-  - PLS-relationship with climate but with todays climate
-    + gets to the point of being able to see how unstable sites chnage
-    + sets us up for the future
+While tropical and temperate climates likely interact with vegetation in different ways, the importance of fire and disturbance in maintaining temperate savanna and treeless grasslands has also been recognized. There has been much debate on the overarching controls of historic vegetation in this region, but the hypotheses for the controls on vegetation in this region echo those of the more well-studied tropics. The savanna and forest boundary in the temperate zone (PP) has been hypothesized to be controlled by climate (bryson, transeau). Additionally, hetergenaeity in soil factors that affect hydrology and overall climate may be important at smaller spatial scales (Danz 2011). Soil and topography are hypothesized to act as fire breaks, creating upland forested regions and lowland, flat prairies (grimm, nowacki & abrams). In this study, we hypothesize that the PLS distribution of tree density was bimodal due to intact vegetation-disturbance feedbacks along the savanna-forest boundary before settlement, but fragmentation and fire suppression has produced a modern savanna-forest boundary that is not bimodal. Additionally, we hypothesize that savannas and forests will coexist at intermediate precipitation levels, and sandy soils in the past. 
     
+
+
   
 1b. "Alternative IntroB" 
   * Savanna biomes are important in temperate/tropics because
@@ -92,7 +63,7 @@ Methods
   *Discuss places that are bimodal
   *Discuss comparison between PLS and modern landscape
 
-### Start Paper Draft
+### Old Intro:
 
 
 Conceptually, biome thoery suggests that there is a predictible relationship between the global distribution of vegetation and environmental drivers. This hypothesized link between vegetation and its environment is the basis for simple ecosystem and dynamic vegetation models, which we often use to make predictions for a future under a changing climate and higher CO~2~. However, biomes with alternative states have two very different vegetation types that can occur within the same climate and environmental space. Thus, in biomes/regions with alternative stable states, vegetation is not a direct function of the environmet, make predictions into the future uncertain (CITE review paper).  
@@ -154,10 +125,15 @@ BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
 
 Desnity distributions of the PLS and FIA data were estimated. We then calculated the BC and performed Hartigan's diptest for unimodaltity for the on these smoothed density distribuitons for the PLS and FIA overall, and the BC within different bins of precipitation and the 1st Principal Component. This provides one BC value for a given range of precipitation/PC and whether the distribution is significantly different from a unimodal distribution. These ranges are used to determine the climate space where savannas and closed forests coexist.  
 
-
 *Generalized Additive Models*
 
 In addition to evaluating the BC for ranges of data, we developed several generalized additive models (GAMs) to determine if tree density can be deterministically predicted by climate and/or soils. GAMs were developed with both strictly additive terms and with flexible smooth terms. The full PLS data was separated into two random halves that make up the testing and training datasets. GAM's were developed with the training dataset, and prediction error was estimated using the test dataset. Model parsimony was evaluated basing on AIC values, and model fit was assessed using RMSE. 
+
+*Future Forest Stability under CMIP5 projected climate scenarios*
+
+To investigate the consequences of the modern climate-vegetation relationship, and the past climate-vegetation relatiohsip would have for the stability of future midwestern forests, we utilized climate projections from CMIP5 representative concentration pathways (rcps) 2.6, 4.5, and 8.5. We obtained average monthly precipitation, total annual precipitation, average monthly temperature, and average annual temperature projections for 2070-2099 under the three RCP scenarios from the CCESM4 GCM climate downscaled climate projections (from worldclim, cite). We calculated precipitation and temperature seasonality as described above. Principal componenet scores (based on the past climate PCA) were assigned for each grid cell using the projected climate data from each RCP. 
+
+We then identified the climate space (within PC1) that was bimodal in the PLS time, and mapped where this climate space is projected to be in 2070-2100. We also identified the climate space where FIA forests were bimodal on the modern landscape, and where this climate space would be in 2070-2100.
 
 
 ##Results:
@@ -189,6 +165,9 @@ Additionally, places that historically had low tree density in the past now have
 
 ![](outputs/v1.6-5/density_difference_plot.png)
 
+
+
+
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
 
 ![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
@@ -199,11 +178,12 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests.  
 
-![](ouputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
+![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
 However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability. 
 
-![](ouputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
+![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
+
 
 *Predicting Tree density (GAMs)*
 
@@ -213,7 +193,7 @@ PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP)
 
 While AIC suggests this is the best model, it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). 
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
 suppressMessages(library(caTools))
@@ -343,7 +323,7 @@ pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.ce
 
 Taking a closer look at PLS.GAM14, we see some overestimation in open savanna areas and underestimation in closed forestion regions.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 suppressMessages(library(maps))
 suppressMessages(library(sp))
 suppressMessages(library(rgeos))
@@ -425,7 +405,7 @@ ggplot(predicted, aes(PLSdensity,ypred, color = MAP1910)) +geom_point() + theme_
 ```
 The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Note that the predictions here are overall much lower than the observations
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -437,7 +417,7 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 ```
 
 Mapping out predicted - observed for each grid cell in the test dataset. This  map also shows that the savannas are generally overestimated in terms of tree density, while the norther closed forests tend to be underestimated. 
-```{r, echo = FALSE}
+```{r, echo = FALSE,  warning = FALSE}
 
 suppressMessages(library(RColorBrewer))
 # calculate predicted - observed
@@ -475,7 +455,7 @@ When we compare the results from the above map to the map where PLS tree density
 
 Specifically,the GAM model overestimates bimodal & stable savannas, slightly underestimates bimodal forests, and does okay at estimating some stable forests (boxplots & histograms).
 
-```{r, echo = FALSE}
+```{r, echo = FALSE,  warning = FALSE}
 suppressMessages(library(modes))
 get.bimodal.5c <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
@@ -526,7 +506,7 @@ ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline( aes(xinterc
 
 ```
 
-```{r, echo = FALSE}
+```{r, echo = FALSE,  warning = FALSE}
 
 
 # plotting predicted - observed in different climate spaces
@@ -541,17 +521,17 @@ The next closest model is PLS.gam11:
 PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct) + s(awc)
 
 Here we plot the predicted vs. observed of for this model:
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 predicted <- get.preds(PLS.gam11, test)
 #summary(predicted)
 
-ggplot(predicted, aes(PLSdensity,ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+ggplot(predicted, aes(PLSdensity, ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 ```
 
 This model also overestimates the low tree density regions and underestimates the high tree density regions. 
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 # plot the predicted tree denisty in the map
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -590,7 +570,7 @@ Sd = rep(0,length(predicted$podiff))
 This model also underestimates the northern WI & UP forests, and overstimates many regions in the prairie/savanna.
 So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 # plotting predicted - observed in different climate spaces
 ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
@@ -630,7 +610,7 @@ The above models are predicting density (continious variable) from continous env
 
 This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
 
-```{r echo = FALSE}
+```{r echo = FALSE, warning = FALSE}
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
 
 # dummyvariables for logistic regression:
@@ -757,7 +737,7 @@ Lets map out the probability of forest based on model with the lowest AIC value:
 forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
 
 The smooth predictors in this model are the same as the smooth predictors in the denisty model
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 library(visreg)
 map.preds <- function(model, testdata){
@@ -819,7 +799,7 @@ The above map shows 'savana or forest' places where the binomial familiy model p
 
 The main effect on predicted forest here is temperature and temperature seasonality.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 plot(PLS.lgr14)
 
 ggplot(preds.df, aes(x = MAP1910, y = ypred, color = pasttmean)) + geom_point() + theme_bw() + ylab('predicted p(forest)') + xlab("observed PLS density")

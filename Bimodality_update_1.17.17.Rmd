@@ -22,8 +22,16 @@ Paper outline:
   * Recent digitatization of historical records of past vegetation in the North American midwest allows us to test for the characteristic bimodality in vegetation w.r.t. climate in the past. We hypothesize that regional fire suppression efforts contirbuted to the removal of vegetation-disturbance feedbacks, leading to an increase in forests in previously savanna and open areas. 
   
   
-1a. "Alternative Intro*" *Contains no alternative facts
-  * Savanna and forest vegetation have been proposed to be currently alternative stable states in some regions of the globe (mostly in the tropics). 
+1a. "Alternative Intro" 
+  * Understanding forest response to environmental changes is a key challenge to predicting and planning for the future. Forest response may be deteriministic in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. In the tropics, alternative savanna and forest stable states coexist within the same climatic spaces due to vegetation-disturbance feedbacks(staver et al. ). These vegetation-disturbance feedbacks predict that increased disturbances (fire, logging, ungulates) would result in a transition to the low tree density savanna state and suggest that there is large scale forest instability across the tropics (staver et al. ..).
+ 
+ * Savanna and forest alternative stable states are vegetation states that are not determined soley by climate, rather then  .
+  
+  
+  *Savanna-forest alternative stable states and fire dominated regions defy biome theory & make it difficult to project into the future
+    + Bimodal distribution in tree cover/tree density that is not deterministically predicted by climate or environmental factors is a hallmark of alternative stable state. 
+  
+  Savanna and forest vegetation have been proposed to be currently alternative stable states in some regions of the globe (mostly in the tropics). 
   * At a large scale, moisture gradients certainly have somecontrol the distribution (deterministic hig and low precip creates forests and savs. respectively)
   * However, at intermediate precipitation climates, savanna/forest alternative stable states are controlled by fire/disturbance vegetation feedbacks. 
       - These controls maintain biotic diversity, have impacts on soil carbon storage/accumulation, as well as having metrological feedbacks on microclimate.
@@ -37,6 +45,7 @@ Paper outline:
   
   
 Intro:
+  * 
   - make the key point that we went from unstable to stable 
   - also show what is going on in tropics
   - but most show instablity with  fear of 
@@ -51,7 +60,7 @@ Methods
     + sets us up for the future
     
   
-1b. "Alternative Introb*" *Also no alternative facts
+1b. "Alternative IntroB" 
   * Savanna biomes are important in temperate/tropics because
     - high NPP contribution
     - hotspots of biodiversity

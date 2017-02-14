@@ -580,51 +580,39 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),
 dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
 
+ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
+dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
 
-########################################
-# testing basic Linear models
-#######################################
-PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
-FIA.lm<- lm(dens.pr$FIAdensity ~dens.pr$MAP2011)
-PLS_mod.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP2011)
-FIA_pas.lm <- lm(dens.pr$FIAdensity~dens.pr$MAP1910)
-diff.lm <- lm(dens.pr$diff ~dens.pr$PLSdensity)
+# predict PCA with the diffrent projections:
 
-summary(PLS.lm)
-summary(FIA.lm)
-summary(PLS_mod.lm)
-summary(FIA_pas.lm)
-summary(diff.lm)
-library(mgcv)
-#make gams 
-PLS.gam <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, method = "ML")
-summary(PLS.gam) # explains 41% of deviance
+res<-princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
+                            "modtmean", "moddeltaT", 
+                            "sandpct", "awc")])
 
-PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean+ dens.pr$sandpct, method = "ML")
-summary(PLS.gam1) #explains 39% deviance
+#created a function to predict the PC scores for the different RCP's using the PCA from PLS
+predict.PCA<- function(rcp){
+  cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
+                         paste0("pr.",rcp,"SI"), 
+                         paste0("tn.",rcp),
+                         paste0("tn.",rcp, "cv"),
+                         "sandpct","awc")])
+  colnames(cc) <- c("MAP2011", "moderndeltaP", 
+                    "modtmean", "moddeltaT", 
+                    "sandpct", "awc")
+  
+  newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
+  
+  dens.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
+  dens.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
+  dens.pr
+}
 
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , method = "ML")
-summary(PLS.gam3) #explains 41.3% of deviance
+dens.pr <- predict.PCA("26")
+dens.pr <- predict.PCA("45")
+dens.pr <- predict.PCA("85")
 
-PLS.gam4 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
-summary(PLS.gam4) #explains 12.5% of deviance
 
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct , method = "ML")
-summary(PLS.gam5) #explains 14.9% of deviance
-
-PLS.gam2 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 , method = "ML")
-summary(PLS.gam2) #explains 0.004% deviance
-
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
-summary(PLS.gam6) #explains 3.02% deviance
-
-PLSgam7 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
-summary(PLSgam7) #explains 15.8% deviance
-plot(PLS.gam7, residuals = TRUE)
-
-FIA.gam <- gam(dens.pr$FIAdensity ~ dens.pr$MAP2011 + dens.pr$sandpct + dens.pr$awc, method = "ML")
-summary(FIA.gam) # explains 4% of deviance
 
 ###############################################################
 # Histogram plots

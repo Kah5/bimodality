@@ -887,15 +887,21 @@ bimodal.future <- function(data, binby, density, binby2){
   
 }
 
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc26bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )
+source("R/grid_arrange_shared_legend.R")
 
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc26bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc45bins' )
-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc85bins' )
+a<-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' ) + ggtitle ("PLS PC1")
+b<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc26bins' ) + ggtitle("RCP 2.6 PC1")
+c<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
+d<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
+
+png(height = 10, width = 6, units = "in",res = 300, filename = paste0('outputs/v1.6-5/full/RCP_scenario_PC1_maps.png'))
+grid_arrange_shared_legend(a,b,c,d, nrow = 2, ncol=2, position = c("bottom"))
+dev.off()
+
+#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1bins' )
+#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc26bins' )
+#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc45bins' )
+#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc85bins' )
 
 ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = bimodal))+geom_point()
 

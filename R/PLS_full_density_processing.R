@@ -437,9 +437,9 @@ dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
 # predict PCA with the diffrent projections:
 
-res<-princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
-                          "modtmean", "moddeltaT", 
-                          "sandpct", "awc")])
+res<-princomp(scale.dens[,c('MAP1910',   
+                            "pastdeltaP", "pasttmean",
+                            "deltaT", "sandpct", "awc")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 predict.PCA<- function(rcp){
@@ -448,9 +448,9 @@ cc <- scale(dens.pr[,c(paste0("pr.",rcp),
                          paste0("tn.",rcp),
                            paste0("tn.",rcp, "cv"),
                                                "sandpct","awc")])
-colnames(cc) <- c("MAP2011", "moderndeltaP", 
-                  "modtmean", "moddeltaT", 
-                  "sandpct", "awc")
+colnames(cc) <- c('MAP1910',   
+                  "pastdeltaP", "pasttmean",
+                  "deltaT", "sandpct", "awc")
 
 newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
 

@@ -958,10 +958,28 @@ ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = classification)) + geom_p
 
 library(scatterplot3d)
 scatterplot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct,color = as.character(df.new$bimodal), angle=20) 
-df.new$color <- "blue"
-df.new[df.new$bimodal %in% c("Stable"),]$color <- "red"
-s3d <- with(df.new, scatterplot3d(pasttmean, MAP1910, sandpct, color = color, pch = 19), angle = 37)
-s3d
+df.new$color <- 1
+df.new[df.new$bimodal %in% c("Stable"),]$color <- 2
+
+#3d plot of climate space that is bimodal
+png(height = 3, width = 4, units = 'in',res = 300, filename = "outputs/v1.6-5/full/3d-plot-pr_t_sand.png")
+s3d <- with(df.new, scatterplot3d( MAP1910, pasttmean, sandpct,color = color, pch = 19,xlab ="MAP(mm/year)", ylab="temp. (degC)"),zlab = "% sand", angle = -180 )
+legend("topleft", inset=.01,      # location and inset
+                    bty="n", cex=1,              # suppress legend box, shrink text 50%
+                    title="Climate space",
+                    c("Bimodal", "Stable"), fill=c("red", "black"))
+dev.off()
+
+#another dimension of climate
+png(height = 3, width = 4, units = 'in', res = 300, filename = "outputs/v1.6-5/full/3d-plot-pr_dt_sand.png")
+s3d <- with(df.new, scatterplot3d( MAP1910, deltaT,sandpct, color = color, pch = 19), angle = -180)
+legend("topleft", inset=.01,      # location and inset
+       bty="n", cex=1,              # suppress legend box, shrink text 50%
+       title="Climate space",
+       c("Bimodal", "Stable"), fill=c("red", "black"))
+dev.off()
+
+plot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct, col = df.new$color)
 write.csv(df.new , "outputs/v1.6-5/full/dens_pr_dataframe_full_w_bimodal.csv")
 write.csv(dens.pr, "outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 

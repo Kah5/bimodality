@@ -149,7 +149,7 @@ Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) expla
 Additionally, the biplot for the Principal Components Analysis:
 ![](outputs/v1.6-5/full/pca_biplot.png)
 
-*Bimodality*
+###Bimodality
 
 ![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
@@ -160,7 +160,7 @@ Ans. Public land survey tree density is bimodal and FIA tree density is not:
 
 ![](outputs/v1.6-5/FIA_PLS_hists.png) 
 
-Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density:
+Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density: * need to fix the text on this figure
 
 
 ![](outputs/v1.6-5/density_difference_plot.png)
@@ -174,7 +174,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 
-*Future Forest Stability*
+###Future Forest Stability
 
 Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests.  
 
@@ -185,7 +185,7 @@ However, the current regime of fire suppression is likely to remain, and startin
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
 
-*Predicting Tree density (GAMs)*
+###Predicting Tree density (GAMs)
 
 Gam model selection for the model with the lowest AIC value yeilded the model: 
 
@@ -223,7 +223,7 @@ trainf <- dens.pr[msk,]
 testf <- dens.pr[!msk,]
 
 
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train, family = poisson(link = "log"))
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 
 
@@ -285,7 +285,7 @@ PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train, family = quasipoisson(link = "log"))
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
 PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)

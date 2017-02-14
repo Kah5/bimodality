@@ -1,7 +1,7 @@
 ---
 title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
-date: "February 7th, 2017"
+date: "February 14th, 2017"
 bibliography: bimodality.bib
 output: html_document
 ---
@@ -186,9 +186,17 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 ![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
 
-Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
-
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
+
+*Future Forest Stability*
+
+Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests.  
+
+![](ouputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
+
+However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability. 
+
+![](ouputs/v1.6-5/full/RCP_scenario_PC1_maps_FIA.png)
 
 *Predicting Tree density (GAMs)*
 

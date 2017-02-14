@@ -196,7 +196,7 @@ Using our new understanding of the the climate space where forests are bimodal (
 
 However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability. 
 
-![](ouputs/v1.6-5/full/RCP_scenario_PC1_maps_FIA.png)
+![](ouputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
 *Predicting Tree density (GAMs)*
 
@@ -249,8 +249,8 @@ PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP),data = train)
 PLS.gam3L <- gam(PLSdensity ~ pastdeltaP,data = train)
 #summary(PLS.gam3) #explains 6.07% deviance
 
-PLS.gam4 <- gam(PLSdensity ~ s(pastdeltaT), data = train)
-PLS.gam4L <- gam(PLSdensity ~ pastdeltaT, data = train)
+PLS.gam4 <- gam(PLSdensity ~ s(deltaT), data = train)
+PLS.gam4L <- gam(PLSdensity ~ deltaT, data = train)
 #summary(PLS.gam4) #explains 6.07% deviance
 
 PLS.gam5 <- gam(PLSdensity ~ s(awc),data = train)
@@ -295,11 +295,11 @@ PLS.gam12L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), data = train)
-PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT, data = train)
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), data = train, family = quasipoisson(link = "log"))
-PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, data = train)
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train, family = quasipoisson(link = "log"))
+PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
 
@@ -355,7 +355,7 @@ cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 
 #visreg2d(PLS.gam11, xvar='MAP1910', yvar='pasttmean', scale='response')
 #visreg2d(PLS.gam11, xvar='MAP1910', yvar='pastdeltaP', scale='response')
-#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pastdeltaT', scale='response')
+#visreg2d(PLS.gam11, xvar='MAP1910', yvar='deltaT', scale='response')
 
 map.pred.density <- function(model, testdata){
 ypred <- predict(model, newdata = testdata, type="response")
@@ -656,8 +656,8 @@ PLS.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = train)
 PLS.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = train)
 #summary(PLS.lgr3) #explains 6.07% deviance
 
-PLS.lgr4 <- gam(ecocode ~ s(pastdeltaT), family = 'binomial',data = train)
-PLS.lgr4L <- gam(ecocode ~ pastdeltaT, family = 'binomial',data = train)
+PLS.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = train)
+PLS.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = train)
 #summary(PLS.lgr4) #explains 6.07% deviance
 
 PLS.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = train)
@@ -702,11 +702,11 @@ PLS.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomia
 PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = train)
 PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
 
-#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), family = 'binomial',data = train)
-#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaT, family = 'binomial',data = train)
+#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = train)
+#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = train)
 
-PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), family = 'binomial',data = train)
-PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, family = 'binomial',data = train)
+PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), family = 'binomial',data = train)
+PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
 
 AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
 
@@ -747,7 +747,7 @@ pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.c
 Looks like model number 14 with just Mean Annual Precipitation has lowest AIC for the logistic/binomial model. 
 Lets map out the probability of forest based on model with the lowest AIC value:
 
-forest type ~ s(MAP1910)+ s(pasttmean) + s(pastdeltaT) +   s(pastdeltaP)
+forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
 
 The smooth predictors in this model are the same as the smooth predictors in the denisty model
 ```{r, echo = FALSE}

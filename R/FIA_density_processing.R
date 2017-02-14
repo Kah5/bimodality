@@ -360,7 +360,9 @@ colnames(dens.pr)[6:7] <- c('MAP1910', "MAP2011")
 dens.pr <- merge(dens.pr, mod.precip.mo[,c('x', 'y', 'SI')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.precip.mo[,c('x', 'y', 'deltaP')], by = c('x', 'y') )
 colnames(dens.pr)[8:9]<- c('moderndeltaP', 'pastdeltaP')
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 
+dens.pr <- nodups
 #now add the mean temperature to the dataframe
 dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
@@ -456,16 +458,19 @@ dens.pr[dens.pr$FIAdensity < 0.5, ]$fiaecotype <-  "prairie"
 ggplot(data = dens.pr, aes(x = x, y = y, color = fiaecotype)) + geom_point()
 
 #or we could use kmeans clustering on the PLS density variable, but this gives us two high density modes
-fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
-dens.pr$kmeans <- fit.km$cluster
-plot(dens.pr$kmeans, dens.pr$PLSdensity)
+#fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
+#dens.pr$kmeans <- fit.km$cluster
+#plot(dens.pr$kmeans, dens.pr$PLSdensity)
 #############################################
 # PCA analysis of environmental variables:
 ############################################
 # remove the NA values and scale
 dens.rm <- na.omit(dens.pr)
 dens.rm <- data.frame(dens.rm)
-scale.dens <- scale(dens.rm[, 6:15]) #PC all but ksat and diff
+scale.dens <- scale(dens.rm[, c("MAP1910", "pastdeltaP", 
+                                "pasttmean", "deltaT", 
+                                "sandpct", "awc", "MAP2011", "moderndeltaP", 
+                                "modtmean", "moddeltaT")]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
@@ -529,19 +534,19 @@ write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
 ##################################################################
 # PCA on FIA dataset
 ##################################################################
-dens.fia <- dens.rm[, c('FIAdensity')] # pls density
+dens_fia <- dens.rm[, c('FIAdensity')] # pls density
 
 # apply PCA - scale. = TRUE is highly 
 # advisable, but default is FALSE. 
-dens.pca <- princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
+dens.fia <- princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
                                    "modtmean", "moddeltaT", 
                                    "sandpct", "awc")],
                      na.rm=TRUE) 
 
-plot(dens.pca)
-dens.pca$loadings
-scores <- data.frame(dens.pca$scores[,1:2])
-scores$FIA <- dens.fia
+plot(dens.fia)
+dens.fia$loadings
+scores <- data.frame(dens.fia$scores[,1:2])
+scores$FIA <- dens_fia
 scores$ecotype <- dens.rm$fiaecotype
 
 dens.rm$PC1fia <- scores[,1]
@@ -579,12 +584,13 @@ test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
-
+#########################################################
+# PCA predictions for the different RCP scenarios
 ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
 dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
 
-# predict PCA with the diffrent projections:
+# predict PCA from modern climate with the diffrent projections:
 
 res<-princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
                             "modtmean", "moddeltaT", 
@@ -832,10 +838,16 @@ dens.pr$pastdeltTbins <- cut(dens.pr$deltaT, breaks = seq(0,7.5, by = .5), label
 
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
 dens.pr$modtmeanbins <- cut(dens.pr$modtmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
-dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-9,5, by = 1), labels = label.breaks(-9,4, 1))
+dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
 dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
 dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
+dens.pr$PC1_cc26fbins <- cut(dens.pr$PC1_cc26, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
+dens.pr$PC2_cc26fbins <- cut(dens.pr$PC2_cc26, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc45fbins <- cut(dens.pr$PC1_cc45, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
+dens.pr$PC2_cc45fbins <- cut(dens.pr$PC2_cc45, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc85fbins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
+dens.pr$PC2_cc85fbins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
 test<- dens.pr[!is.na(dens.pr),]
@@ -1246,6 +1258,87 @@ dev.off()
 png(height = 6, width = 5, units= 'in',  res= 300, paste0('outputs/v',version,'/FIA_PC1_map_5col.png'))
 map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")+ ggtitle(' PC1 FIA')
 dev.off()
+
+
+##########################################
+# Function to map out future climate
+#########################################
+
+bimodal.future <- function(data, binby, density, binby2){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins iwth the second binby -> here is is future climate
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
+  
+  
+  #define bimodality
+  merged$bimodal <- "Stable"
+  #criteria for bimodality
+  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  #merged
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
+      '#fee08b', # tan
+      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
+  
+}
+
+source("R/grid_arrange_shared_legend.R")
+
+a <-bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1fiabins' ) + ggtitle ("FIA PC1")
+b <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc26fbins' ) + ggtitle("RCP 2.6 PC1")
+c <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins' )+ ggtitle("RCP 4.5 PC1")
+d <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins' )+ ggtitle("RCP 8.5 PC1")
+
+png(height = 10, width = 6, units = "in",res = 300, filename = paste0('outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png'))
+grid_arrange_shared_legend(a,b,c,d, nrow = 2, ncol=2, position = c("bottom"))
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 #read in the data from PLS full density processing.R
 dens.full <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 

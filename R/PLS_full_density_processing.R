@@ -898,13 +898,70 @@ png(height = 10, width = 6, units = "in",res = 300, filename = paste0('outputs/v
 grid_arrange_shared_legend(a,b,c,d, nrow = 2, ncol=2, position = c("bottom"))
 dev.off()
 
-#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1bins' )
-#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc26bins' )
-#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc45bins' )
-#bimodal.future(data = dens.pr, binby = 'PC1bins', density = "FIAdensity", binby2 ='PC1_cc85bins' )
+###################################################################
+# bimodal.df function outputs the dataframe of bimodal/not bimodal 
 
+bimodal.df <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins iwth the second binby -> here is is future climate
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby)
+  
+  
+  #define bimodality
+  merged$bimodal <- "Stable"
+  #criteria for bimodality
+  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+merged
+}
+
+df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )
+
+# plot out climate space that is bimodal
 ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = bimodal))+geom_point()
+ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = classification)) + geom_point()+ scale_color_manual(values = c(
+  '#01665e', # light green
+  '#5ab4ac', # dark teal
+  '#8c510a', # red
+  '#d8b365', # light tan
+  '#fee08b', # tan
+  'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+  theme_bw()
 
+library(scatterplot3d)
+scatterplot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct,color = as.character(df.new$bimodal), angle=20) 
+df.new$color <- "blue"
+df.new[df.new$bimodal %in% c("Stable"),]$color <- "red"
+s3d <- with(df.new, scatterplot3d(pasttmean, MAP1910, sandpct, color = color, pch = 19), angle = 37)
+s3d
 write.csv(df.new , "outputs/v1.6-5/full/dens_pr_dataframe_full_w_bimodal.csv")
 write.csv(dens.pr, "outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 

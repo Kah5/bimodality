@@ -10,7 +10,8 @@ library(ggplot2)
 library(hexbin)
 library(grid)
 library(gridExtra)
-
+library(sp)
+library(raster)
 
 
 
@@ -486,15 +487,15 @@ dens.pr$sandbins <- cut(dens.pr$sandpct, breaks = seq(0, 100, by = 10), labels =
 dens.pr$ksatbins <- cut(dens.pr$ksat, breaks = seq(0,300, by = 10), labels = label.breaks(0,290, 10))
 dens.pr$pastdeltPbins <- cut(dens.pr$pastdeltaP, breaks = seq(0,1, by = .10), labels = label.breaks(0,0.9, 0.1))
 dens.pr$pasttmeanbins <- cut(dens.pr$pasttmean, breaks = seq(0,15, by = 1.5), labels = label.breaks(0,14, 1.5))
-dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC1bins <- cut(dens.pr$PC1, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2bins <- cut(dens.pr$PC2, breaks = seq(-4,3, by = 0.5), labels = label.breaks(-4,2.5, 0.5))
-dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC1fiabins <- cut(dens.pr$PC1fia, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2fiabins <- cut(dens.pr$PC2fia, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$PC1_cc26bins <- cut(dens.pr$PC1_cc26, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC1_cc26bins <- cut(dens.pr$PC1_cc26,  breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc26bins <- cut(dens.pr$PC2_cc26, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$PC1_cc45bins <- cut(dens.pr$PC1_cc45, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC1_cc45bins <- cut(dens.pr$PC1_cc45,  breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc45bins <- cut(dens.pr$PC2_cc45, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5, by = 1), labels = label.breaks(-5,4, 1))
+dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc85bins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
 
@@ -894,8 +895,8 @@ b<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", bi
 c<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
 d<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
 
-png(height = 10, width = 6, units = "in",res = 300, filename = paste0('outputs/v1.6-5/full/RCP_scenario_PC1_maps.png'))
-grid_arrange_shared_legend(a,b,c,d, nrow = 2, ncol=2, position = c("bottom"))
+png(height = 4, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/full/RCP_scenario_PC1_maps.png'))
+grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol=4, position = c("bottom"))
 dev.off()
 
 ###################################################################

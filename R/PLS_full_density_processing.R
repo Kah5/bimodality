@@ -883,7 +883,10 @@ bimodal.future <- function(data, binby, density, binby2){
       '#d8b365', # light tan
       '#fee08b', # tan
       'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+
+    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                      axis.title.x=element_blank(),
+                      axis.title.y=element_blank())+
     xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
   
 }
@@ -895,6 +898,9 @@ b<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", bi
 c<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
 d<- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
 
+
+e<-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1fiabins' ) + ggtitle ("PLS PC1")
+
 png(height = 4, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/full/RCP_scenario_PC1_maps.png'))
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol=4, position = c("bottom"))
 dev.off()
@@ -902,7 +908,7 @@ dev.off()
 ###################################################################
 # bimodal.df function outputs the dataframe of bimodal/not bimodal 
 
-bimodal.df <- function(data, binby, density){
+bimodal.df <- function(data, binby, density, binby2){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
@@ -920,7 +926,7 @@ bimodal.df <- function(data, binby, density){
   coef.bins <- cbind(coef.bins, coef.new)
   
   #merge bins iwth the second binby -> here is is future climate
-  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby)
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
   
   
   #define bimodality
@@ -944,19 +950,57 @@ bimodal.df <- function(data, binby, density){
 merged
 }
 
-df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )
+df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1bins')
+df.mod <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1fiabins')
+df.8.5 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc85bins")
+df.4.5 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc45bins")
+df.2.6 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc26bins")
+
+# calculate the % that should be bimodal in the modern landscape
+a <- nrow(df.mod[df.mod$bimodal == "Bimodal",])/nrow(df.mod)
+b <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
+c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
+d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
+e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 
 # plot out climate space that is bimodal
-ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = bimodal))+geom_point()
-ggplot(df.new, aes(x = MAP1910, y = pasttmean, color = classification)) + geom_point()+ scale_color_manual(values = c(
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")
+ggplot(df.new, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
+  stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
+  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")
+ggplot(df.new, aes(x = MAP1910, y = deltaT))+ geom_point()+ 
+  stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
+  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png")
+ggplot(df.new, aes(x = MAP1910, y = deltaT))+ geom_point()+ 
+  stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
+  theme_bw()+ ylab ("Tempearature Seasonality (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
+dev.off()
+
+
+
+
+ggplot(df.new, aes(x = pastdeltaP, y = deltaT, color = classification)) + stat_density2d()+ #+ geom_point()
+scale_color_manual(values = c(
   '#01665e', # light green
   '#5ab4ac', # dark teal
   '#8c510a', # red
   '#d8b365', # light tan
   '#fee08b', # tan
   'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-  theme_bw()
+  theme_bw() 
 
+library(rgl)
+plot3d(x = df.new$pastdeltaP, y = df.new$pasttmean, z = df.new$sandpct, groups = df.new$bimodal,
+          surface=FALSE, ellipsoid = TRUE)
+
+source_url("https://raw.github.com/low-decarie/FAAV/master/r/stat-ellipse.R")    
+qplot(data=df, x=x, y=y, colour=colour)+stat_ellipse()
 library(scatterplot3d)
 scatterplot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct,color = as.character(df.new$bimodal), angle=20) 
 df.new$color <- 1

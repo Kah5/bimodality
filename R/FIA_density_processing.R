@@ -397,6 +397,7 @@ plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Preci
 
 ##########################
 #read in soils data
+#########################
 sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 
@@ -1219,12 +1220,12 @@ map.bimodal.5c <- function(data, binby, density){
   
    ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
     geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#1a9641', # dark green
-      '#fdae61', # light orange
-      '#a6d96a', # light green
-      '#d7191c', # red
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
       '#fee08b', # tan
-      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna") )+
+      'black'),  limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie')  )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0(binby, ' for ',density))
@@ -1251,7 +1252,7 @@ write.csv(dens.pr, "outputs/v1.6-5/dens_pr_FIA_PLS_df.csv")
 
 png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/FIA_PC1_PC2_map_5col.png'))
 pushViewport(viewport(layout = grid.layout(1, 2)))
-print(map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")+ ggtitle(' PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")+ ggtitle(' PC1 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 
@@ -1276,7 +1277,7 @@ bimodal.future <- function(data, binby, density, binby2){
   coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
   coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
+  #library(plyr)
   coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
   colnames(coef.new) <- c("low", "high")
   coef.bins <- cbind(coef.bins, coef.new)
@@ -1288,7 +1289,12 @@ bimodal.future <- function(data, binby, density, binby2){
   #define bimodality
   merged$bimodal <- "Stable"
   #criteria for bimodality
-  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  #suppressWarnings(if(merged$BC >= 0.5 & merged$dipP <= 0.05){
+   # merged$bimodal <- "Bimodal"
+  #}else{
+   # merged$bimodal <- "Stable"
+  #})
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -1312,29 +1318,91 @@ bimodal.future <- function(data, binby, density, binby2){
       '#d8b365', # light tan
       '#fee08b', # tan
       'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+
+    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                       axis.text.y=element_blank(),axis.ticks=element_blank(),
+                       axis.title.x=element_blank(),
+                       axis.title.y=element_blank())+
     xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
   
 }
 
 source("R/grid_arrange_shared_legend.R")
 
-a <-bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1fiabins' ) + ggtitle ("FIA PC1")
-b <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc26fbins' ) + ggtitle("RCP 2.6 PC1")
-c <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins' )+ ggtitle("RCP 4.5 PC1")
-d <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins' )+ ggtitle("RCP 8.5 PC1")
+a <- bimodal.future(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1fiabins' ) + ggtitle ("FIA PC1")
+b <- bimodal.future(data = dens.pr, binby = 'PC1_cc26fbins', density = "FIAdensity", binby2 ='PC1_cc26fbins' ) + ggtitle("RCP 2.6 PC1")
+c <- bimodal.future(data = dens.pr, binby = 'PC1_cc45fbins', density = "FIAdensity", binby2 ='PC1_cc45fbins' )+ ggtitle("RCP 4.5 PC1")
+d <- bimodal.future(data = dens.pr, binby = 'PC1_cc85fbins', density = "FIAdensity", binby2 ='PC1_cc85fbins' )+ ggtitle("RCP 8.5 PC1")
 
-png(height = 10, width = 6, units = "in",res = 300, filename = paste0('outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png'))
-grid_arrange_shared_legend(a,b,c,d, nrow = 2, ncol=2, position = c("bottom"))
+png(height = 5, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png'))
+grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol=4, position = c("bottom"))
 dev.off()
 
+#############################################
+# print out df of future climates
+##########################################
+bimodal.df <- function(data, binby, density, binby2){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  #coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  #library(plyr)
+  #coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  #colnames(coef.new) <- c("low", "high")
+  #coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins iwth the second binby -> here is is future climate
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
+  
+  
+  #define bimodality
+  merged$bimodal <- "Stable"
+  #criteria for bimodality
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+  }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  merged
+}
+
+df.new <- bimodal.df(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 = 'PC1fiabins')
+df.mod <- bimodal.df(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 = 'PC1fiabins')
+df.8.5 <- bimodal.df(data = dens.pr, binby = 'PC1_cc85fbins', density = "FIAdensity", binby2 = "PC1_cc85fbins")
+df.4.5 <- bimodal.df(data = dens.pr, binby = 'PC1_cc45fbins', density = "FIAdensity", binby2 = "PC1_cc45fbins")
+df.2.6 <- bimodal.df(data = dens.pr, binby = 'PC1_cc26fbins', density = "FIAdensity", binby2 = "PC1_cc26fbins")
+
+# calculate the % that should be bimodal in the modern landscape
+a <- nrow(df.mod[df.mod$bimodal == "Bimodal",])/nrow(df.mod)
+b <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
+c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
+d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
+e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 
 
 
 
+find_modes(density(df.new[df.new$bimodal == "Bimodal" & df.new$FIAdensity <= 250, ]$FIAdensity)$y)
 
+plot(density(df.new[df.new$bimodal == "Bimodal" & df.new$FIAdensity <= 250, ]$FIAdensity))
 
-
+dip.test(density(df.new[df.new$bimodal == "Bimodal", ]$FIAdensity)$y)
 
 
 
@@ -1428,7 +1496,7 @@ dev.off()
 
 #do the same for PC1 (climate)
 a <- map.bimodal.5c(data = dens.full, binby = 'PC1bins', density = "PLSdensity")
-b <- map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")
+b <- map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")
 
 png(width = 8, height = 4, units = 'in', res = 300, 'outputs/v1.6-5/PLS_FIA_PC1_BC_map.png')
 grid_arrange_shared_legend(a,b,nrow = 1, ncol = 2 )

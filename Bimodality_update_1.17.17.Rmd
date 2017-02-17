@@ -3,7 +3,7 @@ title: "Update on Bimodality Figures & Analyses"
 author: "Kelly Heilman"
 date: "February 14th, 2017"
 
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -174,6 +174,12 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 
+
+# Climate space where the bimodality occurs: (3d plots):
+
+![](outputs/3d_1.png)
+![](outputs/3d_2.png)
+
 ###Future Forest Stability
 
 Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests.  
@@ -285,7 +291,7 @@ PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = train, family = quasipoisson(link="log"))
 PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
@@ -616,10 +622,10 @@ dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
-dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+#dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
 
 #split training and testing
-Y <- dens.pr$PLSdensity
+Y <- dens.pr$ecotype
 msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
 #table(Y,msk)
 
@@ -692,7 +698,7 @@ PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomia
 #PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = train)
 #PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = train)
 
-PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), family = 'binomial',data = train)
+PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), family = 'binomial',data = train)
 PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
 
 AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
@@ -770,15 +776,15 @@ preds.df <- data.frame(get.preds(PLS.lgr14, test))
 
 preds.df$predcode <- "savanna"
 preds.df <- preds.df[complete.cases(preds.df),]
-preds.df[preds.df$ypred < 0.7,]$predcode <- "savanna or forest"
+preds.df[preds.df$ypred < 0.9,]$predcode <- "savanna or forest"
 preds.df[preds.df$ypred > 0.3,]$predcode <- "savanna or forest"
-preds.df[preds.df$ypred >= 0.7,]$predcode <- "forest"
+preds.df[preds.df$ypred >= 0.9,]$predcode <- "forest"
 preds.df[preds.df$ypred <= 0.3,]$predcode <- "savanna"
 
 
 #ggplot(preds.df, aes(x, y, color = predcode)) + geom_point() + theme_bw()
 
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+predmap<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=preds.df, aes(x=x, y=y, fill = predcode))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Probability of forest from Model 5") + scale_fill_manual(values = c(
@@ -792,7 +798,31 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
       'black'), limits = c('savanna or forest' ,'savanna', 'forest'))+
     theme_bw()+
   coord_equal()+theme_bw()
+predmap
 
+# write to file
+png(height = 7, width = 5, units = "in",res = 300,  filename= "outputs/v1.6-5/logistic_pred_map.png")
+predmap
+dev.off()
+
+
+
+
+
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=preds.df, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Probability of forest from Model 5") + scale_fill_manual(values = c(
+      #, # light green
+      'red', # dark teal
+      '#8c510a', # red
+      #'#d8b365', # light tan
+      'forestgreen',
+      #'#fee08b', # tan
+      '#01665e',
+      'black'), limits = c('Savanna', 'Forest'))+
+    theme_bw()+
+  coord_equal()+theme_bw()
 ```
 
 The above map shows 'savana or forest' places where the binomial familiy model predicted between 30-70% probability of forest. There are some places where the model predicts deterministic forest and deterministic savanna. 

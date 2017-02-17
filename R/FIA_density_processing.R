@@ -1311,17 +1311,20 @@ bimodal.future <- function(data, binby, density, binby2){
   
   #merged
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#01665e', # light green
-      '#5ab4ac', # dark teal
-      '#8c510a', # red
-      '#d8b365', # light tan
-      '#fee08b', # tan
-      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
+      '#2c7bb6', # blue
+      '#d7191c'
+      # '#01665e', # light green
+      #  '#5ab4ac', # dark teal
+      # '#8c510a', # red
+      #'#d8b365', # light tan
+      #'#fee08b', # tan
+      #'black'
+    ), limits = c('Stable','Bimodal') )+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                       axis.text.y=element_blank(),axis.ticks=element_blank(),
-                       axis.title.x=element_blank(),
-                       axis.title.y=element_blank())+
+                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                      axis.title.x=element_blank(),
+                      axis.title.y=element_blank())+
     xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
   
 }

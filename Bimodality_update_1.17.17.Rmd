@@ -119,65 +119,49 @@ We then identified the climate space (within PC1) that was bimodal in the PLS ti
 
 *Distribution of modern and past data*
 
-The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha). Therefore, we do not see a signifcant bimodality with low and high tree denisty models on the modern landscape.
+The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha). Therefore, we do not see a signifcant bimodality with low and high tree denisty models on the modern landscape. This shift in tree density is well explained by the original vegetation. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = XXXX, p < 0.05, Figure 2).
 
-*PCA (supplemental material)* 
+*PCA (supplemental material??)* 
 
 Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) explains 29% of the variance. Past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality and precipitation seasonality index both have negative loadings fro PC1. Sand has the strongest negative loading and AWC has strongest positive loading on PC2. Plotting density/vegetatation type in Principal component space does not separate vegeatation into savanna, prairie, and forest.  
 
-Additionally, the biplot for the Principal Components Analysis:
-![](outputs/v1.6-5/full/pca_biplot.png)
+*Generalized Additive Models/Relationship between historic vegetation and climate/soil variables*
 
-###Bimodality
+Gam model selection for the model with the lowest AIC value yeilded the model: PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). Prediction of tree density is overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
 
+*Historic climate relationship*
+
+PLS tree density was significantly bimodal between xx - xx scores of PC1, which corresponded to intermediate values of temperature and precipitation (XXXX mm/year and XX - XX degC). Over 34% (212,032 km^2) of the the past landscape was bimodal (figure 4) during the PLS time. 
+
+* Future Forest stability*
+Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests (Figure 4a).  However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability (Figure 4b). 
+
+##Figures:
+
+# Figure 1:Public land survey tree density is bimodal and FIA tree density is not:
+
+![](outputs/v1.6-5/FIA_PLS_hists.png) 
 ![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
 
-## Q1. Was the N.American pre-euro settlement tree cover/tree density bimodal? Is the modern landscape bimodal?
-
-Ans. Public land survey tree density is bimodal and FIA tree density is not:
-
-![](outputs/v1.6-5/FIA_PLS_hists.png) 
-
-Additionally, places that historically had low tree density in the past now have higher tree density, while those that were dense in the past have decreased in tree density: * need to fix the text on this figure
-
-
+# Figure 2: Change in tree density between the modern and historic vegetation depends on original vegetation density.
 ![](outputs/v1.6-5/density_difference_plot.png)
 
-
-
-
+# Figure 3:
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
 
 ![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
 
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 
-
-# Climate space where the bimodality occurs: (3d plots):
-
-![](outputs/3d_1.png)
-![](outputs/3d_2.png)
-
-###Future Forest Stability
-
-Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests.  
+# Figure 4a:
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
-However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability. 
-
+# Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
-
-###Predicting Tree density (GAMs)
-
-Gam model selection for the model with the lowest AIC value yeilded the model: 
-
-PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP)
-
-While AIC suggests this is the best model, it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). 
-
+Table 1:
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
@@ -309,8 +293,23 @@ pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.ce
 
 ```
 
-Taking a closer look at PLS.GAM14, we see some overestimation in open savanna areas and underestimation in closed forestion regions.
+# Supplemental Figures:
+Additionally, the biplot for the Principal Components Analysis:
+![](outputs/v1.6-5/full/pca_biplot.png)
 
+
+
+# Climate space where the bimodality occurs: (3d plots):
+
+![](outputs/3d_1.png)
+![](outputs/3d_2.png)
+
+
+
+###Predicting Tree density (GAMs)
+
+
+# Supplemental GAM 14 figure:
 ```{r, echo = FALSE, warning = FALSE}
 suppressMessages(library(maps))
 suppressMessages(library(sp))
@@ -405,6 +404,7 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 ```
 
 Mapping out predicted - observed for each grid cell in the test dataset. This  map also shows that the savannas are generally overestimated in terms of tree density, while the norther closed forests tend to be underestimated. 
+
 ```{r, echo = FALSE,  warning = FALSE}
 
 suppressMessages(library(RColorBrewer))

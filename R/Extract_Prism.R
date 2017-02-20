@@ -4,6 +4,24 @@ library(data.table)
 library(rgdal)
 version <- "1.6-5"
 
+alt12 <- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/alt_12/alt_12.bil")
+alt13 <- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/alt_13/alt_13.bil")
+proj4string(alt12) <- '+init=epsg:4326'
+proj4string(alt13) <- '+init=epsg:4326'
+alt.alb12 <- projectRaster(alt12, crs='+init=epsg:3175')
+alt.alb13 <- projectRaster(alt13, crs='+init=epsg:3175')
+alt.alb <- merge(alt.alb12, alt.alb13)
+
+
+spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv')
+spec.table <- data.frame(spec.table)
+spec.table <- data.frame(spec.table)
+avgs.df <- data.frame(extract(alt.alb, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/data/altitude.csv")
+
 # read in and average prism data
 prism<- raster("C:/Users/JMac/Documents/Kelly/biomodality/data/PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil")
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')

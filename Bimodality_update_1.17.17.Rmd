@@ -133,6 +133,9 @@ Gam model selection for the model with the lowest AIC value yeilded the model: P
 
 PLS tree density was significantly bimodal between xx - xx scores of PC1, which corresponded to intermediate values of temperature and precipitation (XXXX mm/year and XX - XX degC). Over 34% (212,032 km^2) of the the past landscape was bimodal (figure 4) during the PLS time. 
 
+*Modern climate relaitonship* 
+Modern tree denisty was not significantly bimodal overall, and bimodality was detected at less than 1% of the landscape. However, if the historic climate vegetation relationship had remained intact, and only climate had shifted, we would have expected 34.5% of the modern landscape to be bistable today (Figure 4).
+
 * Future Forest stability*
 Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests (Figure 4a).  However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability (Figure 4b). 
 
@@ -161,7 +164,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
-Table 1:
+Table 1: PLS density models
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
@@ -282,14 +285,152 @@ predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
 mean(predicted$sqerr, na.rm = TRUE)
 }
 
-AIC.df$MSPE <- 1
+AIC.df$dev.expl <- 1
 
-#add prediction error ot AIC dataframe
+#add prediction error of AIC dataframe
 
 for (i in 1: length(AIC.df$model)){
-AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), test)
+AIC.df[i,'MSPE'] <- msqe.f(get(AIC.df[i,"model"]), testf)
+AIC.df[i,"dev.expl"] <- summary(get(AIC.df[i,"model"]))$dev.expl * 100
 }
+
 pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+```
+
+
+Table 2: FIA density models
+```{r, echo = FALSE, warning = FALSE}
+
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
+
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+#dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+#hist(dens.pr$PLSdensity, breaks = 50)
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+
+# split into test and trainfing datasets:
+Y <- dens.pr$PLSdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+trainf <- dens.pr[msk,]
+test <- dens.pr[!msk,]
+
+#split FIA data into test and trainfing datasets
+Y <- fiadens$FIAdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+trainf <- dens.pr[msk,]
+testf <- dens.pr[!msk,]
+
+
+FIA.gam1 <-gam(FIAdensity ~  s(MAP2011), data = trainf, family = quasipoisson())
+FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
+
+
+FIA.gam2 <- gam(FIAdensity ~ s(modtmean) , data = trainf,family = quasipoisson())
+FIA.gam2L <- gam(FIAdensity ~ modtmean , data = trainf)
+summary(FIA.gam2) #explains 5.6% deviance
+plot(FIA.gam2)
+
+FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP),data = trainf, family = quasipoisson())
+FIA.gam3L <- gam(FIAdensity ~ moderndeltaP,data = trainf)
+#summary(FIA.gam3) #explains 6.07% deviance
+
+FIA.gam4 <- gam(FIAdensity ~ s(moddeltaT), data = trainf, family = quasipoisson())
+FIA.gam4L <- gam(FIAdensity ~ moddeltaT, data = trainf)
+#summary(FIA.gam4) #explains 6.07% deviance
+
+FIA.gam5 <- gam(FIAdensity ~ s(awc),data = trainf, family = quasipoisson())
+FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
+#summary(FIA.gam5) #explains 12.5% of deviance
+
+FIA.gam6 <- gam(FIAdensity ~ s(sandpct), data = trainf, family = quasipoisson())
+FIA.gam6L <- gam(FIAdensity ~ sandpct, data = trainf)
+#summary(FIA.gam6) #explains 12.5% of deviance
+
+
+
+FIA.gam7 <- gam(FIAdensity ~ s(modtmean) + s(MAP2011) , data = trainf, family = quasipoisson())
+FIA.gam7L <- gam(FIAdensity ~ modtmean + MAP2011 ,  data = trainf)
+#summary(FIA.gam7) #explains 41% deviance
+#summary(FIA.gam7L) # explains 19.6%
+
+FIA.gam8 <- gam(FIAdensity ~ s(awc) +s(sandpct), data = trainf , family = quasipoisson())
+FIA.gam8L <- gam(FIAdensity ~ awc + sandpct, data = trainf )
+#summary(FIA.gam8) #explains 28% of deviance
+
+FIA.gam9 <- gam(FIAdensity ~ s(MAP2011) + s(modtmean) + s(sandpct), data = trainf, family = quasipoisson())
+FIA.gam9L <- gam(FIAdensity ~ MAP2011 + modtmean + sandpct, data = trainf)
+#summary(FIA.gam9) #explains 39% deviance
+#summary(FIA.gam9L)
+#plot(FIA.gam6)
+
+
+FIA.gam10 <- gam(FIAdensity ~ s(MAP2011) +s(modtmean) + s(awc), data = trainf, family = quasipoisson())
+FIA.gam10L <- gam(FIAdensity ~ MAP2011 + modtmean + awc, data = trainf)
+
+#summary(FIA.gam10) #explains 41.3% of deviance
+#plot(FIA.gam10)
+
+FIA.gam11 <- gam(FIAdensity ~ s(MAP2011)  +s(modtmean) +s(sandpct) + s(awc), data = trainf, family = quasipoisson())
+FIA.gam11L <- gam(FIAdensity ~ MAP2011  + modtmean + sandpct + awc, data = trainf)
+
+#summary(FIA.gam8) # explains 41% of deviance
+FIA.gam12 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf, family = quasipoisson())
+FIA.gam12L <- gam(FIAdensity ~ MAP2011  + modtmean + moderndeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf, family = quasipoisson())
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moderndeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainf, family = quasipoisson())
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT, data = trainf)
+
+FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainf, family = quasipoisson(link="log"))
+FIA.gam14L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
+
+FIA.gam15 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainf, family = quasipoisson(link="log"))
+FIA.gam15L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
+
+AIC.df<- AIC(FIA.gam1, FIA.gam2, FIA.gam3, FIA.gam4, FIA.gam5, FIA.gam6, FIA.gam7, FIA.gam8, FIA.gam9,FIA.gam10,FIA.gam11,FIA.gam12,FIA.gam13,FIA.gam14 ,FIA.gam15, FIA.gam1L, FIA.gam2L, FIA.gam3L, FIA.gam4L, FIA.gam5L, FIA.gam6L, FIA.gam7L, FIA.gam8L, FIA.gam9L, FIA.gam10L,FIA.gam11L,FIA.gam12L,FIA.gam13L,FIA.gam14L,FIA.gam15L)
+
+AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC.df$formula <- c(FIA.gam1$formula, FIA.gam2$formula, FIA.gam3$formula, FIA.gam4$formula, FIA.gam5$formula, FIA.gam6$formula, FIA.gam7$formula, FIA.gam8$formula, FIA.gam9$formula,FIA.gam10$formula,FIA.gam11$formula,FIA.gam12$formula,FIA.gam13$formula,FIA.gam14$formula ,FIA.gam15$formula , FIA.gam1L$formula, FIA.gam2L$formula, FIA.gam3L$formula, FIA.gam4L$formula, FIA.gam5L$formula, FIA.gam6L$formula, FIA.gam7L$formula, FIA.gam8L$formula, FIA.gam9L$formula, FIA.gam10L$formula,FIA.gam11L$formula,FIA.gam12L$formula,FIA.gam13L$formula, FIA.gam14L$formula, FIA.gam15L$formula )
+
+AIC.df<- AIC.df[order(AIC.df$AIC),]
+library(knitr)
+library(pander)
+AIC.df$model <- as.character(rownames(AIC.df))
+
+#calculate prediction error:
+msqe.f<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$FIAdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC.df$MSPE <- 1
+AIC.df$dev.expl <- 1
+
+#add prediction error of AIC dataframe
+
+for (i in 1: length(AIC.df$model)){
+AIC.df[i,'MSPE'] <- msqe.f(get(AIC.df[i,"model"]), testf)
+AIC.df[i,"dev.expl"] <- summary(get(AIC.df[i,"model"]))$dev.expl * 100
+}
+
+pander(AIC.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```
 
@@ -606,7 +747,7 @@ dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
 #dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
 
-#split training and testing
+#split trainfing and testing
 Y <- dens.pr$ecotype
 msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
 #table(Y,msk)

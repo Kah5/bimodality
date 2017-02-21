@@ -106,7 +106,7 @@ Desnity distributions of the PLS and FIA data were estimated. We then calculated
 
 *Generalized Additive Models*
 
-In addition to evaluating the BC for ranges of data, we developed several generalized additive models (GAMs) to determine if tree density can be deterministically predicted by climate and/or soils. GAMs were developed with both strictly additive terms and with flexible smooth terms. The full PLS data was separated into two random halves that make up the testing and training datasets. GAM's were developed with the training dataset, and prediction error was estimated using the test dataset. Model parsimony was evaluated basing on AIC values, and model fit was assessed using RMSE. 
+In addition to evaluating the BC for ranges of data, we developed several generalized additive models (GAMs) to determine if tree density can be deterministically predicted by climate and/or soils. GAMs were developed with both strictly additive terms and with flexible smooth terms. The full PLS data and FIA data were separated into two random halves that make up the testing and training datasets. GAM's were developed with the training dataset, and prediction error was estimated using the test dataset. Model parsimony was evaluated basing on AIC values, and model fit was assessed using RMSE. 
 
 *Future Forest Stability under CMIP5 projected climate scenarios*
 
@@ -127,7 +127,11 @@ Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) expla
 
 *Generalized Additive Models/Relationship between historic vegetation and climate/soil variables*
 
-Gam model selection for the model with the lowest AIC value yeilded the model: PLS tree density ~ s(MAP) + s(pasttmean) + s(deltaT) + s(deltaP). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). Prediction of tree density is overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
+Gam model selection for the model with the lowest AIC value yeilded the model: tree density ~ s(MAP) + s(mean annual temperatue) + s(deltaT) + s(deltaP). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). Prediction of tree density is overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
+
+The Gam model for the modern landscape did explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = XXXX). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
+
+Notes: perhaps we should find the places that there is bimodality and determin if soils or something else might predict tree density within these bimodality regions.
 
 *Historic climate relationship*
 
@@ -325,14 +329,14 @@ fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_
 
 #split FIA data into test and trainfing datasets
 Y <- fiadens$FIAdensity
-msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+msk <- sample.split( Y, SplitRatio = 1/4, group = fiadens$fiaecotype )
 #table(Y,msk)
 
 trainf <- fiadens[msk,]
 testf <- fiadens[!msk,]
 
 
-FIA.gam1 <-gam(FIAdensity ~  s(MAP2011), data = trainf, family = quasipoisson())
+FIA.gam1 <-gam(log(FIAdensity) ~  s(MAP2011), data = trainf, family = quasipoisson())
 FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
 
 
@@ -341,13 +345,13 @@ FIA.gam2L <- gam(FIAdensity ~ modtmean , data = trainf)
 summary(FIA.gam2) #explains 5.6% deviance
 plot(FIA.gam2)
 
-FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP),data = trainf, family = quasipoisson())
+FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP),data = trainf)
 FIA.gam3L <- gam(FIAdensity ~ moderndeltaP,data = trainf)
-#summary(FIA.gam3) #explains 6.07% deviance
+summary(FIA.gam3) #explains 6.07% deviance
 
-FIA.gam4 <- gam(FIAdensity ~ s(moddeltaT), data = trainf, family = quasipoisson())
+FIA.gam4 <- gam(FIAdensity ~ s(moddeltaT), data = trainf)
 FIA.gam4L <- gam(FIAdensity ~ moddeltaT, data = trainf)
-#summary(FIA.gam4) #explains 6.07% deviance
+summary(FIA.gam4) #explains 6.07% deviance
 
 FIA.gam5 <- gam(FIAdensity ~ s(awc),data = trainf, family = quasipoisson())
 FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
@@ -394,7 +398,7 @@ FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moderndeltaP, data = trainf
 FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainf, family = quasipoisson())
 FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT, data = trainf)
 
-FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainf, family = quasipoisson(link="log"))
+FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainf)
 FIA.gam14L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
 
 FIA.gam15 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainf, family = quasipoisson(link="log"))
@@ -539,11 +543,11 @@ ggplot(predicted, aes(PLSdensity,ypred, color = PC1)) +geom_point() + theme_bw()
 
 # plot FIA game predicted vs. observed
 
-predictedf <- get.preds(FIA.gam16L, testf)
+predictedf <- get.preds(FIA.gam15L, testf)
 summary(predictedf$ypred)
 
 # plot predicted vs. observed 
-ggplot(predictedf, aes(FIAdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
+ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
 
 ggplot(predictedf, aes(PC1, PC2, color = ypred))+geom_point()
 
@@ -668,10 +672,10 @@ PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct) + s(awc)
 
 Here we plot the predicted vs. observed of for this model:
 ```{r, echo = FALSE, warning = FALSE}
-predicted <- get.preds(PLS.gam13, test)
+predicted <- get.preds(FIA.gam16, testf)
 #summary(predicted)
 
-ggplot(predicted, aes(PLSdensity, ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+ggplot(predicted, aes(FIAdensity, ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 ```
 
@@ -766,7 +770,7 @@ dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
 
 #split trainfing and testing
 Y <- dens.pr$ecotype
-msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+msk <- sample.split( Y, SplitRatio = 3/4, group = NULL)
 #table(Y,msk)
 
 train <- dens.pr[msk,]
@@ -883,7 +887,133 @@ Lets map out the probability of forest based on model with the lowest AIC value:
 forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
 
 The smooth predictors in this model are the same as the smooth predictors in the denisty model
+
+# savanna forest model for FIA:
+```{r echo = FALSE, warning = FALSE}
+
+# dummyvariables for logistic regression:
+fiadens$ecocode <- 0
+fiadens[fiadens$ecotype %in% 'Forest', ]$ecocode <- 1
+#fiadens<- fiadens[!fiadens$ecotype %in% 'prairie',]
+
+#split trainffing and testfing
+Y <- fiadens$ecotype
+msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
+#table(Y,msk)
+
+trainf <- fiadens[msk,]
+testf <- fiadens[!msk,]
+
+
+#plot(fiadens$sandpct, fiadens$ecotype)
+
+
+FIA.lgr1 <-gam(ecocode ~  s(MAP1910), family = 'binomial',data = trainf)
+FIA.lgr1L <-gam(ecocode ~  MAP1910, family = 'binomial',data = trainf)
+
+
+FIA.lgr2 <- gam(ecocode ~ s(pasttmean) , family = 'binomial',data = trainf)
+FIA.lgr2L <- gam(ecocode ~ pasttmean , family = 'binomial',data = trainf)
+#summary(FIA.lgr2) #explains 15.8% deviance
+#plot(FIA.lgr2)
+
+FIA.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = trainf)
+FIA.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = trainf)
+#summary(FIA.lgr3) #explains 6.07% deviance
+
+FIA.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = trainf)
+FIA.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = trainf)
+#summary(FIA.lgr4) #explains 6.07% deviance
+
+FIA.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = trainf)
+FIA.lgr5L <- gam(ecocode ~ awc, family = 'binomial',data = trainf)
+#summary(FIA.lgr5) #explains 12.5% of deviance
+
+FIA.lgr6 <- gam(ecocode ~ s(sandpct), family = 'binomial',data = trainf)
+FIA.lgr6L <- gam(ecocode ~ sandpct, family = 'binomial',data = trainf)
+#summary(FIA.lgr6) #explains 12.5% of deviance
+
+
+
+FIA.lgr7 <- gam(ecocode ~ s(pasttmean) + s(MAP1910) ,  family = 'binomial',data = trainf)
+FIA.lgr7L <- gam(ecocode ~ pasttmean + MAP1910 ,  family = 'binomial',data = trainf)
+#summary(FIA.lgr7) #explains 41% deviance
+#summary(FIA.lgr7L) # explains 19.6%
+
+FIA.lgr8 <- gam(ecocode ~ s(awc) +s(sandpct), family = 'binomial',data = trainf )
+FIA.lgr8L <- gam(ecocode ~ awc + sandpct, family = 'binomial',data = trainf )
+#summary(FIA.lgr8) #explains 28% of deviance
+
+FIA.lgr9 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = 'binomial',data = trainf)
+FIA.lgr9L <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = 'binomial',data = trainf)
+#summary(FIA.lgr9) #explains 39% deviance
+#summary(FIA.lgr9L)
+#plot(FIA.lgr6)
+
+
+FIA.lgr10 <- gam(ecocode ~ s(MAP1910) +s(pasttmean) + s(awc), family = 'binomial',data = trainf)
+FIA.lgr10L <- gam(ecocode ~ MAP1910 + pasttmean + awc, family = 'binomial',data = trainf)
+
+#summary(FIA.lgr10) #explains 41.3% of deviance
+#plot(FIA.lgr10)
+
+FIA.lgr11 <- gam(ecocode ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), family = 'binomial',data = trainf)
+FIA.lgr11L <- gam(ecocode ~ MAP1910  + pasttmean + sandpct + awc, family = 'binomial',data = trainf)
+
+#summary(FIA.lgr8) # explains 41% of deviance
+FIA.lgr12 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP),family = 'binomial', data = trainf)
+FIA.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
+
+FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = trainf)
+FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
+
+#FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = trainf)
+#FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = trainf)
+
+FIA.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = trainf)
+FIA.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = trainf)
+
+AIC2.df<- AIC(FIA.lgr1, FIA.lgr2, FIA.lgr3, FIA.lgr4, FIA.lgr5, FIA.lgr6, FIA.lgr7, FIA.lgr8, FIA.lgr9,FIA.lgr10,FIA.lgr11,FIA.lgr12,FIA.lgr13,FIA.lgr14 , FIA.lgr1L, FIA.lgr2L, FIA.lgr3L, FIA.lgr4L, FIA.lgr5L, FIA.lgr6L, FIA.lgr7L, FIA.lgr8L, FIA.lgr9L, FIA.lgr10L,FIA.lgr11L,FIA.lgr12L,FIA.lgr13L,FIA.lgr14L)
+
+
+
+
+AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC2.df$formula <- c(FIA.lgr1$formula, FIA.lgr2$formula, FIA.lgr3$formula, FIA.lgr4$formula, FIA.lgr5$formula, FIA.lgr6$formula, FIA.lgr7$formula, FIA.lgr8$formula, FIA.lgr9$formula,FIA.lgr10$formula,FIA.lgr11$formula,FIA.lgr12$formula,FIA.lgr13$formula,FIA.lgr14$formula , FIA.lgr1L$formula, FIA.lgr2L$formula, FIA.lgr3L$formula, FIA.lgr4L$formula, FIA.lgr5L$formula, FIA.lgr6L$formula, FIA.lgr7L$formula, FIA.lgr8L$formula, FIA.lgr9L$formula, FIA.lgr10L$formula,FIA.lgr11L$formula,FIA.lgr12L$formula,FIA.lgr13L$formula, FIA.lgr14L$formula )
+
+AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
+library(knitr)
+library(pander)
+AIC2.df$model <- rownames(AIC2.df)
+
+#calculate prediction error:
+msqe.code<- function(model, testfdata){
+ypred <- predict(model, newdata = testfdata, type="response")
+testfdata$ypred <- ypred
+
+predicted<- testfdata
+  
+predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC2.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC2.df$model)){
+AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
+}
+pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+
+```
+
 ```{r, echo = FALSE, warning = FALSE}
+
+FIA.lgr14 <- gam(ecocode ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), family = 'binomial',data = trainf)
+
 
 library(visreg)
 map.preds <- function(model, testdata){
@@ -907,7 +1037,8 @@ testdata
 
 #map.preds(PLS.lgr14, test)
 
-preds.df <- data.frame(get.preds(PLS.lgr14, test))
+preds.df <- data.frame(get.preds(PLS.lgr13, test))
+#preds.df <- data.frame(get.preds(FIA.lgr13, testf))
 #hist(preds.df$ypred, breaks = 25)
 #summary(preds.df$ypred)
 
@@ -916,10 +1047,10 @@ preds.df <- data.frame(get.preds(PLS.lgr14, test))
 
 preds.df$predcode <- "savanna"
 preds.df <- preds.df[complete.cases(preds.df),]
-preds.df[preds.df$ypred < 0.9,]$predcode <- "savanna or forest"
-preds.df[preds.df$ypred > 0.3,]$predcode <- "savanna or forest"
-preds.df[preds.df$ypred >= 0.9,]$predcode <- "forest"
-preds.df[preds.df$ypred <= 0.3,]$predcode <- "savanna"
+preds.df[preds.df$ypred < 0.6,]$predcode <- "savanna or forest"
+preds.df[preds.df$ypred > 0.4,]$predcode <- "savanna or forest"
+preds.df[preds.df$ypred >= 0.6,]$predcode <- "forest"
+preds.df[preds.df$ypred <= 0.4,]$predcode <- "savanna"
 
 
 #ggplot(preds.df, aes(x, y, color = predcode)) + geom_point() + theme_bw()

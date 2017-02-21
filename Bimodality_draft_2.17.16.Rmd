@@ -124,21 +124,6 @@ Using our new understanding of the the climate space where forests are bimodal (
   -While several grid cells on the modern landscape have low tree density below the cutoff for savanna ecosystems (<47 trees/ha), the distribution in tree density overall and for the low tree density sites is still unimodal. Additionally, much of the grid cells that would now be classified as "savanna" lie within historically stable forest regions. This suggests that these forests had previously be logged or deforested for agricultural use, or have recently been affected by wind/insect forest disturbance processes(Sheleeweis et al. 2013, CITE). 
 
 
-*Overall the shifts between the modern landscape and the pre-European settlement is marked by large scale forest stabilization, a shift from bimodal distribution in tree cover characterized by closed forests and open savannas, to mostly closed forested ecosystems. 
-
-Take home point:
-Temperate Midwest was previously altenative savanna and forest stable states, but ~ 150 years of land use changes, changes in climate have altered the stability, and pushed the region towards more stable forests. 
-
-Experimental evidence from other temperate prairies and shrublands suggest that fire suppression may push ecosystms past the threshold, making the activation effort needed to return to open landscapes much higher. 
-
-Limitations of the analysis:
-* distribution in tree density is still poorly constrained
-* evidence for alternative stable states is circumstantial, but strong 
-* limitations and sparcity of modern FIA data
-  -may be sampling forests that are likely regenerating post-logging and still have low tree density
-* Modern landscape has also undergone land conversion from forest/open to agricultural landscapes, however, places that were lower tree denisty in the past are now 
-* projections of future climate don't include changes in land use
-
 ##Figures:
 
 # Figure 1:Public land survey tree density is bimodal and FIA tree density is not:
@@ -156,6 +141,8 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 ![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
 
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
+![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
+![](ouputs/v1.6-5/MAP_TEMP_bimodal_space.png)
 
 # Figure 4a:
 

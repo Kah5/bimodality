@@ -1,8 +1,7 @@
 ---
-title: "Update on Bimodality Figures & Analyses"
+title: "Bimodality Paper Draft"
 author: "Kelly Heilman"
 date: "February 14th, 2017"
-
 output: html_document
 ---
 
@@ -11,7 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-Paper outline:
   
 ### Introduction
   
@@ -133,7 +131,7 @@ Using our new understanding of the the climate space where forests are bimodal (
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
 
 # Figure 2: Change in tree density between the modern and historic vegetation depends on original vegetation density.
-![](outputs/v1.6-5/density_difference_plot.png)
+![](outputs/v1.6/density_difference_plot.png)
 
 # Figure 3:
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
@@ -142,7 +140,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 ![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 ![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
-![](ouputs/v1.6-5/MAP_TEMP_bimodal_space.png)
+![](outputs/v1.6-5/MAP_TEMP_bimodal_space.png)
 
 # Figure 4a:
 
@@ -151,7 +149,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
-Table 1: PLS density models
+Table 1: PLS density GAM models
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
@@ -288,7 +286,7 @@ pander(AIC.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 ```
 
 
-Table 2: FIA density models
+Table 2: FIA density GAM models
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
@@ -325,16 +323,16 @@ FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
 
 FIA.gam2 <- gam(FIAdensity ~ s(modtmean) , data = trainf,family = quasipoisson())
 FIA.gam2L <- gam(FIAdensity ~ modtmean , data = trainf)
-summary(FIA.gam2) #explains 5.6% deviance
-plot(FIA.gam2)
+#summary(FIA.gam2) #explains 5.6% deviance
+#plot(FIA.gam2)
 
 FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP),data = trainf)
 FIA.gam3L <- gam(FIAdensity ~ moderndeltaP,data = trainf)
-summary(FIA.gam3) #explains 6.07% deviance
+#summary(FIA.gam3) #explains 6.07% deviance
 
 FIA.gam4 <- gam(FIAdensity ~ s(moddeltaT), data = trainf)
 FIA.gam4L <- gam(FIAdensity ~ moddeltaT, data = trainf)
-summary(FIA.gam4) #explains 6.07% deviance
+#summary(FIA.gam4) #explains 6.07% deviance
 
 FIA.gam5 <- gam(FIAdensity ~ s(awc),data = trainf, family = quasipoisson())
 FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
@@ -422,7 +420,7 @@ AICf.df[i,'MSPE'] <- msqe.f(get(AICf.df[i,"model"]), testf)
 AICf.df[i,"dev.expl"] <- summary(get(AICf.df[i,"model"]))$dev.expl * 100
 }
 
-print(AICf.df)
+#print(AICf.df)
 pander(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```

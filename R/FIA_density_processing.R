@@ -854,7 +854,7 @@ dens.pr$PC2_cc45fbins <- cut(dens.pr$PC2_cc45, breaks = seq(-3,4, by = 0.5), lab
 dens.pr$PC1_cc85fbins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
 dens.pr$PC2_cc85fbins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
-
+write.csv(dens.pr, "outputs/FIA_pls_density_with_bins.csv")
 test<- dens.pr[!is.na(dens.pr),]
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins', 'fiaprbins', 'plsprbins50', 'fiaprbins50','plsprbins75', 'fiaprbins75',
                                  'plsprbins100', 'fiaprbins100','plsprbins150', 'fiaprbins150','plsprbins25', 'fiaprbins25',
@@ -1020,6 +1020,9 @@ dev.off()
 
 #calculate bimodality coefficients
 library(modes)
+
+# read in bimodality csv
+dens.pr <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 
 # this function uses the bimodality_coefficient funcition in the modes library to calculate the 
 #bimodality coefficient of the density (FIA or PLS) within a given set of bins (climate, sand, etc)
@@ -1306,25 +1309,26 @@ bimodal.future <- function(data, binby, density, binby2){
     merged$classification <- paste(merged$bimodal, merged$ecotype)
     merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
     merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Bimodal Savanna',]$classification <- "Bimodal"
+    merged[merged$classification %in% 'Bimodal Forest',]$classification <- "Bimodal"
     
   }else{
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    merged[merged$classification %in% 'Bimodal Forest',]$classification <- "Bimodal"
     
   }
   
   #merged
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
-      '#2c7bb6', # blue
-      '#d7191c'
-      # '#01665e', # light green
-      #  '#5ab4ac', # dark teal
-      # '#8c510a', # red
-      #'#d8b365', # light tan
-      #'#fee08b', # tan
-      #'black'
-    ), limits = c('Stable','Bimodal') )+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641',
+      '#fdae61',
+      '#d7191c',
+      '#ffffbf'
+    ), limits = c('Stable Forest',"Stable Savanna",'Bimodal', "Prairie") )+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),

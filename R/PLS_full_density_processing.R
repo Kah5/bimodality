@@ -874,7 +874,8 @@ bimodal.future <- function(data, binby, density, binby2){
     merged$classification <- paste(merged$bimodal, merged$ecotype)
     merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
     merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
-    
+    merged[merged$classification %in% 'Bimodal Savanna',]$classification <- "Bimodal"
+    merged[merged$classification %in% 'Bimodal Forest',]$classification <- "Bimodal"
   }else{
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$fiaecotype)
@@ -883,16 +884,12 @@ bimodal.future <- function(data, binby, density, binby2){
   
   #merged
   ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
-      '#2c7bb6', # blue
-      '#d7191c'
-      # '#01665e', # light green
-    #  '#5ab4ac', # dark teal
-     # '#8c510a', # red
-      #'#d8b365', # light tan
-      #'#fee08b', # tan
-      #'black'
-      ), limits = c('Stable','Bimodal') )+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#1a9641',
+     '#fdae61',
+     '#d7191c',
+     '#ffffbf'
+      ), limits = c('Stable Forest',"Stable Savanna",'Bimodal', "Prairie") )+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),
@@ -903,10 +900,10 @@ bimodal.future <- function(data, binby, density, binby2){
 
 source("R/grid_arrange_shared_legend.R")
 
-a<-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' ) + ggtitle ("PLS PC1")
-b<- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins' ) + ggtitle("RCP 2.6 PC1")
-c<- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
-d<- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
+a <- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' ) + ggtitle ("PLS PC1")
+b <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins' ) + ggtitle("RCP 2.6 PC1")
+c <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
+d <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
 
 
 e<-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1fiabins' ) + ggtitle ("PLS PC1")

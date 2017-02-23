@@ -159,9 +159,11 @@ suppressMessages(library(ggplot2))
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 #dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 #hist(dens.pr$PLSdensity, breaks = 50)
-dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+#dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
-#fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all 0 values for now
+dens.pr <- pls.new
 
 # split into test and training datasets:
 Y <- dens.pr$PLSdensity
@@ -281,7 +283,7 @@ AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), test)
 AIC.df[i,"dev.expl"] <- summary(get(AIC.df[i,"model"]))$dev.expl * 100
 }
 
-pander(AIC.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+pander(AIC.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.cells = 30)
 
 ```
 
@@ -498,7 +500,7 @@ testdata$ypred <- ypred
 testdata
 }
 
-predicted <- get.preds(PLS.gam16, test)
+predicted <- get.preds(PLS.gam15, test)
 summary(predicted$ypred)
 
 #predicted <- get.preds(PLS.gam14L, test)

@@ -12,7 +12,7 @@ library(grid)
 library(gridExtra)
 library(sp)
 library(raster)
-
+library(rgdal)
 
 
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
@@ -43,6 +43,13 @@ hist(umdw.new$PLSdensity, breaks = 25)
 densitys <- rbind(pls.inil, umdw.new)
 #coordinates(pls.inil)<- ~x+y
 
+# read in lower mi data
+so.mi <- readOGR(dsn = "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
+
+plot(so.mi)
+so.mi.df <- data.frame(so.mi)
+ggplot(so.mi.df, aes(x=coords.x1, y = coords.x2, color = "red"))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="LOWERMI data extent")+ theme_bw()+ coord_equal()
 #note that for some reason, 1 grid cell is duplicated
 nodups <- densitys[!duplicated(densitys$cell),] # remove dups
 dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
@@ -966,6 +973,9 @@ c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
 d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
 e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 
+
+dens.pr<- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+write.csv(df.new, "outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
 # plot out climate space that is bimodal
 png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")
 ggplot(df.new, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
@@ -973,7 +983,7 @@ ggplot(df.new, aes(x = MAP1910, y = pasttmean))+ geom_point()+
   theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
 dev.off()
 
-png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png")
 ggplot(df.new, aes(x = MAP1910, y = deltaT))+ geom_point()+ 
   stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
   theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")

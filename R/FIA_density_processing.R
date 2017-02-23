@@ -21,7 +21,11 @@ fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.v
 
 density.FIA.table <- fia.by.cell
 
+lowdens <- FIA.by.paleon[FIA.by.paleon$FIAdensity < 47,]
+summary(lowdens) # note there seems to be alot of density grid cells at 44.6...
+low.densm <- melt(lowdens, id.vars = c("x", "y", "cell", "plt_cn", "Var.5"))
 
+ggplot(low.densm, aes(value))+geom_histogram()+facet_wrap(~variable)
 summary(density.FIA.table$FIAdensity)
 hist(density.FIA.table$FIAdensity, breaks = 100)
 #coordinates(density.FIA.table) <- ~x +y

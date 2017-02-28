@@ -149,7 +149,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
-Table 1: PLS density GAM models
+Table 1: PLS density GAM models for stable sites
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
@@ -162,95 +162,94 @@ suppressMessages(library(ggplot2))
 #dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
-pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all 0 values for now
+
+pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+
+pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places
+dens.pr <- pls.new
 dens.pr <- pls.new
 
 # split into test and training datasets:
 Y <- dens.pr$PLSdensity
-msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
 #table(Y,msk)
 
 train <- dens.pr[msk,]
 test <- dens.pr[!msk,]
 
-#split FIA data into test and training datasets
-#Y <- fiadens$FIAdensity
-#msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
-#table(Y,msk)
+ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity))+geom_point()
+ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = PLSdensity))+geom_point()
 
-#trainf <- dens.pr[msk,]
-#testf <- dens.pr[!msk,]
-
-
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train, family = quasipoisson())
+# basic climate plots of data with only "stable forests/savannas"
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 
 
-PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train,family = quasipoisson())
+PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
 PLS.gam2L <- gam(PLSdensity ~ pasttmean , data = train)
 #summary(PLS.gam2) #explains 15.8% deviance
 #plot(PLS.gam2)
 
-PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP),data = train, family = quasipoisson())
+PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP),data = train)
 PLS.gam3L <- gam(PLSdensity ~ pastdeltaP,data = train)
 #summary(PLS.gam3) #explains 6.07% deviance
 
-PLS.gam4 <- gam(PLSdensity ~ s(deltaT), data = train, family = quasipoisson())
+PLS.gam4 <- gam(PLSdensity ~ s(deltaT), data = train)
 PLS.gam4L <- gam(PLSdensity ~ deltaT, data = train)
 #summary(PLS.gam4) #explains 6.07% deviance
 
-PLS.gam5 <- gam(PLSdensity ~ s(awc),data = train, family = quasipoisson())
+PLS.gam5 <- gam(PLSdensity ~ s(awc),data = train)
 PLS.gam5L <- gam(PLSdensity ~ awc, data = train)
 #summary(PLS.gam5) #explains 12.5% of deviance
 
-PLS.gam6 <- gam(PLSdensity ~ s(sandpct), data = train, family = quasipoisson())
+PLS.gam6 <- gam(PLSdensity ~ s(sandpct), data = train)
 PLS.gam6L <- gam(PLSdensity ~ sandpct, data = train)
 #summary(PLS.gam6) #explains 12.5% of deviance
 
 
 
-PLS.gam7 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) , data = train, family = quasipoisson())
+PLS.gam7 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) , data = train)
 PLS.gam7L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
-#summary(PLS.gam7) #explains 41% deviance
+summary(PLS.gam7) #explains 41% deviance
 #summary(PLS.gam7L) # explains 19.6%
 
-PLS.gam8 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train , family = quasipoisson())
+PLS.gam8 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
 PLS.gam8L <- gam(PLSdensity ~ awc + sandpct, data = train )
 #summary(PLS.gam8) #explains 28% of deviance
 
-PLS.gam9 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train, family = quasipoisson())
+PLS.gam9 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
 PLS.gam9L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
 #summary(PLS.gam9) #explains 39% deviance
 #summary(PLS.gam9L)
 #plot(PLS.gam6)
 
 
-PLS.gam10 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train, family = quasipoisson())
+PLS.gam10 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train)
 PLS.gam10L <- gam(PLSdensity ~ MAP1910 + pasttmean + awc, data = train)
 
 #summary(PLS.gam10) #explains 41.3% of deviance
 #plot(PLS.gam10)
 
-PLS.gam11 <- gam(PLSdensity ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = train, family = quasipoisson())
+PLS.gam11 <- gam(PLSdensity ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = train)
 PLS.gam11L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
 
 #summary(PLS.gam8) # explains 41% of deviance
-PLS.gam12 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train, family = quasipoisson())
+PLS.gam12 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
 PLS.gam12L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train, family = quasipoisson())
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train, family = quasipoisson())
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = train, family = quasipoisson(link="log"))
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = train)
 PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
-PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train, family = quasipoisson(link="log"))
+PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train)
 PLS.gam15L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
-PLS.gam16 <- gam(PLSdensity ~ s(PC1)  + s(PC2), data = train, family = quasipoisson(link="log"))
+PLS.gam16 <- gam(PLSdensity ~ s(PC1)  + s(PC2), data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 ,PLS.gam15, PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L,PLS.gam15L)
 
@@ -276,7 +275,7 @@ mean(predicted$sqerr, na.rm = TRUE)
 
 AIC.df$dev.expl <- 1
 
-#add prediction error of AIC dataframe
+#add prediction error & Deviance Explained to the AIC dataframe
 
 for (i in 1: length(AIC.df$model)){
 AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), test)
@@ -319,28 +318,28 @@ trainf <- fiadens[msk,]
 testf <- fiadens[!msk,]
 
 
-FIA.gam1 <-gam(log(FIAdensity) ~  s(MAP2011), data = trainf, family = quasipoisson())
+FIA.gam1 <-gam(FIAdensity ~  s(MAP2011), data = trainf)
 FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
 
 
-FIA.gam2 <- gam(FIAdensity ~ s(modtmean) , data = trainf,family = quasipoisson())
+FIA.gam2 <- gam(FIAdensity ~ s(modtmean) , data = trainf)
 FIA.gam2L <- gam(FIAdensity ~ modtmean , data = trainf)
 #summary(FIA.gam2) #explains 5.6% deviance
 #plot(FIA.gam2)
 
-FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP),data = trainf)
-FIA.gam3L <- gam(FIAdensity ~ moderndeltaP,data = trainf)
+FIA.gam3 <- gam(FIAdensity ~ s(moderndeltaP), data = trainf)
+FIA.gam3L <- gam(FIAdensity ~ moderndeltaP, data = trainf)
 #summary(FIA.gam3) #explains 6.07% deviance
 
 FIA.gam4 <- gam(FIAdensity ~ s(moddeltaT), data = trainf)
 FIA.gam4L <- gam(FIAdensity ~ moddeltaT, data = trainf)
 #summary(FIA.gam4) #explains 6.07% deviance
 
-FIA.gam5 <- gam(FIAdensity ~ s(awc),data = trainf, family = quasipoisson())
+FIA.gam5 <- gam(FIAdensity ~ s(awc),data = trainf)
 FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
 #summary(FIA.gam5) #explains 12.5% of deviance
 
-FIA.gam6 <- gam(FIAdensity ~ s(sandpct), data = trainf, family = quasipoisson())
+FIA.gam6 <- gam(FIAdensity ~ s(sandpct), data = trainf)
 FIA.gam6L <- gam(FIAdensity ~ sandpct, data = trainf)
 #summary(FIA.gam6) #explains 12.5% of deviance
 
@@ -351,40 +350,40 @@ FIA.gam7L <- gam(FIAdensity ~ modtmean + MAP2011 ,  data = trainf)
 #summary(FIA.gam7) #explains 41% deviance
 #summary(FIA.gam7L) # explains 19.6%
 
-FIA.gam8 <- gam(FIAdensity ~ s(awc) +s(sandpct), data = trainf , family = quasipoisson())
+FIA.gam8 <- gam(FIAdensity ~ s(awc) +s(sandpct), data = trainf )
 FIA.gam8L <- gam(FIAdensity ~ awc + sandpct, data = trainf )
 #summary(FIA.gam8) #explains 28% of deviance
 
-FIA.gam9 <- gam(FIAdensity ~ s(MAP2011) + s(modtmean) + s(sandpct), data = trainf, family = quasipoisson())
+FIA.gam9 <- gam(FIAdensity ~ s(MAP2011) + s(modtmean) + s(sandpct), data = trainf)
 FIA.gam9L <- gam(FIAdensity ~ MAP2011 + modtmean + sandpct, data = trainf)
 #summary(FIA.gam9) #explains 39% deviance
 #summary(FIA.gam9L)
 #plot(FIA.gam6)
 
 
-FIA.gam10 <- gam(FIAdensity ~ s(MAP2011) +s(modtmean) + s(awc), data = trainf, family = quasipoisson())
+FIA.gam10 <- gam(FIAdensity ~ s(MAP2011) +s(modtmean) + s(awc), data = trainf)
 FIA.gam10L <- gam(FIAdensity ~ MAP2011 + modtmean + awc, data = trainf)
 
 #summary(FIA.gam10) #explains 41.3% of deviance
 #plot(FIA.gam10)
 
-FIA.gam11 <- gam(FIAdensity ~ s(MAP2011)  +s(modtmean) +s(sandpct) + s(awc), data = trainf, family = quasipoisson())
+FIA.gam11 <- gam(FIAdensity ~ s(MAP2011)  +s(modtmean) +s(sandpct) + s(awc), data = trainf)
 FIA.gam11L <- gam(FIAdensity ~ MAP2011  + modtmean + sandpct + awc, data = trainf)
 
 #summary(FIA.gam8) # explains 41% of deviance
-FIA.gam12 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf, family = quasipoisson())
+FIA.gam12 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf)
 FIA.gam12L <- gam(FIAdensity ~ MAP2011  + modtmean + moderndeltaP, data = trainf)
 
-FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf, family = quasipoisson())
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainf)
 FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moderndeltaP, data = trainf)
 
-FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainf, family = quasipoisson())
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainf)
 FIA.gam13L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT, data = trainf)
 
 FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainf)
 FIA.gam14L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
 
-FIA.gam15 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainf, family = quasipoisson(link="log"))
+FIA.gam15 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainf)
 FIA.gam15L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
 
 FIA.gam16 <- gam(FIAdensity ~ s(PC1)  + s(PC2), data = trainf)
@@ -442,8 +441,10 @@ Additionally, the biplot for the Principal Components Analysis:
 
 ###Predicting Tree density (GAMs)
 
+The model with the lowest AIC value is represented by the formula:
+PLSdensity ~ s(MAP1910) + s(pasttmean) + s(deltaT) + s(pastdeltaP) + s(sandpct) + s(awc)
 
-# Supplemental GAM 14 figure:
+# Supplemental GAM 15 figure:
 ```{r, echo = FALSE, warning = FALSE}
 suppressMessages(library(maps))
 suppressMessages(library(sp))
@@ -460,37 +461,6 @@ cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 #map out 
 
 # plot the predicted response fields to these variables
-
-#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pasttmean', scale='response')
-#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pastdeltaP', scale='response')
-#visreg2d(PLS.gam11, xvar='MAP1910', yvar='deltaT', scale='response')
-
-map.pred.density <- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
-
-plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
-
-testdata$ypred <- ypred
-
-all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
-coordinates(states)<-~long+lat
-class(states)
-proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
-mapdata<-spTransform(states, CRS('+init=epsg:3175'))
-mapdata <- data.frame(mapdata)
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=testdata, aes(x=x, y=y, fill = ypred))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted tree density") + 
-  scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
-#outdata <- testdata
-}
-
 # make a function to extracted predictions from a model
 get.preds <- function(model, testdata){
 ypred <- predict(model, newdata = testdata, type="response")
@@ -521,21 +491,20 @@ mean(predicted$sqerr, na.rm = TRUE)
 
 
 
-# plot predicted vs. observed 
-ggplot(predicted, aes(PLSdensity,ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+# plot predicted vs. observed for PLS
+ggplot(predicted, aes(PLSdensity,ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 # plot FIA game predicted vs. observed
 
-predictedf <- get.preds(FIA.gam15L, testf)
+predictedf <- get.preds(FIA.gam15, testf)
 summary(predictedf$ypred)
 
 # plot predicted vs. observed 
-ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
+ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
 
-ggplot(predictedf, aes(PC1, PC2, color = ypred))+geom_point()
 
 ```
-The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Note that the predictions here are overall much lower than the observations
+The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Model fit has improved for the stable portions of the PLS landscape, and does an Okay job predicting PLS tree density. Note that the predictions here are overall much higher than the observations for FIA tree denisty. 
 
 ```{r, echo = FALSE, warning = FALSE}
 
@@ -543,12 +512,12 @@ The predicted vs. observed plot shows overestimation of PLS tree density in Low 
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted tree density from PLSgam.14") + 
+  labs(x="easting", y="northing", title="Predicted tree density from PLSgam.15") + 
   scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
 ```
 
-Mapping out predicted - observed for each grid cell in the test dataset. This  map also shows that the savannas are generally overestimated in terms of tree density, while the norther closed forests tend to be underestimated. 
+Mapping out predicted - observed for each grid cell in the test dataset. 
 
 ```{r, echo = FALSE,  warning = FALSE}
 
@@ -584,13 +553,12 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
   coord_equal()+theme_bw()
 ```
 
-When we compare the results from the above map to the map where PLS tree density is bimodal (according to Hartigan's diptest and bimodality coefficient), we see that the GAM model and the bimodality analysis converge on similar answers because the GAM model cannot predict the regions that are bimodal (have both savanna and forests) in PC1 climate space very well. 
 
-Specifically,the GAM model overestimates bimodal & stable savannas, slightly underestimates bimodal forests, and does okay at estimating some stable forests (boxplots & histograms).
+
 
 ```{r, echo = FALSE,  warning = FALSE}
 suppressMessages(library(modes))
-get.bimodal.5c <- function(data, binby, density){
+#get.bimodal.5c <- function(data, binby, density){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){
@@ -623,27 +591,34 @@ merged
   
 }
 
-test <- test[complete.cases(test),]
+#test <- test[complete.cases(test),]
 
-merged <- get.bimodal.5c(data = test, binby = "PC1bins", density = "PLSdensity")
-merged <- merge(merged, predicted[,c("x", "y", "ypred", "errordiscrete", "podiff")], by = c('x','y'))
+#merged <- get.bimodal.5c(data = test, binby = "PC1bins", density = "PLSdensity")
+#merged <- merge(merged, predicted[,c("x", "y", "ypred", "errordiscrete", "podiff")], by = c('x','y'))
 
 
-ggplot(merged, aes(x = bimodal, y = podiff))+geom_boxplot()+xlab("Predicted - Observed for different Bimodal regions")
+ggplot(predicted, aes(x = classification, y = podiff))+geom_boxplot()+xlab("Predicted - Observed for different Bimodal regions")
 
-#ggplot(merged, aes(x = errordiscrete))+geom_bar()+facet_grid(classification~., scales = 'free')
 
 
 #plot historgram sof the data
-ggplot(merged, aes(x = podiff, fill = classification)) + geom_vline( aes(xintercept=0), colour="red") +geom_histogram()+facet_grid(classification~., scales = 'free') + xlab("Predicted - Observed for different Bimodal regions")
+ggplot(predicted, aes(x = podiff, fill = classification)) + geom_vline( aes(xintercept=0), colour="red") +geom_histogram()+facet_grid(classification~., scales = 'free') + xlab("Predicted - Observed for different Bimodal regions")
 
 ```
 
+Plotting  the predicted - observed in climate doesnt show any obvious trends in model error.
 ```{r, echo = FALSE,  warning = FALSE}
 
 
 # plotting predicted - observed in different climate spaces
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE)
+```
+
+Model prediction overpredicts the low tree density places and underpredicts high tree density places, but there is a large number of points where predictions are close to observations.
+
+```{r, echo = FALSE,  warning = FALSE}
+ggplot() + geom_point(data = predicted, aes(x= PLSdensity, y = podiff, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 
+
 ```
 
 ## Looking at a model that includes soils as well:

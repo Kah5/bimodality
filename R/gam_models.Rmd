@@ -27,12 +27,9 @@ Generalized additive model: allows for non-linearities...
 
 Alternatively, we could us the classification scheme of savanna and forest; this isn't as great, but it would allow us to use a logistic model, and to model the probability of forest, rather than tree density.
 
-Model Selection/Cross Validation Options:
+### Can we predict the places that are unimodal/stable w.r.t PC1?
 
-* leave one out CV (for gam's, the GCV value is similar), it may not be feasible to do this for our # of data points
-* for now, we split into test and training 50/50
-* Use information criterion AIC (min)
-* Need to decide whether Model prediction should be on PLS density or on PLS classification (savanna vs. forest)?
+Here we model places in the PLS that are non-zero tree density and that were significantly bimodal in the bimodality analysis.
 
 ```{r, echo = FALSE}
 library(stargazer)
@@ -44,7 +41,11 @@ library(ggplot2)
 #dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
 #hist(dens.pr$PLSdensity, breaks = 50)
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
-pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all 0 values for now
+
+
+pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+
+pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places
 dens.pr <- pls.new
 
 ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity))+geom_point()
@@ -62,42 +63,11 @@ test <- dens.pr[!msk,]
 PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 summary(PLS.gam1) #explains 0.004% deviance
-#preds <- predict(PLS.gam1, newdata = test)
-#predsL <- predict(PLS.gam1L, newdata = test)
-#plot(preds, test$PLSdensity)
-#plot(predsL, test$PLSdensity)
-#plot(PLS.gam1)
-
-
-#test$preds <- preds
-#ggplot(test, aes(x = x, y = y, color = preds))+geom_point()+scale_color_gradient(low = "red", high="green")
-
-#plot(preds, test$PLSdensity, xlim = c(0,700), ylim=c(0,700))
-#test[is.na(test$preds),]$preds<- 0 
-
-#test$predeco <- 0
-#test[test$preds >=47,]$predeco <- "Forest"
-#test[test$preds <47,]$predeco <- "Savanna"
-#test[test$preds <0.5,]$predeco <- "prairie"
-
-#plot(test$MAP1910, preds) # plot predicted vs map function
-#plot(test$MAP1910, predsL)
-#plot(test$pasttmean, preds) # plot predicted vs past tmean function
-#plot(test$sandpct, preds) # plot precicted vs. sand function
-#test$po <- preds - test$PLSdensity
-#ggplot(test, aes(x = x, y = y, color = po))+geom_point()+scale_color_gradient(low = "red", high="green")
-
-#ggplot(test, aes(x = MAP1910, y = pasttmean, color = preds))+geom_point()+scale_color_gradient(low = "red", high="green")
-
-#ggplot(test, aes(x = x, y = y, color = predeco))+geom_point()
-
-
-#ggplot(test, aes(x = PLSdensity, y = preds, color = predeco)) + geom_point()
-
-#plot(train$MAP1910, train$PLSdensity)
-
-
-
+preds <- predict(PLS.gam1, newdata = test)
+predsL <- predict(PLS.gam1L, newdata = test)
+plot(preds, test$PLSdensity)
+plot(predsL, test$PLSdensity)
+plot(PLS.gam1)
 
 
 PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
@@ -109,8 +79,8 @@ PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP), data = train)
 PLS.gam3L <- gam(PLSdensity ~ pastdeltaP, data = train)
 #summary(PLS.gam3) #explains 6.07% deviance
 
-PLS.gam4 <- gam(PLSdensity ~ s(pastdeltaT), data = train)
-PLS.gam4L <- gam(PLSdensity ~ pastdeltaT, data = train)
+PLS.gam4 <- gam(PLSdensity ~ s(deltaT), data = train)
+PLS.gam4L <- gam(PLSdensity ~ deltaT, data = train)
 #summary(PLS.gam4) #explains 6.07% deviance
 
 PLS.gam5 <- gam(PLSdensity ~ s(awc), data = train)
@@ -155,11 +125,11 @@ PLS.gam12L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
 PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
 
-PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT), data = train)
-PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT, data = train)
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 
-PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaT) + s(pastdeltaP), data = train)
-PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaT + pastdeltaP, data = train)
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
+PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
 AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
 
@@ -303,38 +273,7 @@ Well, there are a couple of things to think about:
 3. most models overestimate density at low density regions and underestimate density in high denisty regions
 4. Many of the above AIC's are very similar, so the benefit of adding an additional term may be marginal.
 
-```{r}
-require(np)
-data(oecdpanel)
 
-dens.pr<- dens.pr[1:100,]
-# Compare predictive ability using five-fold CV
-nfolds <- nrow(dens.pr)
-case.folds <- rep(1:nfolds,length.out=nrow(dens.pr))
-    # divide the cases as evenly as possible
-case.folds <- sample(case.folds) # randomly permute the order
-#bandwidths <- (1:5)/10 # Evenly space bandwidths from 0.1 to 0.5
-fold.mses <- matrix(0,nrow=nfolds,ncol=1)
-#colnames(fold.mses) = as.character(bandwidths)
-   # By naming the columns, we'll won't have to keep track of which bandwidth
-   # is in which position
-for (fold in 1:nfolds) {
-  # What are the training cases and what are the test cases?
-  train <- dens.pr[case.folds!=fold,]
-  test <- dens.pr[case.folds==fold,]
-    # Fit to the training set
-    current.npr <- lm(PLSdensity ~ sandpct, data=train)
-    # Predict on the test set
-    predictions <- predict(current.npr, newdata=test)
-    # What's the mean-squared error?
-    fold.mses[fold,] <- mean((test$PLSdensity - predictions)^2)
-    # Using paste() here lets us access the column with the right name...
-  }
-
-# Average the MSEs
-head(fold.mses) 
-
-```
 
 
 ```{r, echo = FALSE}

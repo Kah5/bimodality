@@ -10,7 +10,7 @@ library(aspace)
 #read.csv("data/pointwise")
 
 ###need to make sure that the distances to trees are in meters
-
+as_radians <- function(deg) {(deg * pi) / (180)}
 final.data$TreeX1 <- final.data$PointX + cos(as_radians(final.data$az1))*final.data$dist1
 final.data$TreeY1 <- final.data$PointY + sin(as_radians(final.data$az1))*final.data$dist1
 final.data$TreeX2 <- final.data$PointX + cos(as_radians(final.data$az2))*final.data$dist2

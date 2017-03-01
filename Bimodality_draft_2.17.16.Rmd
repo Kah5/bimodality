@@ -287,6 +287,143 @@ pander(AIC.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.ce
 ```
 
 
+Table 1A: PLS denisty GAM models with log transformed PLSdensity as as the dependant variable
+```{r, echo = FALSE, warning = FALSE}
+
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
+
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+#dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+#hist(dens.pr$PLSdensity, breaks = 50)
+#dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+
+dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
+pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+
+pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all prairie places
+dens.pr <- pls.new
+dens.pr <- pls.new
+
+# split into test and training datasets:
+Y <- dens.pr$PLSdensity
+msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
+#table(Y,msk)
+
+trainlog <- dens.pr[msk,]
+testlog <- dens.pr[!msk,]
+
+ggplot(dens.pr, aes(x = MAP1910, y = log(PLSdensity)))+geom_point()
+ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = log(PLSdensity)))+geom_point()
+
+# basic climate plots of data with only "stable forests/savannas"
+PLS.log1 <-gam(log(PLSdensity) ~  s(MAP1910), data = trainlog)
+PLS.log1L <-gam(log(PLSdensity) ~  MAP1910, data = trainlog)
+
+
+PLS.log2 <- gam(log(PLSdensity) ~ s(pasttmean) , data = trainlog)
+PLS.log2L <- gam(log(PLSdensity) ~ pasttmean , data = trainlog)
+#summary(PLS.log2) #explains 15.8% deviance
+#plot(PLS.log2)
+
+PLS.log3 <- gam(log(PLSdensity) ~ s(pastdeltaP),data = trainlog)
+PLS.log3L <- gam(log(PLSdensity) ~ pastdeltaP,data = trainlog)
+#summary(PLS.log3) #explains 6.07% deviance
+
+PLS.log4 <- gam(log(PLSdensity) ~ s(deltaT), data = trainlog)
+PLS.log4L <- gam(log(PLSdensity) ~ deltaT, data = trainlog)
+#summary(PLS.log4) #explains 6.07% deviance
+
+PLS.log5 <- gam(log(PLSdensity) ~ s(awc),data = trainlog)
+PLS.log5L <- gam(log(PLSdensity) ~ awc, data = trainlog)
+#summary(PLS.log5) #explains 12.5% of deviance
+
+PLS.log6 <- gam(log(PLSdensity) ~ s(sandpct), data = trainlog)
+PLS.log6L <- gam(log(PLSdensity) ~ sandpct, data = trainlog)
+#summary(PLS.log6) #explains 12.5% of deviance
+
+
+
+PLS.log7 <- gam(log(PLSdensity) ~ s(pasttmean) + s(MAP1910) , data = trainlog)
+PLS.log7L <- gam(log(PLSdensity) ~ pasttmean + MAP1910 ,  data = trainlog)
+summary(PLS.log7) #explains 41% deviance
+#summary(PLS.log7L) # explains 19.6%
+
+PLS.log8 <- gam(log(PLSdensity) ~ s(awc) +s(sandpct), data = trainlog )
+PLS.log8L <- gam(log(PLSdensity) ~ awc + sandpct, data = trainlog )
+#summary(PLS.log8) #explains 28% of deviance
+
+PLS.log9 <- gam(log(PLSdensity) ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = trainlog)
+PLS.log9L <- gam(log(PLSdensity) ~ MAP1910 + pasttmean + sandpct, data = trainlog)
+#summary(PLS.log9) #explains 39% deviance
+#summary(PLS.log9L)
+#plot(PLS.log6)
+
+
+PLS.log10 <- gam(log(PLSdensity) ~ s(MAP1910) +s(pasttmean) + s(awc), data = trainlog)
+PLS.log10L <- gam(log(PLSdensity) ~ MAP1910 + pasttmean + awc, data = trainlog)
+
+#summary(PLS.log10) #explains 41.3% of deviance
+#plot(PLS.log10)
+
+PLS.log11 <- gam(log(PLSdensity) ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = trainlog)
+PLS.log11L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + sandpct + awc, data = trainlog)
+
+#summary(PLS.log8) # explains 41% of deviance
+PLS.log12 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = trainlog)
+PLS.log12L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + pastdeltaP, data = trainlog)
+
+PLS.log13 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = trainlog)
+PLS.log13L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + pastdeltaP, data = trainlog)
+
+PLS.log13 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = trainlog)
+PLS.log13L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT, data = trainlog)
+
+PLS.log14 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = trainlog)
+PLS.log14L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = trainlog)
+
+PLS.log15 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = trainlog)
+PLS.log15L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = trainlog)
+
+PLS.log16 <- gam(log(PLSdensity) ~ s(PC1)  + s(PC2), data = trainlog)
+
+AIClog.df<- AIC(PLS.log1, PLS.log2, PLS.log3, PLS.log4, PLS.log5, PLS.log6, PLS.log7, PLS.log8, PLS.log9,PLS.log10,PLS.log11,PLS.log12,PLS.log13,PLS.log14 ,PLS.log15, PLS.log1L, PLS.log2L, PLS.log3L, PLS.log4L, PLS.log5L, PLS.log6L, PLS.log7L, PLS.log8L, PLS.log9L, PLS.log10L,PLS.log11L,PLS.log12L,PLS.log13L,PLS.log14L,PLS.log15L)
+
+#AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIClog.df$formula <- c(PLS.log1$formula, PLS.log2$formula, PLS.log3$formula, PLS.log4$formula, PLS.log5$formula, PLS.log6$formula, PLS.log7$formula, PLS.log8$formula, PLS.log9$formula,PLS.log10$formula,PLS.log11$formula,PLS.log12$formula,PLS.log13$formula,PLS.log14$formula ,PLS.log15$formula , PLS.log1L$formula, PLS.log2L$formula, PLS.log3L$formula, PLS.log4L$formula, PLS.log5L$formula, PLS.log6L$formula, PLS.log7L$formula, PLS.log8L$formula, PLS.log9L$formula, PLS.log10L$formula,PLS.log11L$formula,PLS.log12L$formula,PLS.log13L$formula, PLS.log14L$formula, PLS.log15L$formula )
+
+AIClog.df<- AIClog.df[order(AIClog.df$AIC),]
+library(knitr)
+library(pander)
+AIClog.df$model <- rownames(AIClog.df)
+
+#calculate prediction error:
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (log(predicted$PLSdensity) - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIClog.df$dev.expl <- 1
+
+#add prediction error & Deviance Explained to the AIC dataframe
+
+for (i in 1: length(AIC.df$model)){
+AIClog.df[i,'MSPE'] <- msqe(get(AIClog.df[i,"model"]), testlog)
+AIClog.df[i,"dev.expl"] <- summary(get(AIClog.df[i,"model"]))$dev.expl * 100
+}
+
+pander(AIClog.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.cells = 30)
+
+```
+
 Table 2: FIA density GAM models
 ```{r, echo = FALSE, warning = FALSE}
 
@@ -492,7 +629,7 @@ mean(predicted$sqerr, na.rm = TRUE)
 
 
 # plot predicted vs. observed for PLS
-ggplot(predicted, aes(PLSdensity,ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS') + ylab('Predicted tree density') + xlab('Observed tree density')
+ggplot(predicted, aes(PLSdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 # plot FIA game predicted vs. observed
 

@@ -915,33 +915,32 @@ FIA models overpredict over the places that have low tree denisty. I think that 
 ```{r, echo = FALSE, warning = FALSE}
 
 # plotting predicted - observed in different climate spaces
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
+#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
 
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
+#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
 
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
+#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
 
-ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) 
+#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) 
 
-ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
+#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
 
 
 # histograms of soil variables
 
 
 # break up the dataset by sand % 
-predicted$sandgroup <- '59-88%'
-predicted[predicted$sandpct <59.04,]$sandgroup <- '29-59%'
-predicted[predicted$sandpct < 29.52,]$sandgroup <- '0-29%'
+#predicted$sandgroup <- '59-88%'
+#predicted[predicted$sandpct <59.04,]$sandgroup <- '29-59%'
+#predicted[predicted$sandpct < 29.52,]$sandgroup <- '0-29%'
 
 # plot the predicted - obs by bins of sand
-ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) +facet_grid(~sandgroup) + ggtitle('predicted-observed by sand%')
+#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) +facet_grid(~sandgroup) + ggtitle('predicted-observed by sand%')
 
 # plot the predicted by bins of sand
-ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ ggtitle ('predictions by sand %') + facet_grid(~sandgroup)
+#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ ggtitle ('predictions by sand %') + facet_grid(~sandgroup)
 
 ```
-
 
 
 ## Predicting Forest vs. Savanna (not density)

@@ -10,7 +10,7 @@ library(raster)
 version <- "1.6-5"
 
 #read in final.data from the step_one_clean_IN.r script:
-final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
+final.data <- read.csv(paste0("outputs/ndilin_lowerMI_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 # calculate stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
 
@@ -38,7 +38,7 @@ summary(stem.density)
 summary(basal.area)
 
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, paste0('outputs/IN_ILdensestimates_v',version,'.csv'))
+write.csv(stem.density, paste0('outputs/IN_IL_MIdensestimates_v',version,'.csv'))
 
 
 ## maximum Stem density estimates decreases when you remove trees below 8 cm veil line
@@ -66,7 +66,7 @@ summary(basal.area.v)
 
 # created a new function that calculates the canopy cover based on formulaiton of density in 
 # citation: Law et al. (1994): https://www.nrs.fs.fed.us/pubs/tb/tb2/techbrf2.html
-estimates.scc <- SCC(final.data, correction.factor, veil = TRUE)
+#estimates.scc <- SCC(final.data, correction.factor, veil = TRUE)
 
 
 base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
@@ -83,11 +83,11 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
 coordinates(final.data)<- ~PointX+PointY
 
 #create spatial object with density, basal area & diameters data
-stem.density <- SpatialPointsDataFrame(coordinates(final.data), 
-                                       data=data.frame(density = estimates[[1]],
-                                                       basal   = estimates[[2]],
-                                                       SCC = estimates.scc[[3]],
-                                                       diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54))
+stem.density <- data.frame(x = final.data$PointX, 
+                           y = final.data$PointY,
+                           density = estimates[[1]],
+                           basal   = estimates[[2]])#,
+                          #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
 
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))

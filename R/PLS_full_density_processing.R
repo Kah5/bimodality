@@ -44,12 +44,6 @@ densitys <- rbind(pls.inil, umdw.new)
 #coordinates(pls.inil)<- ~x+y
 
 # read in lower mi data
-so.mi <- readOGR(dsn = "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
-
-plot(so.mi)
-so.mi.df <- data.frame(so.mi)
-ggplot(so.mi.df, aes(x=coords.x1, y = coords.x2, color = "red"))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="LOWERMI data extent")+ theme_bw()+ coord_equal()
 #note that for some reason, 1 grid cell is duplicated
 nodups <- densitys[!duplicated(densitys$cell),] # remove dups
 dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
@@ -216,42 +210,6 @@ dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 
 summary(rowSums(dens.pr != 0, na.rm=TRUE))
 #dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
-
-
-
-PLS.lm<- lm(dens.pr$PLSdensity ~dens.pr$MAP1910)
-
-
-summary(PLS.lm)
-
-library(mgcv)
-#make gams 
-PLS.gam <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910  +dens.pr$pasttmean +dens.pr$sandpct + dens.pr$awc, method = "ML")
-summary(PLS.gam) # explains 41% of deviance
-
-PLS.gam1 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean+ dens.pr$sandpct, method = "ML")
-summary(PLS.gam1) #explains 39% deviance
-
-PLS.gam3 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 +dens.pr$pasttmean +dens.pr$awc , method = "ML")
-summary(PLS.gam3) #explains 41.3% of deviance
-
-PLS.gam4 <- gam(dens.pr$PLSdensity ~ dens.pr$awc , method = "ML")
-summary(PLS.gam4) #explains 12.5% of deviance
-
-PLS.gam5 <- gam(dens.pr$PLSdensity ~ dens.pr$awc +dens.pr$sandpct , method = "ML")
-summary(PLS.gam5) #explains 14.9% of deviance
-
-PLS.gam2 <- gam(dens.pr$PLSdensity ~ dens.pr$MAP1910 , method = "ML")
-summary(PLS.gam2) #explains 0.004% deviance
-
-PLS.gam6 <- gam(dens.pr$PLSdensity ~ dens.pr$pastdeltaP , method = "ML")
-summary(PLS.gam6) #explains 3.02% deviance
-
-PLSgam7 <- gam(PLSdensity ~ pasttmean , method = "ML", data = dens.pr)
-summary(PLSgam7) #explains 15.8% deviance
-plot(PLS.gam7, residuals = TRUE)
-
-
 
 library(ggExtra)
 library(ggplot2)
@@ -440,7 +398,61 @@ write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 # Read in CMIP 4 projections
 #############################################
 ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
+
+
+
 dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
+
+
+# for each rcp, we need to determine the places outside of the range of PLS climate:
+# function to find climate space outside of PLS range:
+
+find.noanalog<- function(dens.pr,rcp){
+ dens.pr[,c(paste0("rcp",rcp,"NA"))] <- "Within Range"
+# rcp 4.5
+prange <- range(dens.pr$MAP1910)
+trange <- range(dens.pr$pasttmean)
+pcvrange <- range(dens.pr$pastdeltaP)
+tcvrange <- range(dens.pr$deltaT)
+
+
+precip.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1] | dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
+pcv.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1] | dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
+temp.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] | dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
+tcv.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] | dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
+
+dens.pr[dens.pr$cell %in% precip.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+dens.pr[dens.pr$cell %in% temp.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+dens.pr[dens.pr$cell %in% tcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+dens.pr[dens.pr$cell %in% pcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+
+dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"))]
+
+}
+NArcp26 <- find.noanalog(dens.pr=dens.pr, rcp = "26")
+NArcp45 <- find.noanalog(dens.pr=dens.pr, rcp = "45")
+NArcp85 <- find.noanalog(dens.pr=dens.pr, rcp = "85")
+
+dens.pr <- merge(dens.pr, NArcp85, by = c("x", "y", "cell"))
+dens.pr <- merge(dens.pr, NArcp45, by = c("x", "y", "cell"))
+dens.pr <- merge(dens.pr, NArcp26, by = c("x", "y", "cell"))
+
+# maps for places where rcps predict no-analog climates for 2070:
+a <- ggplot(dens.pr, aes(x,y, color = rcp26NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw()+coord_equal()+theme_bw() + ggtitle("RCP 2.6")
+b <- ggplot(dens.pr, aes(x,y, color = rcp45NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 4.5")
+c <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 8.5")
+
+source("R/grid_arrange_shared_legend.R")
+png(height = 4, width = 9, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates.png")
+grid_arrange_shared_legend(a,b,c, nrow = 1, ncol = 3)
+dev.off()
+
 
 
 # predict PCA with the diffrent projections:
@@ -763,7 +775,7 @@ map.bimodal.5c <- function(data, binby, density){
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){

@@ -149,6 +149,22 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
+# Supplemental Figures:
+Additionally, the biplot for the Principal Components Analysis:
+![](outputs/v1.6-5/full/pca_biplot.png)
+
+
+
+# Climate space where the bimodality occurs: (3d plots):
+
+![](outputs/3d_1.png)
+![](outputs/3d_2.png)
+
+
+
+
+
+
 Table 1: PLS density GAM models for stable sites
 ```{r, echo = FALSE, warning = FALSE}
 
@@ -692,18 +708,6 @@ pander(AIClogf.df[,c("model", "formula", "AIC", "MSPE", 'dev.expl')], split.cell
 
 ```
 
-# Supplemental Figures:
-Additionally, the biplot for the Principal Components Analysis:
-![](outputs/v1.6-5/full/pca_biplot.png)
-
-
-
-# Climate space where the bimodality occurs: (3d plots):
-
-![](outputs/3d_1.png)
-![](outputs/3d_2.png)
-
-
 
 ###Predicting Tree density (GAMs)
 
@@ -726,6 +730,7 @@ mapdata <- data.frame(mapdata)
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 #map out 
 
+
 # plot the predicted response fields to these variables
 # make a function to extracted predictions from a model
 get.preds <- function(model, testdata){
@@ -736,51 +741,70 @@ testdata$ypred <- ypred
 testdata
 }
 
+# for the PLS:
 predicted <- get.preds(PLS.gam15, test)
 summary(predicted$ypred)
 
-#predicted <- get.preds(PLS.gam14L, test)
-#summary(predicted$ypred)
+# predictions for PLS modeled with log transformed density
+predictedlog <- get.preds(PLS.log15, testlog)
+predictedlog$ypred <- exp(predictedlog$ypred)
+summary(predictedlog$ypred)
 
 
-
-#calcuated the squared error for each prediction
-msqe<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
-  
-predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-
-
-# plot predicted vs. observed for PLS
-ggplot(predicted, aes(PLSdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS') + ylab('Predicted tree density') + xlab('Observed tree density')
-
-# plot FIA game predicted vs. observed
-
+# predictions for FIA
 predictedf <- get.preds(FIA.gam15, testf)
 summary(predictedf$ypred)
 
-# plot predicted vs. observed 
-ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
+# predictions for FIA with log transformed density
+predictedflog <- get.preds(FIA.log15, testflog)
+predictedflog$ypred <- exp(predictedflog$ypred)
+summary(predictedf$ypred)
 
+####################################
+# Plotting predicted vs. observed ##
+####################################
+
+# Define function to plot predicted vs. observed:
+pvsobs <- function(preds, obs, colorby, model ){
+# plot predicted vs. observed for PLS
+ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle(paste('Predicted vs. Observed', model)) + ylab('Predicted tree density') + xlab('Observed tree density')
+}
+
+# plot predicted vs. observed for PLS model 15
+pvsobs(preds = predicted, obs = 'PLSdensity', colorby = "PC1", model = "PLS density")
+
+# plot predicted vs. observed for log transformedPLS model 15
+pvsobs(preds = predictedlog, obs = 'PLSdensity', colorby = "PC1", model = "Log-Transformed PLS density")
+
+# plot FIA predicted vs. observed model 15
+pvsobs(preds = predictedf, obs = 'FIAdensity', colorby = "PC1", model = "FIA density")
+
+# plot FIA log transformed predicted vs. observed model 15
+pvsobs(preds = predictedflog, obs = 'FIAdensity', colorby = "PC1", model = "Log-Transformed FIA density")
 
 ```
 The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Model fit has improved for the stable portions of the PLS landscape, and does an Okay job predicting PLS tree density. Note that the predictions here are overall much higher than the observations for FIA tree denisty. 
 
+
+ # Map out predictions in space:
 ```{r, echo = FALSE, warning = FALSE}
 
-# plot the predicted tree denisty in the map
+# Creat a function to plot the predicted tree denisty in the map
+map.preds <- function(preds, model){
 ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
+  geom_raster(data=preds, aes(x=x, y=y, fill = ypred))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted tree density from PLSgam.15") + 
+  labs(x="easting", y="northing", title=paste("Predicted", model)) + 
   scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+  
+}
+
+map.preds(preds = predicted, model = "PLS denisty")
+map.preds(preds = predictedlog, model = "PLS log trans. denisty")
+map.preds(preds = predictedf, model = "FIA denisty")
+map.preds(preds = predictedflog, model = "FIA log trans. denisty")
+
 ```
 
 Mapping out predicted - observed for each grid cell in the test dataset. 
@@ -889,7 +913,7 @@ ggplot() + geom_point(data = predicted, aes(x= PLSdensity, y = podiff, color = e
 
 
 
-# Supplemental PLS density model fit figures:
+# Model fit for log transformed PLS density:
 ```{r, echo = FALSE, warning = FALSE}
 suppressMessages(library(maps))
 suppressMessages(library(sp))
@@ -939,7 +963,48 @@ ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_
 
 ```
 
+# Model fit for log transformed FIA density
+```{r, echo = FALSE, warning = FALSE}
+suppressMessages(library(maps))
+suppressMessages(library(sp))
+suppressMessages(library(rgeos))
+suppressMessages(library(visreg))
 
+
+# plot the predicted response fields to these variables
+# use the get.preds function to get the predictions
+
+predictedflog <- get.preds(FIA.log15, testflog)
+predictedflog$ypred <- exp(predictedflog$ypred) # convert predicitons back to raw density
+summary(predictedflog$ypred)
+
+
+#calcuated the squared error for each prediction
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+
+
+# plot predicted vs. observed for PLS
+ggplot(predictedflog, aes(FIAdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS with log transformation') + ylab('Predicted tree density') + xlab('Observed tree density')
+
+# plot FIA game predicted vs. observed
+
+predictedf <- get.preds(FIA.gam15, testf)
+summary(predictedf$ypred)
+
+# plot predicted vs. observed 
+ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
+
+
+```
 Here we plot the predicted vs. observed for the FIA this model:
 ```{r, echo = FALSE, warning = FALSE}
 predictedf <- get.preds(FIA.gam14, testf)

@@ -876,194 +876,41 @@ class.plots(preds = predictedflog, obs = "FIAdensity", class = 'fiaecotype')
 
 ```
 
-Plotting  the predicted - observed in climate doesnt show any obvious trends in model error.
-```{r, echo = FALSE,  warning = FALSE}
-
-
-# plotting predicted - observed in different climate spaces
-ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE)
-```
-
-Model prediction overpredicts the low tree density places and underpredicts high tree density places, but there is a large number of points where predictions are close to observations.
+# Plot predicted - obs against density:
 
 ```{r, echo = FALSE,  warning = FALSE}
-ggplot() + geom_point(data = predicted, aes(x= PLSdensity, y = podiff, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE) 
 
-```
-
-
-
-# Model fit for log transformed PLS density:
-```{r, echo = FALSE, warning = FALSE}
-suppressMessages(library(maps))
-suppressMessages(library(sp))
-suppressMessages(library(rgeos))
-suppressMessages(library(visreg))
-
-
-# plot the predicted response fields to these variables
-# make a function to extracted predictions from a model
-get.preds <- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-
-testdata$ypred <- ypred
-
-testdata
-}
-
-predicted <- get.preds(PLS.log15, test)
-predicted$ypred <- exp(predicted$ypred) # convert predicitons back to raw density
-summary(predicted$ypred)
-
-
-#calcuated the squared error for each prediction
-msqe<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
+plot.po.dens <- function(preds, obs, model){
+preds$podiff <- preds[,'ypred'] - preds[,obs]
+Sd = rep(0,length(preds$podiff))
+  Sd[which(preds$podiff>0 & preds$podiff<=10)] = 1
+  Sd[which(preds$podiff>10 & preds$podiff<=50)] = 2
   
-predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-
-
-# plot predicted vs. observed for PLS
-ggplot(predicted, aes(PLSdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS with log transformation') + ylab('Predicted tree density') + xlab('Observed tree density')
-
-# plot FIA game predicted vs. observed
-
-predictedf <- get.preds(FIA.gam15, testf)
-summary(predictedf$ypred)
-
-# plot predicted vs. observed 
-ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
-
-
-```
-
-# Model fit for log transformed FIA density
-```{r, echo = FALSE, warning = FALSE}
-suppressMessages(library(maps))
-suppressMessages(library(sp))
-suppressMessages(library(rgeos))
-suppressMessages(library(visreg))
-
-
-# plot the predicted response fields to these variables
-# use the get.preds function to get the predictions
-
-predictedflog <- get.preds(FIA.log15, testflog)
-predictedflog$ypred <- exp(predictedflog$ypred) # convert predicitons back to raw density
-summary(predictedflog$ypred)
-
-
-#calcuated the squared error for each prediction
-msqe<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
+  Sd[which(preds$podiff>50 & preds$podiff<=100)] = 3
+  Sd[which(preds$podiff>100) ] = 4
+  Sd[which(preds$podiff== 0)] = 0
+   Sd[which(preds$podiff>=-10 & preds$podiff<0)] = -1
+  Sd[which(preds$podiff>-50 & preds$podiff<=-10)] = -2
   
-predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-
-
-# plot predicted vs. observed for PLS
-ggplot(predictedflog, aes(FIAdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS with log transformation') + ylab('Predicted tree density') + xlab('Observed tree density')
-
-# plot FIA game predicted vs. observed
-
-predictedf <- get.preds(FIA.gam15, testf)
-summary(predictedf$ypred)
-
-# plot predicted vs. observed 
-ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
-
-
-```
-Here we plot the predicted vs. observed for the FIA this model:
-```{r, echo = FALSE, warning = FALSE}
-predictedf <- get.preds(FIA.gam14, testf)
-#summary(predicted)
-# calculate predicted - observed
-predictedf$podiff <- predicted$ypred - predicted$FIAdensity
-
-Sd = rep(0,length(predictedf$podiff))
-  Sd[which(predictedf$podiff>0 & predictedf$podiff<=10)] = 1
-  Sd[which(predictedf$podiff>10 & predictedf$podiff<=50)] = 2
-  
-  Sd[which(predictedf$podiff>50 & predictedf$podiff<=100)] = 3
-  Sd[which(predictedf$podiff>100) ] = 4
-  Sd[which(predictedf$podiff== 0)] = 0
-   Sd[which(predictedf$podiff>=-10 & predictedf$podiff<0)] = -1
-  Sd[which(predictedf$podiff>-50 & predictedf$podiff<=-10)] = -2
-  
-  Sd[which(predictedf$podiff> -100 & predictedf$podiff<=-50)] = -3
-  Sd[which(predictedf$podiff< -100) ] = -4
+  Sd[which(preds$podiff> -100 & preds$podiff<=-50)] = -3
+  Sd[which(preds$podiff< -100) ] = -4
   Sd = factor(Sd,levels=-4:4)
   levels(Sd) = c(">-100","(-100,-50]","(-50, -10]","(-10,0]",'0','(0,10]','(10,50]','(50, 100]','(100,200]')
   
-  predictedf$errordiscrete <- Sd
+  preds$errordiscrete <- Sd
   
  gs.pal <- colorRampPalette(brewer.pal(11,"PRGn"))
 
+ggplot() + geom_point(data = preds, aes(x= preds[,obs], y = podiff, color = errordiscrete)) +scale_color_manual(values=gs.pal(9),name = "Pred-Obs",drop=FALSE)+ theme_bw() + xlab("Tree density")+ ylab("Predicted - Observed") + ggtitle(paste("Predicted - obs. vs.", model))
+}
 
-# map out predicted - observed using discrete scale
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=predictedf, aes(x=x, y=y, fill = errordiscrete))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted - Obs from Model 14") +scale_fill_manual(values=gs.pal(9),drop=FALSE) +
-  coord_equal()+theme_bw()
-
-
-ggplot(predictedf, aes(FIAdensity, podiff, color = errordiscrete)) +geom_point() + theme_bw()+ ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
-
+plot.po.dens(predicted, "PLSdensity", model = "PLS density")
+plot.po.dens(predictedlog, "PLSdensity", model = "PLS log trans. density")
+plot.po.dens(predictedf, "FIAdensity", model = "FIA density")
+plot.po.dens(predictedflog, "FIAdensity", model = "FIA log trans.")
 ```
+FIA models overpredict over the places that have low tree denisty. I think that if we remove the low denisty places, we might be able to better predict. 
 
-This model also overestimates the low tree density regions and underestimates the high tree density regions. 
-
-```{r, echo = FALSE, warning = FALSE}
-
-# plot the predicted tree denisty in the map
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Predicted tree density from Model 11") + 
-  scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
-
-
-# calculate predicted - observed
-predicted$podiff <- predicted$ypred - predicted$PLSdensity
-Sd = rep(0,length(predicted$podiff))
-  Sd[which(predicted$podiff>0 & predicted$podiff<=10)] = 1
-  Sd[which(predicted$podiff>10 & predicted$podiff<=50)] = 2
-  
-  Sd[which(predicted$podiff>50 & predicted$podiff<=100)] = 3
-  Sd[which(predicted$podiff>100) ] = 4
-  Sd[which(predicted$podiff== 0)] = 0
-   Sd[which(predicted$podiff>=-10 & predicted$podiff<0)] = -1
-  Sd[which(predicted$podiff>-50 & predicted$podiff<=-10)] = -2
-  
-  Sd[which(predicted$podiff> -100 & predicted$podiff<=-50)] = -3
-  Sd[which(predicted$podiff< -100) ] = -4
-  Sd = factor(Sd,levels=-4:4)
-  levels(Sd) = c(">-100","(-100,-50]","(-50, -10]","(-10,0]",'0','(0,10]','(10,50]','(50, 100]','(100,200]')
-  
-  predicted$errordiscrete <- Sd
-  
- gs.pal <- colorRampPalette(brewer.pal(11,"PRGn"))
- 
-  ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+geom_raster(data = predicted, aes(x=x, y=y,fill=errordiscrete))+
-    scale_fill_manual(values=gs.pal(9),drop=FALSE) + theme_bw() +
-    geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ggtitle("Predicted - Obs. discrete scale") + coord_equal() 
-```
-This model also underestimates the northern WI & UP forests, and overstimates many regions in the prairie/savanna.
-So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. It just appears that the prairie regions are being over estimated, but the forest regions are being underestimated.
 
 ```{r, echo = FALSE, warning = FALSE}
 
@@ -1092,7 +939,6 @@ ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = e
 
 # plot the predicted by bins of sand
 ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ ggtitle ('predictions by sand %') + facet_grid(~sandgroup)
-
 
 ```
 

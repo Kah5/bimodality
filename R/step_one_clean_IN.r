@@ -44,11 +44,10 @@ il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
+lowermi <- readOGR(dsn= "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
 
-#coordinates(il) <- ~x+y
-#X11(width = 12)
-#spplot(il, "chainstree")
-
+lowermi <- data.frame(lowermi)
+ggplot(lowermi, aes(coords.x1, coords.x2, color = diam1)) + geom_point()
 #take out all original data with L3_tree1 = No data. Simon does this at the end
 
 
@@ -430,5 +429,15 @@ summary(final.data)
 #final.data <- final.data[!is.na(final.data$PointX),]
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
 
+
+#read in lower mi final data from step.one.clean.bind_lowerMI.R
+final.lower <- read.csv("data/lower_mi_final_data.csv")
+
+final.lower <- final.lower[,2:21]
+final.data <- final.data[,1:20]
+
+full.final <- rbind(final.lower, final.data)
+
+ggplot(full.final, aes(PointX, PointY, color = "diam1"))+geom_point()
 #write the data as a csv
-write.csv(final.data, paste0("outputs/ndilinpls_for_density_v",version,".csv"))
+write.csv(full.final, paste0("outputs/ndilin_lowerMI_pls_for_density_v",version,".csv"))

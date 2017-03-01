@@ -383,14 +383,14 @@ corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
 
 inil$cornertype <- paste0(corner, inil$state)
 
-Pair <- inil$cornertype
-corr.factor <- read.csv('data//charlie_corrections.csv')
-test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
-colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
-require(plyr)
-corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
+#Pair <- inil$cornertype
+#corr.factor <- read.csv('data//charlie_corrections.csv')
+#test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
+#colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
+#require(plyr)
+#corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
-write.csv(corrections, 'data/correction_factors.csv')
+#write.csv(corrections, 'data/correction_factors.csv')
 # create correction factors based on corner types
 
 #These are the columns for the final dataset.
@@ -437,6 +437,17 @@ final.lower <- final.lower[,2:21]
 final.data <- final.data[,1:20]
 
 full.final <- rbind(final.lower, final.data)
+
+# write the correction factors to a file for reference
+Pair <- full.final$corner
+corr.factor <- read.csv('data//charlie_corrections.csv')
+test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
+colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
+require(plyr)
+corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
+
+write.csv(corrections, 'data/correction_factors.csv')
+
 
 ggplot(full.final, aes(PointX, PointY, color = "diam1"))+geom_point()
 #write the data as a csv

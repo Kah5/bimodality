@@ -98,6 +98,7 @@ avgs.df <- data.frame(x = pr.rcp26$x,
                       pr.rcp85[,3:4],
                       t.rcp26[,3:4],
                       t.rcp45[,3:4],
+                      t.rcp60[,3:4],
                       t.rcp85[,3:4])
 
 write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/CCSM4pr_t_2070_full.csv")

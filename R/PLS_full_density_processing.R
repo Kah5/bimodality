@@ -432,8 +432,10 @@ dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"))]
 NArcp26 <- find.noanalog(dens.pr=dens.pr, rcp = "26")
 NArcp45 <- find.noanalog(dens.pr=dens.pr, rcp = "45")
 NArcp85 <- find.noanalog(dens.pr=dens.pr, rcp = "85")
+NArcp60 <- find.noanalog(dens.pr = dens.pr, rcp = "60")
 
 dens.pr <- merge(dens.pr, NArcp85, by = c("x", "y", "cell"))
+dens.pr <- merge(dens.pr, NArcp60, by = c("x", "y", "cell"))
 dens.pr <- merge(dens.pr, NArcp45, by = c("x", "y", "cell"))
 dens.pr <- merge(dens.pr, NArcp26, by = c("x", "y", "cell"))
 
@@ -444,13 +446,16 @@ a <- ggplot(dens.pr, aes(x,y, color = rcp26NA))+geom_point()+geom_polygon(data =
 b <- ggplot(dens.pr, aes(x,y, color = rcp45NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 4.5")
-c <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+c <- ggplot(dens.pr, aes(x,y, color = rcp60NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 6.0")
+d <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 8.5")
-
 source("R/grid_arrange_shared_legend.R")
-png(height = 4, width = 9, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates.png")
-grid_arrange_shared_legend(a,b,c, nrow = 1, ncol = 3)
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates.png")
+grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
 dev.off()
 
 
@@ -481,6 +486,7 @@ dens.pr
 
 dens.pr <- predict.PCA("26")
 dens.pr <- predict.PCA("45")
+dens.pr <- predict.PCA("60")
 dens.pr <- predict.PCA("85")
 
 #################################################################################################

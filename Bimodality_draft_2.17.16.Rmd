@@ -621,19 +621,44 @@ ggplot() + geom_point(data = predicted, aes(x= PLSdensity, y = podiff, color = e
 
 ```
 
-## Looking at a model that includes soils as well:
 
-Since PLS.GAM14 included terms only relating to climate and climate seasonality, we can look another model with a low AIC, but that includes soil parameters to see if soils impact prediction of PLS tree density in an ecologically meaningful way. 
-The next closest model is PLS.gam11:
 
-PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct) + s(awc)
-
-Here we plot the predicted vs. observed of for this model:
+Here we plot the predicted vs. observed fore the FIA this model:
 ```{r, echo = FALSE, warning = FALSE}
-predicted <- get.preds(FIA.gam16, testf)
+predictedf <- get.preds(FIA.gam14, testf)
 #summary(predicted)
+# calculate predicted - observed
+predictedf$podiff <- predicted$ypred - predicted$FIAdensity
 
-ggplot(predicted, aes(FIAdensity, ypred, color = MAP1910)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+Sd = rep(0,length(predictedf$podiff))
+  Sd[which(predictedf$podiff>0 & predictedf$podiff<=10)] = 1
+  Sd[which(predictedf$podiff>10 & predictedf$podiff<=50)] = 2
+  
+  Sd[which(predictedf$podiff>50 & predictedf$podiff<=100)] = 3
+  Sd[which(predictedf$podiff>100) ] = 4
+  Sd[which(predictedf$podiff== 0)] = 0
+   Sd[which(predictedf$podiff>=-10 & predictedf$podiff<0)] = -1
+  Sd[which(predictedf$podiff>-50 & predictedf$podiff<=-10)] = -2
+  
+  Sd[which(predictedf$podiff> -100 & predictedf$podiff<=-50)] = -3
+  Sd[which(predictedf$podiff< -100) ] = -4
+  Sd = factor(Sd,levels=-4:4)
+  levels(Sd) = c(">-100","(-100,-50]","(-50, -10]","(-10,0]",'0','(0,10]','(10,50]','(50, 100]','(100,200]')
+  
+  predictedf$errordiscrete <- Sd
+  
+ gs.pal <- colorRampPalette(brewer.pal(11,"PRGn"))
+
+
+# map out predicted - observed using discrete scale
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=predictedf, aes(x=x, y=y, fill = errordiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Predicted - Obs from Model 14") +scale_fill_manual(values=gs.pal(9),drop=FALSE) +
+  coord_equal()+theme_bw()
+
+
+ggplot(predictedf, aes(FIAdensity, podiff, color = errordiscrete)) +geom_point() + theme_bw()+ ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
 
 ```
 

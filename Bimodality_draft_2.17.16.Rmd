@@ -563,6 +563,135 @@ pander(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```
 
+
+Table 2A: FIA density GAM models modeled with log transformation of FIA density
+```{r, echo = FALSE, warning = FALSE}
+
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
+
+
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+
+
+#split FIA data into test and trainfing datasets
+Y <- fiadens$FIAdensity
+msk <- sample.split( Y, SplitRatio = 1/4, group = fiadens$fiaecotype )
+#table(Y,msk)
+
+trainflog <- fiadens[msk,]
+testflog <- fiadens[!msk,]
+
+
+FIA.log1 <-gam(log(FIAdensity) ~  s(MAP2011), data = trainflog)
+FIA.log1L <-gam(log(FIAdensity) ~  MAP2011, data = trainflog)
+
+
+FIA.log2 <- gam(log(FIAdensity) ~ s(modtmean) , data = trainflog)
+FIA.log2L <- gam(log(FIAdensity) ~ modtmean , data = trainflog)
+#summary(FIA.log2) #explains 5.6% deviance
+#plot(FIA.log2)
+
+FIA.log3 <- gam(log(FIAdensity) ~ s(moderndeltaP), data = trainflog)
+FIA.log3L <- gam(log(FIAdensity) ~ moderndeltaP, data = trainflog)
+#summary(FIA.log3) #explains 6.07% deviance
+
+FIA.log4 <- gam(log(FIAdensity) ~ s(moddeltaT), data = trainflog)
+FIA.log4L <- gam(log(FIAdensity) ~ moddeltaT, data = trainflog)
+#summary(FIA.log4) #explains 6.07% deviance
+
+FIA.log5 <- gam(log(FIAdensity) ~ s(awc),data = trainflog)
+FIA.log5L <- gam(log(FIAdensity) ~ awc, data = trainflog)
+#summary(FIA.log5) #explains 12.5% of deviance
+
+FIA.log6 <- gam(log(FIAdensity) ~ s(sandpct), data = trainflog)
+FIA.log6L <- gam(log(FIAdensity) ~ sandpct, data = trainflog)
+#summary(FIA.log6) #explains 12.5% of deviance
+
+
+
+FIA.log7 <- gam(log(FIAdensity) ~ s(modtmean) + s(MAP2011) , data = trainflog)
+FIA.log7L <- gam(log(FIAdensity) ~ modtmean + MAP2011 ,  data = trainflog)
+#summary(FIA.log7) #explains 41% deviance
+#summary(FIA.log7L) # explains 19.6%
+
+FIA.log8 <- gam(log(FIAdensity) ~ s(awc) +s(sandpct), data = trainflog )
+FIA.log8L <- gam(log(FIAdensity) ~ awc + sandpct, data = trainflog )
+#summary(FIA.log8) #explains 28% of deviance
+
+FIA.log9 <- gam(log(FIAdensity) ~ s(MAP2011) + s(modtmean) + s(sandpct), data = trainflog)
+FIA.log9L <- gam(log(FIAdensity) ~ MAP2011 + modtmean + sandpct, data = trainflog)
+#summary(FIA.log9) #explains 39% deviance
+#summary(FIA.log9L)
+#plot(FIA.log6)
+
+
+FIA.log10 <- gam(log(FIAdensity) ~ s(MAP2011) +s(modtmean) + s(awc), data = trainflog)
+FIA.log10L <- gam(log(FIAdensity) ~ MAP2011 + modtmean + awc, data = trainflog)
+
+#summary(FIA.log10) #explains 41.3% of deviance
+#plot(FIA.log10)
+
+FIA.log11 <- gam(log(FIAdensity) ~ s(MAP2011)  +s(modtmean) +s(sandpct) + s(awc), data = trainflog)
+FIA.log11L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + sandpct + awc, data = trainflog)
+
+#summary(FIA.log8) # explains 41% of deviance
+FIA.log12 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainflog)
+FIA.log12L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moderndeltaP, data = trainflog)
+
+FIA.log13 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainflog)
+FIA.log13L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moderndeltaP, data = trainflog)
+
+FIA.log13 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainflog)
+FIA.log13L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT, data = trainflog)
+
+FIA.log14 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainflog)
+FIA.log14L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainflog)
+
+FIA.log15 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainflog)
+FIA.log15L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainflog)
+
+FIA.log16 <- gam(log(FIAdensity) ~ s(PC1)  + s(PC2), data = trainflog)
+FIA.log16L <- gam(log(FIAdensity) ~ PC1 + PC2, data = trainflog)
+
+AIClogf.df<- AIC(FIA.log1, FIA.log2, FIA.log3, FIA.log4, FIA.log5, FIA.log6, FIA.log7, FIA.log8, FIA.log9,FIA.log10,FIA.log11,FIA.log12,FIA.log13,FIA.log14 ,FIA.log15,FIA.log16, FIA.log1L, FIA.log2L, FIA.log3L, FIA.log4L, FIA.log5L, FIA.log6L, FIA.log7L, FIA.log8L, FIA.log9L, FIA.log10L,FIA.log11L,FIA.log12L,FIA.log13L,FIA.log14L,FIA.log15L, FIA.log16L)
+
+#AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIClogf.df$formula <- c(FIA.log1$formula, FIA.log2$formula, FIA.log3$formula, FIA.log4$formula, FIA.log5$formula, FIA.log6$formula, FIA.log7$formula, FIA.log8$formula, FIA.log9$formula,FIA.log10$formula,FIA.log11$formula,FIA.log12$formula,FIA.log13$formula,FIA.log14$formula ,FIA.log15$formula , FIA.log16L$formula, FIA.log1L$formula, FIA.log2L$formula, FIA.log3L$formula, FIA.log4L$formula, FIA.log5L$formula, FIA.log6L$formula, FIA.log7L$formula, FIA.log8L$formula, FIA.log9L$formula, FIA.log10L$formula,FIA.log11L$formula,FIA.log12L$formula,FIA.log13L$formula, FIA.log14L$formula, FIA.log15L$formula, FIA.log16L$formula )
+
+AIClogf.df<- AICf.df[order(AICf.df$AIC),]
+library(knitr)
+library(pander)
+AIClogf.df$model <- as.character(rownames(AIClogf.df))
+
+#calculate prediction error:
+msqe.f<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$FIAdensity - exp(predicted$ypred))^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIClogf.df$MSPE <- 1
+AIClogf.df$dev.expl <- 1
+
+#add prediction error of AIC dataframe
+
+for (i in 1: length(AIClogf.df$model)){
+AIClogf.df[i,'MSPE'] <- msqe.f(get(AIClogf.df[i,"model"]), testflog)
+AIClogf.df[i,"dev.expl"] <- summary(get(AIClogf.df[i,"model"]))$dev.expl * 100
+}
+
+#print(AICf.df)
+pander(AIClogf.df[,c("model", "formula", "AIC", "MSPE", 'dev.expl')], split.cells = 30)
+
+```
+
 # Supplemental Figures:
 Additionally, the biplot for the Principal Components Analysis:
 ![](outputs/v1.6-5/full/pca_biplot.png)
@@ -581,7 +710,7 @@ Additionally, the biplot for the Principal Components Analysis:
 The model with the lowest AIC value is represented by the formula:
 PLSdensity ~ s(MAP1910) + s(pasttmean) + s(deltaT) + s(pastdeltaP) + s(sandpct) + s(awc)
 
-# Supplemental GAM 15 figure:
+# Supplemental PLS density model fit figures:
 ```{r, echo = FALSE, warning = FALSE}
 suppressMessages(library(maps))
 suppressMessages(library(sp))
@@ -760,7 +889,58 @@ ggplot() + geom_point(data = predicted, aes(x= PLSdensity, y = podiff, color = e
 
 
 
-Here we plot the predicted vs. observed fore the FIA this model:
+# Supplemental PLS density model fit figures:
+```{r, echo = FALSE, warning = FALSE}
+suppressMessages(library(maps))
+suppressMessages(library(sp))
+suppressMessages(library(rgeos))
+suppressMessages(library(visreg))
+
+
+# plot the predicted response fields to these variables
+# make a function to extracted predictions from a model
+get.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+
+testdata$ypred <- ypred
+
+testdata
+}
+
+predicted <- get.preds(PLS.log15, test)
+predicted$ypred <- exp(predicted$ypred) # convert predicitons back to raw density
+summary(predicted$ypred)
+
+
+#calcuated the squared error for each prediction
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+
+
+# plot predicted vs. observed for PLS
+ggplot(predicted, aes(PLSdensity, ypred, color = PC1)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed PLS with log transformation') + ylab('Predicted tree density') + xlab('Observed tree density')
+
+# plot FIA game predicted vs. observed
+
+predictedf <- get.preds(FIA.gam15, testf)
+summary(predictedf$ypred)
+
+# plot predicted vs. observed 
+ggplot(predictedf, aes(FIAdensity, ypred, color = ypred)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed FIA') + ylab('Predicted tree density') + xlab('Observed tree density for FIA')
+
+
+```
+
+
+Here we plot the predicted vs. observed for the FIA this model:
 ```{r, echo = FALSE, warning = FALSE}
 predictedf <- get.preds(FIA.gam14, testf)
 #summary(predicted)

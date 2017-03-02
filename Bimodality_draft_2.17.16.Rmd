@@ -150,8 +150,13 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
+But alot of the climate space is projected to fall within no analog climates:
+
+![](outputs/v1.6-5/full/RCP_scenario_PC1_noanalog_maps.png)
+
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
+
 
 # Supplemental Figures:
 Additionally, the biplot for the Principal Components Analysis:

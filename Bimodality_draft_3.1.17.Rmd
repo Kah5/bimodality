@@ -99,7 +99,7 @@ We then identified the climate space (within PC1) that was bimodal in the PLS ti
 The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha). Therefore, we do not see a signifcant bimodality with low and high tree denisty models on the modern landscape. This shift in tree density is well explained by the original vegetation. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = XXXX, p < 0.05, Figure 2). 
   In the past, grid cells with low tree denisty were comprised of mostly Oak and Hickory species. However, grid cells on the modern landscape with low species density generally have mixed species composition of mixed or single species hardwoods. Most low density FIA grid cells are not dominated by Oak or Hickory species, representing a shift in species composition that accompanied the shift in tree denisty.   
 
-*PCA (supplemental material??)* 
+*PCA (supplemental material)* 
 
 Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) explains 29% of the variance. Past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality and precipitation seasonality index both have negative loadings fro PC1. Sand has the strongest negative loading and AWC has strongest positive loading on PC2. Plotting density/vegetatation type in Principal component space does not separate vegeatation into savanna, prairie, and forest.  
 
@@ -135,14 +135,6 @@ Using our new understanding of the the climate space where forests are bimodal (
   
 
 
-## Discussion outline:
-* Support our hypothesis that tree density is not well explained by climate and edapic factors, and tree density was bimodal in the past
-* projected climate-vegeation relationsihp for the modern climate would suggest only small changes in the stability of the regional savannas and forests. However, tree density is no longer bimodal on the modern landscape, suggesting an unexpected shift towards mostly stable forests. 
-* However tree density is not well constrained by climate/soils on the modern landscape either.
-  - effects of logging and land use has decreased density of forests in the cool, wet northern regions
-  - tree density is lagging behind climatic shifts & fire suppression? (Rhemtulla CITE)
-  - tree density on the modern landscape has increased overall and is not as limited by climate as it was previously (perhaps due to a CO2 fertilization effect)
-  -While several grid cells on the modern landscape have low tree density below the cutoff for savanna ecosystems (<47 trees/ha), the distribution in tree density overall and for the low tree density sites is still unimodal. Additionally, much of the grid cells that would now be classified as "savanna" lie within historically stable forest regions. This suggests that these forests had previously be logged or deforested for agricultural use, or have recently been affected by wind/insect forest disturbance processes(Sheleeweis et al. 2013, CITE). 
 
 
 ##Figures:
@@ -154,7 +146,7 @@ Using our new understanding of the the climate space where forests are bimodal (
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
 
 # Figure 2: Change in tree density between the modern and historic vegetation depends on original vegetation density.
-![](outputs/v1.6/density_difference_plot.png)
+![](outputs/v1.6-5/density_difference_plot.png)
 
 # Figure 3:
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
@@ -168,6 +160,9 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 # Figure 4a: with updated color schemes
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
+
+Also several places were no analog climates w.r.t. the PLS climate:
+![](outputs/v1.6-5/full/RCP_scenario_PC1_noanalog_maps.png)
 
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
@@ -392,7 +387,7 @@ PLS.log6L <- gam(log(PLSdensity) ~ sandpct, data = trainlog)
 
 PLS.log7 <- gam(log(PLSdensity) ~ s(pasttmean) + s(MAP1910) , data = trainlog)
 PLS.log7L <- gam(log(PLSdensity) ~ pasttmean + MAP1910 ,  data = trainlog)
-summary(PLS.log7) #explains 41% deviance
+#summary(PLS.log7) #explains 41% deviance
 #summary(PLS.log7L) # explains 19.6%
 
 PLS.log8 <- gam(log(PLSdensity) ~ s(awc) +s(sandpct), data = trainlog )
@@ -766,11 +761,12 @@ testdata
 
 # for the PLS:
 predicted <- get.preds(PLS.gam15, test)
-summary(predicted$ypred)
+#summary(predicted$ypred)
 
 # for the PLS bimodal only places
 predictedbm <- get.preds(PLS.gam15, pls.bimodal)
-summary(predictedbm$ypred)
+
+#summary(predictedbm$ypred)
 
 
 msqe<- function(model, testdata){
@@ -789,7 +785,7 @@ msqe(PLS.gam15, pls.bimodal)
 # predictions for PLS modeled with log transformed density
 predictedlog <- get.preds(PLS.log15, testlog)
 predictedlog$ypred <- exp(predictedlog$ypred)
-summary(predictedlog$ypred)
+#summary(predictedlog$ypred)
 
 
 # predictions for FIA
@@ -799,7 +795,7 @@ summary(predictedf$ypred)
 # predictions for FIA with log transformed density
 predictedflog <- get.preds(FIA.log15, testflog)
 predictedflog$ypred <- exp(predictedflog$ypred)
-summary(predictedf$ypred)
+#summary(predictedf$ypred)
 
 ####################################
 # Plotting predicted vs. observed ##

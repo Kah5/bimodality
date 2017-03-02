@@ -10,12 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Summary (150 words, no references)
- 
+ TBD
 
 ## Intro 1st paragraph:
     Large scale envrionmental changes will likely drive shifts in vegetation. Vegetation response may be a deteriministic, smooth response to climate in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. Biomes with alternative stable states that could be tipped into different vegetation types with small changes in environment create uncertainty in the future vegetation response, and fuel fears of widespread ecosystem instability and potential forest collapse in response to small changes in environment (Staver et al. 2011). Globally, low tree density savannas and high tree density forests are often cited to be alternative stable states that coexist within the same climatic space. However, there is widespread debate over whether alternative savanna and forest states exist or are an artifact of satellite image processing (CITE Modis paper, STAVER response), and high uncertainty in predicting their sensitivity to environmental changes (Higgins and Scheiter 2012). Therefore, providing evidence savanna and forests existed as alternative stable states in the recent past and evaulating their past responses to environmental changes can provide key insights into the impact of future changes on ecosystems with alternative states. To explore the potential responses of alternative stable states to environmental changes, we use historical (pre-European Agricultural Settlement) and modern vegetation data from the North American Midwest to ask whether there is evidence for savanna and forest alternative stable states in the temperate zone and determine if these systems have been resilient to large scale fire suppression, land use change, and changes in climate. 
 
-    In the North American temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape) (Nowaki and Abrams 208). This shift has occured over a time period of large scale fire supppression at least since the 1930's (Nowacki & Abrams 2008). We estimate pre-European agricultural settlement stem density across 5 states in the Upper Midwest using historical survey data collected in the 19th century (Public Land Survey (PLS)), and estimate modern stem density from Forest Inventory Analysis (FIA) vegetation surveys. We evaluate whether there is evidence of alternative stable states in the past by determining if the past landscape had a bimodal distribution of tree density that cannot be accounted for using climate or soils. We then assess how persistant the hypothesized alternative stable states are on the landscape by comparing the historic relationships between density, soils, and climate to the modern relationship of tree denisty to soils and climate. Finally, we apply the past and modern relationships with soils and climate to assess the resilience to projected future climatic changes. We hypothesized that  PLS distribution of tree density was bimodal and not well explained by environmental factors due to latent intact vegetation-disturbance feedbacks along the savanna-forest boundary before settlement, but that ~150 years of land use fragmentation, climate changes, and fire suppression has stabilized modern vegetation as closed forests and produced a modern boundary that is not bimodal.
+  In the North American temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape) (Nowaki and Abrams 208). This shift has occured over a time period of large scale fire supppression at least since the 1930's (Nowacki & Abrams 2008). We estimate pre-European agricultural settlement stem density across 5 states in the Upper Midwest using historical survey data collected in the 19th century (Public Land Survey (PLS)), and estimate modern stem density from Forest Inventory Analysis (FIA) vegetation surveys. We evaluate whether there is evidence of alternative stable states in the past by determining if the past landscape had a bimodal distribution of tree density that cannot be accounted for using climate or soils. We then assess how persistant the hypothesized alternative stable states are on the landscape by comparing the historic relationships between density, soils, and climate to the modern relationship of tree denisty to soils and climate. Finally, we apply the past and modern relationships with soils and climate to assess the resilience to projected future climatic changes. We hypothesized that  PLS distribution of tree density was bimodal and not well explained by environmental factors due to latent intact vegetation-disturbance feedbacks along the savanna-forest boundary before settlement, but that ~150 years of land use fragmentation, climate changes, and fire suppression has stabilized modern vegetation as closed forests and produced a modern boundary that is not bimodal.
   
    
 ##Results:
@@ -39,8 +39,6 @@ Modern tree denisty was not significantly bimodal overall, and bimodality was de
 Gam model selection for the model with the lowest AIC value yeilded the model: tree density ~ s(MAP) + s(mean annual temperatue) + s(deltaT) + s(deltaP) + s(sandpct) + s(awc). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). Prediction of tree density is overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
 
 The Gam model for the modern landscape explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = XXXX). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
-
-Notes: perhaps we should find the places that there is bimodality and run the gams in these places to see if soils or something else might predict tree density within these bimodality regions.
 
 
 
@@ -105,20 +103,20 @@ The distribution of tree density in the past is significantly bimodal across the
 
 Principal component 1 (PC1) explains 54% of variance and component 2 (PC2) explains 29% of the variance. Past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality and precipitation seasonality index both have negative loadings fro PC1. Sand has the strongest negative loading and AWC has strongest positive loading on PC2. Plotting density/vegetatation type in Principal component space does not separate vegeatation into savanna, prairie, and forest.  
 
-*Generalized Additive Models/Relationship between historic vegetation and climate/soil variables*
-
-Gam model selection for the model with the lowest AIC value yeilded the model: tree density ~ s(MAP) + s(mean annual temperatue) + s(deltaT) + s(deltaP). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5976.366). Prediction of tree density is overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
-
-The Gam model for the modern landscape explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = XXXX). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
-
-Notes: perhaps we should find the places that there is bimodality and run the gams in these places to see if soils or something else might predict tree density within these bimodality regions.
-
 *Historic climate relationship*
 
-PLS tree density was significantly bimodal between xx - xx scores of PC1, which corresponded to intermediate values of temperature and precipitation (XXXX mm/year and XX - XX degC). Over 34% (212,032 km^2) of the the past landscape was bimodal (figure 4) during the PLS time. 
+PLS tree density was significantly bimodal between xx - xx scores of PC1, which corresponds roughly to intermediate values of temperature and precipitation (600-800 mm/year and 5 - 10 degC). Over 34% (212,032 km^2) of the the past landscape was bimodal (figure 4) during the PLS time. 
 
 *Modern climate relationship* 
 Modern tree denisty was not significantly bimodal overall, and bimodality was detected at less than 1% of the landscape. However, if the historic climate vegetation relationship had remained intact, and only climate had shifted, we would have expected 34.5% of the modern landscape to be bistable today (Figure 4).
+
+
+*Generalized Additive Models/Relationship between historic vegetation and climate/soil variables*
+
+The model with the lowest AIC value predicted PLS tree density in historically "stable" places as a function of ~ s(MAP) + s(mean annual temperatue) + s(deltaT) + s(deltaP) + s(sandpct) + s(awc). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5945.194). When applying this model to grid cells that are bimodal under past climate, prediction error (MSPE = 6837.277) is greater than that of the testing dataset for stable grid cells. Prediction of tree density in bimodal climates overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
+
+The Gam model for the modern landscape explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = XXXX). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
+
 
 * Future Forest stability*
 Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for 1 model CCESM4) would result in some increases and spatial shifts in the instability of Midwestern forests (Figure 4a).  However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would result in closed forests in the Midwest maintaining, or increasing ecosystem stability (Figure 4b). 
@@ -167,7 +165,7 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 ![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
 ![](outputs/v1.6-5/MAP_TEMP_bimodal_space.png)
 
-# Figure 4a:
+# Figure 4a: with updated color schemes
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
@@ -187,8 +185,7 @@ Additionally, the biplot for the Principal Components Analysis:
 
 
 
-
-
+# Tables with GAM model fits for PLS grid cells where we document unimodal distributions in tree cover:
 
 Table 1: PLS density GAM models for stable sites
 ```{r, echo = FALSE, warning = FALSE}
@@ -205,6 +202,7 @@ suppressMessages(library(ggplot2))
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 
 pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
 
 pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places
 dens.pr <- pls.new
@@ -218,8 +216,8 @@ msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
 train <- dens.pr[msk,]
 test <- dens.pr[!msk,]
 
-ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity))+geom_point()
-ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = PLSdensity))+geom_point()
+#ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity))+geom_point()
+#ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = PLSdensity))+geom_point()
 
 # basic climate plots of data with only "stable forests/savannas"
 PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
@@ -251,8 +249,8 @@ PLS.gam6L <- gam(PLSdensity ~ sandpct, data = train)
 
 PLS.gam7 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) , data = train)
 PLS.gam7L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
-summary(PLS.gam7) #explains 41% deviance
-#summary(PLS.gam7L) # explains 19.6%
+#summary(PLS.gam7) #explains 41% deviance
+
 
 PLS.gam8 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
 PLS.gam8L <- gam(PLSdensity ~ awc + sandpct, data = train )
@@ -289,6 +287,8 @@ PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP + sand
 
 PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train)
 PLS.gam15L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
+
+plot(PLS.gam15)
 
 PLS.gam16 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
 PLS.gam16L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
@@ -359,8 +359,8 @@ msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
 trainlog <- dens.pr[msk,]
 testlog <- dens.pr[!msk,]
 
-ggplot(dens.pr, aes(x = MAP1910, y = log(PLSdensity)))+geom_point()
-ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = log(PLSdensity)))+geom_point()
+#ggplot(dens.pr, aes(x = MAP1910, y = log(PLSdensity)))+geom_point()
+#ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = log(PLSdensity)))+geom_point()
 
 # basic climate plots of data with only "stable forests/savannas"
 PLS.log1 <-gam(log(PLSdensity) ~  s(MAP1910), data = trainlog)
@@ -459,12 +459,12 @@ AIClog.df$dev.expl <- 1
 
 #add prediction error & Deviance Explained to the AIC dataframe
 
-for (i in 1: length(AIC.df$model)){
+for (i in 1: length(AIClog.df$model)){
 AIClog.df[i,'MSPE'] <- msqe(get(AIClog.df[i,"model"]), testlog)
 AIClog.df[i,"dev.expl"] <- summary(get(AIClog.df[i,"model"]))$dev.expl * 100
 }
 
-pander(AIClog.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.cells = 30)
+print(AIClog.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.cells = 30)
 
 ```
 
@@ -482,14 +482,7 @@ suppressMessages(library(ggplot2))
 
 fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
 
-# split into test and trainfing datasets:
-#Y <- dens.pr$PLSdensity
-#msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
-#table(Y,msk)
-
-#trainf <- dens.pr[msk,]
-#test <- dens.pr[!msk,]
-
+fiadens <- fiadens[fiadens$FIAdensity > 47, ]
 #split FIA data into test and trainfing datasets
 Y <- fiadens$FIAdensity
 msk <- sample.split( Y, SplitRatio = 1/4, group = fiadens$fiaecotype )
@@ -567,8 +560,8 @@ FIA.gam14L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, d
 FIA.gam15 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainf)
 FIA.gam15L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
 
-FIA.gam16 <- gam(FIAdensity ~ s(PC1)  + s(PC2), data = trainf)
-FIA.gam16L <- gam(FIAdensity ~ PC1 + PC2, data = trainf)
+FIA.gam16 <- gam(FIAdensity ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP), data = trainf)
+FIA.gam16L <- gam(FIAdensity ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainf)
 
 AICf.df<- AIC(FIA.gam1, FIA.gam2, FIA.gam3, FIA.gam4, FIA.gam5, FIA.gam6, FIA.gam7, FIA.gam8, FIA.gam9,FIA.gam10,FIA.gam11,FIA.gam12,FIA.gam13,FIA.gam14 ,FIA.gam15,FIA.gam16, FIA.gam1L, FIA.gam2L, FIA.gam3L, FIA.gam4L, FIA.gam5L, FIA.gam6L, FIA.gam7L, FIA.gam8L, FIA.gam9L, FIA.gam10L,FIA.gam11L,FIA.gam12L,FIA.gam13L,FIA.gam14L,FIA.gam15L, FIA.gam16L)
 
@@ -603,7 +596,7 @@ AICf.df[i,"dev.expl"] <- summary(get(AICf.df[i,"model"]))$dev.expl * 100
 }
 
 #print(AICf.df)
-pander(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+print(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```
 
@@ -740,7 +733,9 @@ pander(AIClogf.df[,c("model", "formula", "AIC", "MSPE", 'dev.expl')], split.cell
 ###Predicting Tree density (GAMs)
 
 The model with the lowest AIC value is represented by the formula:
-PLSdensity ~ s(MAP1910) + s(pasttmean) + s(deltaT) + s(pastdeltaP) + s(sandpct) + s(awc)
+PLSdensity ~ s(MAP) + s(MAT) + s(TempCV) + s(PrecipSI) + s(% sand) + s(awc)
+
+Addtionally, for the FIA dataset the model with the lowest AIC also includes MAP, MAT, TempCV, PrecipSI, % sand, and awc. However, the model fits for the modern landscape are substantially lower.
 
 # Supplemental PLS density model fit figures:
 ```{r, echo = FALSE, warning = FALSE}
@@ -773,6 +768,24 @@ testdata
 predicted <- get.preds(PLS.gam15, test)
 summary(predicted$ypred)
 
+# for the PLS bimodal only places
+predictedbm <- get.preds(PLS.gam15, pls.bimodal)
+summary(predictedbm$ypred)
+
+
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+msqe(PLS.gam15, test)
+msqe(PLS.gam15, pls.bimodal)
+
 # predictions for PLS modeled with log transformed density
 predictedlog <- get.preds(PLS.log15, testlog)
 predictedlog$ypred <- exp(predictedlog$ypred)
@@ -800,6 +813,9 @@ ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + 
 
 # plot predicted vs. observed for PLS model 15
 pvsobs(preds = predicted, obs = 'PLSdensity', colorby = "PC1", model = "PLS density")
+
+# plot predicted vs. observed for PLS model 15
+pvsobs(preds = predictedbm, obs = 'PLSdensity', colorby = "PC1", model = "PLS density Bimodal only places")
 
 # plot predicted vs. observed for log transformedPLS model 15
 pvsobs(preds = predictedlog, obs = 'PLSdensity', colorby = "PC1", model = "Log-Transformed PLS density")
@@ -829,6 +845,7 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 }
 
 map.preds(preds = predicted, model = "PLS denisty")
+map.preds(preds = predictedbm, model = "PLS denisty bimodal only")
 map.preds(preds = predictedlog, model = "PLS log trans. denisty")
 map.preds(preds = predictedf, model = "FIA denisty")
 map.preds(preds = predictedflog, model = "FIA log trans. denisty")
@@ -875,6 +892,9 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 }
 
 diserror.map ( preds = predicted, obs = "PLSdensity", model = "PLS density")
+
+diserror.map ( preds = predictedbm, obs = "PLSdensity", model = "PLS bimodal places")
+
 diserror.map ( preds = predictedlog, obs = "PLSdensity", model = "PLS log trans. density")
 diserror.map ( preds = predictedf, obs = "FIAdensity", model = "FIA density")
 diserror.map ( preds = predictedflog, obs = "FIAdensity", model = "FIA log trans. density")
@@ -898,6 +918,7 @@ grid.arrange(a,b, ncol = 1, nrow = 2)
 }
 
 class.plots(preds = predicted, obs = "PLSdensity", class = 'classification')
+class.plots(preds = predictedbm, obs = "PLSdensity", class = 'classification')
 class.plots(preds = predictedlog, obs = "PLSdensity", class = 'classification')
 class.plots(preds = predictedf, obs = "FIAdensity", class = 'fiaecotype')
 class.plots(preds = predictedflog, obs = "FIAdensity", class = 'fiaecotype')
@@ -933,556 +954,14 @@ ggplot() + geom_point(data = preds, aes(x= preds[,obs], y = podiff, color = erro
 }
 
 plot.po.dens(predicted, "PLSdensity", model = "PLS density")
+plot.po.dens(predictedbm, "PLSdensity", model = "PLS density bimodal cells")
 plot.po.dens(predictedlog, "PLSdensity", model = "PLS log trans. density")
 plot.po.dens(predictedf, "FIAdensity", model = "FIA density")
 plot.po.dens(predictedflog, "FIAdensity", model = "FIA log trans.")
 ```
+PLS model trained on the stable places results in high overpredictions for low tree denisty areas and moderate underprediction for tree density in high density grid cells. 
+
 FIA models overpredict over the places that have low tree denisty. I think that if we remove the low denisty places, we might be able to better predict. 
 
 
-```{r, echo = FALSE, warning = FALSE}
 
-# plotting predicted - observed in different climate spaces
-#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
-
-#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = errordiscrete))+scale_color_manual(values=gs.pal(9),drop=FALSE) 
-
-#ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
-
-#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) 
-
-#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE)  
-
-
-# histograms of soil variables
-
-
-# break up the dataset by sand % 
-#predicted$sandgroup <- '59-88%'
-#predicted[predicted$sandpct <59.04,]$sandgroup <- '29-59%'
-#predicted[predicted$sandpct < 29.52,]$sandgroup <- '0-29%'
-
-# plot the predicted - obs by bins of sand
-#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = errordiscrete))+ scale_color_manual(values=gs.pal(9),drop=FALSE) +facet_grid(~sandgroup) + ggtitle('predicted-observed by sand%')
-
-# plot the predicted by bins of sand
-#ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ ggtitle ('predictions by sand %') + facet_grid(~sandgroup)
-
-```
-
-
-## Predicting Forest vs. Savanna (not density)
-
-The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna (ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
-
-
-This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
-
-```{r echo = FALSE, warning = FALSE}
-dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
-
-# dummyvariables for logistic regression:
-dens.pr$ecocode <- 0
-dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
-#dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
-
-#split trainfing and testing
-Y <- dens.pr$ecotype
-msk <- sample.split( Y, SplitRatio = 3/4, group = NULL)
-#table(Y,msk)
-
-train <- dens.pr[msk,]
-test <- dens.pr[!msk,]
-
-
-#plot(dens.pr$sandpct, dens.pr$ecotype)
-
-
-PLS.lgr1 <-gam(ecocode ~  s(MAP1910), family = 'binomial',data = train)
-PLS.lgr1L <-gam(ecocode ~  MAP1910, family = 'binomial',data = train)
-
-
-PLS.lgr2 <- gam(ecocode ~ s(pasttmean) , family = 'binomial',data = train)
-PLS.lgr2L <- gam(ecocode ~ pasttmean , family = 'binomial',data = train)
-#summary(PLS.lgr2) #explains 15.8% deviance
-#plot(PLS.lgr2)
-
-PLS.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = train)
-PLS.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = train)
-#summary(PLS.lgr3) #explains 6.07% deviance
-
-PLS.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = train)
-PLS.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = train)
-#summary(PLS.lgr4) #explains 6.07% deviance
-
-PLS.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = train)
-PLS.lgr5L <- gam(ecocode ~ awc, family = 'binomial',data = train)
-#summary(PLS.lgr5) #explains 12.5% of deviance
-
-PLS.lgr6 <- gam(ecocode ~ s(sandpct), family = 'binomial',data = train)
-PLS.lgr6L <- gam(ecocode ~ sandpct, family = 'binomial',data = train)
-#summary(PLS.lgr6) #explains 12.5% of deviance
-
-
-
-PLS.lgr7 <- gam(ecocode ~ s(pasttmean) + s(MAP1910) ,  family = 'binomial',data = train)
-PLS.lgr7L <- gam(ecocode ~ pasttmean + MAP1910 ,  family = 'binomial',data = train)
-#summary(PLS.lgr7) #explains 41% deviance
-#summary(PLS.lgr7L) # explains 19.6%
-
-PLS.lgr8 <- gam(ecocode ~ s(awc) +s(sandpct), family = 'binomial',data = train )
-PLS.lgr8L <- gam(ecocode ~ awc + sandpct, family = 'binomial',data = train )
-#summary(PLS.lgr8) #explains 28% of deviance
-
-PLS.lgr9 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = 'binomial',data = train)
-PLS.lgr9L <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = 'binomial',data = train)
-#summary(PLS.lgr9) #explains 39% deviance
-#summary(PLS.lgr9L)
-#plot(PLS.lgr6)
-
-
-PLS.lgr10 <- gam(ecocode ~ s(MAP1910) +s(pasttmean) + s(awc), family = 'binomial',data = train)
-PLS.lgr10L <- gam(ecocode ~ MAP1910 + pasttmean + awc, family = 'binomial',data = train)
-
-#summary(PLS.lgr10) #explains 41.3% of deviance
-#plot(PLS.lgr10)
-
-PLS.lgr11 <- gam(ecocode ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), family = 'binomial',data = train)
-PLS.lgr11L <- gam(ecocode ~ MAP1910  + pasttmean + sandpct + awc, family = 'binomial',data = train)
-
-#summary(PLS.lgr8) # explains 41% of deviance
-PLS.lgr12 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP),family = 'binomial', data = train)
-PLS.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
-
-PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = train)
-PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
-
-#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = train)
-#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = train)
-
-PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = train)
-PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
-
-AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
-
-
-
-
-AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
-
-AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula )
-
-AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
-library(knitr)
-library(pander)
-AIC2.df$model <- rownames(AIC2.df)
-
-#calculate prediction error:
-msqe.code<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
-  
-predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-AIC2.df$MSPE <- 1
-
-#add prediction error ot AIC dataframe
-
-for (i in 1: length(AIC2.df$model)){
-AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
-}
-pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
-
-
-```
-Looks like model number 14 with just Mean Annual Precipitation has lowest AIC for the logistic/binomial model. 
-Lets map out the probability of forest based on model with the lowest AIC value:
-
-forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
-
-The smooth predictors in this model are the same as the smooth predictors in the denisty model
-
-# savanna forest model for FIA:
-```{r echo = FALSE, warning = FALSE}
-
-# dummyvariables for logistic regression:
-fiadens$ecocode <- 0
-fiadens[fiadens$ecotype %in% 'Forest', ]$ecocode <- 1
-#fiadens<- fiadens[!fiadens$ecotype %in% 'prairie',]
-
-#split trainffing and testfing
-Y <- fiadens$ecotype
-msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
-#table(Y,msk)
-
-trainf <- fiadens[msk,]
-testf <- fiadens[!msk,]
-
-
-#plot(fiadens$sandpct, fiadens$ecotype)
-
-
-FIA.lgr1 <-gam(ecocode ~  s(MAP1910), family = 'binomial',data = trainf)
-FIA.lgr1L <-gam(ecocode ~  MAP1910, family = 'binomial',data = trainf)
-
-
-FIA.lgr2 <- gam(ecocode ~ s(pasttmean) , family = 'binomial',data = trainf)
-FIA.lgr2L <- gam(ecocode ~ pasttmean , family = 'binomial',data = trainf)
-#summary(FIA.lgr2) #explains 15.8% deviance
-#plot(FIA.lgr2)
-
-FIA.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = trainf)
-FIA.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = trainf)
-#summary(FIA.lgr3) #explains 6.07% deviance
-
-FIA.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = trainf)
-FIA.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = trainf)
-#summary(FIA.lgr4) #explains 6.07% deviance
-
-FIA.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = trainf)
-FIA.lgr5L <- gam(ecocode ~ awc, family = 'binomial',data = trainf)
-#summary(FIA.lgr5) #explains 12.5% of deviance
-
-FIA.lgr6 <- gam(ecocode ~ s(sandpct), family = 'binomial',data = trainf)
-FIA.lgr6L <- gam(ecocode ~ sandpct, family = 'binomial',data = trainf)
-#summary(FIA.lgr6) #explains 12.5% of deviance
-
-
-
-FIA.lgr7 <- gam(ecocode ~ s(pasttmean) + s(MAP1910) ,  family = 'binomial',data = trainf)
-FIA.lgr7L <- gam(ecocode ~ pasttmean + MAP1910 ,  family = 'binomial',data = trainf)
-#summary(FIA.lgr7) #explains 41% deviance
-#summary(FIA.lgr7L) # explains 19.6%
-
-FIA.lgr8 <- gam(ecocode ~ s(awc) +s(sandpct), family = 'binomial',data = trainf )
-FIA.lgr8L <- gam(ecocode ~ awc + sandpct, family = 'binomial',data = trainf )
-#summary(FIA.lgr8) #explains 28% of deviance
-
-FIA.lgr9 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = 'binomial',data = trainf)
-FIA.lgr9L <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = 'binomial',data = trainf)
-#summary(FIA.lgr9) #explains 39% deviance
-#summary(FIA.lgr9L)
-#plot(FIA.lgr6)
-
-
-FIA.lgr10 <- gam(ecocode ~ s(MAP1910) +s(pasttmean) + s(awc), family = 'binomial',data = trainf)
-FIA.lgr10L <- gam(ecocode ~ MAP1910 + pasttmean + awc, family = 'binomial',data = trainf)
-
-#summary(FIA.lgr10) #explains 41.3% of deviance
-#plot(FIA.lgr10)
-
-FIA.lgr11 <- gam(ecocode ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), family = 'binomial',data = trainf)
-FIA.lgr11L <- gam(ecocode ~ MAP1910  + pasttmean + sandpct + awc, family = 'binomial',data = trainf)
-
-#summary(FIA.lgr8) # explains 41% of deviance
-FIA.lgr12 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP),family = 'binomial', data = trainf)
-FIA.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
-
-FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = trainf)
-FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
-
-#FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = trainf)
-#FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = trainf)
-
-FIA.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = trainf)
-FIA.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = trainf)
-
-AIC2.df<- AIC(FIA.lgr1, FIA.lgr2, FIA.lgr3, FIA.lgr4, FIA.lgr5, FIA.lgr6, FIA.lgr7, FIA.lgr8, FIA.lgr9,FIA.lgr10,FIA.lgr11,FIA.lgr12,FIA.lgr13,FIA.lgr14 , FIA.lgr1L, FIA.lgr2L, FIA.lgr3L, FIA.lgr4L, FIA.lgr5L, FIA.lgr6L, FIA.lgr7L, FIA.lgr8L, FIA.lgr9L, FIA.lgr10L,FIA.lgr11L,FIA.lgr12L,FIA.lgr13L,FIA.lgr14L)
-
-
-
-
-AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
-
-AIC2.df$formula <- c(FIA.lgr1$formula, FIA.lgr2$formula, FIA.lgr3$formula, FIA.lgr4$formula, FIA.lgr5$formula, FIA.lgr6$formula, FIA.lgr7$formula, FIA.lgr8$formula, FIA.lgr9$formula,FIA.lgr10$formula,FIA.lgr11$formula,FIA.lgr12$formula,FIA.lgr13$formula,FIA.lgr14$formula , FIA.lgr1L$formula, FIA.lgr2L$formula, FIA.lgr3L$formula, FIA.lgr4L$formula, FIA.lgr5L$formula, FIA.lgr6L$formula, FIA.lgr7L$formula, FIA.lgr8L$formula, FIA.lgr9L$formula, FIA.lgr10L$formula,FIA.lgr11L$formula,FIA.lgr12L$formula,FIA.lgr13L$formula, FIA.lgr14L$formula )
-
-AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
-library(knitr)
-library(pander)
-AIC2.df$model <- rownames(AIC2.df)
-
-#calculate prediction error:
-msqe.code<- function(model, testfdata){
-ypred <- predict(model, newdata = testfdata, type="response")
-testfdata$ypred <- ypred
-
-predicted<- testfdata
-  
-predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-AIC2.df$MSPE <- 1
-
-#add prediction error ot AIC dataframe
-
-for (i in 1: length(AIC2.df$model)){
-AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
-}
-pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
-
-
-```
-
-```{r, echo = FALSE, warning = FALSE}
-
-FIA.lgr14 <- gam(ecocode ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), family = 'binomial',data = trainf)
-
-
-library(visreg)
-map.preds <- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
-
-plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
-
-testdata$ypred <- ypred
-ggplot(testdata, aes(x = x, y = y, color = ypred))+geom_point() + theme_bw() +ggtitle ('Probability of forest') 
-#outdata <- testdata
-}
-
-get.preds <- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-
-testdata$ypred <- as.vector(ypred)
-
-testdata
-}
-
-#map.preds(PLS.lgr14, test)
-
-preds.df <- data.frame(get.preds(PLS.lgr13, test))
-#preds.df <- data.frame(get.preds(FIA.lgr13, testf))
-#hist(preds.df$ypred, breaks = 25)
-#summary(preds.df$ypred)
-
-# plot the predicted response to these variables
-
-
-preds.df$predcode <- "savanna"
-preds.df <- preds.df[complete.cases(preds.df),]
-preds.df[preds.df$ypred < 0.6,]$predcode <- "savanna or forest"
-preds.df[preds.df$ypred > 0.4,]$predcode <- "savanna or forest"
-preds.df[preds.df$ypred >= 0.6,]$predcode <- "forest"
-preds.df[preds.df$ypred <= 0.4,]$predcode <- "savanna"
-
-
-#ggplot(preds.df, aes(x, y, color = predcode)) + geom_point() + theme_bw()
-
-predmap<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=preds.df, aes(x=x, y=y, fill = predcode))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Probability of forest from Model 5") + scale_fill_manual(values = c(
-      #, # light green
-      'red', # dark teal
-      '#8c510a', # red
-      #'#d8b365', # light tan
-      'forestgreen',
-      #'#fee08b', # tan
-      '#01665e',
-      'black'), limits = c('savanna or forest' ,'savanna', 'forest'))+
-    theme_bw()+
-  coord_equal()+theme_bw()
-predmap
-
-# write to file
-png(height = 7, width = 5, units = "in",res = 300,  filename= "outputs/v1.6-5/logistic_pred_map.png")
-predmap
-dev.off()
-
-
-
-
-
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=preds.df, aes(x=x, y=y, fill = ecotype))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Probability of forest from Model 5") + scale_fill_manual(values = c(
-      #, # light green
-      'red', # dark teal
-      '#8c510a', # red
-      #'#d8b365', # light tan
-      'forestgreen',
-      #'#fee08b', # tan
-      '#01665e',
-      'black'), limits = c('Savanna', 'Forest'))+
-    theme_bw()+
-  coord_equal()+theme_bw()
-```
-
-The above map shows 'savana or forest' places where the binomial familiy model predicted between 30-70% probability of forest. There are some places where the model predicts deterministic forest and deterministic savanna. 
-
-The main effect on predicted forest here is temperature and temperature seasonality.
-
-```{r, echo = FALSE, warning = FALSE}
-plot(PLS.lgr14)
-
-ggplot(preds.df, aes(x = MAP1910, y = ypred, color = pasttmean)) + geom_point() + theme_bw() + ylab('predicted p(forest)') + xlab("observed PLS density")
-
-
-```
-
-## It seems like we could make an argument for using the pls density GAMs or the PLS binomial family GAM models and that the analysis of both might end up in supplemental materials. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#text left over from previous update
-
-## Q2. Does climate explain the distribution of tree density in either the past or the modern landscape?
-
-The past and modern climate space of the Midwest is broad spans a large range of precipitation and temperature. 
-
-![](outputs/v1.6-5/precip_vs_temp_FIA_PLS.png)
-
-PLS & FIA tree density are not readily explained by the gradient in Precipitation, but tree denisty bimodality appears to occur between 600-900 mm/year in the past. 
-
-![](outputs/FIA_PLS_hexbinplots.png) 
-
-PLS & FIA density are not obviously explained as a function of mean annual temperature, but the bimodality in tree density appears to occur between 0-10 DegC in the past:
-
-![](outputs/FIA_PLS_temp_hexbinplots.png)
-
-
-##Q3. Do soil factors/elevation explain tree density in either the past or the modern landscape?
-
-Ans. % Sand, Available Water Content (awc), and saturated hydraulic conductivity (ksat) do not explain tree density overall on their own. Additionally, PC1 and PC2 from a Principle Components Analysis do not explain tree density.
-
-
-![](outputs/v1.6/sand_vs_dens_FIA_PLS.png)
-![](outputs/v1.6/awc_vs_dens_FIA_PLS.png)
-![](outputs/v1.6/ksat_vs_dens_FIA_PLS.png)
-![](outputs/v1.6/FIA_PLS_PC1_hexbinplots.png)
-
-
-
-
-
-## Q4. What is the environmental space where the past was bimodal? How bimodal is the distribution? Where is this located within the N. American Midwest?
-
-Ans. We can look at bins of precipitation to get an idea of where this bimodality coefficient is likely to be highest:
-
-![](outputs/v1.6/precipitation_by_bins_100.png)
-
-We can look at the bins of temperature to get an idea of where the BC is likely to be highest:
-![](outputs/v1.6/tmean_by_bins.png)
-
-We can also look at the density distribution with bins of the first Principal Component of the environmental data:
-
-![](outputs/v1.6/PC1_by_bins.png)
-
-We can also look at the density distribution with bins of the second Principal Component of the environmental data:
-
-![](outputs/v1.6/PC2_by_bins.png)
-
-####To fully answer this question of how bimodal the density is, we have to define a bimodality index. There are a few options for this:
-  * Dip Test (null = unimodal distribution)
-  * Bimodality Coefficient calculated from size, skewness, and kurtosis of the distributions, though there may be issues with both BC and the Dip test (Pfister et al. 2013)
-  * BC > 0.556 suggests bimodality
-  * BC is calculated with be calculated in the R package modes
-  
-Bimodality coefficient is calculated from a distribuiton of data as follows:
-
-BC = $\frac{(skew^2 + 1)}{(kurtosis + 3)*\frac{(n-1)^2}{(n-2)*(n-3)}}$
-
-Here we calculated the BC for a bin range of 25mm of precipitation, with non-overlapping and overlapping bins:
-
-![](outputs/v1.6/PLS_FIA_precip_roll_nonroll_BC_bins.png)
-
-We can also calculate BC of the Principal components (this is not as easily interpretable as binning by precipitation):
-![](outputs/v1.6-5/PLS_FIA_PC1_PC2_BC_bins.png)
-
-
-## Where is the bimodality located within the N. American Midwest?
-
-Within the places that were bimodal in the past, and that are bimodal now, we want to know which were savannas and which were forests. We use a classificaiton scheme from Rheumtella et al. (), However there are alternate classificaitons that we could use, such as the scheme Chicago Wilderness has used. We could also make our own classification schemes using kmeans clustering.  
-
-```{r, echo = FALSE, fig.cap = 'Table 1: Site table with highest correlation, year cored, and species present.'}
-
-library(knitr)
-library(pander)
-
-df <- data.frame(Ecotype = c("Forest", "Savanna", "Prairie"),
-                 Rheumtella = c("> 47 trees/ha", "0.5-47 trees/ha", "< 0.5 trees/ha"), ChicagoWilderness = c("> 100 trees/ha", "10-100 trees/ha", "< 10 trees/ha"))
-
-pander(df, split.cells = 30)
-```
-
-### Ecotypes using the Rheumtella et al. classificaiton
-![](outputs/v1.6-5/PLS_FIA_ecotype_map.png)
-
-### Ecotypes using the Chicago Wilderness classification
-![](outputs/v1.6-5/PLS_FIA_ecotype_cw_map.png)
-
-### Where is the precipitation range where PLS and FIA densities are bimodal?
-  * Precipitation climate space where BC > 5.5 
-  * Using the BC values of non-overlapping bins of width = 25mm 
-  * Bimodality occurs at both Low precipitation (525-600mm/year) and intermediate precipitation (800-1125 mm/year) in the past
-  * Bimodality occurs less frequently on the modern landscape, but also at some low precipitations (575-625 mm/year) and some intemediate precipitations(975 - 1150 mm/year ) on the modern landscape. 
-
-![](outputs/v1.6-5/PLS_FIA_precip_BC_map.png)
-
-### Where is the temperature range where PLS and FIA densities are bimodal?
-  * Places that are bimodal across temperature ranges (i.e. not linearly predicted by temperature) are mostly located in southern WI, and Indiana and Illinois.
-  * This might suggest that some of the bimodality that occurs at intermediate preicipitation could be due to differences in temperature
-  * The temperature range where tree density is bimodal is 7-10 degC.
-  
-![](outputs/v1.6-5/PLS_FIA_temp_1.5_deg_BC_map.png) 
-
-### What is the 'climate space' in terms of Principal components where PLS and FIA density is bimodal?
-  * Temperature and Precipitation dominate loadings of the PC1 
-  * PC1 shows a similar region of bimodal savanna and forests as the temperature map
-  * soil factors (sand, ksat) dominate the loadings of PC2
-  * PC2 predicts stable savannas in regions with sandy soils, but the PC2 has bimodalities elsewhere in the midwest
-  * When we map the places that are bimodal in both PC1 and PC2, we have an idea of the places that are bimodal after accounting for soils, temperature & precipitation
-
-#### Principle Component 1 (temperature & precipitation)
-![](outputs/v1.6-5/PLS_FIA_PC1_BC_map.png)
-
-#### Principle Component 2 (soils)
-![](outputs/v1.6-5/PLS_FIA_PC2_BC_map.png)
-
-### Bimodality in both PC1 and PC2 space (accounting for temp., precip, & soils)
-![](outputs/v1.6-5/PLS_FIA_PC1_PC2_BC_map.png)
-
-####Interpretation: 
-Within precipiation ranges that have bistablity, differences in temperature may account for differences in tree density. Other regions that are bimodal w.r.t. precipitaiton can be explained by soil factors, such as differences in soil sandiness (PC2). However, a small subset of areas are bimodal in both PC2 and PC1 space.   
-
-## Summary:
-  * PLS density is bimodal, while the modern density is not
-  * We may be able to explain some of the distribution in tree density using envrionmental variables (above, and see GAM table)
-  * However, none of the environmental variables here fully account for the the bimodality in the PLS data
-  * We demonstrate that a large region of the midwest historically could have been either savanna or forest alternative states that are not predicted by precipiation.
-  * More of the bimodality in PLS tree distribution is accounted for by tempearature and soils, but not all. 
-  * The determininants on bimodality 
-  * Athough historically, this region supported both savanna and forest states, the modern landscape has vitually no bimodal regions. This suggests that fire suppression, land use, and environmental changes that have occurred over the last ~ 150 years may have played a role in the decline of alternative savanna & forest states in the region. 
-
-## Questions/things to work on:
-  * Are there other variables that we should include?
-  * Potentially including PDSI from LBDA
-  * Figure predicting where the Midwest could be bimodal based on future climate
-  * In terms of framing the paper, I need to discuss the regional environmental changes (fire suppresion, land use) in a way that makes it clear that these changes could have removed the endogenous vegetation feedbacks that are important for maintaining alt. stable states.
-  
-
-
-
-
-
-### References

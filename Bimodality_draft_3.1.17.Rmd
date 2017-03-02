@@ -2,7 +2,7 @@
 title: "Bimodality Paper Draft"
 author: "Kelly Heilman"
 date: "February 14th, 2017"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
    
 ##Results:
 
-The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha), which would both be classified as closed forest ecosystems (According to Anderson classifictions (CITE)). Therefore, we do not see a significant bimodality with low and high tree density models on the modern landscape. This shift in tree density is well explained by the original vegetation. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = XXXX, p < 0.05, Figure 2). 
+The distribution of tree density in the past is significantly bimodal across the entire upper midwest, with a prominant low tree density mode at 30 trees/ha and a high tree density mode at 205 trees/ha (Diptest p < 0.05, BC = 0.74306). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha), which would both be classified as closed forest ecosystems (According to Anderson classifictions (CITE)). Therefore, we do not see a significant bimodality with low and high tree density models on the modern landscape. This shift in tree density is well explained by the original vegetation. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = 0.4, p < 0.05, Figure 2). 
   
 *PCA (supplemental material??)* 
 
@@ -62,7 +62,6 @@ SI = sum 1-12(abs(mi - P/12))/P * 100
 Temperature is calculated using the coefficient of variation method
 TSI = sd(m1....m12)/Tavgannual *100
  
-
   
 *Soil data*
 
@@ -115,7 +114,7 @@ Modern tree denisty was not significantly bimodal overall, and bimodality was de
 
 The model with the lowest AIC value predicted PLS tree density in historically "stable" places as a function of ~ s(MAP) + s(mean annual temperatue) + s(deltaT) + s(deltaP) + s(sandpct) + s(awc). While AIC suggests this is the best model (Table 1), it only explains 61% of the Deviance and has high Mean squared prediction error for predicting the test data set (MSPE = 5945.194). When applying this model to grid cells that are bimodal under past climate, prediction error (MSPE = 6837.277) is greater than that of the testing dataset for stable grid cells. Prediction of tree density in bimodal climates overestimated in low tree denisty grid cells and underestimated in high tree denisty grid cells.  
 
-The Gam model for the modern landscape explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = XXXX). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
+The Gam model for the modern landscape explained only 29 % of the deviance and had a high mean squared prediction error for predicting the test data set (MSPE = 24970.01). Prediction of tree density is again overestimated in low tree denisty grid cells and underestimated in high tree density grid cells. 
 
 
 * Future Forest stability*
@@ -166,6 +165,9 @@ Also several places were no analog climates w.r.t. the PLS climate:
 
 # Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
+
+Also several places were no analog climates w.r.t. the FIA climate:
+
 
 # Supplemental Figures:
 Additionally, the biplot for the Principal Components Analysis:
@@ -283,7 +285,7 @@ PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP + sand
 PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train)
 PLS.gam15L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
 
-plot(PLS.gam15)
+#plot(PLS.gam15)
 
 PLS.gam16 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
 PLS.gam16L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
@@ -590,8 +592,8 @@ AICf.df[i,'MSPE'] <- msqe.f(get(AICf.df[i,"model"]), testf)
 AICf.df[i,"dev.expl"] <- summary(get(AICf.df[i,"model"]))$dev.expl * 100
 }
 
-#print(AICf.df)
-print(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+print(AICf.df)
+#print(AICf.df[,c("model", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 ```
 

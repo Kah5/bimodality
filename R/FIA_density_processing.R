@@ -111,7 +111,7 @@ dens <- densitys
 dens$diff <- dens$FIAdensity - dens$PLSdensity
 png(width = 4, height = 3,units = 'in', res = 300, paste0('outputs/v', version, '/density_difference_plot.png'))
 ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
-  theme_bw(base_size = 15)+ ylab('increase in density since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(cor(dens$PLSdensity, dens$diff),2)), size = 5)
+  theme_bw()+ ylab('increase in density \n since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(summary(lm(dens$PLSdensity ~ dens$diff))$adj.r.squared,2)), size = 5)
 dev.off()
 
 #map out 
@@ -594,6 +594,65 @@ write.csv(dens.pr, "data/dens_pr_PLS_FIA_with_cov.csv")
 ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
 dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
+find.noanalog.mod<- function(dens.pr,rcp){
+  dens.pr[,c(paste0("rcp",rcp,"NA"))] <- "Within Range"
+  # rcp 4.5
+  prange <- range(dens.pr$MAP2011)
+  trange <- range(dens.pr$modtmean)
+  pcvrange <- range(dens.pr$moderndeltaP)
+  tcvrange <- range(dens.pr$moddeltaT)
+  
+  
+  precip.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1] | dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
+  pcv.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1] | dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
+  temp.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] | dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
+  tcv.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] | dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
+  
+  dens.pr[dens.pr$cell %in% precip.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+  dens.pr[dens.pr$cell %in% temp.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+  dens.pr[dens.pr$cell %in% tcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+  dens.pr[dens.pr$cell %in% pcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
+  
+  dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"))]
+  
+}
+NArcp26 <- find.noanalog.mod(dens.pr=dens.pr, rcp = "26")
+NArcp45 <- find.noanalog.mod(dens.pr=dens.pr, rcp = "45")
+NArcp85 <- find.noanalog.mod(dens.pr=dens.pr, rcp = "85")
+NArcp60 <- find.noanalog.mod(dens.pr = dens.pr, rcp = "60")
+
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+dens.pr <- nodups
+
+dens.pr <- merge(dens.pr, NArcp85, by = c("x", "y", "cell"))
+dens.pr <- merge(dens.pr, NArcp60, by = c("x", "y", "cell"))
+nodups <- dens.pr[!duplicated(dens.pr$cell),] #
+
+dens.pr <- nodups
+dens.pr <- merge(dens.pr, NArcp45, by = c("x", "y", "cell"))
+dens.pr <- merge(dens.pr, NArcp26, by = c("x", "y", "cell"))
+nodups <- dens.pr[!duplicated(dens.pr$cell),] # this is here cause merge keeps adding duplicated cells and I can't figure out how to prevent
+dens.pr <- nodups
+
+# maps for places where rcps predict no-analog climates for 2070:
+a <- ggplot(dens.pr, aes(x,y, color = rcp26NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw()+coord_equal()+theme_bw() + ggtitle("RCP 2.6")
+b <- ggplot(dens.pr, aes(x,y, color = rcp45NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 4.5")
+c <- ggplot(dens.pr, aes(x,y, color = rcp60NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 6.0")
+d <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 8.5")
+source("R/grid_arrange_shared_legend.R")
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/no-analog-ccsm4-climates_FIA.png")
+grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
+dev.off()
+
 
 # predict PCA from modern climate with the diffrent projections:
 
@@ -621,6 +680,7 @@ predict.PCA<- function(rcp){
 
 dens.pr <- predict.PCA("26")
 dens.pr <- predict.PCA("45")
+dens.pr <- predict.PCA("60")
 dens.pr <- predict.PCA("85")
 
 
@@ -851,6 +911,8 @@ dens.pr$PC1_cc26fbins <- cut(dens.pr$PC1_cc26, breaks = seq(-5,6, by = 1), label
 dens.pr$PC2_cc26fbins <- cut(dens.pr$PC2_cc26, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 dens.pr$PC1_cc45fbins <- cut(dens.pr$PC1_cc45, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
 dens.pr$PC2_cc45fbins <- cut(dens.pr$PC2_cc45, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
+dens.pr$PC1_cc60fbins <- cut(dens.pr$PC1_cc60, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
+dens.pr$PC2_cc60fbins <- cut(dens.pr$PC2_cc60, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 dens.pr$PC1_cc85fbins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,6, by = 1), labels = label.breaks(-5,5, 1))
 dens.pr$PC2_cc85fbins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 
@@ -1207,7 +1269,7 @@ map.bimodal.5c <- function(data, binby, density){
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  if(merged$BC >= 0.5 & merged$dipP <=0.05){
+  if(merged$BC >= 0.55 & merged$dipP <=0.05){
   merged$bimodal <- "Bimodal"
   }else{
     merged$bimodal <- "Stable"

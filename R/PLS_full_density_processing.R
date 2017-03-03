@@ -1016,7 +1016,7 @@ bimodal.df <- function(data, binby, density, binby2){
   #define bimodality
   merged$bimodal <- "Stable"
   #criteria for bimodality
-  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -1047,6 +1047,10 @@ c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
 d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
 e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 
+
+ggplot(df.new, aes(x = MAP1910, y = PLSdensity, color = classification))+geom_point()+ 
+  stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
+  theme_bw()
 
 dens.pr<- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 write.csv(df.new, "outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
@@ -1083,7 +1087,7 @@ scale_color_manual(values = c(
   theme_bw() 
 
 library(rgl)
-plot3d(x = df.new$pastdeltaP, y = df.new$pasttmean, z = df.new$sandpct, groups = df.new$bimodal,
+plot3d(x = df.new$MAP1910, y = df.new$PLSdensity, z = df.new$BC, groups = df.new$bimodal,
           surface=FALSE, ellipsoid = TRUE)
 
 source_url("https://raw.github.com/low-decarie/FAAV/master/r/stat-ellipse.R")    

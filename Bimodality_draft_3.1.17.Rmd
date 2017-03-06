@@ -41,7 +41,20 @@ Main Text:
 Specific Scope: To explore the potential responses of alternative stable states to environmental changes, we use historical (pre-European Agricultural Settlement) and modern vegetation data from the savanna-forest boundary in the North American Midwest to ask whether there is evidence for savanna and forest alternative stable states in the temperate zone and determine if these systems were resilient to large scale fire suppression, land use change, and shifts in climate over the last ~150 years in the region. 
  
 * a statement of the specific scope of the study
-* results  
+In the North American temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape) (Nowaki and Abrams 208). This shift has occured over a time period of large scale fire supppression at least since the 1930's (Nowacki & Abrams 2008). We estimate pre-European agricultural settlement stem density across 5 states in the Upper Midwest using historical survey data collected in the 19th century (Public Land Survey (PLS)), and estimate modern stem density from Forest Inventory Analysis (FIA) vegetation surveys. We evaluate whether there is evidence of alternative stable states in the past by determining if the past landscape had a bimodal distribution of tree density that cannot be accounted for using climate or soils. We then assess how persistant the hypothesized alternative stable states are on the landscape by comparing the historic relationships between density, soils, and climate to the modern relationship of tree denisty to soils and climate. Finally, we apply the past and modern relationships with soils and climate to assess the resilience to projected future climatic changes. We hypothesized that  PLS distribution of tree density was bimodal and not well explained by environmental factors due to latent intact vegetation-disturbance feedbacks along the savanna-forest boundary before settlement, but that ~150 years of land use fragmentation, climate changes, and fire suppression has stabilized modern vegetation as closed forests and produced a modern boundary that is not bimodal.
+  
+* results:
+- PLS tree density is bimodal
+- FIA tree density is signficantly unimodal
+- PLS tree density is also significantly bimodal over intermediate climate/environmetnal spaces:
+- FIA tree density is not significanly bimodal over large regions of climate/enviromental space
+
+- describe models (gam) briefly (we can predict the stable places well, but not bistable places well with climate)
+- In general, environmental changes have left the modern landscape not well constrianed by climate
+-
+
+
+
 * interpretations.  
 
 

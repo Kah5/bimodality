@@ -12,8 +12,19 @@ knitr::opts_chunk$set(echo = TRUE)
 Stabilization of closed forests after ~150 years of land use, climate change. 
 
 
-## Abstract (150 words, no references)
-How will vegetation distribution respond to environmental and climate changes?
+## Abstract (100- 150 words, no references)
+* Opening question:
+How will vegetation with alternative stable states respond to environmental and climate changes?
+
+* Background specific to the study:
+In many parts of the world, savanna and forests have been identified as alternate stable states, resulting in sharp transitions between savannas and forests in response to small spatial changes in environment. However, the responses of these systems to temperal environmental changes remains a key uncertainty in predictions for future vegetation distribution.
+
+* Results
+We analyzed modern and historic tree density (c ~1850), climate, and soils data from the savanna forest boundary region in the North American Midwest to show that ~150 years of land use conversion, fire suppression, and climate shifts in the region have stabilized the region, converting historic savanna-forest alternative stable states into modern stable forests. 
+
+
+* Concluing Sentence
+These results identify climatic regions outside of the tropics where savanna and forest ecosystems are alternative stable states, and demonstrate that environmental changes have resulted in large scale stabilization of the region into a closed forest state. 
 
 
 Main Text:

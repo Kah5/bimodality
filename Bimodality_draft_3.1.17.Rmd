@@ -9,11 +9,35 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Summary (150 words, no references)
- TBD
+Stabilization of closed forests after ~150 years of land use, climate change. 
+
+
+## Abstract (150 words, no references)
+How will vegetation distribution respond to environmental and climate changes?
+
+
+Main Text:
+
+
+* should include a brief (1-2 paragraph) introduction (describing significance)
+  - Environmental controls on tree density define the distribution of forested and open ecoystems worldwide, driving global patterns in woody carbon storage. Climate shifts, fires suppression, and land use changes may drive deterministic responses of tree density to these environmental changes, but non-deterministic relationships between tree density and environmental controls could result in divergent and non-linear shifts in tree density between multiple stable states. The response and sensitivity of transitions between alternative stable states at their "tipping points" represents a key uncertainty in modeling future responses to environmental changes. 
+  - Savannas and forests are documented as alt. stable states globally, prompting concerns over potential large scale forest collapse in bistable regions. 
+  
+ * our study is important/new because**
+ -However, vegetation studies quantifying the responses of alternative stable states to environmental variables have largely been examined only the modern landscape, which provides a snapshot understanding of the regions/space where savanna and forests are most likley to be alternative stable states that could be sensitive to environmental changes, but do not document the responses of altenative stable states to temporal environmental changes. 
+ 
+ 
+Specific Scope: To explore the potential responses of alternative stable states to environmental changes, we use historical (pre-European Agricultural Settlement) and modern vegetation data from the savanna-forest boundary in the North American Midwest to ask whether there is evidence for savanna and forest alternative stable states in the temperate zone and determine if these systems were resilient to large scale fire suppression, land use change, and shifts in climate over the last ~150 years in the region. 
+ 
+* a statement of the specific scope of the study
+* results  
+* interpretations.  
+
+
+
 
 ## Intro 1st paragraph:
-    Large scale envrionmental changes will likely drive shifts in vegetation. Vegetation response may be a deteriministic, smooth response to climate in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. Biomes with alternative stable states that could be tipped into different vegetation types with small changes in environment create uncertainty in the future vegetation response, and fuel fears of widespread ecosystem instability and potential forest collapse in response to small changes in environment (Staver et al. 2011). Globally, low tree density savannas and high tree density forests are often cited to be alternative stable states that coexist within the same climatic space. However, there is widespread debate over whether alternative savanna and forest states exist or are an artifact of satellite image processing (CITE Modis paper, STAVER response), and high uncertainty in predicting their sensitivity to environmental changes (Higgins and Scheiter 2012). Therefore, providing evidence savanna and forests existed as alternative stable states in the recent past and evaulating their past responses to environmental changes can provide key insights into the impact of future changes on ecosystems with alternative states. To explore the potential responses of alternative stable states to environmental changes, we use historical (pre-European Agricultural Settlement) and modern vegetation data from the North American Midwest to ask whether there is evidence for savanna and forest alternative stable states in the temperate zone and determine if these systems have been resilient to large scale fire suppression, land use change, and changes in climate. 
+    Large scale envrionmental changes will likely drive future shifts in the distriubition of forest cover globally. Vegetation response may be a deteriministic, smooth response to climate in some places, but non-linear and non-deterministic vegetation-climate relationships can result in divergent forest responses. Biomes with alternative stable states that could be tipped into different vegetation types with small changes in environment create uncertainty in the future vegetation response, and fuel fears of widespread ecosystem instability and potential forest collapse in response to small changes in environment (Staver et al. 2011). Globally, low tree density savannas and high tree density forests are often cited to be alternative stable states that coexist within the same climatic space. However, there is widespread debate over whether alternative savanna and forest states exist or are an artifact of satellite image processing (CITE Modis paper, STAVER response), and high uncertainty in predicting their sensitivity to environmental changes (Higgins and Scheiter 2012). Therefore, providing evidence savanna and forests existed as alternative stable states in the recent past and evaulating their past responses to environmental changes can provide key insights into the impact of future changes on ecosystems with alternative states. To explore the potential responses of alternative stable states to environmental changes, we use historical (pre-European Agricultural Settlement) and modern vegetation data from the North American Midwest to ask whether there is evidence for savanna and forest alternative stable states in the temperate zone and determine if these systems have been resilient to large scale fire suppression, land use change, and changes in climate. 
 
   In the North American temperate zone, much of the savanna-forest boundary has transitioned into a closed forest state (non-agricultural landscape) (Nowaki and Abrams 208). This shift has occured over a time period of large scale fire supppression at least since the 1930's (Nowacki & Abrams 2008). We estimate pre-European agricultural settlement stem density across 5 states in the Upper Midwest using historical survey data collected in the 19th century (Public Land Survey (PLS)), and estimate modern stem density from Forest Inventory Analysis (FIA) vegetation surveys. We evaluate whether there is evidence of alternative stable states in the past by determining if the past landscape had a bimodal distribution of tree density that cannot be accounted for using climate or soils. We then assess how persistant the hypothesized alternative stable states are on the landscape by comparing the historic relationships between density, soils, and climate to the modern relationship of tree denisty to soils and climate. Finally, we apply the past and modern relationships with soils and climate to assess the resilience to projected future climatic changes. We hypothesized that  PLS distribution of tree density was bimodal and not well explained by environmental factors due to latent intact vegetation-disturbance feedbacks along the savanna-forest boundary before settlement, but that ~150 years of land use fragmentation, climate changes, and fire suppression has stabilized modern vegetation as closed forests and produced a modern boundary that is not bimodal.
   
@@ -184,12 +208,15 @@ Additionally, the biplot for the Principal Components Analysis:
 
 # Tables with GAM model fits for PLS grid cells where we document unimodal distributions in tree cover:
 
+# Issues with the GAM models: some models are predicting a few grid cells to be negative density (at the tails). Likely due to gaussian distn. family that was picked. The GLM models do not predict the negative density values, but still underestimate the low denisty places
+
 Table 1: PLS density GAM models for stable sites
 ```{r, echo = FALSE, warning = FALSE}
 
 suppressMessages(library(mgcv))
 suppressMessages(library(caTools))
 suppressMessages(library(ggplot2))
+suppressMessages(library(MASS))
 
 #dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
 #dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
@@ -197,6 +224,20 @@ suppressMessages(library(ggplot2))
 #dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
+plot(dens.pr$PLSdensity, dens.pr$MAP1910)
+f1 <- kde2d(dens.pr$PLSdensity, dens.pr$MAP1910, n = 50 )#, lims = c(0.5, 6, 40, 100))
+image(f1)
+f2 <- kde2d(dens.pr$PLSdensity, dens.pr$MAP1910, n = 50, lims = c(0.5, 6, 40, 100),
+            h = c(width.SJ(dens.pr$PLSdensity), width.SJ(dens.pr$MAP1910)))
+image(f2, zlim = c(0, 0.05))
+persp(f2, phi = 30, theta = 20, d = 5)
+
+
+
+
+
+
 
 pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
 pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
@@ -217,9 +258,12 @@ test <- dens.pr[!msk,]
 #ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = PLSdensity))+geom_point()
 
 # basic climate plots of data with only "stable forests/savannas"
-PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
+PLS.gam1 <-gam(PLSdensity ~ MAP1910, data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 
+pr <- predict(PLS.gam1L, test)
+summary(pr)
+plot(pr, test$PLSdensity)
 
 PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
 PLS.gam2L <- gam(PLSdensity ~ pasttmean , data = train)
@@ -282,10 +326,16 @@ PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
 PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = train)
 PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP + sandpct, data = train)
 
-PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train)
-PLS.gam15L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
+PLS.gam15 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = train, family = gaussian(link = 'identity'))
+PLS.gam15L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP +sandpct + awc, data = train)
 
-#plot(PLS.gam15)
+t <- predict(PLS.gam15, test[,c("PLSdensity", "MAP1910", "pasttmean", "deltaT", 'pastdeltaP', 'sandpct', 'awc')])
+summary(t)
+
+plot(t, test$PLSdensity)
+abline (a = 0, b = 1, col = 'red')
+hist(t)
+hist(test$PLSdensity)
 
 PLS.gam16 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
 PLS.gam16L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
@@ -360,7 +410,7 @@ testlog <- dens.pr[!msk,]
 #ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = log(PLSdensity)))+geom_point()
 
 # basic climate plots of data with only "stable forests/savannas"
-PLS.log1 <-gam(log(PLSdensity) ~  s(MAP1910), data = trainlog)
+PLS.log1 <-gam(log(PLSdensity) ~  s(MAP1910), data = trainlog, family = gaussian(link = 'identity')
 PLS.log1L <-gam(log(PLSdensity) ~  MAP1910, data = trainlog)
 
 
@@ -762,11 +812,11 @@ testdata
 }
 
 # for the PLS:
-predicted <- get.preds(PLS.gam15, test)
+predicted <- get.preds(PLS.gam16, test)
 #summary(predicted$ypred)
 
 # for the PLS bimodal only places
-predictedbm <- get.preds(PLS.gam15, pls.bimodal)
+predictedbm <- get.preds(PLS.gam16, pls.bimodal)
 
 #summary(predictedbm$ypred)
 
@@ -781,8 +831,8 @@ predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
 mean(predicted$sqerr, na.rm = TRUE)
 }
 
-msqe(PLS.gam15, test)
-msqe(PLS.gam15, pls.bimodal)
+msqe(PLS.gam15L, test)
+msqe(PLS.gam15L, pls.bimodal)
 
 # predictions for PLS modeled with log transformed density
 predictedlog <- get.preds(PLS.log15, testlog)
@@ -806,7 +856,8 @@ predictedflog$ypred <- exp(predictedflog$ypred)
 # Define function to plot predicted vs. observed:
 pvsobs <- function(preds, obs, colorby, model ){
 # plot predicted vs. observed for PLS
-ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle(paste('Predicted vs. Observed', model)) + ylab('Predicted tree density') + xlab('Observed tree density')
+ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + #ylim (-10, 600)+xlim(-10,600) +
+  ggtitle(paste('Predicted vs. Observed', model)) + ylab('Predicted tree density') + xlab('Observed tree density')
 }
 
 # plot predicted vs. observed for PLS model 15

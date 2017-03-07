@@ -1,7 +1,7 @@
 ---
 title: "Bimodality Paper Draft"
 author: "Kelly Heilman"
-date: "February 14th, 2017"
+date: "March 7th, 2017"
 output: html_document
 ---
 
@@ -9,8 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Stabilization of closed forests after ~150 years of land use, climate change. 
+Science article (v. rough draft)
 
+
+Stabilization of alternative stable states to closed forests after ~150 years of land use, climate change 
 
 ## Abstract (100- 150 words, no references)
 * Opening question, background to the study (1-2), key results, concluding sentence*
@@ -29,7 +31,7 @@ We analyzed both modern and historic tree density, climate, and soils data from 
 
   Before European Agricultural settlement in the midwest, tree density in the past was significantly bimodal across the entire upper midwest, with prominant modes at low tree density (30 trees/ha) and at high tree density (205 trees/ha) (Diptest p < 0.05, BC = 0.74306, Figure 1). While Hartigan's diptest shows shows a significant multimodality to the Modern FIA tree denstity, the two modes both occur at intermediate and high tree denisty (147 trees/ha, and 550 trees/ha), which would both be classified as closed forest ecosystems (Anderson et al. (CITE)). Therefore, we do not see a significant bimodality with low and high tree density modes on the modern landscape (Figure 1). This shift in tree density distribution is well explained by the original tree density. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = 0.4, p < 0.05, Figure 2- Difference fig). 
 
-In the past, tree density could only be partially explained by climate. Low tree denisty occured at very low mean annual precipitaiton (600mm/year), but at intermediate precipitation between 700 - 1000 mm/year, both high and low tree densities are possible and form a significant bimodal distribution (PRSIM Mean annual precipitaiton 1885-1925). This suggests that for temperate savannas, very low moisture may serve as a low boundary condition for tree growth, but above this condition, moisture may not be the most important factor deterimining tree denisty. Moderate mean annual temperatures (5-11 degC) overlapped with the intermediate precipitation space where savannas and forests were possible. To determine if the bimodality in tree density could be explained by patterns in climate/edaphic factors, we evaluated tree density distributions over equal intervals of the 1st principal component (PC1) of all environmental variables. PC1 explains 54% of variance in the environmental covariates and past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality (CV) and precipitation seasonality index (SI) both have moderate negative loadings from PC1, % sand and available water content have small negative and postive loadings respectively (Supplemental figure).  Tree density had significantly bimodal distributions between xx - xx scores of PC1, which corresponded to intermediate values of temperature and precipitation (XXXX mm/year and XX - XX degC). Based on this analysis, we estimate that up to 34% (212,032 km^2) of the the past landscape had a an environment where savanna and forests were bistable (figure 4).
+In the past, tree density could only be partially explained by climate. Low tree denisty occured at very low mean annual precipitaiton (600mm/year), but at intermediate precipitation between 700 - 1000 mm/year, both high and low tree densities are possible and form a significant bimodal distribution (PRSIM Mean annual precipitaiton 1885-1925). This suggests that for temperate savannas, very low moisture may serve as a low boundary condition for tree growth, but above this condition, moisture may not be the most important factor deterimining tree denisty. Moderate mean annual temperatures (5-11 degC) overlapped with the intermediate precipitation space where savannas and forests were possible. To determine if the bimodality in tree density could be explained by patterns in climate/edaphic factors, we evaluated tree density distributions over equal intervals of the 1st principal component (PC1) of all environmental variables. PC1 explains 54% of variance in the environmental covariates and past precipitation and Past Temperature both have strong positive loadings on PC1, while temperature seasonality (CV) and precipitation seasonality index (SI) both have moderate negative loadings from PC1, % sand and available water content have small negative and postive loadings respectively (Supplemental figure).  Tree density had significantly bimodal distributions between 0 and -5 scores of PC1, which corresponded to intermediate values of temperature and precipitation (530 - 900 mm/year and 2 - 10 degC). Based on this analysis, we estimate that up to 34% (212,032 km^2) of the the past landscape had a an environment where savanna and forests were bistable (figure 4).
 
   The historic bistablity of forests and savannas throughout a large region of the Midwest would predict strong senstivities to small changes in the environment. Rises in atmospheric CO2 have shifted mean climate since the end of the 20th century (add change in precip, temp), allowing us to test the hypothesis that small shifts in climate have driven the large changes observed in tree density (CITE density dist. figures, and difference figure). Projecting the historically bistable environmental space onto the modern landscape using modern climate, we estimate that if the historic climate-vegetation relationship had remained intact, and only climate had shifted, we would have expected 34.5% of the modern landscape to be bistable today (Figure 4). In sharp contrast to this, Modern tree denisty was not significantly bimodal overall, and climate space where bimodality occurs was detected on less than 1% of the landscape. While it is possible that climate may have shifted some previously bimodal savanna regions towards a closed forest alternative stable state (difference figure, FIA map), the majority of the modern landscape has shifted to stable closed forests, including places outside of the historically bistable region. Thus, the large scale stabilization of Midwestern forests is not likey due to shifts in climate, rather, land use change and disturbance regime shifts may have played a larger role than climate in the stabilization towards closed forests. 
   
@@ -40,12 +42,17 @@ In the past, tree density could only be partially explained by climate. Low tree
   While fire-disturbance feedbacks and fire suppression are reasonable candidate mechanisms for historic ecosystem bistability and stabilization towards closed forests on the modern landscape, other envrionmental changes in the region almost certainly played a role in stabilization.  Land use changes, particularly large scale agricultural conversion in the region converted many open grassland and savanna regions into crops (CITE), which are non-forested areas that were not included in this analysis. Forests logged in the early-20th century in the north are likely regenerating and result in an increase in tree density in historically forested areas (diff figure, rheumtella, goring, CITE others) We examine possible climate shifts that would have slightly increased the bistable climate space, potentially allowing more open regions to approach their tipping point/threshold. Increases in atmospheric CO2 that are driving observed climatic shifts could also have favored forest growth by enhancement of tree WUE and growth, or increasing sapling survival in savannas (CITE). 
 
 
-
-- other implications/ interpretations
- 
-  -land managment implications (required effort for restoring savannas may be high)
-  -forest biodiveristy implications
-  - consequences for understanding s-f transitions globally
+Outline for the conclusions/interpretations:
+  *other implications/ interpretations
+    +land managment implications (required effort for restoring savannas may be high)
+    +forest biodiveristy implications
+    +consequences for understanding s-f transitions  & resilience globally
+  
+  
+Other notes: 
+  *Many of the interretations paragraphs as they stand are too wordy, and I am not sure they convey the points I want them too. 
+  *Do the first two paragraphs provide enough context for the problem?
+  *Is the problem statement clear? Does it lead directly into our approach or solution for the problem? 
 
 
 
@@ -70,18 +77,18 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 ![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
 ![](outputs/v1.6-5/MAP_TEMP_bimodal_space.png)
 
-### Figure 4a: with updated color schemes
+### Figure 4a: Stability maps for pre-settlement vegetation-environment relationship with CCSM4 future climate (2070-2099)
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
 Also several places were no analog climates w.r.t. the PLS climate:
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_noanalog_maps.png)
 
-### Figure 4b:
+### Figure 4b: Stability maps for modern vegetation-environment relationship with CCSM4 future climate (2070-2099)
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
 Also several places were no analog climates w.r.t. the FIA climate:
-
+![](outputs/v1.6-5/RCP_scenario_FIA_PC1_noanalog_maps.png)
 
 
 
@@ -173,7 +180,14 @@ Additionally, the biplot for the Principal Components Analysis:
 ![](outputs/3d_1.png)
 ![](outputs/3d_2.png)
 
+We predict the binomial probability of having closed forest (tree density over 47 trees/hectare) given precipation, temperature, precip seasonality, temperature seasonality, % sand and awc. We get a decrease in probability of forests predicted in the open savanna regions, but the places with intermediate probability suggest unstable intermediates where savannas and forests are equally probable given the environmental data.
 
+
+![](outputs/v1.6-5/full/logistic_pred_prob_testdata.png)
+
+Here is the mapped distribution if we used the whole dataset (note this includes both training and testing dataests, I just wanted to look at a non-pixelated map)
+
+![](outputs/v1.6-5/full/logistic_pred_prob_full.png)
 
 # Tables with GAM model fits for PLS grid cells where we document unimodal distributions in tree cover:
 
@@ -699,7 +713,7 @@ The above models are predicting density (continious variable) from continous env
 
 This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
 
-# Modeling p(forest)
+# Modeling p(forest):
 ```{r echo = FALSE, warning = FALSE}
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
 
@@ -819,18 +833,20 @@ AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
 }
 pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
-full <- dens.pr
+
+#full <- dens.pr
+full <- test
 logsample <- predict(PLS.lgr14, full, type="response")
 full$ypred <- as.numeric(logsample)
-summary(logsample)
-hist(test$ypred)
+#summary(logsample)
+#hist(test$ypred)
 
-ggplot(full, aes(x, y, color = ypred)) + geom_point()
-ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
+#ggplot(full, aes(x, y, color = ypred)) + geom_point()
+#ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
 
-ggplot(test, aes(ypred, PLSdensity))+geom_point()
+#ggplot(test, aes(ypred, PLSdensity))+geom_point()
 
-ggplot(test, aes (ypred, MAP1910))+geom_point()
+#ggplot(test, aes (ypred, MAP1910))+geom_point()
 
 
 
@@ -849,7 +865,7 @@ full$ypreddiscrete <- cut(full$ypred, breaks = seq(0,1, by = 0.2), labels = labe
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 
 full$ypreddiscrete <- as.character(full$ypreddiscrete)
-ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
 
 
 
@@ -857,18 +873,18 @@ ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
 p.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full, aes(x=x, y=y, fill = ypreddiscrete))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= cbpalette) +
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()
 
 # plot PLS forests
 pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full, aes(x=x, y=y, fill = ecotype))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= c("#006837", "#c2e699")) +
-  coord_equal()+theme_bw()
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "#c2e699"))+ coord_equal()+theme_bw()
 
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/v1.6-5/full/logistic_pred_prob_testdata.png')
 grid.arrange(pls, p.forest, nrow = 1, ncol=2)
-
+dev.off()
 
 ```
 

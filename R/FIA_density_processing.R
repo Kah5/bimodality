@@ -1409,6 +1409,65 @@ d <- bimodal.future(data = dens.pr, binby = 'PC1_cc85fbins', density = "FIAdensi
 png(height = 5, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png'))
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol=4, position = c("bottom"))
 dev.off()
+#######################################
+#plot the projecitons into the future, 
+#but highlight the no-analog climates:
+#######################################
+bimodal.future.NA <- function(data, binby, density, binby2, rcp){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins iwth the second binby -> here is is future climate
+  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
+  
+  
+  #define bimodality
+  merged$bimodal <- "Stable"
+  #criteria for bimodality
+  if(merged$BC >= 0.55 & merged$dipP <= 0.05){
+  merged$bimodal <- "Bimodal"
+  }else{ merged$bimodal <- "Stable"}
+  
+  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  
+  
+  #merged
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
+      '#1a9641',
+      'black',
+      '#d7191c'
+    ), limits = c('Stable',"no-analog",'Bimodal') )+
+    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                      axis.title.x=element_blank(),
+                      axis.title.y=element_blank())+
+    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
+  
+}
+a <- bimodal.future.NA(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc60fbins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")
+b <- bimodal.future.NA(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc26fbins',  rcp = "26") + ggtitle("RCP 2.6 PC1")
+c <- bimodal.future.NA(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")
+d <- bimodal.future.NA(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '85' )+ ggtitle("RCP 8.5 PC1")
+
+png(height = 4, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/RCP_scenario_FIA_PC1_noanalog_maps.png'))
+grid_arrange_shared_legend(b,c,a,d, nrow = 1, ncol=4, position = c("bottom"))
+dev.off()
 
 #############################################
 # print out df of future climates

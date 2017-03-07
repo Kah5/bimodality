@@ -2,7 +2,7 @@
 title: "Bimodality Paper Draft"
 author: "Kelly Heilman"
 date: "February 14th, 2017"
-output: word_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -19,7 +19,7 @@ How will vegetation with alternative stable states respond to environmental and 
 We analyzed both modern and historic tree density, climate, and soils data from the savanna forest boundary region in the North American Midwest to show that ~150 years of land use conversion, fire suppression, and climate shifts in the region have stabilized the region, converting historic savanna-forest alternative stable states into modern stable forests. These results identify climatic regions outside of the tropics where savanna and forest ecosystems are alternative stable states, and demonstrate that environmental changes have resulted in large scale stabilization of the region into a closed forest state. 
 
 
-Main Text:
+## Main Text:
 
   Environmental controls on tree density define the distribution of forested and open ecoystems worldwide, driving global patterns in woody carbon storage. Climate shifts, fires suppression, and land use changes may drive deterministic responses of tree density to these environmental changes, but non-deterministic relationships between tree density and environmental controls could result in divergent and non-linear shifts in tree density between multiple stable states. The response and sensitivity of transitions between alternative stable states at their "tipping points" represents a key uncertainty in modeling future responses to environmental changes. Savannas and forests are documented as alternative stable states at intemediate precipitation in the tropics, prompting concerns over potential large scale forest collapse in bistable regions. 
   
@@ -50,18 +50,18 @@ In the past, tree density could only be partially explained by climate. Low tree
 
 
 
-##Figures:
+## Figures:
 
-# Figure 1:Public land survey tree density is bimodal and FIA tree density is not:
+### Figure 1:Public land survey tree density is bimodal and FIA tree density is not:
 
 ![](outputs/v1.6-5/FIA_PLS_hists.png) 
 ![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
 
-# Figure 2: Change in tree density between the modern and historic vegetation depends on original vegetation density.
+### Figure 2: Change in tree density between the modern and historic vegetation depends on original vegetation density.
 ![](outputs/v1.6-5/density_difference_plot.png)
 
-# Figure 3: 
+### Figure 3: 
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:
 
 ![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
@@ -70,14 +70,14 @@ Using the climate space with reduced dimensionality (PC1) and the vegetation cla
 ![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
 ![](outputs/v1.6-5/MAP_TEMP_bimodal_space.png)
 
-# Figure 4a: with updated color schemes
+### Figure 4a: with updated color schemes
 
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_maps.png)
 
 Also several places were no analog climates w.r.t. the PLS climate:
 ![](outputs/v1.6-5/full/RCP_scenario_PC1_noanalog_maps.png)
 
-# Figure 4b:
+### Figure 4b:
 ![](outputs/v1.6-5/RCP_scenario_PC1_maps_FIA.png)
 
 Also several places were no analog climates w.r.t. the FIA climate:
@@ -194,19 +194,6 @@ suppressMessages(library(MASS))
 
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 
-plot(dens.pr$PLSdensity, dens.pr$MAP1910)
-f1 <- kde2d(dens.pr$PLSdensity, dens.pr$MAP1910, n = 50 )#, lims = c(0.5, 6, 40, 100))
-image(f1)
-f2 <- kde2d(dens.pr$PLSdensity, dens.pr$MAP1910, n = 50, lims = c(0.5, 6, 40, 100),
-            h = c(width.SJ(dens.pr$PLSdensity), width.SJ(dens.pr$MAP1910)))
-image(f2, zlim = c(0, 0.05))
-persp(f2, phi = 30, theta = 20, d = 5)
-
-
-
-
-
-
 
 pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
 pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
@@ -231,8 +218,8 @@ PLS.gam1 <-gam(PLSdensity ~ MAP1910, data = train)
 PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
 
 pr <- predict(PLS.gam1L, test)
-summary(pr)
-plot(pr, test$PLSdensity)
+#summary(pr)
+#plot(pr, test$PLSdensity)
 
 PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
 PLS.gam2L <- gam(PLSdensity ~ pasttmean , data = train)
@@ -347,142 +334,6 @@ print(AIC.df)
 ```
 
 
-Table 1A: PLS denisty GAM models with log transformed PLSdensity as as the dependant variable
-```{r, echo = FALSE, warning = FALSE}
-
-suppressMessages(library(mgcv))
-suppressMessages(library(caTools))
-suppressMessages(library(ggplot2))
-
-#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
-#dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
-#hist(dens.pr$PLSdensity, breaks = 50)
-#dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
-
-dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
-
-pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
-
-pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all prairie places
-dens.pr <- pls.new
-dens.pr <- pls.new
-
-# split into test and training datasets:
-Y <- dens.pr$PLSdensity
-msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
-#table(Y,msk)
-
-trainlog <- dens.pr[msk,]
-testlog <- dens.pr[!msk,]
-
-#ggplot(dens.pr, aes(x = MAP1910, y = log(PLSdensity)))+geom_point()
-#ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = log(PLSdensity)))+geom_point()
-
-# basic climate plots of data with only "stable forests/savannas"
-PLS.log1 <-gam(log(PLSdensity) ~  s(MAP1910), data = trainlog, family = gaussian(link = 'identity')
-PLS.log1L <-gam(log(PLSdensity) ~  MAP1910, data = trainlog)
-
-
-PLS.log2 <- gam(log(PLSdensity) ~ s(pasttmean) , data = trainlog)
-PLS.log2L <- gam(log(PLSdensity) ~ pasttmean , data = trainlog)
-#summary(PLS.log2) #explains 15.8% deviance
-#plot(PLS.log2)
-
-PLS.log3 <- gam(log(PLSdensity) ~ s(pastdeltaP),data = trainlog)
-PLS.log3L <- gam(log(PLSdensity) ~ pastdeltaP,data = trainlog)
-#summary(PLS.log3) #explains 6.07% deviance
-
-PLS.log4 <- gam(log(PLSdensity) ~ s(deltaT), data = trainlog)
-PLS.log4L <- gam(log(PLSdensity) ~ deltaT, data = trainlog)
-#summary(PLS.log4) #explains 6.07% deviance
-
-PLS.log5 <- gam(log(PLSdensity) ~ s(awc),data = trainlog)
-PLS.log5L <- gam(log(PLSdensity) ~ awc, data = trainlog)
-#summary(PLS.log5) #explains 12.5% of deviance
-
-PLS.log6 <- gam(log(PLSdensity) ~ s(sandpct), data = trainlog)
-PLS.log6L <- gam(log(PLSdensity) ~ sandpct, data = trainlog)
-#summary(PLS.log6) #explains 12.5% of deviance
-
-
-
-PLS.log7 <- gam(log(PLSdensity) ~ s(pasttmean) + s(MAP1910) , data = trainlog)
-PLS.log7L <- gam(log(PLSdensity) ~ pasttmean + MAP1910 ,  data = trainlog)
-#summary(PLS.log7) #explains 41% deviance
-#summary(PLS.log7L) # explains 19.6%
-
-PLS.log8 <- gam(log(PLSdensity) ~ s(awc) +s(sandpct), data = trainlog )
-PLS.log8L <- gam(log(PLSdensity) ~ awc + sandpct, data = trainlog )
-#summary(PLS.log8) #explains 28% of deviance
-
-PLS.log9 <- gam(log(PLSdensity) ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = trainlog)
-PLS.log9L <- gam(log(PLSdensity) ~ MAP1910 + pasttmean + sandpct, data = trainlog)
-#summary(PLS.log9) #explains 39% deviance
-#summary(PLS.log9L)
-#plot(PLS.log6)
-
-
-PLS.log10 <- gam(log(PLSdensity) ~ s(MAP1910) +s(pasttmean) + s(awc), data = trainlog)
-PLS.log10L <- gam(log(PLSdensity) ~ MAP1910 + pasttmean + awc, data = trainlog)
-
-#summary(PLS.log10) #explains 41.3% of deviance
-#plot(PLS.log10)
-
-PLS.log11 <- gam(log(PLSdensity) ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = trainlog)
-PLS.log11L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + sandpct + awc, data = trainlog)
-
-#summary(PLS.log8) # explains 41% of deviance
-PLS.log12 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = trainlog)
-PLS.log12L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + pastdeltaP, data = trainlog)
-
-PLS.log13 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = trainlog)
-PLS.log13L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + pastdeltaP, data = trainlog)
-
-PLS.log13 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = trainlog)
-PLS.log13L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT, data = trainlog)
-
-PLS.log14 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct), data = trainlog)
-PLS.log14L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = trainlog)
-
-PLS.log15 <- gam(log(PLSdensity) ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), data = trainlog)
-PLS.log15L <- gam(log(PLSdensity) ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = trainlog)
-
-PLS.log16 <- gam(log(PLSdensity) ~ s(PC1)  + s(PC2), data = trainlog)
-
-AIClog.df<- AIC(PLS.log1, PLS.log2, PLS.log3, PLS.log4, PLS.log5, PLS.log6, PLS.log7, PLS.log8, PLS.log9,PLS.log10,PLS.log11,PLS.log12,PLS.log13,PLS.log14 ,PLS.log15, PLS.log1L, PLS.log2L, PLS.log3L, PLS.log4L, PLS.log5L, PLS.log6L, PLS.log7L, PLS.log8L, PLS.log9L, PLS.log10L,PLS.log11L,PLS.log12L,PLS.log13L,PLS.log14L,PLS.log15L)
-
-#AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
-
-AIClog.df$formula <- c(PLS.log1$formula, PLS.log2$formula, PLS.log3$formula, PLS.log4$formula, PLS.log5$formula, PLS.log6$formula, PLS.log7$formula, PLS.log8$formula, PLS.log9$formula,PLS.log10$formula,PLS.log11$formula,PLS.log12$formula,PLS.log13$formula,PLS.log14$formula ,PLS.log15$formula , PLS.log1L$formula, PLS.log2L$formula, PLS.log3L$formula, PLS.log4L$formula, PLS.log5L$formula, PLS.log6L$formula, PLS.log7L$formula, PLS.log8L$formula, PLS.log9L$formula, PLS.log10L$formula,PLS.log11L$formula,PLS.log12L$formula,PLS.log13L$formula, PLS.log14L$formula, PLS.log15L$formula )
-
-AIClog.df<- AIClog.df[order(AIClog.df$AIC),]
-library(knitr)
-library(pander)
-AIClog.df$model <- rownames(AIClog.df)
-
-#calculate prediction error:
-msqe<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
-  
-predicted$sqerr <- (log(predicted$PLSdensity) - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-AIClog.df$dev.expl <- 1
-
-#add prediction error & Deviance Explained to the AIC dataframe
-
-for (i in 1: length(AIClog.df$model)){
-AIClog.df[i,'MSPE'] <- msqe(get(AIClog.df[i,"model"]), testlog)
-AIClog.df[i,"dev.expl"] <- summary(get(AIClog.df[i,"model"]))$dev.expl * 100
-}
-
-print(AIClog.df[,c("model", "formula", "df", "AIC", "MSPE", "dev.expl")], split.cells = 30)
-
-```
 
 Table 2: FIA density GAM models
 ```{r, echo = FALSE, warning = FALSE}
@@ -617,135 +468,6 @@ print(AICf.df)
 ```
 
 
-Table 2A: FIA density GAM models modeled with log transformation of FIA density
-```{r, echo = FALSE, warning = FALSE}
-
-suppressMessages(library(mgcv))
-suppressMessages(library(caTools))
-suppressMessages(library(ggplot2))
-
-
-fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
-
-
-#split FIA data into test and trainfing datasets
-Y <- fiadens$FIAdensity
-msk <- sample.split( Y, SplitRatio = 1/4, group = fiadens$fiaecotype )
-#table(Y,msk)
-
-trainflog <- fiadens[msk,]
-testflog <- fiadens[!msk,]
-
-
-FIA.log1 <-gam(log(FIAdensity) ~  s(MAP2011), data = trainflog)
-FIA.log1L <-gam(log(FIAdensity) ~  MAP2011, data = trainflog)
-
-
-FIA.log2 <- gam(log(FIAdensity) ~ s(modtmean) , data = trainflog)
-FIA.log2L <- gam(log(FIAdensity) ~ modtmean , data = trainflog)
-#summary(FIA.log2) #explains 5.6% deviance
-#plot(FIA.log2)
-
-FIA.log3 <- gam(log(FIAdensity) ~ s(moderndeltaP), data = trainflog)
-FIA.log3L <- gam(log(FIAdensity) ~ moderndeltaP, data = trainflog)
-#summary(FIA.log3) #explains 6.07% deviance
-
-FIA.log4 <- gam(log(FIAdensity) ~ s(moddeltaT), data = trainflog)
-FIA.log4L <- gam(log(FIAdensity) ~ moddeltaT, data = trainflog)
-#summary(FIA.log4) #explains 6.07% deviance
-
-FIA.log5 <- gam(log(FIAdensity) ~ s(awc),data = trainflog)
-FIA.log5L <- gam(log(FIAdensity) ~ awc, data = trainflog)
-#summary(FIA.log5) #explains 12.5% of deviance
-
-FIA.log6 <- gam(log(FIAdensity) ~ s(sandpct), data = trainflog)
-FIA.log6L <- gam(log(FIAdensity) ~ sandpct, data = trainflog)
-#summary(FIA.log6) #explains 12.5% of deviance
-
-
-
-FIA.log7 <- gam(log(FIAdensity) ~ s(modtmean) + s(MAP2011) , data = trainflog)
-FIA.log7L <- gam(log(FIAdensity) ~ modtmean + MAP2011 ,  data = trainflog)
-#summary(FIA.log7) #explains 41% deviance
-#summary(FIA.log7L) # explains 19.6%
-
-FIA.log8 <- gam(log(FIAdensity) ~ s(awc) +s(sandpct), data = trainflog )
-FIA.log8L <- gam(log(FIAdensity) ~ awc + sandpct, data = trainflog )
-#summary(FIA.log8) #explains 28% of deviance
-
-FIA.log9 <- gam(log(FIAdensity) ~ s(MAP2011) + s(modtmean) + s(sandpct), data = trainflog)
-FIA.log9L <- gam(log(FIAdensity) ~ MAP2011 + modtmean + sandpct, data = trainflog)
-#summary(FIA.log9) #explains 39% deviance
-#summary(FIA.log9L)
-#plot(FIA.log6)
-
-
-FIA.log10 <- gam(log(FIAdensity) ~ s(MAP2011) +s(modtmean) + s(awc), data = trainflog)
-FIA.log10L <- gam(log(FIAdensity) ~ MAP2011 + modtmean + awc, data = trainflog)
-
-#summary(FIA.log10) #explains 41.3% of deviance
-#plot(FIA.log10)
-
-FIA.log11 <- gam(log(FIAdensity) ~ s(MAP2011)  +s(modtmean) +s(sandpct) + s(awc), data = trainflog)
-FIA.log11L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + sandpct + awc, data = trainflog)
-
-#summary(FIA.log8) # explains 41% of deviance
-FIA.log12 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainflog)
-FIA.log12L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moderndeltaP, data = trainflog)
-
-FIA.log13 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moderndeltaP), data = trainflog)
-FIA.log13L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moderndeltaP, data = trainflog)
-
-FIA.log13 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT), data = trainflog)
-FIA.log13L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT, data = trainflog)
-
-FIA.log14 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct), data = trainflog)
-FIA.log14L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainflog)
-
-FIA.log15 <- gam(log(FIAdensity) ~ s(MAP2011)  + s(modtmean) + s(moddeltaT) + s(moderndeltaP)+s(sandpct)+s(awc), data = trainflog)
-FIA.log15L <- gam(log(FIAdensity) ~ MAP2011  + modtmean + moddeltaT + moderndeltaP, data = trainflog)
-
-FIA.log16 <- gam(log(FIAdensity) ~ s(PC1)  + s(PC2), data = trainflog)
-FIA.log16L <- gam(log(FIAdensity) ~ PC1 + PC2, data = trainflog)
-
-AIClogf.df<- AIC(FIA.log1, FIA.log2, FIA.log3, FIA.log4, FIA.log5, FIA.log6, FIA.log7, FIA.log8, FIA.log9,FIA.log10,FIA.log11,FIA.log12,FIA.log13,FIA.log14 ,FIA.log15,FIA.log16, FIA.log1L, FIA.log2L, FIA.log3L, FIA.log4L, FIA.log5L, FIA.log6L, FIA.log7L, FIA.log8L, FIA.log9L, FIA.log10L,FIA.log11L,FIA.log12L,FIA.log13L,FIA.log14L,FIA.log15L, FIA.log16L)
-
-#AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
-
-AIClogf.df$formula <- c(FIA.log1$formula, FIA.log2$formula, FIA.log3$formula, FIA.log4$formula, FIA.log5$formula, FIA.log6$formula, FIA.log7$formula, FIA.log8$formula, FIA.log9$formula,FIA.log10$formula,FIA.log11$formula,FIA.log12$formula,FIA.log13$formula,FIA.log14$formula ,FIA.log15$formula , FIA.log16L$formula, FIA.log1L$formula, FIA.log2L$formula, FIA.log3L$formula, FIA.log4L$formula, FIA.log5L$formula, FIA.log6L$formula, FIA.log7L$formula, FIA.log8L$formula, FIA.log9L$formula, FIA.log10L$formula,FIA.log11L$formula,FIA.log12L$formula,FIA.log13L$formula, FIA.log14L$formula, FIA.log15L$formula, FIA.log16L$formula )
-
-AIClogf.df<- AICf.df[order(AICf.df$AIC),]
-library(knitr)
-library(pander)
-AIClogf.df$model <- as.character(rownames(AIClogf.df))
-
-#calculate prediction error:
-msqe.f<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
-
-predicted<- testdata
-  
-predicted$sqerr <- (predicted$FIAdensity - exp(predicted$ypred))^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
-
-AIClogf.df$MSPE <- 1
-AIClogf.df$dev.expl <- 1
-
-#add prediction error of AIC dataframe
-
-for (i in 1: length(AIClogf.df$model)){
-AIClogf.df[i,'MSPE'] <- msqe.f(get(AIClogf.df[i,"model"]), testflog)
-AIClogf.df[i,"dev.expl"] <- summary(get(AIClogf.df[i,"model"]))$dev.expl * 100
-}
-
-#print(AICf.df)
-pander(AIClogf.df[,c("model", "formula", "AIC", "MSPE", 'dev.expl')], split.cells = 30)
-
-```
-
-
 ###Predicting Tree density (GAMs)
 
 The model with the lowest AIC value is represented by the formula:
@@ -803,20 +525,12 @@ mean(predicted$sqerr, na.rm = TRUE)
 msqe(PLS.gam15L, test)
 msqe(PLS.gam15L, pls.bimodal)
 
-# predictions for PLS modeled with log transformed density
-predictedlog <- get.preds(PLS.log15, testlog)
-predictedlog$ypred <- exp(predictedlog$ypred)
-#summary(predictedlog$ypred)
 
 
 # predictions for FIA
 predictedf <- get.preds(FIA.gam15, testf)
 summary(predictedf$ypred)
 
-# predictions for FIA with log transformed density
-predictedflog <- get.preds(FIA.log15, testflog)
-predictedflog$ypred <- exp(predictedflog$ypred)
-#summary(predictedf$ypred)
 
 ####################################
 # Plotting predicted vs. observed ##
@@ -835,14 +549,10 @@ pvsobs(preds = predicted, obs = 'PLSdensity', colorby = "PC1", model = "PLS dens
 # plot predicted vs. observed for PLS model 15
 pvsobs(preds = predictedbm, obs = 'PLSdensity', colorby = "PC1", model = "PLS density Bimodal only places")
 
-# plot predicted vs. observed for log transformedPLS model 15
-pvsobs(preds = predictedlog, obs = 'PLSdensity', colorby = "PC1", model = "Log-Transformed PLS density")
 
 # plot FIA predicted vs. observed model 15
 pvsobs(preds = predictedf, obs = 'FIAdensity', colorby = "PC1", model = "FIA density")
 
-# plot FIA log transformed predicted vs. observed model 15
-pvsobs(preds = predictedflog, obs = 'FIAdensity', colorby = "PC1", model = "Log-Transformed FIA density")
 
 ```
 The predicted vs. observed plot shows overestimation of PLS tree density in Low density areas and underestimation of PLS tree density in High density areas. Below we map out the predictions and prediction errors in space. Model fit has improved for the stable portions of the PLS landscape, and does an Okay job predicting PLS tree density. Note that the predictions here are overall much higher than the observations for FIA tree denisty. 
@@ -864,9 +574,9 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
 
 map.preds(preds = predicted, model = "PLS denisty")
 map.preds(preds = predictedbm, model = "PLS denisty bimodal only")
-map.preds(preds = predictedlog, model = "PLS log trans. denisty")
+
 map.preds(preds = predictedf, model = "FIA denisty")
-map.preds(preds = predictedflog, model = "FIA log trans. denisty")
+
 
 ```
 
@@ -913,9 +623,9 @@ diserror.map ( preds = predicted, obs = "PLSdensity", model = "PLS density")
 
 diserror.map ( preds = predictedbm, obs = "PLSdensity", model = "PLS bimodal places")
 
-diserror.map ( preds = predictedlog, obs = "PLSdensity", model = "PLS log trans. density")
+
 diserror.map ( preds = predictedf, obs = "FIAdensity", model = "FIA density")
-diserror.map ( preds = predictedflog, obs = "FIAdensity", model = "FIA log trans. density")
+
 
 ```
 
@@ -937,9 +647,9 @@ grid.arrange(a,b, ncol = 1, nrow = 2)
 
 class.plots(preds = predicted, obs = "PLSdensity", class = 'classification')
 class.plots(preds = predictedbm, obs = "PLSdensity", class = 'classification')
-class.plots(preds = predictedlog, obs = "PLSdensity", class = 'classification')
+
 class.plots(preds = predictedf, obs = "FIAdensity", class = 'fiaecotype')
-class.plots(preds = predictedflog, obs = "FIAdensity", class = 'fiaecotype')
+
 
 ```
 
@@ -973,13 +683,274 @@ ggplot() + geom_point(data = preds, aes(x= preds[,obs], y = podiff, color = erro
 
 plot.po.dens(predicted, "PLSdensity", model = "PLS density")
 plot.po.dens(predictedbm, "PLSdensity", model = "PLS density bimodal cells")
-plot.po.dens(predictedlog, "PLSdensity", model = "PLS log trans. density")
+
 plot.po.dens(predictedf, "FIAdensity", model = "FIA density")
-plot.po.dens(predictedflog, "FIAdensity", model = "FIA log trans.")
+
 ```
 PLS model trained on the stable places results in high overpredictions for low tree denisty areas and moderate underprediction for tree density in high density grid cells. 
 
 FIA models overpredict over the places that have low tree denisty. I think that if we remove the low denisty places, we might be able to better predict. 
 
 
+## Predicting Forest vs. Savanna (not density)
 
+The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna (ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
+
+
+This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
+
+```{r echo = FALSE, warning = FALSE}
+dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
+
+# dummyvariables for logistic regression:
+dens.pr$ecocode <- 0
+dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
+dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+
+#split trainfing and testing
+Y <- dens.pr$ecotype
+msk <- sample.split( Y, SplitRatio = 3/4, group = NULL)
+#table(Y,msk)
+
+train <- dens.pr[msk,]
+test <- dens.pr[!msk,]
+
+
+#plot(dens.pr$sandpct, dens.pr$ecotype)
+
+
+PLS.lgr1 <-gam(ecocode ~  s(MAP1910), family = 'binomial',data = train)
+PLS.lgr1L <-gam(ecocode ~  MAP1910, family = 'binomial',data = train)
+
+
+PLS.lgr2 <- gam(ecocode ~ s(pasttmean) , family = 'binomial',data = train)
+PLS.lgr2L <- gam(ecocode ~ pasttmean , family = 'binomial',data = train)
+#summary(PLS.lgr2) #explains 15.8% deviance
+#plot(PLS.lgr2)
+
+PLS.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = train)
+PLS.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = train)
+#summary(PLS.lgr3) #explains 6.07% deviance
+
+PLS.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = train)
+PLS.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = train)
+#summary(PLS.lgr4) #explains 6.07% deviance
+
+PLS.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = train)
+PLS.lgr5L <- gam(ecocode ~ awc, family = 'binomial',data = train)
+#summary(PLS.lgr5) #explains 12.5% of deviance
+
+PLS.lgr6 <- gam(ecocode ~ s(sandpct), family = 'binomial',data = train)
+PLS.lgr6L <- gam(ecocode ~ sandpct, family = 'binomial',data = train)
+#summary(PLS.lgr6) #explains 12.5% of deviance
+
+
+
+PLS.lgr7 <- gam(ecocode ~ s(pasttmean) + s(MAP1910) ,  family = 'binomial',data = train)
+PLS.lgr7L <- gam(ecocode ~ pasttmean + MAP1910 ,  family = 'binomial',data = train)
+#summary(PLS.lgr7) #explains 41% deviance
+#summary(PLS.lgr7L) # explains 19.6%
+
+PLS.lgr8 <- gam(ecocode ~ s(awc) +s(sandpct), family = 'binomial',data = train )
+PLS.lgr8L <- gam(ecocode ~ awc + sandpct, family = 'binomial',data = train )
+#summary(PLS.lgr8) #explains 28% of deviance
+
+PLS.lgr9 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = 'binomial',data = train)
+PLS.lgr9L <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = 'binomial',data = train)
+#summary(PLS.lgr9) #explains 39% deviance
+#summary(PLS.lgr9L)
+#plot(PLS.lgr6)
+
+
+PLS.lgr10 <- gam(ecocode ~ s(MAP1910) +s(pasttmean) + s(awc), family = 'binomial',data = train)
+PLS.lgr10L <- gam(ecocode ~ MAP1910 + pasttmean + awc, family = 'binomial',data = train)
+
+#summary(PLS.lgr10) #explains 41.3% of deviance
+#plot(PLS.lgr10)
+
+PLS.lgr11 <- gam(ecocode ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), family = 'binomial',data = train)
+PLS.lgr11L <- gam(ecocode ~ MAP1910  + pasttmean + sandpct + awc, family = 'binomial',data = train)
+
+#summary(PLS.lgr8) # explains 41% of deviance
+PLS.lgr12 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP),family = 'binomial', data = train)
+PLS.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
+
+PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = train)
+PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = train)
+
+#PLS.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = train)
+#PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = train)
+
+PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = train)
+PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
+
+AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
+
+
+
+
+AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula )
+
+AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
+library(knitr)
+library(pander)
+AIC2.df$model <- rownames(AIC2.df)
+
+#calculate prediction error:
+msqe.code<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC2.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC2.df$model)){
+AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
+}
+pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+logsample <- predict(PLS.lgr1, test, type="response")
+test$ypred <- logsample
+summary(logsample)
+hist(test$ypred)
+
+ggplot(test, aes(x, y, color = ypred)) + geom_point()
+
+```
+Looks like model number 14 with just Mean Annual Precipitation has lowest AIC for the logistic/binomial model. 
+Lets map out the probability of forest based on model with the lowest AIC value:
+
+forest type ~ s(MAP1910)+ s(pasttmean) + s(deltaT) +   s(pastdeltaP)
+
+The smooth predictors in this model are the same as the smooth predictors in the denisty model
+
+# savanna forest model for FIA:
+```{r echo = FALSE, warning = FALSE}
+
+# dummyvariables for logistic regression:
+fiadens$ecocode <- 0
+fiadens[fiadens$ecotype %in% 'Forest', ]$ecocode <- 1
+#fiadens<- fiadens[!fiadens$ecotype %in% 'prairie',]
+
+#split trainffing and testfing
+Y <- fiadens$ecotype
+msk <- sample.split( Y, SplitRatio = 1/4, group = NULL )
+#table(Y,msk)
+
+trainf <- fiadens[msk,]
+testf <- fiadens[!msk,]
+
+
+#plot(fiadens$sandpct, fiadens$ecotype)
+
+
+FIA.lgr1 <-gam(ecocode ~  s(MAP1910), family = 'binomial',data = trainf)
+FIA.lgr1L <-gam(ecocode ~  MAP1910, family = 'binomial',data = trainf)
+
+
+FIA.lgr2 <- gam(ecocode ~ s(pasttmean) , family = 'binomial',data = trainf)
+FIA.lgr2L <- gam(ecocode ~ pasttmean , family = 'binomial',data = trainf)
+#summary(FIA.lgr2) #explains 15.8% deviance
+#plot(FIA.lgr2)
+
+FIA.lgr3 <- gam(ecocode ~ s(pastdeltaP), family = 'binomial',data = trainf)
+FIA.lgr3L <- gam(ecocode ~ pastdeltaP, family = 'binomial',data = trainf)
+#summary(FIA.lgr3) #explains 6.07% deviance
+
+FIA.lgr4 <- gam(ecocode ~ s(deltaT), family = 'binomial',data = trainf)
+FIA.lgr4L <- gam(ecocode ~ deltaT, family = 'binomial',data = trainf)
+#summary(FIA.lgr4) #explains 6.07% deviance
+
+FIA.lgr5 <- gam(ecocode ~ s(awc), family = 'binomial',data = trainf)
+FIA.lgr5L <- gam(ecocode ~ awc, family = 'binomial',data = trainf)
+#summary(FIA.lgr5) #explains 12.5% of deviance
+
+FIA.lgr6 <- gam(ecocode ~ s(sandpct), family = 'binomial',data = trainf)
+FIA.lgr6L <- gam(ecocode ~ sandpct, family = 'binomial',data = trainf)
+#summary(FIA.lgr6) #explains 12.5% of deviance
+
+
+
+FIA.lgr7 <- gam(ecocode ~ s(pasttmean) + s(MAP1910) ,  family = 'binomial',data = trainf)
+FIA.lgr7L <- gam(ecocode ~ pasttmean + MAP1910 ,  family = 'binomial',data = trainf)
+#summary(FIA.lgr7) #explains 41% deviance
+#summary(FIA.lgr7L) # explains 19.6%
+
+FIA.lgr8 <- gam(ecocode ~ s(awc) +s(sandpct), family = 'binomial',data = trainf )
+FIA.lgr8L <- gam(ecocode ~ awc + sandpct, family = 'binomial',data = trainf )
+#summary(FIA.lgr8) #explains 28% of deviance
+
+FIA.lgr9 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = 'binomial',data = trainf)
+FIA.lgr9L <- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = 'binomial',data = trainf)
+#summary(FIA.lgr9) #explains 39% deviance
+#summary(FIA.lgr9L)
+#plot(FIA.lgr6)
+
+
+FIA.lgr10 <- gam(ecocode ~ s(MAP1910) +s(pasttmean) + s(awc), family = 'binomial',data = trainf)
+FIA.lgr10L <- gam(ecocode ~ MAP1910 + pasttmean + awc, family = 'binomial',data = trainf)
+
+#summary(FIA.lgr10) #explains 41.3% of deviance
+#plot(FIA.lgr10)
+
+FIA.lgr11 <- gam(ecocode ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), family = 'binomial',data = trainf)
+FIA.lgr11L <- gam(ecocode ~ MAP1910  + pasttmean + sandpct + awc, family = 'binomial',data = trainf)
+
+#summary(FIA.lgr8) # explains 41% of deviance
+FIA.lgr12 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP),family = 'binomial', data = trainf)
+FIA.lgr12L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
+
+FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), family = 'binomial',data = trainf)
+FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomial',data = trainf)
+
+#FIA.lgr13 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT), family = 'binomial',data = trainf)
+#FIA.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT, family = 'binomial',data = trainf)
+
+FIA.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = trainf)
+FIA.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = trainf)
+
+AIC2.df<- AIC(FIA.lgr1, FIA.lgr2, FIA.lgr3, FIA.lgr4, FIA.lgr5, FIA.lgr6, FIA.lgr7, FIA.lgr8, FIA.lgr9,FIA.lgr10,FIA.lgr11,FIA.lgr12,FIA.lgr13,FIA.lgr14 , FIA.lgr1L, FIA.lgr2L, FIA.lgr3L, FIA.lgr4L, FIA.lgr5L, FIA.lgr6L, FIA.lgr7L, FIA.lgr8L, FIA.lgr9L, FIA.lgr10L,FIA.lgr11L,FIA.lgr12L,FIA.lgr13L,FIA.lgr14L)
+
+
+
+
+AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC2.df$formula <- c(FIA.lgr1$formula, FIA.lgr2$formula, FIA.lgr3$formula, FIA.lgr4$formula, FIA.lgr5$formula, FIA.lgr6$formula, FIA.lgr7$formula, FIA.lgr8$formula, FIA.lgr9$formula,FIA.lgr10$formula,FIA.lgr11$formula,FIA.lgr12$formula,FIA.lgr13$formula,FIA.lgr14$formula , FIA.lgr1L$formula, FIA.lgr2L$formula, FIA.lgr3L$formula, FIA.lgr4L$formula, FIA.lgr5L$formula, FIA.lgr6L$formula, FIA.lgr7L$formula, FIA.lgr8L$formula, FIA.lgr9L$formula, FIA.lgr10L$formula,FIA.lgr11L$formula,FIA.lgr12L$formula,FIA.lgr13L$formula, FIA.lgr14L$formula )
+
+AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
+library(knitr)
+library(pander)
+AIC2.df$model <- rownames(AIC2.df)
+
+#calculate prediction error:
+msqe.code<- function(model, testfdata){
+ypred <- predict(model, newdata = testfdata, type="response")
+testfdata$ypred <- ypred
+
+predicted<- testfdata
+  
+predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC2.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC2.df$model)){
+AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
+}
+pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+
+```

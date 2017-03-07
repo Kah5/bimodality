@@ -819,14 +819,56 @@ AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
 }
 pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
-logsample <- predict(PLS.lgr14, dens.pr, type="response")
-test$ypred <- logsample
+full <- dens.pr
+logsample <- predict(PLS.lgr14, full, type="response")
+full$ypred <- as.numeric(logsample)
 summary(logsample)
 hist(test$ypred)
 
-ggplot(test, aes(x, y, color = ypred)) + geom_point()
-ggplot(test, aes(x,y, color = ecocode)) + geom_point()+coord_equal()
+ggplot(full, aes(x, y, color = ypred)) + geom_point()
+ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
+
 ggplot(test, aes(ypred, PLSdensity))+geom_point()
+
+ggplot(test, aes (ypred, MAP1910))+geom_point()
+
+
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+full$ypreddiscrete <- cut(full$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+full$ypreddiscrete <- as.character(full$ypreddiscrete)
+ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+
+# plot the discrete probability of forest 
+p.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full, aes(x=x, y=y, fill = ypreddiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= cbpalette) +
+  coord_equal()+theme_bw()+ theme()
+
+# plot PLS forests
+pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= c("#006837", "#c2e699")) +
+  coord_equal()+theme_bw()
+
+grid.arrange(pls, p.forest, nrow = 1, ncol=2)
+
 
 ```
 

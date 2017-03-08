@@ -38,6 +38,15 @@ umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
 
 
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
+umdw.n <- umdw.new[,c('x', 'y', 'PLSdensity')]
+coordinates(umdw.n) <- ~x+y
+gridded(umdw.n) <- TRUE
+umdw.rast <- raster(umdw.n)
+plot(umdw.rast)
+proj4string(umdw.rast) <- '+init=epsg:3175'
+
+writeRaster(umdw.rast, "data/upper_midwest.ascii", overwrite = TRUE)
+
 hist(umdw.new$PLSdensity, breaks = 25)
 
 densitys <- rbind(pls.inil, umdw.new)
@@ -409,26 +418,54 @@ dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
 find.noanalog<- function(dens.pr,rcp){
  dens.pr[,c(paste0("rcp",rcp,"NA"))] <- "Within Range"
-# rcp 4.5
+ dens.pr[,c(paste0('rcp',rcp,"NAclim"))] <- "Within Range" # column labeling the reason climate is out of range
+ #dens.pr[,c(paste0('rcp',rcp,"NAclimhigh"))] <- "Within Range" # column labeling the reason climate is out of range
+ 
+ # rcp 4.5
 prange <- range(dens.pr$MAP1910)
 trange <- range(dens.pr$pasttmean)
 pcvrange <- range(dens.pr$pastdeltaP)
 tcvrange <- range(dens.pr$deltaT)
 
-
+# identify climate space outside of the modern/pls range
 precip.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1] | dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
 pcv.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1] | dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
 temp.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] | dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
 tcv.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] | dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
+
+# identify grid cells with climate space lower than modern/pls
+pcv.low <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1],  ]
+tcv.low <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] , ]
+precip.low <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1], ]
+temp.low <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] , ]
+
+dens.pr[dens.pr$cell %in% precip.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low precip"
+dens.pr[dens.pr$cell %in% temp.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low temp"
+dens.pr[dens.pr$cell %in% tcv.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low temp CV"
+dens.pr[dens.pr$cell %in% pcv.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low precip SI"
+
+# identify the gird cells that are higher than modern/pls
+pcv.high <- dens.pr[ dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
+tcv.high <- dens.pr[ dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
+precip.high <- dens.pr[ dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
+temp.high <- dens.pr[ dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
+
+dens.pr[dens.pr$cell %in% precip.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High precip"
+dens.pr[dens.pr$cell %in% temp.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High temp"
+dens.pr[dens.pr$cell %in% tcv.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High temp CV"
+dens.pr[dens.pr$cell %in% pcv.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High precip SI"
+
 
 dens.pr[dens.pr$cell %in% precip.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
 dens.pr[dens.pr$cell %in% temp.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
 dens.pr[dens.pr$cell %in% tcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
 dens.pr[dens.pr$cell %in% pcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
 
-dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"))]
+dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"), paste0('rcp', rcp,"NAclim"))]
 
 }
+
+# find noanalog climates, label high or low
 NArcp26 <- find.noanalog(dens.pr=dens.pr, rcp = "26")
 NArcp45 <- find.noanalog(dens.pr=dens.pr, rcp = "45")
 NArcp85 <- find.noanalog(dens.pr=dens.pr, rcp = "85")
@@ -458,7 +495,25 @@ png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/full/no-ana
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
 dev.off()
 
+# plot reasons for no-analog climate:
 
+a <- ggplot(dens.pr, aes(x,y, color = rcp26NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw()+coord_equal()+theme_bw() + ggtitle("RCP 2.6")
+b <- ggplot(dens.pr, aes(x,y, color = rcp45NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 4.5")
+c <- ggplot(dens.pr, aes(x,y, color = rcp60NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 6.0")
+d <- ggplot(dens.pr, aes(x,y, color = rcp85NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  coord_equal()+theme_bw() + ggtitle("RCP 8.5")
+source("R/grid_arrange_shared_legend.R")
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates-reason.png")
+grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
+dev.off()
 
 # predict PCA with the diffrent projections:
 

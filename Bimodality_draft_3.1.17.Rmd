@@ -27,10 +27,25 @@ Paragraph 1: Background & set up
 Paragraph 2: Introduce PLS data, tell the story of bimodality (methodsy, look to the past)
   *We use landscape level tree density estimates from pre-Agro industrial settlement 
   * bimodality is hallmark
-  *PLS is bimodal
-  * is bimodal in intermediate climate space (climate is not bimodal)
-  * resulting in XXXX sq km of the landscape that is alternative states. 
-  *
+  *PLS is bimodal (Fig 1a)
+  * is bimodal in intermediate climate space (climate is not bimodal) (Fig. 1b)
+  * resulting in XXXX sq km of the landscape that is alternative states. Fig 1c
+
+Paragraph 3: Is the bimodalily reslient to 20th century environmental changes (climatic shifts, fire supp. land use)?
+  * modern tree denisty is not bimodal, showing a sharp stabilization of the landscape to closed forests
+  * How did the density shift? Density difference map (Fig 1d)
+  * While climate has shifted between 1895-1925 and 1977-2011, this shift does not account for the large changes in tree density (Supplemental figure).
+  * Non-climatic environmental changes (land use, fire suppression) have stabilized the historically unstable biome to a stable closed forest state (Figure 1e).
+  
+Paragraph 4: Future climate changes could drive instabile responses of the region. 
+  * Increased temperatures may drive drought mortality in closed forests (Frelich and Reich hypotheses).
+  * Change in ecosystem stability (documented above) likely  has consequences for the future responses of these forests
+  * projecting the historic climate-veg relationhisp..(fig 2a)
+  * projecting the modern climate-veg relationships (fig 2b)
+  
+Implications, etc.
+  
+  
 Science article (v. rough draft)
 
 

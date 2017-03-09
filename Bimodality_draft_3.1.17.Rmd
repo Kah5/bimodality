@@ -9,6 +9,28 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Outline for rewriting:
+
+abstract:
+1. Climate changes have the potential to destabilize large biomes.
+2. Biomes with alternative states in similar climate space maintained by ecological feedback mechanisms can be tipped from one state to another by small changes in climate, driving this instability.
+3. We show that before Agro-industrial land conversion, large regions of North America existed as alternative states, but that ~150 years of land use change and fire suppression have stabilized (XXXX sq. km ) the landscape. 
+4. Projecting into the future, climate would destabilize alternative states in the region, but continued human impacts will maintian stability under changes in climate.
+
+
+Main Text Outline:
+Paragraph 1: Background & set up
+  * expand on point 2 in the abstract
+  * general background and importance of alt. states
+  * End with: others have projected that alternative states could be tipped with small perterbations in climate (Staver, Hirota), but real time oberservations of regional switches between states are lacking.
+  
+Paragraph 2: Introduce PLS data, tell the story of bimodality (methodsy, look to the past)
+  *We use landscape level tree density estimates from pre-Agro industrial settlement 
+  * bimodality is hallmark
+  *PLS is bimodal
+  * is bimodal in intermediate climate space (climate is not bimodal)
+  * resulting in XXXX sq km of the landscape that is alternative states. 
+  *
 Science article (v. rough draft)
 
 

@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Outline for rewriting:
 
-abstract:
+Abstract:
 1. Climate changes have the potential to destabilize large biomes, driving shifts in vegetation across large regions of the globe.
 2. Biomes with alternative states maintained by ecological feedback mechanisms drive this instability, as they can be tipped from one state to another by small changes in climate.
 (Possibly: )
@@ -25,7 +25,7 @@ Paragraph 1: Background & set up
   * general background and importance of alt. states
   * End with: others have projected that alternative states could be tipped with small perterbations in climate (Staver, Hirota), but real time oberservations of regional switches between states are lacking.
   
-  *Anthropogenic climate changes are expected to alter the distribution of ecosytems and biomes on the globe. Vegetation response to these changes may be linear with climate, or a non-linear threshold response in the case of unstable systems maintained by ecological feedback mechanisms. Biomes that can take alternative states within similar envionmental conditions are considered particularly unstable, becuase at a critical threshold, small perterbations of the environment can result in non-linear transitions in vegetation. The sensitivity of transitions between alternative stable states at their "tipping points" represents a key uncertainty in understanding future responses to environmental changes. In many parts of the world, savanna and forests have been identified as alternate stable states maintained by disturbance feedbacks, driving widespread concern over the the continued stability of the landscape (Staver et al. 2011, Hirota et al. 2011).However, observations of a temporal response of these systems to rapid environmental changes are lacking and remains a key uncertainty in predictions for future vegetation distribution.
+  *Anthropogenic climate changes are expected to alter the distribution of ecosytems and biomes on the globe. Vegetation response to these changes may be linear with climate, or a non-linear threshold response in the case of unstable systems maintained by ecological feedback mechanisms. Biomes that can take alternative states within similar envionmental conditions are considered particularly unstable, becuase at a critical threshold, small perterbations of the environment can result in non-linear transitions in vegetation. The sensitivity of transitions between alternative stable states at their "tipping points" represents a key uncertainty in understanding future responses to environmental changes. In many parts of the world, savanna and forests have been identified as alternate stable states maintained by disturbance-vegetation feedbacks, driving widespread concern over the the continued stability of the landscape (Staver et al. 2011, Hirota et al. 2011). However, observations of a temporal response of these systems to rapid environmental changes are lacking and remains a key uncertainty in predictions for future vegetation distribution.
   
   
 
@@ -37,12 +37,20 @@ Paragraph 2: Introduce PLS data, tell the story of bimodality (methodsy, look to
   *PLS is bimodal (Fig 1a)
   * is bimodal in intermediate climate space (climate is not bimodal) (Fig. 1b)
   * resulting in XXXX sq km of the landscape that is alternative states. Fig 1c
+  
+ 
+Paragraph 2 text (can we split this up?).  To explore the potential responses of alternative stable states to future environmental changes, we use baseline historic and modern vegetation data from the North American savanna-forest boundary to ask whether savanna and forests are alternative stable states in the temperate zone and to determine if these systems were resilient to large scale fire suppression, land use change, and shifts in climate over the last ~150 years in the region. For our historic baseline vegetation data, we estimated landscape level tree density estimates from Public Land Surveys (PLS) at an 8km grid across five states in the Upper Midwest (Supplemental figure tree density). Since a bimodal or discontinous distribution in tree cover that is not determined by climate or edaphic factors is a hallmark of alternative stable states, we focus on the distribution and explanatory variables of tree density to identify savanna and forest alternative states. Before European Agricultural settlement in the midwest, tree density was significantly bimodal across the entire upper midwest, with prominant modes at low tree density (30 trees/ha) and at high tree density (205 trees/ha) (Diptest p < 0.05, BC = 0.74306, Figure 1a).To determine if the bimodality observed in tree density was due to discontinous patterns in climate/edaphic factors, we evaluated tree density distributions over intervals of the first principal component (PC1) of all environmental variables (Supplemental Material). Tree density was significantly bimodal at intermediate precipitation and temperature levels (530 - 900 mm/year and 2 - 10 degC) (Figure 1b). Based on this analysis, we estimate that up to 34% (212,032 km^2) of the the past landscape had a an environment where savanna and forests were alternative states that could potentially switch between states (Figure 1c).
+
+
 
 Paragraph 3: Is the bimodalily reslient to 20th century environmental changes (climatic shifts, fire supp. land use)?
   * modern tree denisty is not bimodal, showing a sharp stabilization of the landscape to closed forests
   * How did the density shift? Density difference map (Fig 1d)
   * While climate has shifted between 1895-1925 and 1977-2011, this shift does not account for the large changes in tree density (Supplemental figure).
   * Non-climatic environmental changes (land use, fire suppression) have stabilized the historically unstable biome to a stable closed forest state (Figure 1e).
+  
+  
+1. 
   
 Paragraph 4: Future climate changes could drive instabile responses of the region. 
   * Increased temperatures may drive drought mortality in closed forests (Frelich and Reich hypotheses).

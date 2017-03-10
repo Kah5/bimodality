@@ -43,19 +43,22 @@ Paragraph 2 text (can we split this up?).  To explore the potential responses of
 
 
 Over 150 years of environmental changes have influenced this region, allowing us to explore the aggregate effect of climate, land use, and fire regime changes on the stability of the savanna-forest boundary. Tree density distribtion from the modern Forest Inventory Analysis (FIA)is not significantly bimodal between 0 and 500 trees/ha, showing a sharp stabilization of the landscape to closed forests (Figure 1d). This shift in tree density distribution is well explained by the original tree density. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = 0.4, p < 0.05, Figure 1e). Marked changes in climate over the last century was one plausible explanation for  
-these shifts in ecosystem stability. However, observed climate shifts have slightly expanded the region where bistability occurs, which would mean that previously stable closed forests would be destabilized, resulting bimodal closed forests that could be tipped into savannas (Supplemental figure). In sharp contrast to these trends, we observe an overall stabilization of the modern landscape to predominatly stable closed forests (Figure 1f).
+these shifts in ecosystem stability. However, observed climate shifts have slightly expanded the region where bistability occurs, which would mean that previously stable closed forests would be destabilized, resulting bimodal closed forests that could be tipped into savannas (Supplemental figure). In sharp contrast to these trends, we observe an overall stabilization of the modern landscape to predominatly stable closed forests (Figure 1f), indicating that human impacts on the land, not climate have stabilized the landscape to modern forests.
 
 
-Paragraph 3: Is the bimodality reslient to 20th century environmental changes (climatic shifts, fire supp. land use)?
+
+Paragraph 3: Is the bimodality resilient to 20th century environmental changes (climatic shifts, fire supp. land use)?
   * modern tree denisty is not bimodal, showing a sharp stabilization of the landscape to closed forests
   * How did the density shift? Density difference map (Fig 1d)
   * While climate has shifted between 1895-1925 and 1977-2011, this shift does not account for the large changes in tree density (Supplemental figure).
   * Non-climatic environmental changes (land use, fire suppression) have stabilized the historically unstable biome to a stable closed forest state (Figure 1e).
   
-  
-1. 
-  
-Paragraph 4: Future climate changes could drive instabile responses of the region. 
+The conversion of a alternative savanna and forest alternative states to predominantly  closed forest results in a change in ecosystem stability in the region that may have practical consequeces for the future responses of vegetation to climate. Projecting the historic climate vegetation relait 
+
+
+These findings have practical implications for the future resilience of the region because the transition of the modern landscape to closed forests constitutes a stability regime change shift that is may not be easily reversible. Using our new understanding of the the climate space where forests are bimodal (unstable) in the past, and now, we can make broad predictions for the future stability of midwestern forests. If the relationship between climate/soils and PLS vegetation held in the future, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (for CMIP5 CCESM4 climate projections) would result in some increases and spatial shifts in the instability of Midwestern forests (Figure 4a).  However, the current regime of fire suppression is likely to remain, and starting with a modern relationship between climate/soils and modern vegetaion, the climate changes projected under the RCP 2.6, RCP4.5, and RCP 8.5 emmissions scenarios (again for CCESM4 only) would likely result in stable closed forests in the Midwest maintaining, or increasing ecosystem stability (Figure 4b). 
+
+Paragraph 4: Future climate changes could drive instable responses of the region. 
   * Increased temperatures may drive drought mortality in closed forests (Frelich and Reich hypotheses).
   * Change in ecosystem stability (documented above) likely  has consequences for the future responses of these forests
   * projecting the historic climate-veg relationhisp..(fig 2a)

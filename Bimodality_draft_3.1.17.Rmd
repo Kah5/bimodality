@@ -39,11 +39,13 @@ Paragraph 2: Introduce PLS data, tell the story of bimodality (methodsy, look to
   * resulting in XXXX sq km of the landscape that is alternative states. Fig 1c
   
  
-Paragraph 2 text (can we split this up?).  To explore the potential responses of alternative stable states to future environmental changes, we use baseline historic and modern vegetation data from the North American savanna-forest boundary to ask whether savanna and forests are alternative stable states in the temperate zone and to determine if these systems were resilient to large scale fire suppression, land use change, and shifts in climate over the last ~150 years in the region. For our historic baseline vegetation data, we estimated landscape level tree density estimates from Public Land Surveys (PLS) at an 8km grid across five states in the Upper Midwest (Supplemental figure tree density). Since a bimodal or discontinous distribution in tree cover that is not determined by climate or edaphic factors is a hallmark of alternative stable states, we focus on the distribution and explanatory variables of tree density to identify savanna and forest alternative states. Before European Agricultural settlement in the midwest, tree density was significantly bimodal across the entire upper midwest, with prominant modes at low tree density (30 trees/ha) and at high tree density (205 trees/ha) (Diptest p < 0.05, BC = 0.74306, Figure 1a).To determine if the bimodality observed in tree density was due to discontinous patterns in climate/edaphic factors, we evaluated tree density distributions over intervals of the first principal component (PC1) of all environmental variables (Supplemental Material). Tree density was significantly bimodal at intermediate precipitation and temperature levels (530 - 900 mm/year and 2 - 10 degC) (Figure 1b). Based on this analysis, we estimate that up to 34% (212,032 km^2) of the the past landscape had a an environment where savanna and forests were alternative states that could potentially switch between states (Figure 1c).
+Paragraph 2 text (can we split this up?).  To explore the potential responses of alternative stable states to future environmental changes, we use baseline historic and modern vegetation data from the North American savanna-forest boundary to ask whether savanna and forests are alternative stable states in the temperate zone and to determine if these systems were resilient to large scale fire suppression, land use change, and shifts in climate over the last ~150 years in the region. For our historic baseline vegetation data, we estimated landscape level tree density estimates from Public Land Surveys (PLS) at an 8km grid across five states in the Upper Midwest (Supplemental figure tree density). Since a bimodal or discontinous distribution in tree cover that is not determined by climate or edaphic factors is a hallmark of alternative stable states, we focus on the distribution and explanatory variables of tree density to identify savanna and forest alternative states. Before European Agricultural settlement in the midwest, tree density was significantly bimodal across the entire upper midwest, with prominant modes at low tree density (30 trees/ha) and at high tree density (205 trees/ha) (Diptest p < 0.05, BC = 0.74306, Figure 1a).To determine if the bimodality observed in tree density was due to discontinous patterns in climate/edaphic factors, we evaluated tree density distributions over intervals of the first principal component (PC1) of all environmental variables (Supplemental Material). Tree density was significantly bimodal at intermediate precipitation and temperature levels (530 - 900 mm/year and 2 - 10 degC) (Figure 1b). Based on this analysis, we estimate that up to 34% (212,032 km^2) of the the past landscape had a an environment where savanna and forests were alternative states that could potentially switch between two bistable states (Figure 1c).
 
 
+Over 150 years of environmental changes have influenced this region, allowing us to explore the aggregate effect of climate, land use, and fire regime changes on the stability of the savanna-forest boundary. Tree density distribtion from the modern Forest Inventory Analysis (FIA)is not significantly bimodal between 0 and 500 trees/ha, showing a sharp stabilization of the landscape to closed forests (Figure 1d). This shift in tree density distribution is well explained by the original tree density. Specifically, grid cells with historically low tree density have generally increased in tree denisity, while those that were dense closed forests in the past have decreased in tree density (Linear reg., R^2 = 0.4, p < 0.05, Figure 1e). However these large shifts in ecosystem stability are not solely attributable to the climate shifts bewtween these time periods. Climate shifts have slightly expanded the region where bistability is possible (Supplemental figure), but they would not predict  
 
-Paragraph 3: Is the bimodalily reslient to 20th century environmental changes (climatic shifts, fire supp. land use)?
+
+Paragraph 3: Is the bimodality reslient to 20th century environmental changes (climatic shifts, fire supp. land use)?
   * modern tree denisty is not bimodal, showing a sharp stabilization of the landscape to closed forests
   * How did the density shift? Density difference map (Fig 1d)
   * While climate has shifted between 1895-1925 and 1977-2011, this shift does not account for the large changes in tree density (Supplemental figure).
@@ -769,10 +771,24 @@ This method has the benefit of predicting the probability of forest (or the prob
 ```{r echo = FALSE, warning = FALSE}
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
 
+
+
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+
+future <- fiadens[,c('x','y','FIAdensity', 'MAP2011', 'moderndeltaP', "modtmean", 'moddeltaT', 'sandpct','awc','ksat', 'fiaecotype')]
+
+# rename future variables to match pls
+colnames(future) <- c('x','y','PLSdensity', 'MAP1910', 'pastdeltaP', 'pasttmean', 'deltaT', "sandpct", "awc", "ksat",'fiaecotype')
+
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
 dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+
+future$ecocode <- 0
+future[future$fiaecotype %in% 'Forest', ]$ecocode <- 1
+future<- future[!future$fiaecotype %in% 'prairie',]
+
 
 #split trainfing and testing
 Y <- dens.pr$ecotype
@@ -936,6 +952,59 @@ pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),
 
 png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/v1.6-5/full/logistic_pred_prob_testdata.png')
 grid.arrange(pls, p.forest, nrow = 1, ncol=2)
+dev.off()
+
+
+
+
+# use the pls model to model the modern landscape:
+fia <- future
+logsample <- predict(PLS.lgr14, fia, type="response")
+fia$ypred <- as.numeric(logsample)
+summary(logsample)
+hist(fia$ypred)
+
+ggplot(fia, aes(x, y, color = ypred)) + geom_point()
+ggplot(fia, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
+
+ggplot(fia, aes(ypred, PLSdensity))+geom_point()
+
+#ggplot(test, aes (ypred, MAP1910))+geom_point()
+
+
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+fia$ypreddiscrete <- cut(fia$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+fia$ypreddiscrete <- as.character(fia$ypreddiscrete)
+
+# plot predictions for modern forests based on pls-climate relationships: 
+# it actually predicts a contraction of the forests!
+f.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia, aes(x=x, y=y, fill = ypreddiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
+  coord_equal()+theme_bw()+ theme()
+
+
+mod <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia, aes(x=x, y=y, fill = fiaecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="FIA classification")+ scale_fill_manual(values= c("#006837", "#c2e699"))+ coord_equal()+theme_bw()
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/v1.6-5/full/logistic_pred_prob_FIA_from_PLS_model.png')
+grid.arrange(mod, f.forest, nrow = 1, ncol=2)
 dev.off()
 
 ```

@@ -12,8 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 Outline for rewriting:
 
 abstract:
-1. Climate changes have the potential to destabilize large biomes.
-2. Biomes with alternative states in similar climate space maintained by ecological feedback mechanisms can be tipped from one state to another by small changes in climate, driving this instability.
+1. Climate changes have the potential to destabilize large biomes, driving shifts in vegetation across large regions of the globe.
+2. Biomes with alternative states maintained by ecological feedback mechanisms drive this instability, as they can be tipped from one state to another by small changes in climate.
+(Possibly: )
 3. We show that before Agro-industrial land conversion, large regions of North America existed as alternative states, but that ~150 years of land use change and fire suppression have stabilized (XXXX sq. km ) the landscape. 
 4. Projecting into the future, climate would destabilize alternative states in the region, but continued human impacts will maintian stability under changes in climate.
 
@@ -23,6 +24,12 @@ Paragraph 1: Background & set up
   * expand on point 2 in the abstract
   * general background and importance of alt. states
   * End with: others have projected that alternative states could be tipped with small perterbations in climate (Staver, Hirota), but real time oberservations of regional switches between states are lacking.
+  
+  *Anthropogenic climate changes are expected to alter the distribution of ecosytems and biomes on the globe. Vegetation response to these changes may be linear with climate, or a non-linear threshold response in the case of unstable systems maintained by ecological feedback mechanisms. Biomes that can take alternative states within similar envionmental conditions are considered particularly unstable, becuase at a critical threshold, small perterbations of the environment can result in non-linear transitions in vegetation. The sensitivity of transitions between alternative stable states at their "tipping points" represents a key uncertainty in understanding future responses to environmental changes. In many parts of the world, savanna and forests have been identified as alternate stable states maintained by disturbance feedbacks, driving widespread concern over the the continued stability of the landscape (Staver et al. 2011, Hirota et al. 2011).However, observations of a temporal response of these systems to rapid environmental changes are lacking and remains a key uncertainty in predictions for future vegetation distribution.
+  
+  
+
+  
   
 Paragraph 2: Introduce PLS data, tell the story of bimodality (methodsy, look to the past)
   *We use landscape level tree density estimates from pre-Agro industrial settlement 
@@ -54,7 +61,7 @@ Stabilization of alternative stable states to closed forests after ~150 years of
 ## Abstract (100- 150 words, no references)
 * Opening question, background to the study (1-2), key results, concluding sentence*
 
-How will vegetation with alternative stable states respond to environmental and climate changes? In many parts of the world, savanna and forests have been identified as alternate stable states, resulting in sharp transitions between savannas and forests in response to small spatial changes in environment. However, the responses of these systems to temperal environmental changes remains a key uncertainty in predictions for future vegetation distribution.
+How will vegetation with alternative stable states respond to environmental and climate changes? In many parts of the world, savanna and forests have been identified as alternate stable states, resulting in sharp transitions between savannas and forests in response to small spatial changes in environment. However, the responses of these systems to temperol environmental changes remains a key uncertainty in predictions for future vegetation distribution.
 We analyzed both modern and historic tree density, climate, and soils data from the savanna forest boundary region in the North American Midwest to show that ~150 years of land use conversion, fire suppression, and climate shifts in the region have stabilized the region, converting historic savanna-forest alternative stable states into modern stable forests. These results identify climatic regions outside of the tropics where savanna and forest ecosystems are alternative stable states, and demonstrate that environmental changes have resulted in large scale stabilization of the region into a closed forest state. 
 
 

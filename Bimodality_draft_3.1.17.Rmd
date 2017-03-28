@@ -42,6 +42,30 @@ Climate changes have the potential to destabilize large biomes, driving rapid sh
 ## Figures:
 
 ### Figure 1: multipanel figure 
+```{r, echo = FALSE}
+densitys <- read.csv("data/midwest_pls_fia_density_alb1.6-5.csv")
+
+# fia and pls plots
+fig1A <- ggplot(densitys, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+        theme_bw(base_size = 10)
+fig1D<- ggplot(densitys, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
+        theme_bw(base_size = 10)
+
+dens <- densitys
+dens$diff <- dens$FIAdensity - dens$PLSdensity
+
+# density difference plots
+fig1E <- ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
+  theme_bw()+ ylab('increase in density \n since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(summary(lm(dens$PLSdensity ~ dens$diff))$adj.r.squared,2)), size = 5)
+
+
+
+
+
+
+```
+
+
 
 ![](outputs/v1.6-5/FIA_PLS_hists.png)
 ![](outputs/v1.6-5/density_difference_plot.png)
@@ -185,6 +209,7 @@ suppressMessages(library(MASS))
 #dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
 
 
 pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now

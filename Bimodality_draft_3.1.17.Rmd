@@ -43,6 +43,9 @@ Climate changes have the potential to destabilize large biomes, driving rapid sh
 
 ### Figure 1: multipanel figure 
 ```{r, echo = FALSE}
+library(gridExtra)
+library(grid)
+
 densitys <- read.csv("data/midwest_pls_fia_density_alb1.6-5.csv")
 
 # fia and pls plots
@@ -59,20 +62,77 @@ fig1E <- ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_
   theme_bw()+ ylab('increase in density \n since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(summary(lm(dens$PLSdensity ~ dens$diff))$adj.r.squared,2)), size = 5)
 
 
+# plot bimodal climate space:
+bimodalpls <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
+fig1B <- ggplot(df.new, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
+  stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
+  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
+
+# plot out bimodal maps for pls and FIA
+library(modes)
+library(diptest)
+
+map.bimodal.5c <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # should we also do BC on the denisty estimated function?
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
+  #define bimodality
+  merged$bimodal <- "Stable"
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  
+  #define bimodal savanna/forest and not bimodal savanna & forest 
+  if(density == "PLSdensity"){
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$ecotype)
+    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    
+    }else{
+    merged$classification <- "test"
+    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
+    
+  }
+  
+  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
+      '#01665e', # light green
+      '#5ab4ac', # dark teal
+      '#8c510a', # red
+      '#d8b365', # light tan
+      '#fee08b', # tan
+      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
+    theme_bw()+
+    xlab("easting") + ylab("northing") +coord_equal()
+    
+  
+}
 
 
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
+fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(),legend.justification = c(-0.1, 0), legend.position = c(0, 0))
+
+fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
+
+fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank(),legend.justification = c(-0.1, 0), legend.position = c(0, 0))
+fig1F
+
+X11(width = 9)
+grid.arrange(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, ncol = 2)
 
 ```
 
 
 
-![](outputs/v1.6-5/FIA_PLS_hists.png)
-![](outputs/v1.6-5/density_difference_plot.png)
-![](outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png)
-![](outputs/v1.6-5/MAP_TEMP_bimodal_space.png)
-![](outputs/v1.6-5/full/PLS_PC1_PC2_map.png)
-![](outputs/v1.6-5/FIA_PC1_PC2_map.png)
 
 ### Figure 2: 2 maps of rcp 8.5 
 Using the climate space with reduced dimensionality (PC1) and the vegetation classificaitons from rheumtella, we can map out places where tree density was bimodal in the past:

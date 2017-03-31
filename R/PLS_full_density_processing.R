@@ -16,10 +16,13 @@ library(rgdal)
 
 
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
-pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
+#pls.inil <- read.csv(paste0('data/outputs/plss_density_v1.csv'))
+pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
+# alt to the above step: would be to normalize by the # points by cell
+pls.inil <- pls.inil[, c("x", "y", "cell", ".")]
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
-hist(pls.inil$PLSdensity, xlim = c(0, 400),breaks = 50)
+hist(pls.inil$PLSdensity, xlim = c(0, 600),breaks = 100)
 
 
 #can aggregate by species

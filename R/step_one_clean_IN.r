@@ -44,10 +44,10 @@ il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
 #il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
 
-lowermi <- readOGR(dsn= "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
+#lowermi <- readOGR(dsn= "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
 
-lowermi <- data.frame(lowermi)
-ggplot(lowermi, aes(coords.x1, coords.x2, color = diam1)) + geom_point()
+#lowermi <- data.frame(lowermi)
+#ggplot(lowermi, aes(coords.x1, coords.x2, color = diam1)) + geom_point()
 #take out all original data with L3_tree1 = No data. Simon does this at the end
 
 
@@ -133,7 +133,7 @@ il$bearings3 <- il$bearing3
 il$bearings4 <- il$bearing4
 il$DIST4 <- NA
 
-keeps <- c("x","y","twp", "L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
+keeps <- c("x","y","twp","year","L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
   "bearings2", "bearings3", "bearings4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
   "diameter", "diameter2", "diameter3", "diameter4", "cornerid", "state")
 
@@ -178,6 +178,7 @@ inil$degrees3[inil$degrees3 == 99999] <- NA
 inil$degrees3[inil$degrees3 == 88888] <- NA
 inil$degrees4[inil$degrees4 == 99999] <- NA     
 inil$degrees4[inil$degrees4 == 88888] <- NA
+inil$year[inil$year == 99999] <- NA
 
 summary(inil)
 # There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"
@@ -190,8 +191,14 @@ inil[zero.trees, c('diameter', 'diameter2', "diameter3")] <- NA
 # now kill missing cells:
 inil <- inil[!is.na(inil$y),]
 inil <- inil[!is.na(inil$x),]
+
+# create a survey year variable that coresponds to survey year correction factors
+year <- ifelse(inil$year > 1825, '1825+',
+                    ifelse(inil$year < 1825, '< 1825',"None"))
+
+inil$surveyyear <- year
 X11(width = 12)
-ggplot(data = inil, aes(x = x, y = y, color = DIST1)) + geom_point()
+ggplot(data = inil, aes(x = x, y = y, color = surveyyear)) + geom_point()
 
 
 inil <- data.frame(inil)
@@ -398,16 +405,19 @@ inil$cornertype <- paste0(corner, inil$state)
 final.data <- data.frame(inil$x,
                          inil$y,
                          inil$twp,
+                         as.character(inil$state),
                          ranked.data[,1:8],
                          species[,1:4],
-                         ranked.data[,13:16], inil$cornertype,
+                         ranked.data[,13:16], 
+                         inil$cornertype,
+                         inil$surveyyear,
                          stringsAsFactors = FALSE)
 
-colnames(final.data) <- c('PointX','PointY', 'Township',
+colnames(final.data) <- c('PointX','PointY', 'Township','state',
                           paste('diam',    1:4, sep =''),
                           paste('dist',    1:4, sep = ''), 
                           paste('species', 1:4, sep = ''),
-                          paste('az',      1:4, sep = ''), 'corner')
+                          paste('az',      1:4, sep = ''), 'corner', 'surveyyear')
 
                           
 # part of the high density problem in indiana might be due to a large number of points with really low distances                  
@@ -428,20 +438,19 @@ summary(final.data)
 #final.data <- final.data[!is.na(final.data$PointY),]
 #final.data <- final.data[!is.na(final.data$PointX),]
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
+hist(final.data[!final.data$diam1 == 0,]$diam1, breaks = 80, xlim=c(0,20))
 
 
-#read in lower mi final data from step.one.clean.bind_lowerMI.R
-final.lower <- read.csv("data/lower_mi_final_data.csv")
+full.final <- final.data
 
-final.lower <- final.lower[,2:21]
-final.data <- final.data[,1:20]
+# write the correction factors to a file for reference later:
+Pair <- ifelse(full.final$state == "IN",as.character(full.final$corner),
+               ifelse(full.final$state == "IL", paste0(as.character(full.final$corner), full.final$surveyyear), "NA"))
 
-full.final <- rbind(final.lower, final.data)
 
-# write the correction factors to a file for reference
-Pair <- full.final$corner
 corr.factor <- read.csv('data//charlie_corrections.csv')
 test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
+
 colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
 require(plyr)
 corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")

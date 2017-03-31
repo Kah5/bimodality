@@ -89,6 +89,8 @@ stem.density <- data.frame(x = final.data$PointX,
                            basal   = estimates[[2]])#,
                           #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
 
+# make stem.density spatial
+coordinates(stem.density)<- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
@@ -101,15 +103,15 @@ final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"),
 spec.table <- data.frame(PointX = final.data$PointX, 
                          PointY = final.data$PointY,
                          cell = numbered.cell,
-                         spec = c(as.character(final.data$species1), as.character(final.data$species2)),
+                         spec = c(as.character(final.data$species1),as.character(final.data$species2)),
                          count = 1,
                          point = 1:nrow(final.data),
                          density = rep(stem.density$density/2, 2),
                          #shhould density be /2 or not??
                          basal =  rep(stem.density$basal/2, 2),
                          diams = c(final.data$diam1, final.data$diam2),
-                         dists = c(final.data$dist1, final.data$dist2),
-                         scc = stem.density$SCC,stringsAsFactors = FALSE)
+                         dists = c(final.data$dist1, final.data$dist2))#,
+                         #scc = stem.density$SCC,stringsAsFactors = FALSE)
 
 #classify trees as zero or as wet trees
 zero.trees <- is.na(stem.density$density) & (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
@@ -163,6 +165,7 @@ for (i in 1:nrow(spec.table)) {
   # It's just really slow, so I do it this way to see what's happening.
   biomass[i] <- form(spec.table[i,])
   cat(i,'\n')
+  flush.console()
 }
 
 # convert to Mg.
@@ -177,47 +180,6 @@ write.csv(spec.table,
         file = paste0('outputs/density_biomass_pointwise.ests','_v', 
                       version, 
                       '.csv'))
-
-#################################
-# Crown Width Estimates per tree#
-#################################
-
-##this section estimates point level crown widths using density and allometic equation s 
-#allometric equations from simon
-  CW.table <- read.csv('data/plss.pft.CW.conversion_v0.1-1.csv', 
-                                              stringsAsFactors=FALSE)
-
-  form <- function(x){
-
-       eqn <- match(x$spec, CW.table[,1])
-       eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
-        
-          b0 <- CW.table[eqn,2]
-          b1 <- CW.table[eqn,3]
-          
-            CW <- (b0 + b1 * (x$diams*2.54))*0.305 # 2.54 converts cm to inches
-            CW
-          }
-
-  CW <- rep(NA, nrow(spec.table))
-
-  for(i in 1:nrow(spec.table)){
-      CW[i] <- form(spec.table[i,])
-      cat(i,'\n')
-    }
-
-summary(CW)
-hist(CW, breaks = 75)
-#once crown width  is estimated from diameter, need to multiply by the estimated density at each point
-  #spec.table provides point level  estimates of biomass, density, and species
-
-
-spec.table$CW <- CW # Crown diameter of each tree
-#spec.table$CW.scaled <- CW*spec.table$density
-spec.table$crown.area <- 0.25*pi*(CW^2) #crown area of each tree
-spec.table$crown.scaled <-(spec.table$crown.area*spec.table$density) #(crown area (m2))/tree)*(trees/hectare)
-
-  #CC.adj <-  100*(1-exp(-0.01*spec.table$crown.scaled))
 
 
 

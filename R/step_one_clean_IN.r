@@ -135,7 +135,7 @@ il$DIST4 <- NA
 
 keeps <- c("x","y","twp","year","L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
   "bearings2", "bearings3", "bearings4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
-  "diameter", "diameter2", "diameter3", "diameter4", "cornerid", "state")
+  "diameter", "diameter2", "diameter3", "diameter4", "cornerid", "typecorner","state")
 
 ind.data <- ind[keeps] 
 il.data <- il[keeps]
@@ -193,8 +193,8 @@ inil <- inil[!is.na(inil$y),]
 inil <- inil[!is.na(inil$x),]
 
 # create a survey year variable that coresponds to survey year correction factors
-year <- ifelse(inil$year > 1825, '1825+',
-                    ifelse(inil$year < 1825, '< 1825',"None"))
+year <- ifelse(inil$year >= 1825, '1825+',
+                    ifelse(inil$year < 1825, '< 1825',"ALL"))
 
 inil$surveyyear <- year
 X11(width = 12)
@@ -383,13 +383,20 @@ intqtr <- c(140200, 240200, 340200, 440200, 540200, 640200,
             200540, 300540, 400540, 500540, 600540,
             200640, 300640, 400640, 500640, 600640)
 corner <- rep('NA', length(inil$cornerid))
-corner[ inil$cornerid %in% intsec ] <- 'intsec'
-corner[ inil$cornerid %in% intqtr ] <- 'intqtr'
-corner[ inil$cornerid %in% extsec ] <- 'extsec'
-corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
+
+corner<- ifelse(inil$cornerid %in% intsec, 'intsec',
+       ifelse(inil$cornerid %in% intqtr, 'intqtr',
+              ifelse(inil$cornerid %in% extsec, 'extsec',
+                     ifelse(inil$cornerid %in% extqtr,  'extqtr',
+                            ifelse(inil$typecorner == "(1/4) Section", "intqtr",
+                                   ifelse(inil$typecorner == "Section", "intsec", "extsec"))))))
+       
+#corner[ inil$cornerid %in% intsec ] <- 'intsec'
+#corner[ inil$cornerid %in% intqtr ] <- 'intqtr'
+#corner[ inil$cornerid %in% extsec ] <- 'extsec'
+#corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
 
 inil$cornertype <- paste0(corner, inil$state)
-
 #Pair <- inil$cornertype
 #corr.factor <- read.csv('data//charlie_corrections.csv')
 #test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
@@ -428,7 +435,7 @@ count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2 (most in IN
 
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
-coordinates(final.data) <- ~PointX + PointY
+coordinates(final.data) <- ~ PointX + PointY
 spplot(final.data, "dist1")
 final.data <- data.frame(final.data)
 summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.data$species2 == c("No tree", "Water", "Wet"),])
@@ -438,15 +445,18 @@ summary(final.data)
 #final.data <- final.data[!is.na(final.data$PointY),]
 #final.data <- final.data[!is.na(final.data$PointX),]
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
-hist(final.data[!final.data$diam1 == 0,]$diam1, breaks = 80, xlim=c(0,20))
+hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
+     main = "IN only tree diameter distribution")
 
 
 full.final <- final.data
+test<- full.final[!full.final$corner == "NAIL",] # there are some NA corners in 
 
 # write the correction factors to a file for reference later:
 Pair <- ifelse(full.final$state == "IN",as.character(full.final$corner),
                ifelse(full.final$state == "IL", paste0(as.character(full.final$corner), full.final$surveyyear), "NA"))
 
+# need to get ring of NAIL< 1825
 
 corr.factor <- read.csv('data//charlie_corrections.csv')
 test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)

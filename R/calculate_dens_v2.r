@@ -75,11 +75,6 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
 
 
 
-###################################
-#point level Crown Width  calculations #
-###################################
-
-
 coordinates(final.data)<- ~PointX+PointY
 
 #create spatial object with density, basal area & diameters data
@@ -89,9 +84,45 @@ stem.density <- data.frame(x = final.data$PointX,
                            basal   = estimates[[2]])#,
                           #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
 
+# find the 99% percentile here for yr
+nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
+
+stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
+stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+
+#density     basal 
+#1602.1130  361.0054
+
+species[species==""]<- "No tree"
+#fix the captalized "No tree" problem
+species[species == 'No Tree'] <- 'No tree'
+
+#change all No tree densities to 0
+stem.density$density[species[,1] == 'No tree'| species[,2]=='No tree'] <- 0
+#classify trees as zero or as wet trees
+zero.trees <- is.na(stem.density$density) & (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
+wet.trees <- (species[,2] %in% c('Wet', "Water") | species[,1] %in% c('Wet','Water'))
+
+#designate all zero trees as density of 0
+stem.density$density[zero.trees] <- 0
+stem.density$basal[zero.trees] <- 0
+
+#desgnate all wet trees as 'NA'
+stem.density$density[wet.trees] <- 0
+stem.density$basal[wet.trees] <- 0
+
+
 # make stem.density spatial
 coordinates(stem.density)<- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
+
+
+writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.6-5.shp", layer = "stem_density_alb_v1.6-5", driver = "ESRI Shapefile", overwrite=TRUE)
+
+#compare to previous density estsimates
+#prev<- readOGR("data/IN_georef_density_shapfiles/IN_georef_density_shapfiles/in_point_density_alb.shp", layer = "in_point_density_alb")
+
+
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
 
@@ -113,23 +144,15 @@ spec.table <- data.frame(PointX = final.data$PointX,
                          dists = c(final.data$dist1, final.data$dist2))#,
                          #scc = stem.density$SCC,stringsAsFactors = FALSE)
 
-#classify trees as zero or as wet trees
-zero.trees <- is.na(stem.density$density) & (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
-wet.trees <- (species[,2] %in% c('Wet', "Water") | species[,1] %in% c('Wet','Water'))
 
-#designate all zero trees as density of 0
-stem.density$density[zero.trees] <- 0
-stem.density$basal[zero.trees] <- 0
 
-#desgnate all wet trees as 'NA'
-stem.density$density[wet.trees] <- 0
-stem.density$basal[wet.trees] <- 0
 
 #fix the captalized "No tree" problem
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 
 #change all No tree densities to 0
 spec.table$density[spec.table$spec == 'No tree'] <- 0
+
 
 ####################################################3
 # Estimate Biomass from density

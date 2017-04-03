@@ -95,10 +95,12 @@ setwd(paste0(workingdir,'PRISM_ppt_stable_4kmM2_189501_198012_bil/'))
 # again read in the 8km grid for extracting
 spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_pr_alb1.6-5.csv'))
 coordinates(spec.table) <- ~x + y
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
 #designate the years we want to extract/ average over
-years <- 1895:1925
-yrs <- "1895-1925"
+years <- 1900
+yrs <- "1900"
 
 # this chunk of code reads in the filenames within the PRISM data folder
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
@@ -146,6 +148,7 @@ avgs.df$y <- spec.table$y
 write.csv(avgs.df, paste0(workingdir,"outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
 
+#ggplot(avgs.df, aes(x = x, y=y, color = total))+geom_point()
 ###################################################
 #extract mean temperature data from the prism data#
 ###################################################
@@ -162,8 +165,8 @@ coordinates(spec.table) <- ~x + y
 proj4string(spec.table) <- '+init=epsg:3175'
 spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
-years <- 1895:1925
-yrs <- "1895-1925"
+years <- 1900
+yrs <- "1900"
 
 # read in the filenames, stack as rasters, extract raster to points
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))

@@ -1238,7 +1238,7 @@ map.bimodal <- function(data, binby, density){
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.5 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -1295,7 +1295,7 @@ dev.off()
 
 png(height = 400, width = 800, paste0('outputs/v',version,'/FIA_PC1_PC2_map.png'))
 pushViewport(viewport(layout = grid.layout(1, 2)))
-print(map.bimodal(data = dens.pr, binby = 'PC1bins', density = "FIAdensity")+ ggtitle('Bimodal Regions for PC1 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map.bimodal(data = dens.pr, binby = 'PC1fiabins', density = "FIAdensity")+ ggtitle('Bimodal Regions for PC1 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal(data = dens.pr, binby = 'PC2bins', density = "FIAdensity") + ggtitle('Bimodal Regions for PC2 FIA'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 

@@ -453,8 +453,7 @@ full.final <- final.data
 test<- full.final[!full.final$corner == "NAIL",] # there are some NA corners in 
 
 # write the correction factors to a file for reference later:
-Pair <- ifelse(full.final$state == "IN",as.character(full.final$corner),
-               ifelse(full.final$state == "IL", paste0(as.character(full.final$corner), full.final$surveyyear), "NA"))
+Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
 # need to get ring of NAIL< 1825
 

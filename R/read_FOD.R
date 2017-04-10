@@ -111,6 +111,50 @@ ggplot(cause.m, aes(x = coords.x1, y = coords.x2, fill = Countfires))+geom_raste
   scale_fill_gradient(low = "blue", high = "red", limits = c(0,50))+theme(axis.text = element_blank())
 dev.off()
 
-# we could average 
-# View the feature class
-#plot(fc)
+
+# map out the number of fires within each size class in each grid cell
+size.table <- dcast(fc.alb, coords.x1 + coords.x2 + cell ~ FIRE_SIZE_, sum, na.rm=TRUE, value.var = 'count')
+#size.table$Total <- rowSums(size.table[,4:10])
+#ggplot(size.table, aes(x = coords.x1, y = coords.x2, fill = Total))+geom_raster()+coord_equal()+theme_bw()
+
+size.m <- melt(size.table, id.vars = c("coords.x1", "coords.x2", "cell"), variable.name = "FireSize", value.name = "Countfires")
+
+png("outputs/fire/map_sizes.png")
+ggplot(size.m, aes(x = coords.x1, y = coords.x2, fill = Countfires))+geom_raster()+coord_equal()+theme_bw()+facet_wrap(~FireSize)+
+  scale_fill_gradient(low = "blue", high = "red", limits = c(0,50))+theme(axis.text = element_blank())
+dev.off()
+
+
+
+# Find the average size of fires in each grid cell:
+
+size.avgs <- dcast(fc.alb, coords.x1 + coords.x2 + cell ~ ., mean, na.rm=TRUE, value.var = 'FIRE_SIZE')
+colnames(size.avgs)<- c('x','y',"cell","MeanSize")
+
+ggplot(size.avgs, aes(x = x, y = y, fill = MeanSize))+geom_raster()+coord_equal()+theme_bw()+
+  scale_fill_gradient(low = "blue", high = "red", limits = c(0,2000))+theme(axis.text = element_blank())
+
+
+# calculate the # fires per year per grid cell
+fireperyr <- dcast(fc.alb, coords.x1 + coords.x2 + cell ~ FIRE_YEAR, sum, na.rm=TRUE, value.var = 'count')
+
+
+year.m <- melt(fireperyr, id.vars = c("coords.x1", "coords.x2", "cell"), variable.name = "Year", value.name = "Countfires")
+
+X11(width = 12)
+ggplot(year.m, aes(x = coords.x1, y = coords.x2, fill = Countfires))+geom_raster()+coord_equal()+theme_bw()+facet_wrap(~Year)+
+  scale_fill_gradient(low = "blue", high = "red", limits = c(0,50))+theme(axis.text = element_blank())
+
+# calculate a Fire Rotation per grid cell (this is probably too big of an area)
+
+size.tots <- dcast(fc.alb, coords.x1 + coords.x2 + cell ~ ., sum, na.rm=TRUE, value.var = 'FIRE_SIZE')
+colnames(size.tots)<- c('x','y',"cell","TotalAreaBurned")
+summary(size.tots$TotalAreaBurned/20)
+size.tots$AvgAreaBurnedYr <- size.tots$TotalAreaBurned/20 # avg area burned per year fire record
+size.tots$FireRotation <- 64/size.tots$AvgAreaBurnedYr # 64 km-sq area grid cell / average km-sq buned/yr = years to burn whole grid cell
+
+
+ggplot(size.tots, aes(x = x, y = y, fill = FireRotation))+geom_raster()+coord_equal()+theme_bw()+
+  scale_fill_gradient(low = "blue", high = "red", limits = c(0,5000))+theme(axis.text = element_blank())
+
+# there are alot of high Fire Rotations, lets classify

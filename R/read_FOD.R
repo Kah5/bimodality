@@ -1,4 +1,4 @@
-# reading in the FPA-FOD fire database:
+# reading in the FPA-FOD fire database version 1:
 # the original database had issues being read in...
 # I first created a new shapefile with only MI, MN, WI, IL, IN. Resulting shapefile = "UMW_FIRES.shp
 
@@ -98,10 +98,21 @@ fc.alb$count <- 1 #
 # remove the one point that is outside of the region...
 fc.alb <- fc.alb[!is.na(fc.alb$cell),]
 
+#map out states for plotting later
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
+
 # map out the total number of fires for each cause by Paleon grid cell
 library(reshape2)
 cause.table <- dcast(fc.alb, coords.x1 + coords.x2 + cell ~ STAT_CAU_1, sum, na.rm=TRUE, value.var = 'count')
 cause.table$Total <- rowSums(cause.table[,4:16])
+
 ggplot(cause.table, aes(x = coords.x1, y = coords.x2, fill = Total))+geom_raster()+coord_equal()+theme_bw()
 
 cause.m <- melt(cause.table, id.vars = c("coords.x1", "coords.x2", "cell"), variable.name = "FireCause", value.name = "Countfires")
@@ -158,3 +169,26 @@ ggplot(size.tots, aes(x = x, y = y, fill = FireRotation))+geom_raster()+coord_eq
   scale_fill_gradient(low = "blue", high = "red", limits = c(0,5000))+theme(axis.text = element_blank())
 
 # there are alot of high Fire Rotations, lets classify
+size.tots$FRdiscrete <- cut(size.tots$FireRotation, labels = c('0-1', '1-5', '5-10', '10-50', '50-100','100-500','500-1000','1000-2000',"> 2000"),
+    breaks=c(0,1,5,10,50,100,500,1000,2000,128000))
+
+
+
+# map out the calculated fire rotation for these grid cells
+ggsave("outputs/fire/Fire_rotation_map.png", width=22,height=21,units=c("cm"), dpi=600 )
+p <- ggplot(size.tots, aes(x = x, y = y, fill = FRdiscrete))+geom_raster()+coord_equal()+theme_bw()+
+  scale_fill_manual(values = rev(c('#ffffcc',
+    '#ffeda0',
+    '#fed976',
+    '#feb24c',
+    '#fd8d3c',
+    '#fc4e2a',
+    '#e31a1c',
+    '#bd0026',
+    '#800026')))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme(axis.text = element_blank())+ xlab(' ')+ylab(' ')+ggtitle("Fire Rotation (# years to burn area of gridcell)")+
+  guides(fill=guide_legend(title="Fire Rotation \n (years)"))
+
+p
+dev.off()
+

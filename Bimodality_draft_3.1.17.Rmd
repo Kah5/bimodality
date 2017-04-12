@@ -160,9 +160,32 @@ fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank() )+ annotate("text", x=0, y=900,label= "F", size = 5)#,legend.justification = c(-0.1, 0), legend.position = c(0, 0))
 fig1F
 
-#X11(width = 9)
+X11(width = 9)
 grid.arrange(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, ncol = 2)
 
+
+#lets see how many bimodal grid cells are not in the FIA datasets now:
+bimodal.cells <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]$cell
+
+bimodal <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]
+
+fcellsbim <- fia.dens[fia.dens$cell %in% bimodal.cells,]
+
+prop.bimodal <- nrow(fcellsbim)/nrow(bimodal.cells)
+# 45.1 percent of bimodal places fall within the FIA dataset
+fcell <- fcellsbim$cell
+# lets see how many of bimodal forest/bimodal forests places have been removed
+
+notinfia <- bimodal[!bimodal$cell %in% fcell, ]
+
+infia <- bimodal[bimodal$cell %in% fcellsbim$cell, ]
+
+summary(infia$classification)
+summary(notinfia$classification)
+
+
+#make a plot of the places removed
+# bar plot or plot showing proportion of these
 ```
 
 
@@ -923,7 +946,7 @@ This method has the benefit of predicting the probability of forest (or the prob
 # Modeling p(forest):
 ```{r echo = FALSE, warning = FALSE}
 dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
-
+dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 
 
 fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
@@ -1055,8 +1078,8 @@ AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
 pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 
-#full <- dens.pr
-full <- test
+full <- dens.pr
+#full <- test
 logsample <- predict(PLS.lgr14, full, type="response")
 full$ypred <- as.numeric(logsample)
 #summary(logsample)
@@ -1065,7 +1088,7 @@ full$ypred <- as.numeric(logsample)
 #ggplot(full, aes(x, y, color = ypred)) + geom_point()
 #ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
 
-#ggplot(test, aes(ypred, PLSdensity))+geom_point()
+ggplot(full, aes(ypred, PLSdensity))+geom_point()
 
 #ggplot(test, aes (ypred, MAP1910))+geom_point()
 
@@ -1097,6 +1120,8 @@ p.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()
 
+p.forest
+
 # plot PLS forests
 pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full, aes(x=x, y=y, fill = ecotype))+
@@ -1108,7 +1133,7 @@ grid.arrange(pls, p.forest, nrow = 1, ncol=2)
 dev.off()
 
 
-
+ggplot(full, aes(x = PC1, y = ypred))+geom_point()
 
 # use the pls model to model the modern landscape:
 fia <- future

@@ -1,3 +1,20 @@
+# Working with the FPA FOD dataset
+# Author: kheilman
+
+#-----------------------------------------------------
+#Analyses in this script:
+#-----------------------------------------------------
+# 1. Are fires large or small on the modern landscape?
+# 2. how often do they occur?
+# 3. Are they caused by anthropogenic/natural causes
+# 4. Do the past bimodal places have more fires than past stable places? ** key question
+
+# ----------------------------------------------------
+# datasets used: 
+# 1. PLS output from PLS_density_processing.R
+# 2. Midwestern selection of FPA-FOD fire database version 1: https://www.fs.usda.gov/rds/archive/Product/RDS-2013-0009
+
+
 # reading in the FPA-FOD fire database version 1:
 # the original database had issues being read in...
 # I first created a new shapefile with only MI, MN, WI, IL, IN. Resulting shapefile = "UMW_FIRES.shp
@@ -57,6 +74,7 @@ sizelookup <- data.frame(FIRE_SIZE_ = c("A", "B", "C", "D", "E", "F", "G"),
                           "300 - 999", "1000 - 4999", "1000 - 4999"))
 
 bysize <- merge(bysize, sizelookup, by.x = "x",by.y = "FIRE_SIZE_")
+
 png("outputs/fire/proportion_byfiresize.png")
 ggplot(bysize, aes(x= sizes, y = freq))+geom_bar(stat = "identity")+theme_bw()+
   ylab("Proportion of total Upper Midwest Fires \n 1992 - 2011") + xlab("Size of Fire (acres)")
@@ -73,14 +91,15 @@ ggplot(test, aes(sizes, y = pct, fill = STAT_CAU_1))+geom_bar(stat="identity")+t
   xlab("Fire Class") + ylab("Proportion of fires by size and cause 1992 - 2011") + guides(fill=guide_legend(title="Cause"))
 dev.off()
 
+#---------------------------------------------------------
+# working on the scale of the 8km grid
+#--------------------------------------------------------
 # find average fire size per 8km grid
 base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
                     ymn = 58000,  ymx = 1498000, nrows = 180,
                     crs = '+init=epsg:3175')
 
-base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
-                    ymn = 58000,  ymx = 1498000, nrows = 180,
-                    crs = '+init=epsg:3175')
+
 
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
 
@@ -190,5 +209,58 @@ p <- ggplot(size.tots, aes(x = x, y = y, fill = FRdiscrete))+geom_raster()+coord
   guides(fill=guide_legend(title="Fire Rotation \n (years)"))
 
 p
+dev.off()
+
+
+# read in the pls bimodal dataset
+bimodalpls <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
+# merge datasets together
+plsfire <- merge(bimodalpls, size.tots, by= c('x','y','cell'))
+
+#plot out summary of stable  and bimodal gridcells
+summary(plsfire[plsfire$bimodal == 'Bimodal',]$TotalAreaBurned)
+summary(plsfire[plsfire$bimodal == 'Stable',]$TotalAreaBurned)
+
+summary(plsfire[plsfire$classification == 'Bimodal Forest',]$TotalAreaBurned)
+summary(plsfire[plsfire$classification == 'Stable Forest',]$TotalAreaBurned)
+
+
+# -------------------------------------------------------------
+# Do the stable places burn less now than the bimodal places??
+# -------------------------------------------------------------
+
+
+plsfire.m <- melt(plsfire[, c("x", "y", "cell", "TotalAreaBurned", "classification")], id.vars = c("x", "y", "cell"), variable.name = "classification", value.name = "TotalAreaBurned")
+
+# plot the total area burned in each class
+ggplot(plsfire, aes(x= classification, y = TotalAreaBurned))+geom_bar(stat = "identity")+theme_bw()+
+  ylab("Total area burned in each class Upper Midwest Fires \n 1992 - 2011 (acres)") + xlab("Class of grid cell in PLS")
+
+# but we would want the area burned normalized by the total area in each class...
+
+area.burn.avg <- ddply(plsfire[, c("x", "y", "cell", "TotalAreaBurned", "classification")],~classification,summarise,mean=mean(TotalAreaBurned),sd=sd(TotalAreaBurned))
+area.burn.avg.bimodal <- ddply(plsfire[, c("x", "y", "cell", "TotalAreaBurned", "bimodal")],~bimodal,summarise,mean=mean(TotalAreaBurned),sd=sd(TotalAreaBurned))
+
+ggplot(plsfire, aes(x= classification, y = TotalAreaBurned))+geom_boxplot()
+
+sem<-sd(x)/sqrt(length(x))
+#95% confidence intervals of the mean
+c(mean(x)-2*sem,mean(x)+2*sem)
+
+# fire rotation averages (how many years it would take to burn entire grid cell)
+FR.avg <- ddply(plsfire[, c("x", "y", "cell", "FireRotation", "classification")],~classification,summarise,mean=mean(FireRotation),sd=sd(FireRotation), se = sd(FireRotation)/sqrt(length(FireRotation)))
+FR.avg.bimodal <- ddply(plsfire[, c("x", "y", "cell", "FireRotation", "bimodal")],~bimodal,summarise,mean=mean(FireRotation),sd=sd(FireRotation))
+
+FR.avg$bimodal <- c('Bimodal', 'Bimodal', 'Savanna', 'Stable', 'Stable')
+
+# make error bars as SEM
+limits <- aes(ymax = FR.avg$mean + FR.avg$se,
+             ymin = FR.avg$mean - FR.avg$se)
+
+png(width = 8, height= 4, units = 'in', res=300, 'outputs/fire/FR_mean_by_bimodal_.png')
+ggplot(FR.avg, aes(x= classification, y = mean, fill=bimodal))+geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymax = FR.avg$mean + FR.avg$se,
+                    ymin = FR.avg$mean - FR.avg$se), width = 0.25) +ylab("Mean Fire Rotation (years)") +xlab("")+theme_bw()
 dev.off()
 

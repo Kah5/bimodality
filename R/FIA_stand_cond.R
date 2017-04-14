@@ -107,4 +107,31 @@ TRT <- ddply(mergedin[, c("x", "y", "cell", "STDAGE", "STDORGCD", 'DSTRBCD1', 'F
 
 
 
-ggplot(mergedin, aes(x= STDORGCD, y = FIAdensity)) + geom_bar()
+ggplot(TRT, aes(x= TRTCD1, y = meandens)) + geom_bar(stat= "identity")
+ggplot(TRT, aes(x= TRTCD1, y = meanstdage)) + geom_bar(stat= "identity")
+
+# disturbance code 30 stands out as being low denisty and low age
+# this one is fire damage
+dstrub$DSTRBCD1 <- as.factor(dstrub$DSTRBCD1)
+ggplot(dstrub, aes(x= DSTRBCD1, y = meandens)) + geom_bar(stat= "identity")
+ggplot(dstrub, aes(x= DSTRBCD1, y = meanstdage)) + geom_bar(stat= "identity")
+
+# map out sites with fire damage--there are only a few:
+
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
+ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+  geom_point(data = mergedin[mergedin$DSTRBCD1 == 30,], aes(x = x, y = y))
+
+
+ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+  geom_point(data = mergedin, aes(x = x, y = y, color = as.factor(DSTRBCD1)))
+
+ggplot()+geom_polygon(data = mapdata, aes(group = group, x =long, y = lat), color = 'black', fill = 'white')+
+  geom_point(data = mergedin, aes(x = x, y = y, color = as.factor(STDORGCD)))

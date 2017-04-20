@@ -37,10 +37,10 @@ ind[ind$L3_tree2 %in% 'No data',] <- NA
 
 # remove all points with 'No data' points for chainstree in Indiana
 #ind <- ind[!ind$chainstree == 'NA',]
-#ind <- ind[ind$chainstree == 88888,]<- NA
+#ind <- ind[!ind$chainstree == 88888,]
 #ind <- ind[!ind$chainstree == 99999,]
-#ind <- ind[!ind$chainstree2 == 88888,]
-#ind <- ind[!ind$chainstree2 == 99999,]
+#ind <- ind[!ind$chainstr_2 == 88888,]
+#ind <- ind[!ind$chainstr_2 == 99999,]
 
 # remove all instances of no data for the l3tree 1
 ind <- ind[!is.na(ind$L3_tree1),]
@@ -52,11 +52,6 @@ ind$DIST3 <- as.numeric(ind$chainstr_2)
 ind$DIST4 <- as.numeric(ind$chainstr_3)
 
 
-#this removes all points (including no trees) that dont have distances provided. 
-#il <- il[!il$DIST1 == 88888,]
-#il <- il[!il$DIST1 == 99999,]
-#il <- il[!il$DIST2 == 88888,]
-#il <- il[!il$DIST2 == 99999,]
 
 
 #  Character vectors are read into R as factors, to merge them they need to
@@ -66,49 +61,29 @@ ind$DIST4 <- as.numeric(ind$chainstr_3)
 twp <- c(paste('IN', as.character(ind$TRP)))
 #rng <- c(as.character(ind$TownshipRange))
 ind$twp <- twp
-twp_il <- c(paste('IL', as.character(il$TRP)))
-il$twp <- twp_il
 
-## for the getAngle function, need a 4character Azimuth
+
+## for the getAngle function, need a 4character Azimuth that we get from the bearing and directions
 ind$bearings1 <- c(paste0(as.character(ind$bearing),  as.character(ind$bearingdir)))
-ind$bearings2 <- c(paste0(as.character(ind$bearing2),  as.character(ind$bearingdir2)))
-ind$bearings3 <- c(paste0(as.character(ind$bearing3),  as.character(ind$bearingdir3)))
-ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingdir4)))
+ind$bearings2 <- c(paste0(as.character(ind$bearing2),  as.character(ind$bearingd_1)))
+ind$bearings3 <- c(paste0(as.character(ind$bearing3),  as.character(ind$bearingd_2)))
+ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingd_3)))
 
-#there is something off about the labeing for bearing direction in illinios for version 1.5-2
-il$bearings1 <- c(paste0(as.character(il$bearing),  as.character(il$bearingdir)))
-il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingd_1)))
-il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingd_2)))
-il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingd_3)))
 
-il$state <-'IL'
+
 ind$state <-'IN'
 #create and rename columns to match that of indiana
-il$twp <- il$TRP
-il$bearings1 <- il$bearing
-il$bearings2 <- il$bearing2
-il$bearings3 <- il$bearing3
-il$bearings4 <- il$bearing4
-il$DIST4 <- NA
+
 
 keeps <- c("x","y","twp","year","L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
   "bearings2", "bearings3", "bearings4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
   "diameter", "diameter2", "diameter3", "diameter4", "cornerid", "typecorner","state")
 
 ind.data <- ind[keeps] 
-il.data <- il[keeps]
-
-#  The merged dataset is called inil
-inil <- rbind(data.frame(ind.data), data.frame(il.data))
+inil <- ind.data
 
 
-
-#inil$rng <- rng
 inil<-data.frame(inil, stringsAsFactors = FALSE)
-#inil [inil$DIST1 == 99999] <- 'NA'
-#inil [inil == '99999'] <- 'NA'
-#inil [inil == 88888] <- 'NA'
-#inil [inil =='88888'] <- 'NA'
 
 #  There are a set of 9999 values for distances which I assume are meant to be NAs. 
 inil$DIST1[inil$DIST1 == 88888] <- NA
@@ -138,8 +113,8 @@ inil$degrees4[inil$degrees4 == 99999] <- NA
 inil$degrees4[inil$degrees4 == 88888] <- NA
 inil$year[inil$year == 99999] <- NA
 
-summary(inil)
-# There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"
+
+# There are some points in Indiana where distances are listed as 0, but they are "Water" or "wet" or "No tree"
 # Here we change these distnces to 'NA'
 summary(inil[inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'),])
 zero.trees <-(inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'))
@@ -155,13 +130,13 @@ year <- ifelse(inil$year >= 1825, '1825+',
                     ifelse(inil$year < 1825, '< 1825',"ALL"))
 
 inil$surveyyear <- year
-X11(width = 12)
+#X11(width = 12)
 ggplot(data = inil, aes(x = x, y = y, color = surveyyear)) + geom_point()
 
 
 inil <- data.frame(inil)
 
-#diameters in centimeters
+#make a df of diameters (in centimeters)
 diams <-  cbind(as.numeric(inil$diameter), 
                 as.numeric(inil$diameter2), 
                 as.numeric(inil$diameter3), 
@@ -307,11 +282,6 @@ species <- data.frame(species1 = sp.levels[ranked.data[, 9]],
                       stringsAsFactors=FALSE)
 
 
-
-
-
-
-
 #  Indiana data has same correction factors for the whole state
 #  There are 8 corners that have 4 trees, and some corners with 3 trees. 
 #  For now, we are treating all corners as '2 trees' for the correction factors
@@ -349,24 +319,10 @@ corner<- ifelse(inil$cornerid %in% intsec, 'intsec',
                             ifelse(inil$typecorner == "(1/4) Section", "intqtr",
                                    ifelse(inil$typecorner == "Section", "intsec", "extsec"))))))
        
-#corner[ inil$cornerid %in% intsec ] <- 'intsec'
-#corner[ inil$cornerid %in% intqtr ] <- 'intqtr'
-#corner[ inil$cornerid %in% extsec ] <- 'extsec'
-#corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
 
 inil$cornertype <- paste0(corner, inil$state)
-#Pair <- inil$cornertype
-#corr.factor <- read.csv('data//charlie_corrections.csv')
-#test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
-#colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
-#require(plyr)
-#corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
-#write.csv(corrections, 'data/correction_factors.csv')
-# create correction factors based on corner types
-
-#These are the columns for the final dataset.
-
+# create a df with the finalized data
 final.data <- data.frame(inil$x,
                          inil$y,
                          inil$twp,
@@ -385,11 +341,6 @@ colnames(final.data) <- c('PointX','PointY', 'Township','state',
                           paste('az',      1:4, sep = ''), 'corner', 'surveyyear')
 
                           
-# part of the high density problem in indiana might be due to a large number of points with really low distances                  
-
-summary(final.data[final.data$dist1 ==1.0,])
-# 78 points with dist1= 1 
-count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2 (most in IN)
 
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
@@ -400,8 +351,8 @@ summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.d
 summary(final.data)
 
 # now kill missing cells:
-#final.data <- final.data[!is.na(final.data$PointY),]
-#final.data <- final.data[!is.na(final.data$PointX),]
+final.data <- final.data[!is.na(final.data$PointY),]
+final.data <- final.data[!is.na(final.data$PointX),]
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
 hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
      main = "IN only tree diameter distribution")
@@ -425,6 +376,4 @@ corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 write.csv(corrections, 'data/correction_factors.csv')
 
 
-ggplot(full.final, aes(PointX, PointY, color = "diam1"))+geom_point()
-#write the data as a csv
-write.csv(full.final, paste0("outputs/ndilin_lowerMI_pls_for_density_v",version,".csv"))
+write.csv(final.data, paste0("outputs/indiana_final_data_for_dens_est.csv"))

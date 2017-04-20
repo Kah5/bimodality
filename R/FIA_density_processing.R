@@ -66,7 +66,7 @@ hist(umdw.new$PLSdensity, breaks = 25)
 
 pls.inil <- rbind(pls.inil, umdw.new)
 #coordinates(pls.inil)<- ~x+y
-
+ggplot(pls.inil, aes(x, y, color = PLSdensity))+geom_raster()
 #test.ex<- extract(density.FIA.table, extent(pls.inil))
 #write.csv(pls.inil,C:/Users/JMac/Documents/Kelly/biomodality/outputs )
 #plot raw data

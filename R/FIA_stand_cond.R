@@ -1,6 +1,7 @@
 # This script is looking at stand history in the FIA dataset:
 # Author: kheilman
-
+library(reshape2)
+library(ggplot2)
 #-----------------------------------------------------------
 # Does stand history explain low density sites in the FIA?
 #-----------------------------------------------------------
@@ -28,7 +29,7 @@ cond <- rbind(IN, IL, MI, MN, WI)
 # merge with FIA estimated densities
 mergedin<- merge(FIA.by.paleon, cond[,c('PLT_CN', 'STDAGE','DSTRBCD1','STDORGCD', 'FLDSZCD','TRTCD1')], by.x = 'plt_cn', by.y = 'PLT_CN')
 
-# ensity is somewhat correlated with stand age
+# density is somewhat correlated with stand age
 ggplot(mergedin, aes(x=STDAGE, y = FIAdensity))+geom_point()
 ggplot(mergedin, aes(x=FLDSZCD, y = FIAdensity))+geom_point()
 ggplot(mergedin, aes(x=STDORGCD, y = FIAdensity))+geom_point()
@@ -54,7 +55,7 @@ mergedin[mergedin$FIAdensity < 0.5, ]$fiaecotype <-  "prairie"
 ggplot(mergedin, aes(x = STDAGE)) + geom_histogram()+facet_wrap(~fiaecotype)
 # note that most savannas cluster at lower standages than forest:
 
-ggplot(mergedin, aes(x= fiaecotype, y = STDAGE))+geom_boxplot()
+ggplot(mergedin, aes(x= fiaecotype, y = STDAGE))+geom_boxplot()+theme_bw()+xlab("Modern density class")+ylab("FIA stand age ests")
 
 # forest stand ages are significantly higher than savanna standages
 t.test(mergedin$STDAGE ~ mergedin$fiaecotype)
@@ -100,6 +101,7 @@ ggplot(mergedin, aes(x = FIAdensity)) + geom_histogram()+facet_wrap(~STDORGCD)
 
 ggplot(mergedin, aes(x = STDAGE)) + geom_histogram()+facet_wrap(~STDORGCD)
 
+ggplot(mergedin, aes(x = STDORGCD, y = FIAdensity))+geom_boxplot(stat = "identity")
 
 storigin <- ddply(mergedin[, c("x", "y", "cell", "STDAGE", "STDORGCD", 'DSTRBCD1', 'FIAdensity', "TRTCD1")],~STDORGCD,summarise,meandens=mean(FIAdensity),sddens=sd(FIAdensity), meanstdage = mean(STDAGE), sdstdage = sd(STDAGE))
 dstrub <- ddply(mergedin[, c("x", "y", "cell", "STDAGE", "STDORGCD", 'DSTRBCD1', 'FIAdensity', "TRTCD1")],~DSTRBCD1,summarise,meandens=mean(FIAdensity),sddens=sd(FIAdensity), meanstdage = mean(STDAGE), sdstdage = sd(STDAGE))

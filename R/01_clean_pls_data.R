@@ -1,4 +1,7 @@
-#   This code obtained from Simon Goring's 2016 paper (https://github.com/SimonGoring/WitnessTrees)and adapted to be applied to Indiana Data
+#------------------------------------------------------------
+#  01_clean_pls_data.R
+#  This script cleans up the PLS records for density calculations
+#  This code obtained from Simon Goring's 2016 paper (https://github.com/SimonGoring/WitnessTrees)and adapted to be applied to Indiana Data
 #
 #  This file opens the Indiana PLS datasets, renames the columns and then
 #  binds a number of columns from both datasets together.  The
@@ -28,7 +31,8 @@ library(ggplot2)
 library(Rcpp)
 
 version <- "1.6-1" #  version of IN PLS data
-# Read in the IN data
+
+# Read in the IN data here
 ind <- read.csv(paste0("data/ndinpls_v", version, ".csv"), stringsAsFactors = FALSE) # version 1.6 
 
 #Flag original data with L3_tree1 = No data as "NA" 

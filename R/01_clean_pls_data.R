@@ -364,9 +364,9 @@ test<- full.final[!full.final$corner == "NAIL",] # there are some NA corners in
 # write the correction factors to a file for reference later:
 Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
-# need to get ring of NAIL< 1825
 
-corr.factor <- read.csv('data//charlie_corrections.csv')
+# read in the correction factors provided by Charlie Cogbill:
+corr.factor <- read.csv('data//charlie_corrections_in.csv')
 test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
 
 colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')

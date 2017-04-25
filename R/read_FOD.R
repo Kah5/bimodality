@@ -194,7 +194,7 @@ size.tots$FRdiscrete <- cut(size.tots$FireRotation, labels = c('0-1', '1-5', '5-
 
 
 # map out the calculated fire rotation for these grid cells
-ggsave("outputs/fire/Fire_rotation_map.png", width=22,height=21,units=c("cm"), dpi=600 )
+ggsave("outputs/fire/Fire_rotation_map.png", width=22,height=21,units=c("cm"), dpi=300 )
 p <- ggplot(size.tots, aes(x = x, y = y, fill = FRdiscrete))+geom_raster()+coord_equal()+theme_bw()+
   scale_fill_manual(values = rev(c('#ffffcc',
     '#ffeda0',
@@ -264,3 +264,6 @@ ggplot(FR.avg, aes(x= classification, y = mean, fill=bimodal))+geom_bar(stat = "
                     ymin = FR.avg$mean - FR.avg$se), width = 0.25) +ylab("Mean Fire Rotation (years)") +xlab("")+theme_bw()
 dev.off()
 
+# are these statistically significant?
+
+anova(lm(plsfire$FireRotation ~ plsfire$classification))

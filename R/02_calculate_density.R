@@ -1,6 +1,6 @@
 #-----------------------------------------------------------
 # 02_calculate_density.R
-#Thi script does the PLS Density calculations at each PLS survey point
+#This script does the PLS Density calculations at each PLS survey point
 #Code adapted from Simon Goring by Kelly Heilman               
 # 
 #Updated April 20, 2017

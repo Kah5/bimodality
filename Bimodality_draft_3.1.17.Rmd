@@ -223,6 +223,53 @@ dev.off()
   
 Supplemental Material:   
 Supplemental figures:
+
+```{r, echo = FALSE}
+
+#map out 
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+#################################
+#plot maps of tree density
+#################################
+#dens.pr<- data.frame(dens.pr)
+
+
+sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+# map out the pls map:
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree Density \n(trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+
+# map out the fia data
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.dens, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree Density \n(trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+png(width = 8, height=4, units="in", res=300, "outputs/paper_figs/Fig_S1.png")
+grid.arrange(pls.map, fia.map, ncol = 2)
+dev.off()
+
+
+```
+
+
 ![](outputs/v1.6-5/tree_density_maps_PLS_FIA.png)
 ![](outputs/v1.6-5/PLS__full_tree_density_map.png)
 

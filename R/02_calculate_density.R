@@ -98,6 +98,8 @@ stem.density$basal[zero.trees] <- 0
 stem.density$density[wet.trees] <- NA
 stem.density$basal[wet.trees] <- NA
 
+# write out as csv:
+write.csv(stem.density,"outputs/in_stem_density_alb_v1.6-1.csv")
 
 # make stem.density spatial
 coordinates(stem.density)<- ~x+y

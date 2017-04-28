@@ -36,7 +36,7 @@ library(Rcpp)
 
 version <- "1.6-5" # version using 1.7 IL data and 1.6 IN data
 # Read in the data
-ind <- read.csv("data/ndinpls_v1.6.csv", stringsAsFactors = FALSE) # version 1.6 
+ind <- read.csv("data/ndinpls_v1.6-1.csv", stringsAsFactors = FALSE) # version 1.6 
 
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6

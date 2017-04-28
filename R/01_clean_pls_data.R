@@ -371,9 +371,9 @@ Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
 # read in the correction factors provided by Charlie Cogbill:
 corr.factor <- read.csv('data//charlie_corrections_in.csv')
-test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
+test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
 
-colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
+colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
 require(plyr)
 corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 

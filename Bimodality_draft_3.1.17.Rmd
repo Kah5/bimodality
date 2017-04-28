@@ -86,7 +86,7 @@ fig1A <- ggplot(densitys, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color
 
 
 fig1D<- ggplot(densitys, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
-        theme_bw(base_size = 10)+ annotate("text", x=0, y=900,label= "D", size = 5)
+        theme_bw(base_size = 10)+ annotate("text", x=0, y=900,label= "D", size = 5)+theme(legend.title=element_blank())
 
 dens <- densitys
 dens$diff <- dens$FIAdensity - dens$PLSdensity
@@ -101,116 +101,33 @@ bimodalpls <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.cs
 
 fig1B <- ggplot(bimodalpls, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
   stat_density2d(data = bimodalpls, aes(colour = bimodal),fill = "transparent",geom="polygon") +
-  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925") + annotate("text", x=400, y=15,label= "B", size = 5)+theme(legend.key.size = unit(0.5,'lines'), legend.position = c(0.9, 0.2))
+  theme_bw()+ ylab ("Mean Temperature (degC)") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925") + annotate("text", x=400, y=15,label= "B", size = 5)+theme(legend.key.size = unit(0.5,'lines'), legend.position = c(0.8, 0.2), legend.title=element_blank())
 
 # plot out bimodal maps for pls and FIA
 library(modes)
 library(diptest)
 
-map.bimodal.5c <- function(data, binby, density){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # should we also do BC on the denisty estimated function?
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-  }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
-  #define bimodality
-  merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  if(density == "PLSdensity"){
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$ecotype)
-    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
-    
-    }else{
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-    
-  }
-  
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#01665e', # light green
-      '#5ab4ac', # dark teal
-      '#8c510a', # red
-      '#d8b365', # light tan
-      '#fee08b', # tan
-      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+ xlim(-150000, 1150000)+
-    xlab("easting") + ylab("northing")+coord_equal()+xlim(-150000, 1150000) 
-    
-  
-}
+# function to determine places that are bimodal and map these out in space:
 
+source("R/map.bimodal.5c.R")
 
 dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
-fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
+fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)
 
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 
-fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
+fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
 
-#X11(width = 12, height = 9)
 
+# Write out to a png to control size
  
-png(width = 7, height = 9, units = "in", res= 100,"test_fig1.png")
-grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4),widths=c(1,1), ncol=2))
+png(width = 7, height = 9, units = "in", res= 300,"outputs/paper_figs/Figure_1.png")
+grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4), widths=c(1.1,1.1), ncol=2))
 dev.off()
 
-grid.newpage()
-
-vp1 <- viewport(x = 0, y = 1, 
-                height = 0.5, width = 0.5,
-                just = c("left", "top"),
-                name = "upper left")
-pushViewport(vp1)
-print(fig1A, newpage = FALSE)
-
-upViewport(1)
-
-vp2 <- viewport(x = 0, y = 0, 
-                height = 0.5, width = 0.25,
-                just = c("left", "bottom"),
-                name = "lower left")
-pushViewport(vp2)
-print(fig1B, newpage = FALSE) 
-
-upViewport(1)
-
-vp3 <- viewport(x = 0.25, y = 0, 
-                height = 1, width = 0.5,
-                just = c("left", "bottom"),
-                name = "centre")
-pushViewport(vp3)
-print(fig1C, newpage = FALSE) 
-
-upViewport(1)
-
-vp4 <- viewport(x = 1, y = 1, 
-                height = 0.5, width = 0.5,
-                just = c("right", "top"),
-                name = "upper right")
-pushViewport(vp4)
-print(fig1D, newpage = FALSE) 
-
-upViewport(1)
-vp5 <- viewport(x = 1, y = 0, 
-                height = 0.5, width = 0.25,
-                just = c("right", "bottom"),
-                name = "lower right")
-pushViewport(vp5)
-print(fig1E, newpage = FALSE) 
-
-upViewport(1)
 
 #lets see how many bimodal grid cells are not in the FIA datasets now:
 bimodal.cells <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]$cell
@@ -257,114 +174,35 @@ ggplot(kept.table, aes(x = classification, y = freq))+geom_bar(stat='identity')+
 Projected stability of the Midwestern vegetation in 2070-2099 based on RCP8.5 CMIP5 climate projections from model CCESM4 and historic vegetation-environment relationships (A), and modern vegetation-environment relationships (B). Bimodal places in the future are those with climates matching the bimodal climate space (based on PC1) in the past and modern landscape respectively. No-analog climates were determined with respect to the climate space of the past in (A), and with respect to modern climate in (B).
 ```{r, echo=FALSE,warning = FALSE}
 
-bimodal.future.NA <- function(data, binby, density, binby2, rcp){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-  }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
-  
-  #merge bins iwth the second binby -> here is is future climate
-  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
-  
-  
-  #define bimodality
-  merged$bimodal <- "Stable"
-  #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bistable"
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  
-  
-  #merged
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
-      '#1a9641',
-      'black',
-      '#d7191c'
-    ), limits = c('Stable',"no-analog",'Bistable') )+
-    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                      axis.text.y=element_blank(),axis.ticks=element_blank(),
-                      axis.title.x=element_blank(),
-                      axis.title.y=element_blank())+
-    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
-  
-}
+source("R/map.future.scenarios.R")
+
+
 a <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc60bins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")
+
 b <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")
+
 c <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc45bins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")
-fig2a <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc85bins', rcp = '85' )+ ggtitle("RCP 8.5 PC1")+annotate("text", x=40000, y=1550000,label= "A", size = 5)
+
+fig2a <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc85bins', rcp = '85' )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
 
 # for the FIA data
 
-bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-  }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
-  
-  #merge bins iwth the second binby -> here is is future climate
-  merged <- merge(coef.bins, data, by.x = "bins", by.y = binby2)
-  
-  
-  #define bimodality
-  merged$bimodal <- "Stable"
-  #criteria for bimodality
-  if(merged$BC >= 0.55 & merged$dipP <= 0.05){
-  merged$bimodal <- "Bistable"
-  }else{ merged$bimodal <- "Stable"}
-  
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  
-  
-  #merged
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
-      '#1a9641',
-      'black',
-      '#d7191c'
-    ), limits = c('Stable',"no-analog",'Bistable') )+
-    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                      axis.text.y=element_blank(),axis.ticks=element_blank(),
-                      axis.title.x=element_blank(),
-                      axis.title.y=element_blank())+
-    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
-  
-}
+
 af <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc60fbins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")
 bf <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc26fbins',  rcp = "26") + ggtitle("RCP 2.6 PC1")
 cf <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")
-fig2b <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '85' )+ ggtitle("RCP 8.5 PC1")+annotate("text", x=40000, y=1550000,label= "B", size = 5)
+
+
+fig2b <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '85' )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
 
 
 
+png(width = 8, height=4, units="in", res=300, "outputs/paper_figs/Fig_2.png")
 grid.arrange(fig2a, fig2b, ncol = 2)
-
+dev.off()
 ```
 
 

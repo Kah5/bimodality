@@ -93,7 +93,7 @@ dens$diff <- dens$FIAdensity - dens$PLSdensity
 
 # density difference plots
 fig1E <- ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geom_smooth(method = 'lm', color = 'red')+xlim(0,600)+
-  theme_bw()+ ylab('increase in density \n since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=0, y=900,label= "E", size = 5)
+  theme_bw()+ ylab('density difference (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=0, y=900,label= "E", size = 5)
 
 
 # plot bimodal climate space:
@@ -101,7 +101,7 @@ bimodalpls <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.cs
 
 fig1B <- ggplot(bimodalpls, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
   stat_density2d(data = bimodalpls, aes(colour = bimodal),fill = "transparent",geom="polygon") +
-  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925") + annotate("text", x=400, y=15,label= "B", size = 5)
+  theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925") + annotate("text", x=400, y=15,label= "B", size = 5)+theme(legend.key.size = unit(0.5,'lines'), legend.position = c(0.9, 0.2))
 
 # plot out bimodal maps for pls and FIA
 library(modes)
@@ -144,8 +144,8 @@ map.bimodal.5c <- function(data, binby, density){
       '#d8b365', # light tan
       '#fee08b', # tan
       'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+
-    xlab("easting") + ylab("northing") +coord_equal()
+    theme_bw()+ xlim(-150000, 1150000)+
+    xlab("easting") + ylab("northing")+coord_equal()+xlim(-150000, 1150000) 
     
   
 }
@@ -153,16 +153,64 @@ map.bimodal.5c <- function(data, binby, density){
 
 dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
-fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank())+ annotate("text", x=0, y=900,label= "C", size = 5)#,legend.justification = c(-0.1, 0), legend.position = c(0, 0))
+fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
 
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 
-fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank() )+ annotate("text", x=0, y=900,label= "F", size = 5)#,legend.justification = c(-0.1, 0), legend.position = c(0, 0))
-fig1F
+fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity" )+theme(axis.text = element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
 
-X11(width = 9)
-grid.arrange(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, ncol = 2)
+#X11(width = 12, height = 9)
 
+ 
+png(width = 7, height = 9, units = "in", res= 100,"test_fig1.png")
+grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4),widths=c(1,1), ncol=2))
+dev.off()
+
+grid.newpage()
+
+vp1 <- viewport(x = 0, y = 1, 
+                height = 0.5, width = 0.5,
+                just = c("left", "top"),
+                name = "upper left")
+pushViewport(vp1)
+print(fig1A, newpage = FALSE)
+
+upViewport(1)
+
+vp2 <- viewport(x = 0, y = 0, 
+                height = 0.5, width = 0.25,
+                just = c("left", "bottom"),
+                name = "lower left")
+pushViewport(vp2)
+print(fig1B, newpage = FALSE) 
+
+upViewport(1)
+
+vp3 <- viewport(x = 0.25, y = 0, 
+                height = 1, width = 0.5,
+                just = c("left", "bottom"),
+                name = "centre")
+pushViewport(vp3)
+print(fig1C, newpage = FALSE) 
+
+upViewport(1)
+
+vp4 <- viewport(x = 1, y = 1, 
+                height = 0.5, width = 0.5,
+                just = c("right", "top"),
+                name = "upper right")
+pushViewport(vp4)
+print(fig1D, newpage = FALSE) 
+
+upViewport(1)
+vp5 <- viewport(x = 1, y = 0, 
+                height = 0.5, width = 0.25,
+                just = c("right", "bottom"),
+                name = "lower right")
+pushViewport(vp5)
+print(fig1E, newpage = FALSE) 
+
+upViewport(1)
 
 #lets see how many bimodal grid cells are not in the FIA datasets now:
 bimodal.cells <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]$cell
@@ -171,7 +219,7 @@ bimodal <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]
 
 fcellsbim <- fia.dens[fia.dens$cell %in% bimodal.cells,]
 
-prop.bimodal <- nrow(fcellsbim)/nrow(bimodal.cells)
+prop.bimodal <- nrow(fcellsbim)/nrow(bimodal)
 # 45.1 percent of bimodal places fall within the FIA dataset
 fcell <- fcellsbim$cell
 # lets see how many of bimodal forest/bimodal forests places have been removed
@@ -183,9 +231,23 @@ infia <- bimodal[bimodal$cell %in% fcellsbim$cell, ]
 summary(infia$classification)
 summary(notinfia$classification)
 
+ggplot(infia, aes(x = x, y = y, color = classification))+geom_point()
+
+
+ggplot(notinfia, aes(x = x, y = y, color = classification))+geom_point()
 
 #make a plot of the places removed
 # bar plot or plot showing proportion of these
+notinfia$count <- 1
+
+lost.table <- count(df = notinfia, vars = c('classification'))
+
+
+kept.table <- count(df= infia, vars = c('classification'))
+
+ggplot(lost.table, aes(x = classification, y = freq))+geom_bar(stat='identity')+ggtitle('grid cells lost in FIA')
+
+ggplot(kept.table, aes(x = classification, y = freq))+geom_bar(stat='identity')+ggtitle('grid cells still in FIA')
 ```
 
 

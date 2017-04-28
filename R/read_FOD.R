@@ -194,7 +194,7 @@ size.tots$FRdiscrete <- cut(size.tots$FireRotation, labels = c('0-1', '1-5', '5-
 
 
 # map out the calculated fire rotation for these grid cells
-ggsave("outputs/fire/Fire_rotation_map.png", width=22,height=21,units=c("cm"), dpi=300 )
+png(width=4,height=4,units="in", res=300, "outputs/paper_figs/Fire_rotation_map.png")
 p <- ggplot(size.tots, aes(x = x, y = y, fill = FRdiscrete))+geom_raster()+coord_equal()+theme_bw()+
   scale_fill_manual(values = rev(c('#ffffcc',
     '#ffeda0',
@@ -205,8 +205,10 @@ p <- ggplot(size.tots, aes(x = x, y = y, fill = FRdiscrete))+geom_raster()+coord
     '#e31a1c',
     '#bd0026',
     '#800026')))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme(axis.text = element_blank())+ xlab(' ')+ylab(' ')+ggtitle("Fire Rotation (# years to burn area of gridcell)")+
-  guides(fill=guide_legend(title="Fire Rotation \n (years)"))
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  theme(axis.text = element_blank())+ xlab(' ')+ylab(' ')+ggtitle("Fire Rotation (# years to burn area of gridcell)")+
+  guides(fill=guide_legend(title="Fire Rotation \n (years)"))+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.267),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                                                    panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ggtitle("")
 
 p
 dev.off()

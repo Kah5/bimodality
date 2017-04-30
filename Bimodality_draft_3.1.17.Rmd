@@ -67,6 +67,7 @@ library(grid)
 library(ggplot2)
 library(maps)
 library(sp)
+library(plyr)
 
 
 all_states <- map_data("state")
@@ -189,7 +190,7 @@ panel.grid.major = element_blank(),panel.border = element_rect(colour = "black",
 
 
 png(width = 12, height=4, units="in", res=300, "outputs/paper_figs/PLS_supplemental_rcp_map.png")
-grid.arrange(b, c, a ncol = 3)
+grid.arrange(b, c, a, ncol = 3)
 dev.off()
 
 
@@ -242,6 +243,33 @@ dev.off()
 
 
 
+```{r, echo = FALSE}
+
+# calculate the area that is bimodal
+df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1bins')
+df.mod <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1fiabins')
+df.8.5 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc85bins")
+df.4.5 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc45bins")
+df.2.6 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = "PC1_cc26bins")
+
+# calculate the % that should be bimodal in the modern landscape
+a <- nrow(df.mod[df.mod$bimodal == "Bimodal",])/nrow(df.mod)
+b <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
+c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
+d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
+e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
+plsgrd <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
+plspct <- nrow(df.new[df.new$bimodal == "Bimodal",])*64
+
+
+a
+b
+c
+d
+e
+
+
+```
 
 
 

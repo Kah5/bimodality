@@ -326,16 +326,27 @@ biplot(dens.pca)
 
 # using biplot
 library(ggbiplot)
-g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
-              = 20,alpha = 0)
+source("R/newggbiplot.R")
+
+pretty.scale <- scale.dens[,c('MAP1910',   
+                              "pastdeltaP", "pasttmean",
+                              "deltaT", "sandpct", "awc")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc")
+
+pretty.pca <- princomp(pretty.scale,
+                     na.rm=TRUE) 
+
+g <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+              = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5)
+
 # layer the points from pls underneath the pca biplot
 # using a clever trick to manipulate the layers
 g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
 g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
 
 #write to png
-png(width = 800, height = 400,paste0("outputs/v",version,"/full/pca_biplot.png"))
-g + ggtitle('PCA biplot with PLS tree density')
+png(width = 8, height = 4,unit="in", res=300, paste0("outputs/paper_figs/pca_biplot.png"))
+g 
 dev.off()
 
 #now plot biplot with the classification colors

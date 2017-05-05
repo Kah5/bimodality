@@ -78,7 +78,7 @@ nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE
 stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-
+ggplot(stem.density, aes(x, y, color=density))+geom_point()
 # ---------------------fixing some lingering data naming issues:-------------------
 species[species==""]<- "No tree"
 #fix the captalized "No tree" problem
@@ -268,8 +268,8 @@ density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
 X11(width =12)
-ggplot(data = density.table, aes(x = x, y = y, fill = Oak)) + geom_raster()+coord_equal()+
-  scale_fill_gradient(low = "green", high= "red")
+ggplot(data = density.table, aes(x = x, y = y, fill = total)) + geom_raster()+coord_equal()+
+  scale_fill_gradient(low = "yellow", high= "red")
 
 
 

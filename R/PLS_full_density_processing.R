@@ -15,25 +15,30 @@ library(raster)
 library(rgdal)
 
 
+#-----------------------------Load PLS data--------------------------------------
+
+# read in pont level data
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
-#pls.inil <- read.csv(paste0('data/outputs/plss_density_v1.csv'))
+
+# find the mean density by species
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
-# alt to the above step: would be to normalize by the # points by cell
-pls.inil <- pls.inil[, c("x", "y", "cell", ".")]
+pls.inil <- pls.inil[, c("x", "y", "cell", ".")] # just keep mean 
 
 colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
 hist(pls.inil$PLSdensity, xlim = c(0, 600),breaks = 100)
 
 
-#can aggregate by species
-#pls.spec<- read.csv(paste0('outputs/density_tables.csv'))
+# read in point level data
 pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+
+# find mean denisty for all species in a grid cell
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
-pls.spec$total <- rowSums(pls.spec[4:36], na.rm=TRUE)
-hist(pls.spec$total)
+pls.spec$total <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
+hist(pls.spec$total, breaks = 50)
 pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
 colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
 
+# read in Uppermidwest data at paleon grid scale
 umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
 #umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
 umdw$total <- rowSums(umdw[,5:32], na.rm= TRUE)
@@ -76,7 +81,7 @@ summary(densitys)
 hist(densitys$PLSdensity, breaks = 50)
 hist(densitys[densitys$PLSdensity > 0.5,]$PLSdensity, breaks = 50)
 
-#map out 
+# ----------------------mapping out tree density-------------------------------
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states)<-~long+lat
@@ -84,6 +89,7 @@ class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
+
 #################################
 #plot maps of tree density
 #################################
@@ -105,13 +111,12 @@ png(paste0("outputs/v",version,"/PLS__full_tree_density_map.png"))
 pls.map
 dev.off()
 
-
+# write out combinded datasets:
 write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb", version,".csv"))
 
-################################################################
-#comparison of FIA and PLS datasets to climate
-###############################################################
+#--------------------load associated environmental data----------------------
 
+# precipitation, temperature, seasonality are all calculated in R/Extract_Prism.R
 past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 past.precip.mo$deltaP <- past.precip.mo$SI
@@ -165,47 +170,30 @@ hist(nodups$PLSdensity, breaks =50)
 
 write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
 
-#nine.five.pct<- quantile(dens.pr$PLSdensity, probs = .95, na.rm=TRUE)
-#dens.pr[dens.pr$PLSdensity>nine.five.pct,]$PLSdensity <- nine.five.pct #patch fix the overestimates of density
-
-#plot histograms
-hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,550), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
-#hist(dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
-
 #plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
-#plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
 plot(dens.pr$pastdeltaP, dens.pr$PLSdensity, xlab = "Past P seasonality", ylab = "PLS density")
-#plot(dens.pr$moderndeltaP, dens.pr$FIAdensity, xlab = "Modern P seasonality", ylab = "FIA density")
 plot(dens.pr$pasttmean, dens.pr$PLSdensity, xlab = 'Past Tmean', ylab = "PLSdensity")
-#plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
-#plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
 plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Precip")
-##########################
-#read in soils data
+
+
+
+#read in soils data--soils data from gssurgo database, aggregated in ArcGIS
+# percent sand 0-100cm soil
 sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 
-#sand1km <- raster("data/1km_UMW_sand1.tif")
-
-
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
-#sand1km.alb <- projectRaster(sand1km, crs = '+init=epsg:3175')
 
-
-#awc
+#awc-availible water content
 awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
-#awc1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_awc1.tif")
-
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
-#awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
 
-
-ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
+# issues with ksat raster--missing all of IL
+#ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
 #ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
-
-ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
+#ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
 #ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #write albers rasters to files:
@@ -213,25 +201,20 @@ writeRaster(awc8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awcalb.tif",
 writeRaster(sand8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_sandalb.tif", overwrite = TRUE)
 writeRaster(ksat8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksatalb.tif", overwrite = TRUE)
 
-#extract soils data using FIA and ps points
+#extract soils data using PLS points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
 dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 
+# --------------------------Plotting density vs. environmental data---------------
 
-
-summary(rowSums(dens.pr != 0, na.rm=TRUE))
-#dens.pr$diff <- dens.pr$FIAdensity - dens.pr$PLSdensity
-
-library(ggExtra)
-library(ggplot2)
-
+# ggmarginal not working as of 5/4/17, so I have taken the marginal histograms out
 png(paste0('outputs/v',version,'/full/PLS_full_precip_hist_prism.png'))
 #X11(width = 5)
 p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
-  xlim(450, 1200) + ylim(0, 800)+theme_bw()+
+  xlim(450, 1200) + ylim(0, 600)+theme_bw()+
   theme(text = element_text(size = 20))
-ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
+#ggExtra::ggMarginal(p, type = "histogram",margins = c("both"),size = 3, colour = 'black', fill = 'red')
 dev.off()
 
 png(paste0('outputs/v',version,'/full/PLS__full_delta_precip_hist_prism.png'))
@@ -239,7 +222,7 @@ png(paste0('outputs/v',version,'/full/PLS__full_delta_precip_hist_prism.png'))
 p <- ggplot(dens.pr, aes(pastdeltaP, PLSdensity)) + geom_point() + theme_classic() + xlab('Precipitation seasonality') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
   xlim(0,1) + ylim(0, 800)+theme_bw()+
   theme(text = element_text(size = 20))
-ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
+#ggExtra::ggMarginal(p, type = "histogram",size = 3, colour = 'black', fill = 'red')
 dev.off()
 
 sandpls <- ggplot(dens.pr, aes(sandpct, PLSdensity)) + geom_point() + theme_classic()+ xlab('% sand 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
@@ -259,33 +242,35 @@ png(paste0('outputs/v',version,'/full/PLS_full_ksat.png'))
 ksatpls
 dev.off()
 
-##########################################################
-# assign density classificaitons of savanna, forests, etc#
-##########################################################
 
-#Using the Rheumtella Classification scheme:
+#------------------- assign density classificaitons of savanna, forests, etc----------------
+
+
+#Using the Rheumtella Classification scheme, orginally Anderson:
+
 # prairie (<0.5 trees/ha)
 # savanna (0.5-47 trees/ha)
 # forest cover (>47 trees/ha)
 
 dens.pr$ecotype<- 'test'
-dens.pr[dens.pr$PLSdensity >= 47, ]$ecotype <-  "Forest"
-dens.pr[dens.pr$PLSdensity < 47, ]$ecotype <-  "Savanna" 
-dens.pr[dens.pr$PLSdensity == 0, ]$ecotype <-  "prairie"
+ecotype <- ifelse(dens.pr$PLSdensity == 0,  "prairie", 
+                  ifelse(dens.pr$PLSdensity <= 47, "Savanna",
+                         ifelse(dens.pr$PLSdensity > 47, "Forest", "Check")))
+dens.pr$ecotype <- ecotype
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
 write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
+
 # we could also do kmeans clustering, but this results in some overlap between clusters
 fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
 dens.pr$kmeans <- fit.km$cluster
 plot(fit.km$cluster, dens.pr$PLSdensity)
 
-ggplot(dens.full, aes(x = kmeans, y = PLSdensity, group = kmeans))+geom_boxplot()
 
-####################################################
-#PCA analysis
-#####################################################
+
+#------------------------PCA of environmental variables-------------------------------
+
 dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
@@ -293,8 +278,7 @@ scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP",
                                 "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
-# apply PCA - scale. = TRUE is highly 
-# advisable, but default is FALSE. 
+# apply PCA - scale. = TRUE 
 dens.pca <- princomp(scale.dens[,c('MAP1910',   
                                    "pastdeltaP", "pasttmean",
                                     "deltaT", "sandpct", "awc")],
@@ -317,14 +301,13 @@ ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
 dev.off()
 
 data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
-ggbiplot(dens.pca)
+
 
 plot(dens.pca, type = "l")
 print(dens.pca)
-summary(dens.pca)
-biplot(dens.pca)
 
-# using biplot
+
+# using ggbiplot
 library(ggbiplot)
 source("R/newggbiplot.R")
 
@@ -370,114 +353,42 @@ dens.pr <- test1
 ##################################################################
 # PCA on FIA dataset
 ##################################################################
-#dens.fia <- dens.rm[, c('FIAdensity')] # pls density
+# predict PCA scores for modern landscape
+res <-princomp(scale.dens[,c('MAP1910',   
+                            "pastdeltaP", "pasttmean",
+                            "deltaT", "sandpct", "awc")])
 
-# apply PCA - scale. = TRUE is highly 
-# advisable, but default is FALSE. 
-dens.pca <- princomp(scale.dens[,c("MAP2011", "moderndeltaP", 
-                                   "modtmean", "moddeltaT", 
-                                   "sandpct", "awc")],
-                     na.rm=TRUE) 
+#created a function to predict the PC scores for the different RCP's using the PCA from PLS
+# scale modern environmental data
+cc <- scale(dens.pr[,c("MAP2011", "moderndeltaP", 
+                         "modtmean", "moddeltaT", 
+                         "sandpct", "awc")])
+  # rename so that it is the same column names as PLS--for prediction purposes
+colnames(cc) <- c('MAP1910',   
+                    "pastdeltaP", "pasttmean",
+                    "deltaT", "sandpct", "awc")
+  
+newscores <- predict(res, newdata=cc) # predict new scores based on the PLS pca 
 
-plot(dens.pca)
-dens.pca$loadings
-scores <- data.frame(dens.pca$scores[,1:2])
-#scores$FIA <- dens.fia
-#scores$ecotype <- dens.rm$fiaecotype
-
-dens.rm$PC1fia <- scores[,1]
-dens.rm$PC2fia <- scores[,2]
-dens.rm <- data.frame(dens.rm)
-PC <- dens.pca
-#plot scores by tree density in trees per hectare
-
-data <- data.frame(obsnames=row.names(PC$scores[1]), PC$Comp.1)
-
-# using biplot
-library(ggbiplot)
-g <- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
-              = 20,alpha = 0)
-# layer the points from pls underneath the pca biplot
-# using a clever trick to manipulate the layers
-g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = "black")), g$layers)
-g <- g #+ scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
-
-#write to png
-png(width = 800, height = 400,"outputs/v1.6/pca_fia_biplot.png")
-g + ggtitle('PCA biplot with PLS tree density')
-dev.off()
+#add to dens.pr dataframe
+dens.pr[,paste0('PC1fia')] <- newscores[,1]
+dens.pr[,paste0('PC2fia')]  <- newscores[,2]
 
 
-
-# add the scores from pca to the dens.pr data frame
-#this merge is not working
-test1 <- merge(dens.pr, unique(dens.rm[,c('x','y','cell', 'PC1fia', 'PC2fia')]),  by = c('x','y','cell'), all.x = T)
-
-#convert dens.rm to the new dens.pr---we only lose ~150 grid cells
-dens.pr <- test1
 write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 
-##############################################
-# Read in CMIP 4 projections
-#############################################
+
+#--------------------------- Read in CMIP 4 projections----------------------
+# CCESM climate projections extracted using the R/Extract_CMIP_climate.R
 ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
-
-
 
 dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
 
 # for each rcp, we need to determine the places outside of the range of PLS climate:
 # function to find climate space outside of PLS range:
+source("R/find_noanalog_cmip.R")
 
-find.noanalog<- function(dens.pr,rcp){
- dens.pr[,c(paste0("rcp",rcp,"NA"))] <- "Within Range"
- dens.pr[,c(paste0('rcp',rcp,"NAclim"))] <- "Within Range" # column labeling the reason climate is out of range
- #dens.pr[,c(paste0('rcp',rcp,"NAclimhigh"))] <- "Within Range" # column labeling the reason climate is out of range
- 
- # rcp 4.5
-prange <- range(dens.pr$MAP1910)
-trange <- range(dens.pr$pasttmean)
-pcvrange <- range(dens.pr$pastdeltaP)
-tcvrange <- range(dens.pr$deltaT)
-
-# identify climate space outside of the modern/pls range
-precip.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1] | dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
-pcv.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1] | dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
-temp.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] | dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
-tcv.out <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] | dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
-
-# identify grid cells with climate space lower than modern/pls
-pcv.low <- dens.pr[dens.pr[,c(paste0("pr.",rcp,"SI"))] < pcvrange[1],  ]
-tcv.low <- dens.pr[dens.pr[,c(paste0("tn.",rcp,"cv"))] < tcvrange[1] , ]
-precip.low <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1], ]
-temp.low <- dens.pr[dens.pr[,c(paste0("tn.",rcp))] < trange[1] , ]
-
-dens.pr[dens.pr$cell %in% precip.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low precip"
-dens.pr[dens.pr$cell %in% temp.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low temp"
-dens.pr[dens.pr$cell %in% tcv.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low temp CV"
-dens.pr[dens.pr$cell %in% pcv.low$cell, c(paste0("rcp",rcp,"NAclim"))] <- "Low precip SI"
-
-# identify the gird cells that are higher than modern/pls
-pcv.high <- dens.pr[ dens.pr[,c(paste0("pr.",rcp,"SI"))]> pcvrange[2], ]
-tcv.high <- dens.pr[ dens.pr[,c(paste0("tn.",rcp,"cv"))]> tcvrange[2], ]
-precip.high <- dens.pr[ dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]
-temp.high <- dens.pr[ dens.pr[,c(paste0("tn.",rcp))]> trange[2], ]
-
-dens.pr[dens.pr$cell %in% precip.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High precip"
-dens.pr[dens.pr$cell %in% temp.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High temp"
-dens.pr[dens.pr$cell %in% tcv.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High temp CV"
-dens.pr[dens.pr$cell %in% pcv.high$cell, c(paste0("rcp",rcp,"NAclim"))] <- "High precip SI"
-
-
-dens.pr[dens.pr$cell %in% precip.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
-dens.pr[dens.pr$cell %in% temp.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
-dens.pr[dens.pr$cell %in% tcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
-dens.pr[dens.pr$cell %in% pcv.out$cell, c(paste0("rcp",rcp,"NA"))] <- "no-analog"
-
-dens.pr[,c("x","y", "cell", paste0("rcp",rcp,"NA"), paste0('rcp', rcp,"NAclim"))]
-
-}
 
 # find noanalog climates, label high or low
 NArcp26 <- find.noanalog(dens.pr=dens.pr, rcp = "26")

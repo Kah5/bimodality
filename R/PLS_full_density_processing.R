@@ -519,7 +519,7 @@ melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','
                                   'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 
                                  'pastdeltaP','deltaT',  'pastdeltPbins', 'pasttmeanbins',
                                  'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
-                                 "PC1fiabins", "PC2fiabins","PC1_cc2.6bins",'PC2_cc2.6bins','ecotype')) 
+                                 "PC1fiabins", "PC2fiabins","PC1_cc26bins",'PC2_cc26bins','ecotype')) 
 
 #load map data for future maps
 all_states <- map_data("state")
@@ -531,14 +531,14 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 #pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-png(paste0('outputs/v',version,'/full/PLS_full_density_histogram.png'))#
-ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
-  theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
-dev.off()
+#png(paste0('outputs/v',version,'/full/PLS_full_density_histogram.png'))#
+#ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
+ # theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
+#dev.off()
 
-#####################################################
-# CREATE HEXBIN PLOTS of Density vs. envtl variables#
-#####################################################
+
+#-------------------- CREATE HEXBIN PLOTS of Density vs. envtl variables--------------------#
+
 
 library(lattice)
 
@@ -567,13 +567,13 @@ ggplot(dens.pr, aes(PC2, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,5) + them
   xlab(' Principal component 2') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
-rbpalette <- c('red', "blue")
-ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
+#rbpalette <- c('red', "blue")
+#ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
 
-##################################################
-#plot out denisty distriburions binned by envt#
-##################################################
 
+#----------------plot out denisty distriburions binned by envt----------------------#
+
+# need to make sure the melting worked above
 png(paste0('outputs/v',version,'/full/precipitation_full_by_bins.png'))
 ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
@@ -613,6 +613,9 @@ ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
+
+
+# make this a new script---moving from preliminary plots to calculating bimodality
 ###################################
 #calculate bimodality coefficients#
 ####################################

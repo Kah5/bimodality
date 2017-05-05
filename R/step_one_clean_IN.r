@@ -180,6 +180,19 @@ inil$degrees3[inil$degrees3 == 99999] <- NA
 inil$degrees3[inil$degrees3 == 88888] <- NA
 inil$degrees4[inil$degrees4 == 99999] <- NA     
 inil$degrees4[inil$degrees4 == 88888] <- NA
+inil$bearing[inil$bearing == 99999] <- NA     
+inil$bearing[inil$bearing == 88888] <- NA
+inil$bearing2[inil$bearing2 == 99999] <- NA     
+inil$bearing2[inil$bearing2 == 88888] <- NA
+inil$bearing2[inil$bearing2 == 8888] <- NA
+inil$bearing3[inil$bearing3 == 99999] <- NA     
+inil$bearing3[inil$bearing3 == 88888] <- NA
+inil$bearing4[inil$bearing4 == 99999] <- NA     
+inil$bearing4[inil$bearing4 == 88888] <- NA
+inil$bearing[inil$bearing == ''] <- NA     
+inil$bearing2[inil$bearing2 == ''] <- NA
+inil$bearing3[inil$bearing3 == ''] <- NA     
+inil$bearing4[inil$bearing4 == ''] <- NA
 inil$year[inil$year == 99999] <- NA # our correction factors are by year, so we need the year
 
 summary(inil)

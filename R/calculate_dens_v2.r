@@ -1,34 +1,41 @@
-##############################
-#PLS Crown Width calculations#
-#Kelly Heilman               #
+
+#Tree Density  calculations  
+#Kelly Heilman               
 #January 20, 2016   
 #Updated October 26, 2016
-##############################
+#Code based on Simon Goring's code at: https://github.com/SimonGoring/WitnessTrees
+
 library(plyr)
 library(reshape2)
 library(raster)
 version <- "1.6-5"
 
+#-----------------------load data------------------------------------------------
+
 #read in final.data from the step_one_clean_IN.r script:
-final.data <- read.csv(paste0("outputs/ndilin_lowerMI_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
+final.data <- read.csv(paste0("outputs/ndilin_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 # calculate stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
 
+
+#------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
 # & no diameter veil
-source('R/morisita.r')
+source('R/morisita.r') # morisita density estimator from Simon Goring's Witness Trees code
 
-#make sure density is really being calculated correctly in morisita
+# morisita function calculates basal area and stem density
 estimates <- morisita(final.data, correction.factor, veil = FALSE)
 
 stem.density <- estimates[[1]]
 basal.area <- estimates[[2]]
+
+# there are some very high estimates of stem density 
 summary(stem.density)
 summary(basal.area)
 zero.trees <- is.na(stem.density) & (species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
-#plot Histogram of stem density
-hist(stem.density, breaks = 1000, xlim = c(0,1000))
 
+#plot Histogram of point estimates of stem density
+hist(stem.density, breaks = 1000, xlim = c(0,1000))
 
 #set stem.density where there are zero trees due to No tree or Wet or Water to 0
 stem.density[zero.trees] <- 0
@@ -37,37 +44,14 @@ basal.area[zero.trees] <- 0
 summary(stem.density)
 summary(basal.area)
 
+# make into a data frame and export as csv
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, paste0('outputs/IN_IL_MIdensestimates_v',version,'.csv'))
+write.csv(stem.density, paste0('outputs/IN_IL_densestimates_v',version,'.csv'))
 
-
-## maximum Stem density estimates decreases when you remove trees below 8 cm veil line
-##
-source('R/morisita.R')
-estimates.v <- morisita(final.data, correction.factor, veil = TRUE)
-
-stem.density.v <- estimates.v[[1]]
-basal.area.v <- estimates.v[[2]]
-summary(stem.density.v)
-summary(basal.area.v)
-zero.trees <- is.na(stem.density.v) & (species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
-
-stem.density.v[zero.trees] <- 0
-stem.density.v[zero.trees] <- 0
-
-summary(stem.density.v)
-summary(basal.area.v)
-
-#for now we will use these without the veil line
+#----------------------------Density Regridding------------------------------
 
 ##need to regrid the density estimates onto the paleon centroids
-
 ##create base raster that is extent of midwest domain
-
-# created a new function that calculates the canopy cover based on formulaiton of density in 
-# citation: Law et al. (1994): https://www.nrs.fs.fed.us/pubs/tb/tb2/techbrf2.html
-#estimates.scc <- SCC(final.data, correction.factor, veil = TRUE)
-
 
 base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
                   ymn = 58000,  ymx = 1498000, nrows = 180,
@@ -84,15 +68,18 @@ stem.density <- data.frame(x = final.data$PointX,
                            basal   = estimates[[2]])#,
                           #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
 
-# find the 99% percentile here for yr
+# find the 99% percentile here for stem density and basal area:
 nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
+#99th percentiles still seem high
+#density     basal 
+#1782.5492  415.0344 
 
+# convert anything over 99th percentile to the 99th percentile value
 stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-#density     basal 
-#1602.1130  361.0054
 
+# ---------------------fixing some lingering data naming issues:-------------------
 species[species==""]<- "No tree"
 #fix the captalized "No tree" problem
 species[species == 'No Tree'] <- 'No tree'
@@ -116,11 +103,11 @@ stem.density$basal[wet.trees] <- 0
 coordinates(stem.density)<- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 
-
+# write to an arcGIS compatible shapefile
 writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.6-5.shp", layer = "stem_density_alb_v1.6-5", driver = "ESRI Shapefile", overwrite=TRUE)
 
-#compare to previous density estsimates
-#prev<- readOGR("data/IN_georef_density_shapfiles/IN_georef_density_shapfiles/in_point_density_alb.shp", layer = "in_point_density_alb")
+
+#------------------------Formatting for biomass estimation-------------------------
 
 
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
@@ -154,17 +141,17 @@ spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 spec.table$density[spec.table$spec == 'No tree'] <- 0
 
 
-####################################################3
-# Estimate Biomass from density
-###################################
+#-----------------Estimating Biomass from density and diameter-------------------
+# changing column names
 spec.table$Pointx <- spec.table$PointX
 spec.table$Pointy <- spec.table$PointY
 spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
 
-
+# read in table with allometric equations for each taxa
 biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
                        stringsAsFactors = FALSE)
 
+# this function calculates biomass of an individual tree using taxa-specific allometric equations
 form <- function(x) {
   
   eqn <- match(x$spec, biom.table[,1])
@@ -179,7 +166,7 @@ form <- function(x) {
 }
 
 #  This is the biomass of individual trees.  It needs to be converted into
-#  a stand level value, through the stem density estimate?  The values are
+#  a stand level value, through the stem density estimate  The values are
 #  in kg.
 
 biomass <- rep(NA, nrow(spec.table))
@@ -191,20 +178,20 @@ for (i in 1:nrow(spec.table)) {
   flush.console()
 }
 
-# convert to Mg.
+# convert to Mg./hectare
 spec.table$biom <- biomass * spec.table$density / 1000
 #spec.table      <- spec.table[!is.na(spec.table$density), ]
 
-spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
+spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already be corrected
 
-#colnames(spec.table)[11:12] <- c('x', 'y')
-colnames(spec.table)[1:2] <- c("x", "y")
+
+colnames(spec.table)[1:2] <- c("x", "y")# rename grid cell x and y colnames
 write.csv(spec.table, 
         file = paste0('outputs/density_biomass_pointwise.ests','_v', 
                       version, 
                       '.csv'))
 
-
+# in case you don't want to redo the biomass calcuations
 spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests','_v', 
                        version, 
                        '.csv'))
@@ -213,26 +200,27 @@ pre.quantile <- spec.table
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
-#    point     density       basal       diams 
-#1.0000  95230.1700    643.8201    196.9202     38.0000 
-#dists      Pointx      Pointy        biom 
-#567.0000 857335.2342 652074.7000   1064.8663 
+#count       point     density       basal       diams       dists      Pointx 
+#1.0000  95230.1700    517.4408    200.6453     38.0000    567.0000 857335.2342 
+#Pointy        biom 
+#652074.7000   1321.4863
  
 nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.95, na.rm=TRUE)
-#   count        point      density        basal 
-#1.00000  91382.85000    253.56388     76.91428 
-#diams        dists       Pointx       Pointy 
-#30.00000    200.00000 825833.32850 572834.27300 
-#biom 
-#359.26456 
-# assign all species greater than the 99th percentile to 99th percentile values
+#count       point     density       basal       diams       dists      Pointx 
+#1.0000  95230.1700    517.4408    200.6453     38.0000    567.0000 857335.2342 
+#Pointy        biom 
+#652074.7000   1321.4863 
+
+
+# assign all points greater than the 99th percentile to 99th percentile values
 spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
 write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.csv'))
 
+#-------------------------Paleon gridding----------------------------------------------
 
-# These are not the full tables since the include only the cells with points in the database.
+# These are not the full tables since the include only the Paleon grid cells with points in the database.
 #dcast rearranges the spec.table data by x, y and cell
 count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
 
@@ -278,8 +266,9 @@ biomass.table <- normalize(biomass.table)
 
 density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
+# plotting example taxa
 X11(width =12)
-ggplot(data = density.table, aes(x = x, y = y, fill = Hickory)) + geom_raster()+coord_equal()+
+ggplot(data = density.table, aes(x = x, y = y, fill = Oak)) + geom_raster()+coord_equal()+
   scale_fill_gradient(low = "green", high= "red")
 
 
@@ -411,24 +400,14 @@ add.v <- function(x, name){
 
 add.v(count.table, 'plss_trees')
 add.v(biomass.points, 'plss_points')
-#add.v(biomass.points.pft, 'plss_points_pft')
-#add.v(biomass.trees.pft, 'plss_trees_pft')
-#add the total number of points per cell to end of biomass.table
+
 biomass.table$plsspts_cell <- points.by.cell
-#biomass.indiana$plsspts_cell <- points.by.cell
+
 add.v(density.table, 'plss_density')
 add.v(basal.table, 'plss_basal')
 add.v(biomass.table, 'plss_biomass')
-#add.v(crown.table, 'plss_crown_area')
-#add.v(crown.dens.table, 'plss_crown_dens')
+
 add.v(biomass.full,  'plss_spec_biomass') #full species biomass for indiana
 add.v(density.full, 'plss_spec_density')
 add.v(diameter.full, 'plss_spec_diam')
 add.v(diam.table, 'plss_diam')
-#add.v(crown.full, 'plss_spec_crown_area')
-#add.v(crown.dens.full, 'plss_spec_crown_area_dens')
-#these three outputs created for biomass model runs may 21, 2015
-#add.v(biomass.indiana, 'plss_biomass_indiana_illinois')
-#add.v(biomass.points.ind, 'plss_points_indiana_illinois')
-#add.v(count.trees.ind, 'plss_trees_indiana_illinois')
-

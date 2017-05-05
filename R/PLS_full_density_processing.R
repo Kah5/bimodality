@@ -414,13 +414,14 @@ c <- ggplot(dens.pr, aes(x,y, color = rcp60NA))+geom_point()+geom_polygon(data =
 d <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 8.5")
+
 source("R/grid_arrange_shared_legend.R")
 
 png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates.png")
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
 dev.off()
 
-# plot reasons for no-analog climate:
+# plot reasons for no-analog climate (exploratory):
 
 a <- ggplot(dens.pr, aes(x,y, color = rcp26NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
@@ -434,20 +435,20 @@ c <- ggplot(dens.pr, aes(x,y, color = rcp60NAclim))+geom_point()+geom_polygon(da
 d <- ggplot(dens.pr, aes(x,y, color = rcp85NAclim))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 8.5")
-source("R/grid_arrange_shared_legend.R")
+
 
 png(height = 4, width = 12, units = "in", res = 300, "outputs/v1.6-5/full/no-analog-ccsm4-climates-reason.png")
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol = 4)
 dev.off()
 
-# predict PCA with the diffrent projections:
+# predict PCA with the diffrent CMIP projections:
 
 res<-princomp(scale.dens[,c('MAP1910',   
                             "pastdeltaP", "pasttmean",
                             "deltaT", "sandpct", "awc")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
-predict.PCA<- function(rcp){
+predict.PCA <- function(rcp){
 cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
                        paste0("pr.",rcp,"SI"), 
                          paste0("tn.",rcp),
@@ -469,9 +470,10 @@ dens.pr <- predict.PCA("45")
 dens.pr <- predict.PCA("60")
 dens.pr <- predict.PCA("85")
 
-#################################################################################################
-#separate density values by precipitation bins, sand bins, and soil bins for bimodality analysis#
-#################################################################################################
+
+
+#------------------------------Create bins for bimodality analysis------------------------
+
 
 dens.pr$plsprbins <- cut(dens.pr$MAP1910, #labels = c('350-400mm', '400-450mm', '450-500mm', '550-600mm', '600-650mm','650-700mm','700-750mm','750-800mm','800-850mm',  '850-900mm','900-950mm','950-1000mm','1000-1050mm','1050-1100mm', '1100-1150mm','1150-1200mm', '1200-1250mm', '1250-1300mm'),
                          breaks=c(200,250,300,400,500,600, 700,800,900, 1000,1100,1200, 1400))
@@ -510,6 +512,7 @@ test<- dens.pr[!is.na(dens.pr),]
 
 write.csv(dens.pr, "data/PLS_full_dens_pr_with_bins.csv")
 
+# melt for plots
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','plsprbins75', 
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  

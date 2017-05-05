@@ -34,23 +34,33 @@ library(raster)
 library(ggplot2)
 library(Rcpp)
 
+
+#---------------------read in data and clean up the column names------------------------
 version <- "1.6-5" # version using 1.7 IL data and 1.6 IN data
 # Read in the data
-ind <- read.csv("data/ndinpls_v1.6-1.csv", stringsAsFactors = FALSE) # version 1.6 
+ind <- read.csv("data/ndinpls_v1.6-1.csv", stringsAsFactors = FALSE) # version 1.6-1 
+
+# this version has several errors in the column names--I think it is an artefact of exporting from ArcGIS after georeferencing.
+colnames(ind)[41] <- "speciescode2"
+colnames(ind)[48] <- "bearingdir2"
+colnames(ind)[49] <- "chainstree2"
+colnames(ind)[51] <- "speciescode2"
+colnames(ind)[58] <- "bearingdir3"
+colnames(ind)[59] <- "chainstree3"
+colnames(ind)[61] <- "speciescode4"
+colnames(ind)[68] <- "bearingdir4"
+colnames(ind)[69] <- "chainstree4"
 
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
-ggplot(data = il, aes(x = x, y = y, color = bearingdir)) + geom_point()
-#il[is.na(il)] <- '' #fixes problems with 'NA' in dataset
-
-#lowermi <- readOGR(dsn= "data/southern_MI/southern_MI/so_michigan.shp", layer = "so_michigan")
-
-#lowermi <- data.frame(lowermi)
-#ggplot(lowermi, aes(coords.x1, coords.x2, color = diam1)) + geom_point()
-#take out all original data with L3_tree1 = No data. Simon does this at the end
 
 
+
+#-------------------------Data cleaning--------------------------------------------------
+
+# we can't use datapoints listed as no data, or those that are missing data in key variables
+# converting all No data trees to NA's :
 ind[ind$L3_tree1 %in% 'No data',] <- NA
 ind[ind$L3_tree2 %in% 'No data',] <- NA
 #ind <- ind[!ind$L3_tree3 == 'NA',]
@@ -87,7 +97,7 @@ ind$DIST2 <- as.numeric(ind$chainstree2)
 ind$DIST3 <- as.numeric(ind$chainstree3)
 ind$DIST4 <- as.numeric(ind$chainstree4)
 
-# there is something off about the chainstree labels that needs to be fixed in version 1.5-2 of illinios data
+# Il distances in chains to tree
 il$DIST1 <- as.numeric(il$chainstree)
 il$DIST2 <- as.numeric(il$chainstree2)
 il$DIST3 <- as.numeric(il$chainstree3)
@@ -111,7 +121,7 @@ ind$twp <- twp
 twp_il <- c(paste('IL', as.character(il$TRP)))
 il$twp <- twp_il
 
-## for the getAngle function, need a 4character Azimuth
+## for the getAngle function to work later, we need a 4character Azimuth
 ind$bearings1 <- c(paste0(as.character(ind$bearing),  as.character(ind$bearingdir)))
 ind$bearings2 <- c(paste0(as.character(ind$bearing2),  as.character(ind$bearingdir2)))
 ind$bearings3 <- c(paste0(as.character(ind$bearing3),  as.character(ind$bearingdir3)))
@@ -125,6 +135,7 @@ il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingd_3)
 
 il$state <-'IL'
 ind$state <-'IN'
+
 #create and rename columns to match that of indiana
 il$twp <- il$TRP
 il$bearings1 <- il$bearing
@@ -145,14 +156,10 @@ inil <- rbind(data.frame(ind.data), data.frame(il.data))
 
 
 
-#inil$rng <- rng
-inil<-data.frame(inil, stringsAsFactors = FALSE)
-#inil [inil$DIST1 == 99999] <- 'NA'
-#inil [inil == '99999'] <- 'NA'
-#inil [inil == 88888] <- 'NA'
-#inil [inil =='88888'] <- 'NA'
 
-#  There are a set of 9999 values for distances which I assume are meant to be NAs. 
+inil<-data.frame(inil, stringsAsFactors = FALSE)
+
+#  There are a set of 99999 values for distances which I assume are meant to be NAs. 
 inil$DIST1[inil$DIST1 == 88888] <- NA
 inil$DIST1[inil$DIST1 == 99999] <- NA
 inil$DIST2[inil$DIST2 == 88888] <- NA
@@ -178,16 +185,18 @@ inil$degrees3[inil$degrees3 == 99999] <- NA
 inil$degrees3[inil$degrees3 == 88888] <- NA
 inil$degrees4[inil$degrees4 == 99999] <- NA     
 inil$degrees4[inil$degrees4 == 88888] <- NA
-inil$year[inil$year == 99999] <- NA
+inil$year[inil$year == 99999] <- NA # our correction factors are by year, so we need the year
 
 summary(inil)
 # There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"
 # Here we change these distnces to 'NA'
+
 summary(inil[inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'),])
 zero.trees <-(inil$L3_tree1 %in% c('No tree', 'Water', 'Wet') | inil$L3_tree2 %in% c('No tree', 'Water', 'Wet'))
 
 inil[zero.trees, c("DIST1", "DIST2", "DIST3")] <- NA
 inil[zero.trees, c('diameter', 'diameter2', "diameter3")] <- NA
+
 # now kill missing cells:
 inil <- inil[!is.na(inil$y),]
 inil <- inil[!is.na(inil$x),]
@@ -203,6 +212,11 @@ ggplot(data = inil, aes(x = x, y = y, color = surveyyear)) + geom_point()
 
 inil <- data.frame(inil)
 
+
+
+# ----------------------------reorganizing data -------------------------------------
+
+# create data frames for diameters, distances, bearings and degrees
 #diameters in centimeters
 diams <-  cbind(as.numeric(inil$diameter), 
                 as.numeric(inil$diameter2), 
@@ -225,6 +239,11 @@ degrees <- cbind(as.numeric(inil$degrees),
                  as.numeric(inil$degrees3),
                  as.numeric(inil$degrees4))
 
+
+
+#--------------------geting azimuths from distance and direction-----------------
+
+#  Use Simon's getAngle function to find the azimuth 
 #  getAngle converts the four character azimuth (e.g. N43E) to a numeric, 360
 #  degree angle.  It also has to deal with a number of special cases.
 #  The code for getAngles is a bit scuzzy, but it leaves only 231 azimuths 
@@ -273,7 +292,7 @@ treed.center[is.na(treed.center)] <- FALSE
 
 azimuths[treed.center,1] <- 0 #assign azimuth to 0
 
-#  Another special case, two trees of distance 1.  What's up with that?!
+#  Another special case, two trees of distance 1. 
 dists[rowSums(dists == 1, na.rm=T) > 1, ] <- rep(NA, 4)
 
 #  When the object is NA, or the species is not a tree (NonTree or Water), set
@@ -293,6 +312,7 @@ dists[rowSums(dists == 1, na.rm=T) > 1, ] <- rep(NA, 4)
 #dists[is.na(species) | species %in% c( 'Wet', 'Water')] <- NA
 
 
+#--------------Reorder the tree number by distance to the point-----------------
 
 #  At this point we need to make sure that the species are ordered by distance
 #  so that trees one and two are actually the closest two trees.
@@ -341,6 +361,7 @@ for(i in 1:nrow(ranked.data)){
 
 ranked.data <- t(apply(usable.data, 1, rank.fun)) # need to drop 'id'
 ranked.data <-data.frame(ranked.data)
+
 # Convert species from numeric codes back into text
 species <- data.frame(species1 = sp.levels[ranked.data[, 9]],
                       species2 = sp.levels[ranked.data[,10]],
@@ -350,7 +371,7 @@ species <- data.frame(species1 = sp.levels[ranked.data[, 9]],
 
 
 
-
+#----------Getting correction factors----------------------
 
 
 
@@ -429,44 +450,36 @@ colnames(final.data) <- c('PointX','PointY', 'Township','state',
                           
 # part of the high density problem in indiana might be due to a large number of points with really low distances                  
 
-summary(final.data[final.data$dist1 ==1.0,])
-# 78 points with dist1= 1 
-count(final.data[final.data$dist1 ==2,]) # 202 points with dist1 = 2 (most in IN)
-
-#not sure I need this for Indiana data..dont have points for spatial points df
-#  Turn it into a SpatialPointsDataFrame:
+#  Turn it into a SpatialPointsDataFrame (for YR manuscript):
 coordinates(final.data) <- ~ PointX + PointY
-spplot(final.data, "dist1")
 final.data <- data.frame(final.data)
 summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.data$species2 == c("No tree", "Water", "Wet"),])
 summary(final.data)
 
-# now kill missing cells:
-#final.data <- final.data[!is.na(final.data$PointY),]
-#final.data <- final.data[!is.na(final.data$PointX),]
+
 ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
-hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
-     main = "IN only tree diameter distribution")
+#hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
+  #   main = "IN only tree diameter distribution")
 
 
 full.final <- final.data
 test<- full.final[!full.final$corner == "NAIL",] # there are some NA corners in 
 
+
+
 # write the correction factors to a file for reference later:
 Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
-# need to get ring of NAIL< 1825
-
 corr.factor <- read.csv('data//charlie_corrections.csv')
-test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
+test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
+colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
 
-colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
+# merge corretion factors with the Pair dataset for each inil point
 require(plyr)
 corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
 write.csv(corrections, 'data/correction_factors.csv')
 
 
-ggplot(full.final, aes(PointX, PointY, color = "diam1"))+geom_point()
 #write the data as a csv
-write.csv(full.final, paste0("outputs/ndilin_lowerMI_pls_for_density_v",version,".csv"))
+write.csv(full.final, paste0("outputs/ndilin_pls_for_density_v",version,".csv"))

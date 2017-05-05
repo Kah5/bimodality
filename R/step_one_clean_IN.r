@@ -63,14 +63,12 @@ il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 # converting all No data trees to NA's :
 ind[ind$L3_tree1 %in% 'No data',] <- NA
 ind[ind$L3_tree2 %in% 'No data',] <- NA
-#ind <- ind[!ind$L3_tree3 == 'NA',]
-#ind <- ind[!ind$L3_tree4 == 'No data',]
+
 
 
 il[il$L3_tree1 %in% 'No data',] <- NA
 il[il$L3_tree2 %in% 'No data',] <- NA
-#il <- il[!il$L3_tree3 == 'No data',]
-#il <- il[!il$L3_tree4 == 'No data',]
+
 
 
 # remove all points with 'No data' points for chainstree in Indiana
@@ -129,23 +127,20 @@ ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingd
 
 #there is something off about the labeing for bearing direction in illinios for version 1.5-2
 il$bearings1 <- c(paste0(as.character(il$bearing),  as.character(il$bearingdir)))
-il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingd_1)))
-il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingd_2)))
-il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingd_3)))
+il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingdir2)))
+il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingdir3)))
+il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingdir4)))
 
 il$state <-'IL'
 ind$state <-'IN'
 
 #create and rename columns to match that of indiana
 il$twp <- il$TRP
-il$bearings1 <- il$bearing
-il$bearings2 <- il$bearing2
-il$bearings3 <- il$bearing3
-il$bearings4 <- il$bearing4
+
 il$DIST4 <- NA
 
-keeps <- c("x","y","twp","year","L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearings1", 
-  "bearings2", "bearings3", "bearings4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
+keeps <- c("x","y","twp","year","L3_tree1", "L3_tree2", "L3_tree3", "L3_tree4", "bearing", 
+  "bearing2", "bearing3", "bearing4","degrees", "degrees2", "degrees3","degrees4", "DIST1", "DIST2", "DIST3", "DIST4",
   "diameter", "diameter2", "diameter3", "diameter4", "cornerid", "typecorner","state")
 
 ind.data <- ind[keeps] 
@@ -208,6 +203,7 @@ year <- ifelse(inil$year >= 1825, '1825+',
 inil$surveyyear <- year
 X11(width = 12)
 ggplot(data = inil, aes(x = x, y = y, color = surveyyear)) + geom_point()
+ggplot(data = inil, aes(x = x, y = y, color = bearing)) + geom_point()
 
 
 inil <- data.frame(inil)
@@ -229,10 +225,10 @@ dists <-  cbind(as.numeric(inil$DIST1),
                 as.numeric(inil$DIST3), 
                 as.numeric(inil$DIST4))
 
-bearings <- cbind(as.character(inil$bearings1), 
-                  as.character(inil$bearings2),
-                  as.character(inil$bearings3),
-                  as.character(inil$bearings4))
+bearings <- cbind(as.character(inil$bearing), 
+                  as.character(inil$bearing2),
+                  as.character(inil$bearing3),
+                  as.character(inil$bearing4))
 
 degrees <- cbind(as.numeric(inil$degrees), 
                  as.numeric(inil$degrees2),
@@ -418,15 +414,7 @@ corner<- ifelse(inil$cornerid %in% intsec, 'intsec',
 #corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
 
 inil$cornertype <- paste0(corner, inil$state)
-#Pair <- inil$cornertype
-#corr.factor <- read.csv('data//charlie_corrections.csv')
-#test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi, corr.factor$tau)
-#colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi', 'tau')
-#require(plyr)
-#corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
-#write.csv(corrections, 'data/correction_factors.csv')
-# create correction factors based on corner types
 
 #These are the columns for the final dataset.
 

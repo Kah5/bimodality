@@ -524,3 +524,66 @@ source("R/grid_arrange_shared_legend.R")
 png(height = 4, width = 18, units = "in", res = 300, "outputs/v1.6-5/full/density_highest_species_FIA.png")
 grid_arrange_shared_legend(d,e,f, nrow = 1, ncol = 3)
 dev.off()
+
+
+#--------------------------------species density PCA------------------------
+# note this is working with density, but I think I want species composition
+full.spec[is.na(full.spec)]<- 0
+
+
+drops <- c("x","y", 'cell', "No.tree", "Water", "Wet", "PLSdensity")
+# need to remove the no tree density estimates, water, and wet from the df
+scale.dens <- scale(full.spec[,!(names(full.spec)) %in% drops]) #PC all but ksat and diff
+#dens.dens <- dens.rm[, c('PLSdensity')] # pls density
+
+# apply PCA - scale. = TRUE 
+#dens.pca <- princomp(scale.dens) # the scaled dataset doesnt work
+
+dens.pca <- princomp(scale.dens) 
+plot(dens.pca)
+
+biplot(dens.pca)
+
+
+#dens.rm$PC1 <- dens.pca[,1]
+#dens.rm$PC2 <- scores[,2]
+#loadings <-dens.pca$rotation
+#head(loadings)
+
+
+#output for prcomp
+#outputPCA <- list(summary(dens.pca), loadings)
+#outputPCA
+
+
+#scores
+#scores <- dens.pca$x
+#head(scores,10)
+
+# add pc1 and pc2 to df
+df <- full.spec
+df$pc1 <- scores[,1]
+df$pc2 <- scores[,2]
+
+ggplot(df, aes(x=pc1, y = pc2, color = PLSdensity))+geom_point()
+ggplot(df, aes(x=x, y=y, fill = pc1))+geom_raster()
+
+plot(dens.pca, type = "l")
+print(dens.pca)
+
+
+# using ggbiplot
+library(ggbiplot)
+source("R/newggbiplot.R")
+
+
+
+g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+
+# this plot looks like it has not been scaled
+g + ylim(-3, 1)+xlim(-3, 1)
+
+
+#----------------------cluster analysis---------------------------------
+# we want to cluster

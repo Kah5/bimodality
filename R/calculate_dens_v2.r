@@ -367,7 +367,12 @@ composition.table <- reform(basal.table)
 
 
 #not sure why you need this next line of code
+composition.table <- composition.table[,!names(composition.table) %in% c('Water', "Wet", "No tree", "plss_pts")]
 composition.table[,4:ncol(composition.table)] <- composition.table[,4:ncol(composition.table)]/rowSums(composition.table[,4:ncol(composition.table)], na.rm=TRUE)
+
+# composition table without paleon grid NA values:
+comp.inil <- composition.table[complete.cases(composition.table),]
+
 #ind_il <- readOGR(dsn = "C:/Users/Kelly/Documents/Indiana_Density_Biomass/Data//IL_IN_merge_project.shp", layer = 'IL_IN_merge_project')
 #ind_il <- spTransform(ind_il, CRS('+proj=longlat +ellps=WGS84'))
 #ind_il<- spTransform(ind_il, CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
@@ -400,7 +405,8 @@ add.v <- function(x, name){
 
 add.v(count.table, 'plss_trees')
 add.v(biomass.points, 'plss_points')
-
+add.v(composition.table, "plss_composition.csv")
+add.v(comp.inil, "plss_inil_composition.csv")
 biomass.table$plsspts_cell <- points.by.cell
 
 add.v(density.table, 'plss_density')

@@ -114,7 +114,7 @@ colnames(full.spec)[42] <- 'PLSdensity'
 #------------------------------map out pls density for some species----------------
 
 spec.melt <- melt(full.spec[,1:41], id.vars = c("x", "y", "cell"))
-ggplot(full.spec, aes(x=x, y=y, fill = Oak))+geom_raster()
+ggplot(full.spec, aes(x=x, y=y, fill = Beech))+geom_raster()
 
 
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
@@ -131,9 +131,9 @@ ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(
 
 
 X11(width = 12)
-ggplot(spec.melt, aes(x = value))+geom_histogram(binwidth = 15)+facet_wrap(~variable, ncol=10, scales = 'free')
-
-
+ggplot(spec.melt, aes(x = value))+geom_histogram(binwidth = 15)+facet_wrap(~variable, ncol=10, scales = 'free<- ')
+full.spec[is.na(full.spec)]<- 0
+density.full <- full.spec
 # -----------------merge with bimodality analysis----------------------------------
 
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
@@ -584,6 +584,237 @@ g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
 # this plot looks like it has not been scaled
 g + ylim(-3, 1)+xlim(-3, 1)
 
+#--------------------------------species composition PCA------------------------
+# read in the data of the counts of species in each grid cell
+comp.inil <- read.csv("data/outputs/plss_inil_composition.csv_v1.csv")
+comp.inil <- comp.inil[!names(comp.inil) %in% c("X","Water", "Wet")] # get rid of water and wet columns
+
+comp.umw <-read.csv("data/plss_composition_alb_v0.9-10.csv")
+
+colnames(comp.inil) <- c("x" ,  "y" , "cell" ,"Alder","Ash",
+                        "Bald cypress","Basswood","Beech","Birch", "Black.gum" ,         
+                        "Black gum.sweet gum", "Buckeye" , "Cedar.juniper" ,"Cherry" ,"Chestnut" ,          
+                        "Dogwood","Elm" , "Hackberry", "Hickory", "Ironwood",    
+                        "Locust" ,"Maple" ,"Mulberry" ,"No.tree","Oak",                
+                        "Other.hardwood","Pine","Poplar", "Poplar.tulip poplar", "Sweet gum" ,         
+                        "Sycamore" ,"Tamarack" ,"Tulip.poplar" ,"Unknown.tree","Walnut" ,            
+                         "Willow" )
+umdw.names<- colnames(comp.umw)
+pls.names<- colnames(comp.inil)
+
+
+#create name vectors for species columns missing in the upper and lower midewst
+to.add.umdw <-pls.names[!pls.names %in% umdw.names]
+to.add.pls <- umdw.names[!umdw.names %in% pls.names]
+
+#add these species columns to the respective dataframes, but with 0 for data values
+comp.inil[,to.add.pls] <- 0
+comp.umw[,to.add.umdw] <-0 
+
+
+
+#reorder the columns so the comp.inil and comp.umw dataframes match
+comp.inil<- comp.inil[ , order(names(comp.inil))]
+comp.umw <- comp.umw[,order(names(comp.umw))]
+
+full.spec <- rbind(comp.inil, comp.umw)
+
+#move around the columns
+require(dplyr)
+full.spec<- full.spec %>%
+  dplyr::select(cell, everything())
+
+full.spec<- full.spec %>%
+  dplyr::select(y, everything())
+
+full.spec<- full.spec %>%
+  dplyr::select(x, everything())
+
+write.csv(full.spec, "outputs/full_midwest_composition.csv")
+
+
+# note this is working with density, but I think I want species composition
+full.spec[is.na(full.spec)]<- 0
+
+
+drops <- c("x","y", 'cell', "No.tree", "Water", "Wet", "PLSdensity")
+
+# plot out composition of the full datasets
+ggplot(full.spec, aes(x=x, y=y, fill = Oak)) + geom_raster()
+ggplot(full.spec, aes(x=x, y=y, fill = Beech)) + geom_raster()
+
+# melt the dataframe:
+comp.m <- melt(full.spec, id.vars = c("x", "y", "cell"))
+
+# plot all the species composition at once:
+X11(width = 12)
+ggplot(comp.m, aes(x = x, y = y, fill = value))+geom_raster()+coord_equal()+theme_bw()+scale_fill_gradientn(colors = rev(terrain.colors(5)))+facet_wrap(~ variable, ncol=9)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                                                                                                                                                                             axis.title.x=element_blank(),
+                                                                                                                                                                                                                                                                             axis.title.y=element_blank())+
+  xlab("easting") + ylab("northing")
+
+
+
+
+# need to remove the no tree density estimates, water, and wet from the df
+scale.dens <- scale(full.spec[,!(names(full.spec)) %in% drops]) #PC all but ksat and diff
+#dens.dens <- dens.rm[, c('PLSdensity')] # pls density
+
+
+# apply PCA - scale. = TRUE 
+#dens.pca <- princomp(scale.dens) # the scaled dataset doesnt work
+
+dens.pca <- princomp(scale.dens) 
+plot(dens.pca)
+
+biplot(dens.pca)
+
+
+#dens.rm$PC1 <- dens.pca[,1]
+#dens.rm$PC2 <- scores[,2]
+#loadings <-dens.pca$rotation
+#head(loadings)
+
+
+#output for prcomp
+#outputPCA <- list(summary(dens.pca), loadings)
+#outputPCA
+
+
+#scores
+#scores <- dens.pca$x
+#head(scores,10)
+
+# add pc1 and pc2 to df
+df <- full.spec
+#df$pc1 <- scores[,1]
+#df$pc2 <- scores[,2]
+
+#ggplot(df, aes(x=pc1, y = pc2, color = PLSdensity))+geom_point()
+#ggplot(df, aes(x=x, y=y, fill = pc1))+geom_raster()
+
+plot(dens.pca, type = "l")
+print(dens.pca)
+
+
+# using ggbiplot
+library(ggbiplot)
+source("R/newggbiplot.R")
+
+
+
+g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+
+
+#now add totals to the 'total columns
 
 #----------------------cluster analysis---------------------------------
-# we want to cluster
+# we want to cluster the data based on % species composition: based on tree density, not the counts
+# using clusters similar to simons mediod clustering scheme: 
+library(cluster)
+library(fpc)
+
+comps<- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
+#comps <- comps[!is.na(comps),]
+comps[,4:39] <- comps[,4:39]/comps[,40] # calculate the proportion of the total density that each species takes up
+comps <- comps[,1:39]
+
+# remove prairie cells:
+comps <- data.frame(comps[complete.cases(comps),])
+
+classes.3 <- pam(comps[,4:ncol(comps)], k = 4)
+classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
+classes.5 <- pam(comps[,4:ncol(comps)], k = 5)
+classes.6 <- pam(comps[,4:ncol(comps)], k = 6)
+classes.7 <- pam(comps[,4:ncol(comps)], k = 7)
+classes.8 <- pam(comps[,4:ncol(comps)], k = 8)
+
+plot(classes.8)
+plot(classes.7)
+plot(classes.6)
+plot(classes.5)
+plot(classes.4)
+plot(classes.3)
+
+#summary(classes.8) # Avg. Silhouette width = 
+summary(classes.7) # Avg. Silhouette width = 0.5652912
+summary(classes.6) # Avg. Silhouette width = 0.5787966
+summary(classes.5) # Avg. Silhouette width = 0.572014
+summary(classes.4) # Avg. Silhouette width = 0.5738307
+summary(classes.3) # Avg. Silhouette width = 0.5738307
+
+
+
+# below is simons code for clustering, but I need to determine if 5 classes is the right number of classes...via scree plot
+
+
+# 5 classes:
+mediods <- comps$cell [classes.5$id.med]
+
+
+df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
+
+old_classes <- classes.5
+#[1] 8609 23808 18179 18394 41838# mediods
+rem_class5 <- factor(old_classes$clustering,
+                    labels=c('Oak/Maple/Beech/Hickory/Basswood', # 1,
+                             'Prairie', # 2
+                             'Oak/Elm/Ash/Tamarack', #3
+                             "Pine/Tamarack/Poplar/Spruce/Birch", # 4,
+                             'Hemlock/Beech/Cedar/Birch/Maple'#5,
+                             
+                    ))
+
+clust_plot5 <- data.frame(full.spec, 
+                         cluster = rem_class5,
+                         clustNum = as.numeric(rem_class5))
+
+ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+
+
+
+# 7 classes
+mediods <- full.spec$cell [classes.7$id.med]
+#mediods
+#[1] 44491 34996 28197 16294  8919  8019 15495
+
+full.spec[full.spec$cell %in% mediods,] # look at the rows that have the mediods
+
+old_classes <- classes.7
+rem_class <- factor(old_classes$clustering,
+                   labels=c('Oak/Beech/Hickory/No tree', # 1,
+                            'No tree/Oak Savanna', # 2
+                            'Oak/No Tree/Elm/Ash/Hickory/Basswood', #3
+                            #'Oak/Poplar/Basswood/Maple',
+                            "Prairie/No Tree", # 4,
+                            'Tamarack/Pine/Spruce/Poplar/Birch', #5,
+                            'Pine/Poplar/Basswood/Oak', #6
+                            'Hemlock/Beech/Cedar/Birch/Maple'#7,
+                            
+                       ))
+
+clust_plot <- data.frame(full.spec, 
+                         cluster = rem_class,
+                         clustNum = as.numeric(rem_class))
+
+ggplot(clust_plot, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+#---------------------Ordination of the species composition data---------------------
+#NMDS:
+library(vegan)
+NMDS <- metaMDS(comps[4:ncol(comps)],distance = "bray",k=2)
+
+
+NMDS 
+
+stressplot(NMDS)
+
+plot(NMDS)
+
+ordiplot(NMDS,type="n")
+orditorp(NMDS,display="species",col="red",air=0.01)
+orditorp(NMDS,display="sites",cex=1.25,air=0.01)
+

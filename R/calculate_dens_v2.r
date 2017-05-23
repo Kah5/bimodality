@@ -216,6 +216,7 @@ nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.9
 # assign all points greater than the 99th percentile to 99th percentile values
 spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+spec.table  <- spec.table[!is.na(spec.table$density), ]
 
 write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.csv'))
 

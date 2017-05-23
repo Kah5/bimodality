@@ -422,3 +422,13 @@ add.v(biomass.full,  'plss_spec_biomass') #full species biomass for indiana
 add.v(density.full, 'plss_spec_density')
 add.v(diameter.full, 'plss_spec_diam')
 add.v(diam.table, 'plss_diam')
+
+# extra stuff to look at density estimates for now
+#ggplot(density.table, aes(x = x, y=y, fill = total))+geom_raster()
+
+#density.table$ecotype<- 'test'
+#ecotype <- ifelse(density.table$total == 0,  "prairie", 
+ #                 ifelse(density.table$total <= 47, "Savanna",
+  #                       ifelse(density.table$total > 47, "Forest", "Check")))
+#density.table$ecotype <- ecotype
+#ggplot(density.table, aes(x = x, y=y, fill = ecotype)) + geom_raster()

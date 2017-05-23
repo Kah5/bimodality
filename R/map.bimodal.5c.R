@@ -1,6 +1,7 @@
 # this function is used to determine if a climate space is significantly bimodal, and then maps out bimodal classificaiton onto a map
 
 map.bimodal.5c <- function(data, binby, density){
+  data <- data[!is.na(data[,c(density)]),] # gets rid of 4 NA values
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
   for (i in 1:length(bins)){

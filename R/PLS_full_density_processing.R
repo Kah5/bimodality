@@ -34,6 +34,10 @@ pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.
 # find mean denisty for all species in a grid cell
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
 pls.spec$total <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
+
+# write to a csv:
+write.csv(pls.spec, "data/plss_gridded_density_inil_v1.6.csv")
+
 hist(pls.spec$total, breaks = 50)
 pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
 colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')

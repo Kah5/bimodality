@@ -64,15 +64,15 @@ coordinates(final.data)<- ~PointX+PointY
 #create spatial object with density, basal area & diameters data
 stem.density <- data.frame(x = final.data$PointX, 
                            y = final.data$PointY,
-                           density = estimates[[1]],
-                           basal   = estimates[[2]])#,
+                           density = stem.density$stem.density,
+                           basal   = stem.density$basal.area)#,
                           #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
 
 # find the 99% percentile here for stem density and basal area:
-nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
+#nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
 #99th percentiles still seem high
 #density     basal 
-#1782.5492  415.0344 
+#1076.0074  251.9382 
 
 # convert anything over 99th percentile to the 99th percentile value
 stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
@@ -94,7 +94,7 @@ wet.trees <- (species[,2] %in% c('Wet', "Water") | species[,1] %in% c('Wet','Wat
 stem.density$density[zero.trees] <- 0
 stem.density$basal[zero.trees] <- 0
 
-#desgnate all wet trees as 'NA'
+#desgnate all wet trees as 0
 stem.density$density[wet.trees] <- 0
 stem.density$basal[wet.trees] <- 0
 
@@ -139,7 +139,8 @@ spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
 
 #change all No tree densities to 0
 spec.table$density[spec.table$spec == 'No tree'] <- 0
-
+spec.table$density[spec.table$spec == 'Water'] <- 0
+spec.table$density[spec.table$spec == 'Wet'] <- 0
 
 #-----------------Estimating Biomass from density and diameter-------------------
 # changing column names
@@ -264,11 +265,15 @@ basal.table <- normalize(basal.table)
 diam.table <- normalize(diam.table, mult = 2.54, trees.by.cell)
 biomass.table <- normalize(biomass.table)
 
+# output preliminary density table to look at:
+write.csv(density.table, "outputs/density.table_test.csv")
+
+
 density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
 X11(width =12)
-ggplot(data = density.table, aes(x = x, y = y, fill = total)) + geom_raster()+coord_equal()+
+ggplot(data = basal.table, aes(x = x, y = y, fill = Oak)) + geom_raster()+coord_equal()+
   scale_fill_gradient(low = "yellow", high= "red")
 
 
@@ -405,8 +410,8 @@ add.v <- function(x, name){
 
 add.v(count.table, 'plss_trees')
 add.v(biomass.points, 'plss_points')
-add.v(composition.table, "plss_composition.csv")
-add.v(comp.inil, "plss_inil_composition.csv")
+add.v(count.table, "plss_composition.csv")
+add.v(count.table, "plss_inil_composition.csv")
 biomass.table$plsspts_cell <- points.by.cell
 
 add.v(density.table, 'plss_density')

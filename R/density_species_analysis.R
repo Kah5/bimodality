@@ -665,7 +665,7 @@ scale.dens <- scale(full.spec[,!(names(full.spec)) %in% drops]) #PC all but ksat
 # apply PCA - scale. = TRUE 
 #dens.pca <- princomp(scale.dens) # the scaled dataset doesnt work
 
-dens.pca <- princomp(scale.dens) 
+dens.pca <- princomp(scale.dens, scale = TRUE) 
 plot(dens.pca)
 
 biplot(dens.pca)
@@ -683,13 +683,14 @@ biplot(dens.pca)
 
 
 #scores
-#scores <- dens.pca$x
+scores <- dens.pca$scores
+
 #head(scores,10)
 
 # add pc1 and pc2 to df
 df <- full.spec
-#df$pc1 <- scores[,1]
-#df$pc2 <- scores[,2]
+df$pc1 <- scores[,1]
+df$pc2 <- scores[,2]
 
 #ggplot(df, aes(x=pc1, y = pc2, color = PLSdensity))+geom_point()
 #ggplot(df, aes(x=x, y=y, fill = pc1))+geom_raster()
@@ -701,11 +702,22 @@ print(dens.pca)
 # using ggbiplot
 library(ggbiplot)
 source("R/newggbiplot.R")
+source("R/ggbiplot2.R")
+p<- ggbiplot(dens.pca, obs.scale = 1, var.scale = 1, ellipse = TRUE, circle = TRUE)
 
+# I dont know why the background points disappear with ggbiplot2--I didnt change that part
+g <- ggbiplot2(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25, alpha = 0, color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
 
+g
 
-g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
-                 = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+png("outputs/pls_counts_PCA_nopoints.png")
+g
+dev.off()
+
+png("outputs/pls_counts_PCA_with_points.png")
+p
+dev.off()
 
 
 #now add totals to the 'total columns
@@ -723,6 +735,9 @@ comps <- comps[,1:39]
 
 # remove prairie cells:
 comps <- data.frame(comps[complete.cases(comps),])
+# write as a csv so we don't have to keep doing this:
+write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
+
 
 classes.3 <- pam(comps[,4:ncol(comps)], k = 4)
 classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
@@ -805,7 +820,9 @@ ggplot(clust_plot, aes(x = x, y=y, fill=cluster))+geom_raster()
 #---------------------Ordination of the species composition data---------------------
 #NMDS:
 library(vegan)
-NMDS <- metaMDS(comps[4:ncol(comps)],distance = "bray",k=2)
+comps <- read.csv("data/outputs/plss_pct_density_composition_v1.6.csv")
+comps<- as.matrix(comps[5:ncol(comps)])
+NMDS <- metaMDS(comps[1:100,],distance = "bray",k=2)
 
 
 NMDS 
@@ -816,5 +833,23 @@ plot(NMDS)
 
 ordiplot(NMDS,type="n")
 orditorp(NMDS,display="species",col="red",air=0.01)
-orditorp(NMDS,display="sites",cex=1.25,air=0.01)
+#orditorp(NMDS,display="sites",cex=1.25,air=0.01)
+variableScores <- NMDS$species
+sampleScores <- NMDS$points
 
+
+#-----------------------PCA of full dataset----------------------
+dens.pca <- princomp(comps) 
+plot(dens.pca)
+
+biplot(dens.pca)
+
+library(ggbiplot)
+source("R/newggbiplot.R")
+
+ggbiplot(dens.pca, pc.biplot = TRUE)
+
+g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+
+g

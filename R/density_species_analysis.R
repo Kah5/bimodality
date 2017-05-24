@@ -689,8 +689,8 @@ scores <- dens.pca$scores
 
 # add pc1 and pc2 to df
 df <- full.spec
-df$pc1 <- scores[,1]
-df$pc2 <- scores[,2]
+df$comp.pc1 <- scores[,1]
+df$comp.pc2 <- scores[,2]
 
 #ggplot(df, aes(x=pc1, y = pc2, color = PLSdensity))+geom_point()
 #ggplot(df, aes(x=x, y=y, fill = pc1))+geom_raster()
@@ -719,16 +719,28 @@ png("outputs/pls_counts_PCA_with_points.png")
 p
 dev.off()
 
+# now add the scores to the overall pls bimodality data and see if these PCA scores result in bimodality?
+dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+dens.pr <- merge(dens.pr, df[,c("x", "y", "cell", "comp.pc1", "comp.pc2")])
 
-#now add totals to the 'total columns
+ggplot(dens.pr, aes(x = x, y=y, fill= comp.pc1))+geom_raster()
+ggplot(dens.pr, aes(x = x, y=y, fill= comp.pc2))+geom_raster()
 
+ggplot(dens.pr, aes(x = comp.pc1, y=PLSdensity))+geom_point()
+ggplot(dens.pr, aes(x = comp.pc2, y=PLSdensity))+geom_point()
+
+ggplot(dens.pr, aes(x = MAP1910, y=comp.pc1, color = bimodal))+geom_point()
+ggplot(dens.pr, aes(x = PC1, y=comp.pc1,  color = bimodal))+geom_point()
+ggplot(dens.pr, aes(x = PC1, y=comp.pc2,  color = bimodal))+geom_point()
+
+write.csv(dens.pr, "outputs/PLS_full_dens_with_species_comp_PCvals.csv")
 #----------------------cluster analysis---------------------------------
 # we want to cluster the data based on % species composition: based on tree density, not the counts
 # using clusters similar to simons mediod clustering scheme: 
 library(cluster)
 library(fpc)
 
-comps<- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
+comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
 #comps <- comps[!is.na(comps),]
 comps[,4:39] <- comps[,4:39]/comps[,40] # calculate the proportion of the total density that each species takes up
 comps <- comps[,1:39]
@@ -739,7 +751,7 @@ comps <- data.frame(comps[complete.cases(comps),])
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
 
 
-classes.3 <- pam(comps[,4:ncol(comps)], k = 4)
+classes.3 <- pam(comps[,4:ncol(comps)], k = 3)
 classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
 classes.5 <- pam(comps[,4:ncol(comps)], k = 5)
 classes.6 <- pam(comps[,4:ncol(comps)], k = 6)
@@ -754,35 +766,35 @@ plot(classes.4)
 plot(classes.3)
 
 #summary(classes.8) # Avg. Silhouette width = 
-summary(classes.7) # Avg. Silhouette width = 0.5652912
-summary(classes.6) # Avg. Silhouette width = 0.5787966
-summary(classes.5) # Avg. Silhouette width = 0.572014
-summary(classes.4) # Avg. Silhouette width = 0.5738307
-summary(classes.3) # Avg. Silhouette width = 0.5738307
+summary(classes.7) # Avg. Silhouette width = 0.2506271
+summary(classes.6) # Avg. Silhouette width = 0.2677659
+summary(classes.5) # Avg. Silhouette width = 0.2610493
+summary(classes.4) # Avg. Silhouette width = 0.2006347
+summary(classes.3) # Avg. Silhouette width = 0.2393605
 
-
-
-# below is simons code for clustering, but I need to determine if 5 classes is the right number of classes...via scree plot
 
 
 # 5 classes:
+
+
 mediods <- comps$cell [classes.5$id.med]
 
 
 df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
-#[1] 8609 23808 18179 18394 41838# mediods
+#[1] 49221 29369 17193 16954 11274# mediods
 rem_class5 <- factor(old_classes$clustering,
-                    labels=c('Oak/Maple/Beech/Hickory/Basswood', # 1,
-                             'Prairie', # 2
-                             'Oak/Elm/Ash/Tamarack', #3
+                    labels=c('Maple/Elm/Hickory/Oak/Basswood', # 1,
+                             'Oak', # 2
+                             'Poplar',#3
                              "Pine/Tamarack/Poplar/Spruce/Birch", # 4,
-                             'Hemlock/Beech/Cedar/Birch/Maple'#5,
+                             'PineTamarack' 
+                            
                              
                     ))
 
-clust_plot5 <- data.frame(full.spec, 
+clust_plot5 <- data.frame(comps, 
                          cluster = rem_class5,
                          clustNum = as.numeric(rem_class5))
 
@@ -791,31 +803,66 @@ ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
 
 
 
-# 7 classes
-mediods <- full.spec$cell [classes.7$id.med]
+# 6 classes
+mediods <- comps$cell [classes.6$id.med]
 #mediods
-#[1] 44491 34996 28197 16294  8919  8019 15495
+#[1] 35637 29369 20805 19885  7144 19029
 
-full.spec[full.spec$cell %in% mediods,] # look at the rows that have the mediods
+df6 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
+write.csv(df, "outputs/species_comp_clusters_6_class_mediods.csv")
 
-old_classes <- classes.7
+old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,
-                   labels=c('Oak/Beech/Hickory/No tree', # 1,
-                            'No tree/Oak Savanna', # 2
-                            'Oak/No Tree/Elm/Ash/Hickory/Basswood', #3
+                   labels=c('Elm/Maple/Hickory/Oak/Beech', # 1,
+                            'Oak', # 2
+                            'Hemlock/Beech/Cedar/Birch/Maple',#3
                             #'Oak/Poplar/Basswood/Maple',
-                            "Prairie/No Tree", # 4,
-                            'Tamarack/Pine/Spruce/Poplar/Birch', #5,
-                            'Pine/Poplar/Basswood/Oak', #6
-                            'Hemlock/Beech/Cedar/Birch/Maple'#7,
+                            "Poplar/Oak", # 4,
+                            'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', #5,
+                            'Pine/Tamarack/Poplar' #6
+                           
                             
                        ))
 
-clust_plot <- data.frame(full.spec, 
-                         cluster = rem_class,
+clust_plot6 <- data.frame(comps, 
+                         speciescluster = rem_class,
                          clustNum = as.numeric(rem_class))
 
-ggplot(clust_plot, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+# merge the clusters with denisty estimates:
+dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum")], by = c("x","y","cell"),keep = all)
+
+write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
+
+# map out the clusters in space:
+png(width = 6, height = 6, units= 'in',res=300,"outputs/cluster/six_cluster_map.png")
+ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+dev.off()
+
+ggplot(dens, aes(x = MAP1910, y=comp.pc1, color = speciescluster))+geom_point(size = 0.5)
+
+# plot by bimodality
+bi <- ggplot(dens, aes(x = PC1, y=comp.pc1,  color = bimodal))+geom_point(size = 1)+theme_bw()+ylab("Species Composition PC1")+xlab("Environmental Space PC1")+
+  theme(axis.text = element_blank(), axis.ticks=element_blank(),
+        legend.key.size = unit(2,'lines'), legend.position = c(0.205, 0.125)
+        ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-4, y=4,label= "A", size = 5)
+
+# plot by clusters
+cl <-ggplot(dens, aes(x = PC1, y=comp.pc1,  color = speciescluster))+geom_point(size = 1)+theme_bw()+ylab("Species Composition PC1")+xlab("Environmental Space PC1")+
+  theme(axis.text = element_blank(), axis.ticks=element_blank(), legend.key.size = unit(2,'lines'), legend.position = c(0.205, 0.325) ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-4, y=4,label= "B", size = 5)
+
+png(width = 8, height =10, units= 'in', res= 300, "outputs/cluster/speciescluster_vs_environment.png")
+grid.arrange(arrangeGrob(bi, cl, heights=c(1/2, 1/2), widths=c(8), ncol=1))
+dev.off()
+
+#with pc2
+bi2 <- ggplot(dens, aes(x = PC1, y=comp.pc2,  color = bimodal))+geom_point(size = 0.8)+theme_bw()+ylab("Species Composition PC2")+xlab("Environmental Space PC1")
+cl2 <-ggplot(dens, aes(x = PC1, y=comp.pc2,  color = speciescluster))+geom_point(size = 0.8)+theme_bw()+ylab("Species Composition PC2")+xlab("Environmental Space PC1")
+
 
 #---------------------Ordination of the species composition data---------------------
 #NMDS:

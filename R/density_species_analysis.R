@@ -871,8 +871,10 @@ png(height = 5, width = 10, units = 'in', res=300, "outputs/cluster/histogram_fa
 ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+facet_wrap(~speciescluster, ncol=2)
 dev.off()
 
-png(height = 5, width = 5, units = 'in', res=300, "outputs/cluster/histogram_colored_by_cluster.png")
-ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))
+png(height = 5, width = 10, units = 'in', res=300, "outputs/cluster/histogram_colored_by_cluster.png")
+ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+theme_bw()+
+  theme( legend.key.size = unit(2,'lines'), legend.position = c(0.8, 0.7) ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
 dev.off()
 
 

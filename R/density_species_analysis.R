@@ -837,6 +837,7 @@ write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
 # map out the clusters in space:
 png(width = 6, height = 6, units= 'in',res=300,"outputs/cluster/six_cluster_map.png")
 ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
@@ -852,7 +853,8 @@ bi <- ggplot(dens, aes(x = PC1, y=comp.pc1,  color = bimodal))+geom_point(size =
         ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-4, y=4,label= "A", size = 5)
 
 # plot by clusters
-cl <-ggplot(dens, aes(x = PC1, y=comp.pc1,  color = speciescluster))+geom_point(size = 1)+theme_bw()+ylab("Species Composition PC1")+xlab("Environmental Space PC1")+
+cl <-ggplot(dens, aes(x = PC1, y=comp.pc1,  color = speciescluster))+geom_point(size = 1)+theme_bw()+ scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
+  ylab("Species Composition PC1")+xlab("Environmental Space PC1")+
   theme(axis.text = element_blank(), axis.ticks=element_blank(), legend.key.size = unit(2,'lines'), legend.position = c(0.205, 0.325) ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-4, y=4,label= "B", size = 5)
 
 png(width = 8, height =10, units= 'in', res= 300, "outputs/cluster/speciescluster_vs_environment.png")
@@ -862,6 +864,16 @@ dev.off()
 #with pc2
 bi2 <- ggplot(dens, aes(x = PC1, y=comp.pc2,  color = bimodal))+geom_point(size = 0.8)+theme_bw()+ylab("Species Composition PC2")+xlab("Environmental Space PC1")
 cl2 <-ggplot(dens, aes(x = PC1, y=comp.pc2,  color = speciescluster))+geom_point(size = 0.8)+theme_bw()+ylab("Species Composition PC2")+xlab("Environmental Space PC1")
+
+# plot histograms of total density by species:
+
+png(height = 5, width = 10, units = 'in', res=300, "outputs/cluster/histogram_faceted_by_cluster.png")
+ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+facet_wrap(~speciescluster, ncol=2)
+dev.off()
+
+png(height = 5, width = 5, units = 'in', res=300, "outputs/cluster/histogram_colored_by_cluster.png")
+ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))
+dev.off()
 
 
 #---------------------Ordination of the species composition data---------------------

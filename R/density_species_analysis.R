@@ -130,10 +130,9 @@ ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(
                                                                                 axis.title.y=element_blank())+facet_wrap(~variable, ncol = 10, scales = 'free')+scale_fill_gradientn(colours = rev(rainbow(3)))
 
 
-X11(width = 12)
-ggplot(spec.melt, aes(x = value))+geom_histogram(binwidth = 15)+facet_wrap(~variable, ncol=10, scales = 'free<- ')
 full.spec[is.na(full.spec)]<- 0
 density.full <- full.spec
+
 # -----------------merge with bimodality analysis----------------------------------
 
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
@@ -599,8 +598,8 @@ colnames(comp.inil) <- c("x" ,  "y" , "cell" ,"Alder","Ash",
                         "Other.hardwood","Pine","Poplar", "Poplar.tulip poplar", "Sweet gum" ,         
                         "Sycamore" ,"Tamarack" ,"Tulip.poplar" ,"Unknown.tree","Walnut" ,            
                          "Willow" )
-umdw.names<- colnames(comp.umw)
-pls.names<- colnames(comp.inil)
+umdw.names <- colnames(comp.umw)
+pls.names <- colnames(comp.inil)
 
 
 #create name vectors for species columns missing in the upper and lower midewst
@@ -746,7 +745,7 @@ comps[,4:39] <- comps[,4:39]/comps[,40] # calculate the proportion of the total 
 comps <- comps[,1:39]
 
 # remove prairie cells:
-comps <- data.frame(comps[complete.cases(comps),])
+comps <- data.frame( comps[ complete.cases(comps),] )
 # write as a csv so we don't have to keep doing this:
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
 
@@ -1097,4 +1096,11 @@ ggbiplot(full.pca, pc.biplot = TRUE, groups = fullcomps$period)+geom_point(data=
 g <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
 
-g + geom_raster(data= fc, aes(x=pc1, y=pc2, fill = period))
+g + geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
+
+ggplot(data = fc, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)
+ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)
+
+ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
+                                                                       
+# Is community composition bimodal across the environmental space??

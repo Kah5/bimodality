@@ -877,9 +877,8 @@ ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill
 
 dev.off()
 
-
 #---------------------Ordination of the species composition data---------------------
-#NMDS:
+#NMDS: run on fhte CRC
 library(vegan)
 comps <- read.csv("data/outputs/plss_pct_density_composition_v1.6.csv")
 comps<- as.matrix(comps[5:ncol(comps)])
@@ -899,18 +898,203 @@ variableScores <- NMDS$species
 sampleScores <- NMDS$points
 
 
-#-----------------------PCA of full dataset----------------------
-dens.pca <- princomp(comps) 
-plot(dens.pca)
 
-biplot(dens.pca)
+
+# -----------------------Clustering of FIA data----------------------
+
+FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
+speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
+
+FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum the total density in each plot
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
+fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+
+fcomps <- fia.by.cell
+fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
+
+fcomps[,4:34] <- fcomps[,4:34]/fcomps[,35] # calculate the proportion of the total density that each species takes up
+fcomps <- fcomps[,1:34]
+
+# remove prairie cells:
+fcomps <- data.frame(fcomps[complete.cases(fcomps),])
+# write as a csv so we don't have to keep doing this:
+write.csv(fcomps, "data/outputs/FIA_pct_density_composition.csv")
+
+library(cluster)
+library(fpc)
+
+# need to match up the species with pls and fia
+colnames(fcomps) <- c("x" , "y" , "cell"  ,"Alder",       
+"Ash" ,"Basswood" ,"Beech", "Birch" ,     
+"Black.gum", "Buckeye"    ,    "Cedar.juniper" , "Cherry" ,       
+"Dogwood" , "Douglas fir" ,   "Elm"  ,  "Fir",           
+"Hackberry"  ,"Hemlock"   ,  "Hickory"  ,   "Ironwood",      
+"Maple"   , "Oak"     ,  "Other.hardwood" ,"Other.softwood",
+"Pine"   ,  "Poplar"  ,  "Spruce" ,   "Sweet.gum",     
+"Sycamore"    ,   "Tamarack"     ,  "Tulip.poplar"  , "Unknown.tree",  
+"Walnut","Willow","FIAdensity")
+
+# add douglas fir to fir
+fcomps$Fir <- rowSums(fcomps[,c("Fir", "Douglas fir")], na.rm=TRUE)
+fcomps <- fcomps[,-14] # get rid of douglas fir
+
+plscols <- colnames(comps)
+fiacols <- colnames(fcomps)
+
+notinfia <- plscols[ !plscols %in% fiacols ]
+notinpls <- fiacols[ !fiacols %in% plscols ] 
+
+comps[,notinpls] <- 0
+fcomps[,notinfia] <-0 
+
+
+#reorder the columns so the comp.inil and comp.umw dataframes match
+comps <- comps[ ,order(names(comps))]
+fcomps <- fcomps[ ,order(names(fcomps))]
+
+# add and fia vs. pls flag:
+comps$period <- "PLS"
+fcomps$period<- "FIA"
+
+fullcomps <- rbind( comps, fcomps )
+
+#move around the columns
+require(dplyr)
+fullcomps<- fullcomps %>%
+  dplyr::select(period, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(cell, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(y, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(x, everything())
+
+
+#fcomps classifcation only
+
+classes.3 <- pam(fcomps[,4:ncol(fcomps)], k = 3)
+classes.4 <- pam(fcomps[,4:ncol(fcomps)], k = 4)
+classes.5 <- pam(fcomps[,4:ncol(fcomps)], k = 5)
+classes.6 <- pam(fcomps[,4:ncol(fcomps)], k = 6)
+classes.7 <- pam(fcomps[,4:ncol(fcomps)], k = 7)
+classes.8 <- pam(fcomps[,4:ncol(fcomps)], k = 8)
+
+plot(classes.8)
+plot(classes.7)
+plot(classes.6)
+plot(classes.5)
+plot(classes.4)
+plot(classes.3)
+
+#summary(classes.8) # Avg. Silhouette width = 
+summary(classes.7) # Avg. Silhouette width = 0.2553684
+summary(classes.6) # Avg. Silhouette width = 0.2348445
+summary(classes.5) # Avg. Silhouette width = 0.2350457
+summary(classes.4) # Avg. Silhouette width = 
+summary(classes.3) # Avg. Silhouette width = 
+
+mediods <- fcomps$cell [classes.5$id.med]
+
+
+df5 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
+
+old_classes <- classes.5
+#[1] 45364 14855  9203 22622 10411# mediods
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c('Oak/OtherHardwood/Elm', # 1,
+                              'Maple/Ash/Birch', # 2
+                              'Poplar/Spruce/Maple',#3
+                              "Pine/Poplar", # 4,
+                              'Cedar.juniper/Tamarack' 
+                              
+                              
+                     ))
+
+clust_plot5 <- data.frame(fcomps, 
+                          cluster = rem_class5,
+                          clustNum = as.numeric(rem_class5))
+
+ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+
+
+
+# 6 classes
+mediods <- fcomps$cell [classes.6$id.med]
+#mediods
+#[1] 45094 27585 14273  9203 22622 15808
+
+df6 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
+write.csv(df, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
+
+old_classes <- classes.6
+rem_class <- factor(old_classes$clustering,
+                    labels=c('Oak', # 1,
+                             'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
+                             'Maple',#3
+                             #'Oak/Poplar/Basswood/Maple',
+                             "Poplar/Spruce/Maple/Fir", # 4,
+                             'Pine/Poplar', #5,
+                             'Cedar.juniper/Poplar/Maple' #6
+                             
+                             
+                    ))
+
+clust_plot6 <- data.frame(fcomps, 
+                          speciescluster = rem_class,
+                          clustNum = as.numeric(rem_class))
+
+png(width = 6, height = 6, units= 'in',res=300,"outputs/cluster/six_cluster_map_fia.png")
+ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#386cb0','#beaed4','#e41a1c','#ffff33', '#7fc97f','#fdc086'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+dev.off()
+
+dens<- merge(clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum")], fia.by.cell[,c('x', 'y', 'cell', 'FIAdensity')], by=c('x', "y", "cell") )
+
+png(height = 5, width = 10, units = 'in', res=300, "outputs/cluster/histogram_faceted_by_fia_cluster.png")
+ggplot(dens, aes(FIAdensity, fill= speciescluster))+geom_histogram()+
+  scale_fill_manual(values = c('#386cb0','#beaed4','#e41a1c','#ffff33', '#7fc97f','#fdc086'))+facet_wrap(~speciescluster, ncol=2)
+dev.off()
+
+png(height = 5, width = 10, units = 'in', res=300, "outputs/cluster/histogram_colored_by_fia_cluster.png")
+ggplot(dens, aes(FIAdensity, fill= speciescluster))+geom_histogram()+
+  scale_fill_manual(values = c('#386cb0','#beaed4','#e41a1c','#ffff33', '#7fc97f','#fdc086'))+theme_bw()+
+  theme( legend.key.size = unit(2,'lines'), legend.position = c(0.8, 0.7) ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+dev.off()
+
+
+#-----------------------PCA of full dataset (PLS and FIA)----------------------
+fc <- fullcomps
+fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
+
+
+
+full.pca <- princomp(fullcomps[,4:38])
+plot(full.pca)
+
+biplot(full.pca)
+scores <- full.pca$scores
+
+fc$pc1 <- scores[,1]
+fc$pc2 <- scores[,2]
+
 
 library(ggbiplot)
 source("R/newggbiplot.R")
 
-ggbiplot(dens.pca, pc.biplot = TRUE)
+ggbiplot(full.pca, pc.biplot = TRUE, groups = fullcomps$period)+geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
 
-g <- newggbiplot(dens.pca, obs.scale = 1, var.scale = 1, labels.size
+g <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
 
-g
+g + geom_raster(data= fc, aes(x=pc1, y=pc2, fill = period))

@@ -888,12 +888,12 @@ fullcomps<- fullcomps %>%
 
 #fcomps classifcation only
 
-classes.3 <- pam(fcomps[,4:ncol(fcomps)], k = 3)
-classes.4 <- pam(fcomps[,4:ncol(fcomps)], k = 4)
-classes.5 <- pam(fcomps[,4:ncol(fcomps)], k = 5)
-classes.6 <- pam(fcomps[,4:ncol(fcomps)], k = 6)
-classes.7 <- pam(fcomps[,4:ncol(fcomps)], k = 7)
-classes.8 <- pam(fcomps[,4:ncol(fcomps)], k = 8)
+classes.3 <- pam(fcomps[,4:ncol(fullcomps)], k = 3)
+classes.4 <- pam(fcomps[,4:ncol(fullcomps)], k = 4)
+classes.5 <- pam(fcomps[,4:ncol(fullcomps)], k = 5)
+classes.6 <- pam(fcomps[,4:ncol(fullcomps)], k = 6)
+classes.7 <- pam(fcomps[,4:ncol(fullcomps)], k = 7)
+classes.8 <- pam(fcomps[,4:ncol(fullcomps)], k = 8)
 
 plot(classes.8)
 plot(classes.7)
@@ -908,25 +908,35 @@ summary(classes.6) # Avg. Silhouette width = 0.2348445
 summary(classes.5) # Avg. Silhouette width = 0.2350457
 summary(classes.4) # Avg. Silhouette width = 
 summary(classes.3) # Avg. Silhouette width = 
+fullcomps$idvar <- 1:nrow(fullcomps)
+mediods <- fullcomps$idvar [classes.5$id.med]
 
-mediods <- fcomps$cell [classes.5$id.med]
 
-
-df5 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
+df5 <- fullcomps[fullcomps$idvar %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
-#[1] 45364 14855  9203 22622 10411# mediods
+#[1] 1292 2201 4618 4978 4604# idvars of the mediods
+#rem_class5 <- factor(old_classes$clustering,
+ #                    labels=c('Oak/OtherHardwood/Elm', # 1,
+  #                            'Maple/Ash/Birch', # 2
+  #                            'Poplar/Spruce/Maple',#3
+   #                           "Pine/Poplar", # 4,
+    #                          'Cedar.juniper/Tamarack' 
+                              
+                              
+                   #  ))
+
 rem_class5 <- factor(old_classes$clustering,
-                     labels=c('Oak/OtherHardwood/Elm', # 1,
-                              'Maple/Ash/Birch', # 2
-                              'Poplar/Spruce/Maple',#3
-                              "Pine/Poplar", # 4,
-                              'Cedar.juniper/Tamarack' 
+                     labels=c('Ash/Beech/Elm/Hickory/Oak', # 1,
+                              'Poplar/Spruce/Tamarack', # 2
+                              'Hemlock/Maple/Birch/Cedar.juniper',#3
+                              "Tamarack/Cedar.juniper/Spruce", # 4,
+                              'Cedar.juniper/Hemlock/Spruce' 
                               
                               
                      ))
 
-clust_plot5 <- data.frame(fcomps, 
+clust_plot5 <- data.frame(fullcomps, 
                           cluster = rem_class5,
                           clustNum = as.numeric(rem_class5))
 
@@ -990,7 +1000,7 @@ fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "pe
 
 
 
-full.pca <- princomp(fullcomps[,4:38])
+full.pca <- princomp(scale(fullcomps[,4:38]))
 plot(full.pca)
 
 biplot(full.pca)
@@ -1003,15 +1013,20 @@ fc$pc2 <- scores[,2]
 library(ggbiplot)
 source("R/newggbiplot.R")
 
-ggbiplot(full.pca, pc.biplot = TRUE, groups = fullcomps$period)+geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
+ggbiplot(full.pca, pc.biplot = TRUE)+geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
 
 g <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+g$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), g$layers)
 
-g + geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
+png("outputs/cluster/full_composition_PCA_biplot.png")
+g +theme_bw()
+dev.off()
 
-ggplot(data = fc, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)
-ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)
+png("outputs/cluster/full_composition_PCA1_maps.png")
+ggplot(data = fc, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
+dev.off()
+ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
 
 ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
                                                                        

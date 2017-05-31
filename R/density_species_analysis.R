@@ -995,6 +995,7 @@ dev.off()
 
 
 #-----------------------PCA of full dataset (PLS and FIA)----------------------
+
 fc <- fullcomps
 fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
 
@@ -1065,14 +1066,26 @@ png("outputs/cluster/Composition_PC1_histograms.png")
 ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
 dev.off()
 
+#test for significance
+bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
+#[1] 0.7789676
+diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
+# 
+
+png("outputs/cluster/Composition_PC2_histograms.png")
+ggplot(data = fc, aes(pc2, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
+dev.off()
+
+#test for significance
+bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
+#[1] 0.8892039
+diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
 # the pls might be significantly bimodal....it has alot of grid cells with slightly negative values
 
 # Using the PC1 bins of with add the data -- FIA or PLS:
 library(modes)
-data = fc.m
-binby = "PC1bins"
-density = "pc1"
-time = "FIA"
+comp.bimodal <- function(data = fc.m, binby, density, time){
+
 
 data <- data[data[,"period"] %in% time,]
 bins <- as.character(unique(data[,binby]))
@@ -1112,19 +1125,56 @@ ggplot()+ # geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), colo
                     axis.text.y=element_blank(),axis.ticks=element_blank(),
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank())+
+  scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
   xlab("easting") + ylab("northing") +coord_equal() 
 
+}
+
+png(width = 10, height = 4, units='in',res=300,'outputs/cluster/PLS_composition_pca_maps.png')
+ppc1<-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")+ ggtitle("Modes for PLS pc1 of composition")
+ppc2<-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")+ ggtitle("Modes for PLS pc2 of composition")
+grid.arrange(arrangeGrob(ppc1, ppc2,  widths=c(1.1,1.1), ncol=2))
+dev.off()
+
+
+png(width = 10, height = 4, units='in',res=300,'outputs/cluster/FIA_composition_pca_maps.png')
+fpc1 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")+ ggtitle("Modes for FIA pc1 of composition")
+fpc2 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "FIA")+ ggtitle("Modes for FIA pc2 of composition")
+grid.arrange(arrangeGrob(fpc1, fpc2,  widths=c(1.1,1.1), ncol=2))
+dev.off()
+
+
+png(width = 7, height = 9, units = "in", res= 300,"outputs/paper_figs/Figure_1.png")
+grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4), widths=c(1.1,1.1), ncol=2))
+dev.off()
+
+data = fc.m
+binby = "PC1bins"
+density = "pc1"
+time = "FIA"
 
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
 
+#comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")
+#comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS") 
+
+
 # plot the composition histograms by bin and period:
-png("outputs/cluster/composition_hists_by_bins.png")
+png("outputs/cluster/composition_hists_by_PC1bins.png")
 ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram()+
   facet_grid(PC1bins ~ period)
 dev.off()
 
+ggplot(fc.m, aes(pc1, fill = period))+geom_histogram()
+
 # The 1st principal component of composition is not bimodal...but I am not sure if this is really the best metric because of the horseshoe
 # 
 
-png("outputs/cluster/")
+png("outputs/cluster/compostion_hists_by_PC2bins.png")
+ggplot(fc.m, aes(pc2, fill = period)) + geom_histogram()+
+  facet_grid(PC2bins ~ period)
+dev.off()
+
+write.csv(fc.m, "outputs/cluster/fullcomps_dataset.csv")
+

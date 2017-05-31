@@ -11,11 +11,11 @@ library(gridExtra)
 library(modes)
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
-speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
+speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
 
 FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
 FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
-FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:25], na.rm = TRUE) # sum the total density in each plot
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum the total density in each plot
 fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn', 'Var.5')) # melt the dataframe
 fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 

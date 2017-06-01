@@ -33,7 +33,8 @@ library(Rcpp)
 version <- "1.6-1" #  version of IN PLS data
 
 # Read in the IN data here
-ind <- read.csv(paste0("data/ndinpls_v", version, ".csv"), stringsAsFactors = FALSE) # version 1.6 
+#ind <- read.csv(paste0("data/ndinpls_v", version, ".csv"), stringsAsFactors = FALSE) # version 1.6 
+ind <- read.csv("data/KankakeeCorners_Summary.csv")
 
 #Flag original data with L3_tree1 = No data as "NA" 
 ind[ind$L3_tree1 %in% 'No data',] <- NA
@@ -62,7 +63,7 @@ ind$DIST4 <- as.numeric(ind$chainstr_3)
 #  be converted to character strings first and then bound together.  To ensure
 #  township and ranges are unique we add a state abbreviation to the front of
 #  the twonship name.
-twp <- c(paste('IN', as.character(ind$TRP)))
+twp <- c(paste(as.character(ind$state), as.character(ind$TRP)))
 #rng <- c(as.character(ind$TownshipRange))
 ind$twp <- twp
 
@@ -75,7 +76,7 @@ ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingd
 
 
 
-ind$state <-'IN'
+
 #create and rename columns to match that of indiana
 
 
@@ -349,7 +350,7 @@ colnames(final.data) <- c('PointX','PointY', 'Township','state',
 #not sure I need this for Indiana data..dont have points for spatial points df
 #  Turn it into a SpatialPointsDataFrame:
 coordinates(final.data) <- ~ PointX + PointY
-spplot(final.data, "dist1")
+#spplot(final.data, "species1")
 final.data <- data.frame(final.data)
 summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.data$species2 == c("No tree", "Water", "Wet"),])
 summary(final.data)
@@ -357,7 +358,7 @@ summary(final.data)
 # now kill missing cells:
 final.data <- final.data[!is.na(final.data$PointY),]
 final.data <- final.data[!is.na(final.data$PointX),]
-ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
+ggplot(data = final.data, aes(x = PointX, y = PointY, color = species1)) + geom_point()
 hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
      main = "IN only tree diameter distribution")
 
@@ -370,7 +371,7 @@ Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
 
 # read in the correction factors provided by Charlie Cogbill:
-corr.factor <- read.csv('data//charlie_corrections_in.csv')
+corr.factor <- read.csv('data//charlie_corrections.csv')
 test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
 
 colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')

@@ -1144,21 +1144,104 @@ grid.arrange(arrangeGrob(fpc1, fpc2,  widths=c(1.1,1.1), ncol=2))
 dev.off()
 
 
-png(width = 7, height = 9, units = "in", res= 300,"outputs/paper_figs/Figure_1.png")
-grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4), widths=c(1.1,1.1), ncol=2))
-dev.off()
-
 data = fc.m
 binby = "PC1bins"
-density = "pc1"
+density = "pc2"
 time = "FIA"
+
+
+comp.bimodal.df <- function(data = fc.m, binby, density, time){
+  
+  
+  data <- data[data[,"period"] %in% time,]
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins with the "binby" column
+  merged <- merge(coef.bins, data, by.x = "bins", by.y = binby)
+  
+  
+  #define bimodality
+  #merged$bimodal <- "Stable"
+  #criteria for bimodality
+  
+  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+  merged$bimodal <- bi
+  
+  
+  unique(merged$bimodal)
+  
+  
+  merged
+}
+
+pls.pc1 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")
+pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")
 
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
 
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS") 
+comp.bimodal.full <- function(data = fc.m, binby, density){
+  
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 2)
+  for (i in 1:length(bins)){
+    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  }
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins with the "binby" column
+  merged <- merge(coef.bins, data, by.x = "bins", by.y = binby)
+  
+  
+  #define bimodality
+  #merged$bimodal <- "Stable"
+  #criteria for bimodality
+  
+  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+  merged$bimodal <- bi
+  
+  
+  unique(merged$bimodal)
+  ggplot(merged, aes(pc2, fill = period))+geom_histogram(alpha=0.6,position = 'identity')+facet_wrap(~bins)
+  ggplot(merged, aes(PC1, pc2, color = bimodal, shape = period))+geom_point()
+  
+  ggplot()+ # geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+
+    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                      axis.title.x=element_blank(),
+                      axis.title.y=element_blank())+
+    scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
+    xlab("easting") + ylab("northing") +coord_equal() +facet_grid(~period)
+  
+}
 
+comp.bimodal.full(data = fc.m, binby="PC1bins", density = "pc2")
 
 # plot the composition histograms by bin and period:
 png("outputs/cluster/composition_hists_by_PC1bins.png")

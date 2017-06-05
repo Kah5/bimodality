@@ -981,6 +981,7 @@ dev.off()
 
 ###################################################################
 # bimodal.df function outputs the dataframe of bimodal/not bimodal 
+dens.pr <- dens.pr[!is.na(dens.pr$PLSdensity), ]
 
 bimodal.df <- function(data, binby, density, binby2){
   bins <- as.character(unique(data[,binby]))
@@ -1004,22 +1005,10 @@ bimodal.df <- function(data, binby, density, binby2){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  if(density == "PLSdensity"){
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$ecotype)
-    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
-    
-  }else{
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-    
-  }
   
 merged
 }
@@ -1042,7 +1031,7 @@ ggplot(df.new, aes(x = MAP1910, y = PLSdensity, color = classification))+geom_po
   stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
   theme_bw()
 
-dens.pr<- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+#dens.pr<- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 write.csv(df.new, "outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
 # plot out climate space that is bimodal
 png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")

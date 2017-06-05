@@ -133,247 +133,6 @@ ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(
 full.spec[is.na(full.spec)]<- 0
 density.full <- full.spec
 
-# -----------------merge with bimodality analysis----------------------------------
-
-dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
-dens.pr <- dens.pr[,c('x','y','cell','ecotype','bimodal', 'classification')]
-spec <- merge(full.spec, dens.pr, by = c('x','y','cell'))
-
-summary(spec[spec$bimodal== 'Bimodal',])
-summary(spec[spec$bimodal== 'Bimodal',]$classification)
-
-summary(spec[spec$bimodal== 'Bimodal' & spec$classification == "Bimodal Forest",])
-
-# % of places that are bimodal and classified as forests
-counts <- summary(spec[spec$bimodal== 'Bimodal',]$classification)
-pcts <- (counts/1560)*100
-
-#Bimodal Forest Bimodal Savanna         Prairie   Stable Forest  Stable Savanna 
-#35.641026       59.871795        4.487179        0.000000        0.000000
-
-
-
-#---------------------------look at the composition of bimodal forests-----------------
-
-bi.forest <- spec[spec$bimodal== 'Bimodal' & spec$classification == "Bimodal Forest",]
-
-
-ggplot(bi.forest, aes(x=x, y=y, fill = Oak))+geom_raster()
-ggplot(bi.forest, aes(Oak))+geom_density(position = fill)
-ggplot(bi.forest, aes(Maple))+geom_density()
-ggplot(bi.forest, aes(Beech))+geom_density()
-ggplot(bi.forest, aes(Hemlock))+geom_density()
-ggplot(bi.forest, aes(Hickory))+geom_density()
-ggplot(bi.forest, aes(Basswood))+geom_density()
-ggplot(bi.forest, aes(Ironwood))+geom_density()
-#bimodal <- spec[spec$bimodal== 'Bimodal' & !spec$PLSdensity == 0,]
-
-# remove water, wet, no tree
-bi.forest<- bi.forest[,!names(bi.forest) %in% c("Water", "Wet", "No.tree")]
-
-f.melt <- melt(bi.forest, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-
-ggplot(f.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-ggplot(f.melt[f.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-
-
-# caluclate the % of total denisty that the taxa makes up of the grid cell:
-
-comps <- bi.forest
-comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total density that each species takes up
-comp.melt <- melt(comps, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-#ggplot(comp.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-#ggplot(comp.melt[comp.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-#X11(width = 12)
-#ggplot(comp.melt, aes(x = x,y=y, fill = value))+geom_raster()+facet_wrap(~variable, ncol = 10) + scale_fill_gradient(low= 'blue', high='red')
-
-
-# find the grid cell with highest % of denisty in all bimodal places
-comps[is.na(comps)]<- 0
-comps$highest <- colnames(comps[,4:38])[max.col(comps[,4:38],ties.method="first")]
-taxa <- unique(comps$highest)
-
-
-highest <- comps[names(comps) %in% taxa] 
-highest$x <- comps$x
-highest$y <- comps$y
-highest$highest <- comps$highest
-
-# plot with colors by mesophytic vs non mesophytic:
-# blues => Oak, hickory, pines
-# reds = > Maple, elm, Basswood, Beech, blackgum.sweet gum, Black.gum, Buckeye
-# yellows => spruce, tamarack
-all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
-coordinates(states)<-~long+lat
-class(states)
-proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
-mapdata<-spTransform(states, CRS('+init=epsg:3175'))
-mapdata <- data.frame(mapdata)
-
-
-
-forest <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_fill_manual(values = c(
-  "skyblue", "royalblue", "blue", 'forestgreen',"darkred", "red", "pink", "salmon", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", 'red','red','red','red',
-  "yellow", "yellow", "yellow", "yellow", "yellow", "yellow"
-  
-), limits = c('Oak',"Hickory",'Pine', 'Walnut',"Maple", "Basswood", "Beech", "black gum.sweet gum", 
-              'Black.gum', "Buckeye", "Cherry", 'Dogwood', "Elm", "Hackberry", 'Ironwood', "Alder", "Ash", "Locust", "Mulberry", "Other.hardwood",
-              'Sweet gum', "Poplar", 'Poplar.tulip poplar', "Spruce", "Sycamore", "Tamarack", "Willow") )+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                    axis.text.y=element_blank(),axis.ticks=element_blank(),
-                    axis.title.x=element_blank(),
-                    axis.title.y=element_blank())+
-  xlab("easting") + ylab("northing") +coord_equal()
-
-
-
-
-#---------------------------look at the composition of bimodal savannas -----------------
-
-bi.savanna <- spec[spec$bimodal== 'Bimodal' & spec$classification == "Bimodal Savanna",]
-
-
-ggplot(bi.savanna, aes(x=x, y=y, fill = Oak))+geom_raster()
-#ggplot(bi.savanna, aes(Oak))+geom_density(position = fill)
-ggplot(bi.savanna, aes(Maple))+geom_density()
-ggplot(bi.savanna, aes(Beech))+geom_density()
-ggplot(bi.savanna, aes(Hemlock))+geom_density()
-ggplot(bi.savanna, aes(Hickory))+geom_density()
-ggplot(bi.savanna, aes(Basswood))+geom_density()
-ggplot(bi.savanna, aes(Ironwood))+geom_density()
-#bimodal <- spec[spec$bimodal== 'Bimodal' & !spec$PLSdensity == 0,]
-
-# remove water, wet, no tree
-bi.savanna<- bi.savanna[,!names(bi.savanna) %in% c("Water", "Wet", "No.tree")]
-
-p.melt <- melt(bi.savanna, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-
-ggplot(p.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-ggplot(p.melt[p.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-
-
-# caluclate the % of total denisty that the taxa makes up of the grid cell:
-
-compss <- bi.savanna
-compss[,4:38] <- compss[,4:38]/compss[,39] # calculate the proportion of the total density that each species takes up
-comp.melt <- melt(compss, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-#ggplot(comp.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-#ggplot(comp.melt[comp.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-#X11(width = 12)
-#ggplot(comp.melt, aes(x = x,y=y, fill = value))+geom_raster()+facet_wrap(~variable, ncol = 10) + scale_fill_gradient(low= 'blue', high='red')
-
-
-# find the grid cell with highest % of denisty in all bimodal places
-compss[is.na(compss)]<- 0
-compss$highest <- colnames(compss[,4:38])[max.col(compss[,4:38],ties.method="first")]
-taxa <- unique(compss$highest)
-
-
-highest <- compss[names(compss) %in% taxa] 
-highest$x <- compss$x
-highest$y <- compss$y
-highest$highest <- compss$highest
-
-# plot with colors by mesophytic vs non mesophytic:
-# blues => Oak, hickory, pines
-# reds = > Maple, elm, Basswood, Beech, blackgum.sweet gum, Black.gum, Buckeye
-# yellows => spruce, tamarack
-
-savanna <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_fill_manual(values = c(
-  "skyblue", "royalblue", "blue", 'forestgreen',"darkred", "red", "pink", "salmon", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", 'red','red','red','red',
-  "yellow", "yellow", "yellow", "yellow", "yellow", "yellow"
-  
-), limits = c('Oak',"Hickory",'Pine', 'Walnut',"Maple", "Basswood", "Beech", "black gum.sweet gum", 
-              'Black.gum', "Buckeye", "Cherry", 'Dogwood', "Elm", "Hackberry", 'Ironwood', "Alder", "Ash", "Locust", "Mulberry", "Other.hardwood",
-              'Sweet gum', "Poplar", 'Poplar.tulip poplar', "Spruce", "Sycamore", "Tamarack", "Willow") )+
-  theme_bw()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                    axis.text.y=element_blank(),axis.ticks=element_blank(),
-                    axis.title.x=element_blank(),
-                    axis.title.y=element_blank())+
-  xlab("easting") + ylab("northing") +coord_equal()
-
-
-#---------------------------look at the composition of all the places -----------------
-
-all <- spec
-
-
-ggplot(all, aes(x=x, y=y, fill = Oak))+geom_raster()
-#ggplot(all, aes(Oak))+geom_density(position = fill)
-ggplot(all, aes(Maple))+geom_density()
-ggplot(all, aes(Beech))+geom_density()
-ggplot(all, aes(Hemlock))+geom_density()
-ggplot(all, aes(Hickory))+geom_density()
-ggplot(all, aes(Basswood))+geom_density()
-ggplot(all, aes(Ironwood))+geom_density()
-#bimodal <- spec[spec$bimodal== 'Bimodal' & !spec$PLSdensity == 0,]
-
-# remove water, wet, no tree
-all<- all[,!names(all) %in% c("Water", "Wet", "No.tree")]
-
-p.melt <- melt(all, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-
-ggplot(p.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-ggplot(p.melt[p.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-
-
-# caluclate the % of total denisty that the taxa makes up of the grid cell:
-
-compss <- all
-compss[,4:38] <- compss[,4:38]/compss[,39] # calculate the proportion of the total density that each species takes up
-comp.melt <- melt(compss, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'PLSdensity','ecotype'))
-#ggplot(comp.melt, aes(x = value, fill = variable))+geom_density(position = 'fill')
-#ggplot(comp.melt[comp.melt$value > 0,], aes(x = value, fill = variable))+geom_histogram()
-
-#X11(width = 12)
-#ggplot(comp.melt, aes(x = x,y=y, fill = value))+geom_raster()+facet_wrap(~variable, ncol = 10) + scale_fill_gradient(low= 'blue', high='red')
-
-
-# find the grid cell with highest % of denisty in all bimodal places
-compss[is.na(compss)]<- 0
-compss$highest <- colnames(compss[,4:38])[max.col(compss[,4:38],ties.method="first")]
-taxa <- unique(compss$highest)
-
-
-highest <- compss[names(compss) %in% taxa] 
-highest$x <- compss$x
-highest$y <- compss$y
-highest$highest <- compss$highest
-
-# plot with colors by mesophytic vs non mesophytic:
-# blues => Oak, hickory, pines
-# reds = > Maple, elm, Basswood, Beech, blackgum.sweet gum, Black.gum, Buckeye
-# yellows => spruce, tamarack
-
-all <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_fill_manual(values = c(
-  "skyblue", "royalblue", "blue", 'cyan4','forestgreen',"darkred", "red", "pink", "coral", 'chocolate1',"red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red",'red','red','red','red',
-  "yellow", "yellow", "yellow", "yellow","yellow", "yellow", "yellow", "yellow"
-  
-), limits = c('Oak',"Hickory",'Pine', 'Walnut',"Cedar.juniper","Maple", "Basswood", "Beech","Hemlock", 'Birch',"black gum.sweet gum", 
-              'Black.gum', "Buckeye", "Cherry", 'Dogwood', "Elm", "Hackberry", "Chestnut",'Ironwood', "Alder", "Ash", "Locust", "Mulberry", "Other.hardwood","Unknown.tree",
-              'Sweet gum', "Poplar", 'Poplar.tulip poplar', "Tulip.poplar" ,"Spruce", "Sycamore", "Tamarack", "Willow") )+
-  theme_bw()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                                              axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank())+
-  xlab("easting") + ylab("northing") +coord_equal()
-
-X11(width =12)
-a <- all + ggtitle('All grid cells (species with highest density)')
-b <- savanna + ggtitle('Bimodal savanna (species with highest density)')
-c <- forest + ggtitle('Bimodal forest (species with highest density)')
-
-source("R/grid_arrange_shared_legend.R")
-
-png(height = 4, width = 18, units = "in", res = 300, "outputs/v1.6-5/full/density_highest_species.png")
-grid_arrange_shared_legend(a,b,c, nrow = 1, ncol = 3)
-dev.off()
 
 
 #-------------------Lets look at FIA now-------------------------------
@@ -434,10 +193,7 @@ allf <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_f
   xlab("easting") + ylab("northing") +coord_equal()
 
 
-
-
-
-#--------------------------------species density PCA------------------------
+#--------------------------------species density PCA (pls only)------------------------
 # note this is working with density, but I think I want species composition
 full.spec[is.na(full.spec)]<- 0
 
@@ -995,7 +751,8 @@ dev.off()
 
 
 #-----------------------PCA of full dataset (PLS and FIA)----------------------
-
+write.csv(fullcomps, "outputs/cluster/fullcomps.csv")
+#fullcomps <- read.csv("outputs/cluster/fullcomps.csv")
 fc <- fullcomps
 fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
 
@@ -1053,24 +810,33 @@ fc.m <- rbind(fiamerged, plsmerged)
 
 # now PC1 is the PC for modern and pls data respectively and pc1 is the species principal component 1
 ggplot(fc.m, aes(x=PC1, y = pc1,color=period))+geom_point()
-#ggplot(fc.m, aes(x=PC2, y = pc1,color=period))+geom_point()
-#ggplot(fc.m, aes(x=PC1, y = pc2,color=period))+geom_point()
+ggplot(fc.m, aes(x=PC2, y = pc1,color=period))+geom_point()
 
+png(width = 6, height = 4, units = 'in', res = 300, "outputs/cluster/species_pc2_envt_pc1.png")
+ggplot(fc.m, aes(x=PC1, y = pc2,color=period))+geom_point(size = 0.5)+theme_bw()+ 
+  ylab("species composition pc2")+xlab("Environmental data pc1")
+dev.off()
+
+png(width = 6, height = 4, units = 'in', res = 300, "outputs/cluster/species_pc2_envt_pc1_panels.png")
+ggplot(fc.m, aes(x=PC1, y = pc2,color=period))+geom_point(size = 0.5)+theme_bw()+ 
+  ylab("species composition pc2")+xlab("Environmental data pc1")+facet_wrap(~period)
+dev.off()
 
 #------------- Is the composition data bimodal in PLS and FIA?:----------------------
 hist(fc.m$pc1) # the overall pc1 of composition does not seem bimodal
-hist(fc.m$pc2) # sampe with pc2
+hist(fc.m$pc2) # same with pc2
 
 # how about FIA or PLS by itself?
 png("outputs/cluster/Composition_PC1_histograms.png")
 ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
 dev.off()
 
+library(modes)
 #test for significance
 bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
 #[1] 0.7789676
 diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
-# 
+# p valueu =0.4296
 
 png("outputs/cluster/Composition_PC2_histograms.png")
 ggplot(data = fc, aes(pc2, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
@@ -1080,6 +846,7 @@ dev.off()
 bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
 #[1] 0.8892039
 diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
+# pvalue < 2.2e-16
 # the pls might be significantly bimodal....it has alot of grid cells with slightly negative values
 
 # Using the PC1 bins of with add the data -- FIA or PLS:
@@ -1194,6 +961,46 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
 
+#----Are the bimodal places in composition the same as thos in density?
+
+# read in bimodality file from density:
+#dens.bi <- read.csv('data/PLS_full_dens_pr_with_bins.csv')
+dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
+colnames(dens.pr)[1:13] <- c("X2", "densbins", "V1dens", "V2dens", "BCdens", "dipPdens", "lowdens", "highdens", "NA.", "X.1", "x", "y", "cell")
+colnames(dens.pr)[86] <- c("bimodaldensity")
+plspc2.m <- merge(pls.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2")], dens.pr, by = c("x", "y", "cell"))
+
+
+# map out the places that are bimodal density, bimodal comp, stable both, bimodal both:
+
+comp.bi <- ifelse (plspc2.m$BC > 0.55 & plspc2.m$dipP <= 0.05, "Bimodal Composition", "Unimodal Composition")
+plspc2.m$bimodaldensity <- paste(plspc2.m$bimodaldensity, "Density")
+plspc2.m$bimodalcomp <- comp.bi
+
+plspc2.m$bimodalboth <- paste(plspc2.m$bimodaldensity, "&", plspc2.m$bimodalcomp)
+
+unique(plspc2.m$bimodalboth)
+
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
+png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_pls_comp_and_dens_bimodality.png")
+ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#ca0020',
+    '#f4a582',
+    '#92c5de',
+    '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                      panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+dev.off()
+
+#----------------Bimodality criteria over all the data--------------------
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS") 
 comp.bimodal.full <- function(data = fc.m, binby, density){

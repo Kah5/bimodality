@@ -409,20 +409,20 @@ add.v <- function(x, name){
   write.csv(x, paste0('data/outputs/', name,  '_v',1, '.csv'))
 }
 
-add.v(count.table, 'plss_trees')
-add.v(biomass.points, 'plss_points')
-add.v(count.table, "plss_composition.csv")
-add.v(count.table, "plss_inil_composition.csv")
+add.v(count.table, 'plss_trees', row.names=FALSE)
+add.v(biomass.points, 'plss_points', row.names=FALSE)
+add.v(count.table, "plss_composition.csv", row.names=FALSE)
+add.v(count.table, "plss_inil_composition.csv", row.names=FALSE)
 biomass.table$plsspts_cell <- points.by.cell
 
-add.v(density.table, 'plss_density')
-add.v(basal.table, 'plss_basal')
-add.v(biomass.table, 'plss_biomass')
+add.v(density.table, 'plss_density', row.names=FALSE)
+add.v(basal.table, 'plss_basal', row.names=FALSE)
+add.v(biomass.table, 'plss_biomass', row.names=FALSE)
 
-add.v(biomass.full,  'plss_spec_biomass') #full species biomass for indiana
-add.v(density.full, 'plss_spec_density')
-add.v(diameter.full, 'plss_spec_diam')
-add.v(diam.table, 'plss_diam')
+add.v(biomass.full,  'plss_spec_biomass', row.names=FALSE) #full species biomass for indiana
+add.v(density.full, 'plss_spec_density', row.names=FALSE)
+add.v(diameter.full, 'plss_spec_diam', row.names=FALSE)
+add.v(diam.table, 'plss_diam', row.names=FALSE)
 
 # extra stuff to look at density estimates for now
 #ggplot(density.table, aes(x = x, y=y, fill = total))+geom_raster()

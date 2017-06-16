@@ -545,25 +545,38 @@ ggplot(dens, aes(PLSdensity, fill= speciescluster))+geom_histogram()+ scale_fill
 dev.off()
 
 #---------------------Ordination of the species composition data---------------------
-#NMDS: run on fhte CRC
+#NMDS: run on the CRC
 library(vegan)
-comps <- read.csv("data/outputs/plss_pct_density_composition_v1.6.csv")
-comps<- as.matrix(comps[5:ncol(comps)])
-NMDS <- metaMDS(comps[1:100,],distance = "bray",k=2)
+fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
 
+s.scores <- readRDS("NMDS.samp.scores.rds")
+v.scores <- readRDS("NMDS.var.scores.rds")
+#NMDS <- readRDS("NMDS.obj.rds") 
+v.scores <- data.frame(v.scores)
+v.scores$species <- row.names(v.scores)
+s.scores <- data.frame(s.scores)
+#stressplot(NMDS)
 
-NMDS 
+#plot(NMDS)
 
-stressplot(NMDS)
-
-plot(NMDS)
-
-ordiplot(NMDS,type="n")
-orditorp(NMDS,display="species",col="red",air=0.01)
+#ordiplot(NMDS,type="n")
+#orditorp(NMDS,display="species",col="red",air=0.01)
 #orditorp(NMDS,display="sites",cex=1.25,air=0.01)
-variableScores <- NMDS$species
-sampleScores <- NMDS$points
 
+# sycamore and blackgum are outliers outline in terms of MDS1--I removed these to get a better look at species we are interested in:
+png("outputs/cluster/NMDS_full_excluding_outliers.png")
+ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)
+dev.off()
+# MDS2 seems to be the dominant separation of species
+
+fullcomps$MDS1 <- s.scores$MDS1
+fullcomps$MDS2 <- s.scores$MDS2
+
+# it seems like the Oak separates well from pin, hemlock, alder on MDS1
+# but MDS2 separates Oak from cherry, hickory, dogwood, other speices
+ggplot(fullcomps, aes(MDS1, MDS2, color = period))+geom_point(alpha = 0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)+facet_wrap(~period)
+ggplot(fullcomps, aes(x=x, y=y, fill = MDS1))+geom_raster()+facet_wrap(~period)+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
+ggplot(fullcomps, aes(x=x, y=y, fill = MDS2))+geom_raster()+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
 
 
 

@@ -762,16 +762,19 @@ ggplot(dens, aes(FIAdensity, fill= speciescluster))+geom_histogram()+
 
 dev.off()
 
+fullcomps <- fullcomps[complete.cases(fullcomps),]
+
+write.csv(fullcomps, "outputs/cluster/fullcomps.csv")
+
 
 #-----------------------PCA of full dataset (PLS and FIA)----------------------
-write.csv(fullcomps, "outputs/cluster/fullcomps.csv")
-#fullcomps <- read.csv("outputs/cluster/fullcomps.csv")
+fullcomps <- read.csv("outputs/cluster/fullcomps.csv")
 fc <- fullcomps
 fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
 
 
-
-full.pca <- princomp(scale(fullcomps[,4:38]))
+# pca on the scaled data
+full.pca <- princomp(scale(fullcomps[,5:39])) #scale to 0 variance
 plot(full.pca)
 
 biplot(full.pca)
@@ -794,19 +797,20 @@ g <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
 g$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), g$layers)
 
 png("outputs/cluster/full_composition_PCA_biplot.png")
-g +theme_bw()
+g + theme_bw()
 dev.off()
 
 png("outputs/cluster/full_composition_PCA1_maps.png")
 ggplot(data = fc, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
 dev.off()
 
+png("outputs/cluster/full_composition_PCA2_maps.png")
 ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
-
+dev.off()
                                                                      
 # Is community composition bimodal across the environmental space?
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
-dens.pr <- dens.pr[,c('x','y','cell','ecotype','bimodal', 'classification', "PC1", "PC2")]#, "PC1bins", "PC2bins")]
+dens.pr <- dens.pr[,c('x','y','cell','ecotype','bimodal', "PC1", "PC2")]#, "PC1bins", "PC2bins")]
 fc.m <- merge(fc, dens.pr, by = c('x','y','cell'))
 PLSbins<- read.csv('data/PLS_full_dens_pr_with_bins.csv')
 FIAbins <- read.csv('outputs/FIA_pls_density_with_bins.csv')
@@ -867,52 +871,52 @@ library(modes)
 comp.bimodal <- function(data = fc.m, binby, density, time){
 
 
-data <- data[data[,"period"] %in% time,]
-bins <- as.character(unique(data[,binby]))
-coeffs <- matrix(NA, length(bins), 2)
-for (i in 1:length(bins)){
-  coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-  coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-}
-coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-coef.bins<- data.frame(cbind(coeffs, bins))
-coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-library(plyr)
-coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-colnames(coef.new) <- c("low", "high")
-coef.bins <- cbind(coef.bins, coef.new)
-
-#merge bins with the "binby" column
-merged <- merge(coef.bins, data, by.x = "bins", by.y = binby)
-
-
-#define bimodality
-#merged$bimodal <- "Stable"
-#criteria for bimodality
-
-bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
-merged$bimodal <- bi
-
-
-unique(merged$bimodal)
-
-
-ggplot()+ # geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-  geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+
-  theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                    axis.text.y=element_blank(),axis.ticks=element_blank(),
-                    axis.title.x=element_blank(),
-                    axis.title.y=element_blank())+
-  scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
-  xlab("easting") + ylab("northing") +coord_equal() 
+    data <- data[data[,"period"] %in% time,]
+    bins <- as.character(unique(data[,binby]))
+    coeffs <- matrix(NA, length(bins), 2)
+    for (i in 1:length(bins)){
+      coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    }
+    coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+    coef.bins<- data.frame(cbind(coeffs, bins))
+    coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+    coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+    coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+    library(plyr)
+    coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+    colnames(coef.new) <- c("low", "high")
+    coef.bins <- cbind(coef.bins, coef.new)
+    
+    #merge bins with the "binby" column
+    merged <- merge(coef.bins, data, by.x = "bins", by.y = binby)
+    
+    
+    #define bimodality
+    #merged$bimodal <- "Stable"
+    #criteria for bimodality
+    
+    bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+    merged$bimodal <- bi
+    
+    
+    unique(merged$bimodal)
+    
+    
+    ggplot()+ # geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
+      geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+
+      theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())+
+      scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
+      xlab("easting") + ylab("northing") +coord_equal() 
 
 }
 
 png(width = 10, height = 4, units='in',res=300,'outputs/cluster/PLS_composition_pca_maps.png')
-ppc1<-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")+ ggtitle("Modes for PLS pc1 of composition")
-ppc2<-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")+ ggtitle("Modes for PLS pc2 of composition")
+ppc1 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")+ ggtitle("Modes for PLS pc1 of composition")
+ppc2 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")+ ggtitle("Modes for PLS pc2 of composition")
 grid.arrange(arrangeGrob(ppc1, ppc2,  widths=c(1.1,1.1), ncol=2))
 dev.off()
 
@@ -924,10 +928,10 @@ grid.arrange(arrangeGrob(fpc1, fpc2,  widths=c(1.1,1.1), ncol=2))
 dev.off()
 
 
-data = fc.m
-binby = "PC1bins"
-density = "pc2"
-time = "FIA"
+#data = fc.m
+#binby = "PC1bins"
+#density = "pc2"
+#time = "FIA"
 
 
 comp.bimodal.df <- function(data = fc.m, binby, density, time){
@@ -974,7 +978,8 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
 
-#----Are the bimodal places in composition the same as thos in density?
+
+#----Are the bimodal places in composition the same as those in density?
 
 # read in bimodality file from density:
 #dens.bi <- read.csv('data/PLS_full_dens_pr_with_bins.csv')
@@ -1063,21 +1068,72 @@ comp.bimodal.full <- function(data = fc.m, binby, density){
 
 comp.bimodal.full(data = fc.m, binby="PC1bins", density = "pc2")
 
+fc.m$PC1_bins_f = factor(fc.m$PC1bins, levels=c('-5 - -4','-4 - -3',
+                                                '-3 - -2','-2 - -1',
+                                                '-1 - 0', '0 - 1',
+                                                '1 - 2', '2 - 3', 
+                                                '3 - 4', '4 - 5', 
+                                                '5 - 6'))
 # plot the composition histograms by bin and period:
-png("outputs/cluster/composition_hists_by_PC1bins.png")
-ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram()+
-  facet_grid(PC1bins ~ period)
+png("outputs/cluster/composition_pc1_hists_by_PC1bins.png")
+ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+  facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
 
-ggplot(fc.m, aes(pc1, fill = period))+geom_histogram()
-
-# The 1st principal component of composition is not bimodal...but I am not sure if this is really the best metric because of the horseshoe
-# 
-
-png("outputs/cluster/compostion_hists_by_PC2bins.png")
-ggplot(fc.m, aes(pc2, fill = period)) + geom_histogram()+
-  facet_grid(PC2bins ~ period)
+png("outputs/cluster/composition_pc2_hists_by_PC1bins.png")
+ggplot(fc.m, aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+  facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
+
+# digging into the bimodal places in envtPC1 from -1 to 2:
+ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Oak, color = period))+geom_point()
+ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Hemlock, color = period))+geom_point()
+ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Maple, color = period))+geom_point()
+ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Elm, color = period))+geom_point()
+
+
+fc.bim <- fc.m[fc.m$PC1bins %in% c("0 - 1", "-1 - 0", "1 - 2"),]
+
+fc.bim.m <- melt(fc.bim, id.vars = c('x', 'y','cell','X', 'period','pc1', 'pc2',
+                         'ecotype','bimodal', 'PC1', "PC2", "PC1bins", "PC2bins", "PC1_bins_f"))
+
+
+
+ggplot(fc.bim.m, aes(pc2, value, color = variable))+geom_point()+stat_smooth(position = 'identity')+facet_wrap(~period)
+ggplot(fc.bim.m, aes(PC1, value, color = variable))+geom_point()+facet_wrap(~period)
+
+ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" ,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+facet_wrap(~period)
+
+
+# select species with higest compositions to look at in these graphs
+
+spec <- c("Oak","Maple","Hemlock", "Birch", "Beech", "Ash", "Cherry", "Poplar", "Pine")
+
+ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+geom_point()+facet_wrap(~period)
+
+env.PC0.1 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
+
+env.PCn1.0 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("-1 - 0") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range -1 - 0")
+
+env.PC1.2 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("1 - 2") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 1- 2")
+
+source("R/grid_arrange_shared_legend.R")
+png(height = 6, width = 6, units = 'in', res = 300, "outputs/cluster/composition_by_species_bimodal_bins.png")
+grid_arrange_shared_legend(env.PCn1.0, env.PC0.1, ncol = 1, nrow = 2)
+dev.off()
+
+
+
+ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
+  geom_point()+geom_density2d()+
+  scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
+
 
 write.csv(fc.m, "outputs/cluster/fullcomps_dataset.csv")
 

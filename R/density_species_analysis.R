@@ -1235,7 +1235,7 @@ cherry.diff<- ggplot(oaks, aes(x, y, fill = cherrydiff)) + geom_raster()+coord_e
 
                                                                                                                                                                                                     axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
 
-
+#----------Does the species bimodality correspond to density bimodality?
 
 # add the density to the dataframe to evaluate:
 colnames(FIA.oak)[52] <- "Density"
@@ -1243,11 +1243,18 @@ colnames(PLS.oak)[52] <- "Density"
 
 full <- rbind(FIA.oak, PLS.oak)
 
-ggplot(full[full$PC1bins %in% "-1 - 0",], aes(pc2, Density))+geom_point()+facet_grid(~period)
-ggplot(full[full$PC1bins %in% "1 - 2",], aes(pc2, Density))+geom_point()+facet_wrap(~period)
-ggplot(full[full$PC1bins %in% "0 - 1",], aes(pc2, Density))+geom_point()+facet_wrap(~period)
+png("outputs/cluster/species_comp_vs_density_all_bimodal.png")
+ggplot(full[full$PC1bins %in% c("-1 - 0", "0 - 1", "1 - 2"),], aes(pc2, Density))+geom_point()+facet_grid(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)
+dev.off()
 
 
+a1.2 <- ggplot(full[full$PC1bins %in% "1 - 2",], aes(pc2, Density, color = Oak))+geom_point()+facet_wrap(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+ggtitle('environmental PC 1-2')
+b0.1 <- ggplot(full[full$PC1bins %in% "0 - 1",], aes(pc2, Density, color = Oak))+geom_point()+facet_wrap(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+ggtitle('environmental PC 0-1')
+c.1.0 <- ggplot(full[full$PC1bins %in% "-1 - 0",], aes(pc2, Density, color = Oak))+geom_point()+facet_wrap(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+ggtitle('environmental PC -1 - 0')
+
+png(height = 9, width = 6, units = 'in', res=300,"outputs/cluster/species_comp_vs_density_all_bimodal_by_pc1bins.png")
+grid_arrange_shared_legend(a1.2, b0.1, c.1.0, ncol=1, nrow=3)
+dev.off()
 
 write.csv(fc.m, "outputs/cluster/fullcomps_dataset.csv")
 

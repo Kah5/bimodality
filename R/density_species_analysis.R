@@ -1018,6 +1018,9 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
 
 dev.off()
 
+
+ggplot(plspc2.m, aes(PLSdensity, pc2))+geom_point()+geom_density2d()
+
 #----------------Bimodality criteria over all the data--------------------
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")
 #comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS") 
@@ -1080,8 +1083,15 @@ ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = '
   facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
 
+# get the cells that have data in PLS and FIA
+PLS.cell <- fc.m[fc.m$period %in% "PLS",]
+FIA.cell <- fc.m[fc.m$period %in% "FIA",]
+
+common <- merge(PLS.cell[,c("x", "y","cell")], FIA.cell[,c("x", "y", "cell")], by = c("x", "y", "cell"))
+both <- common$cell
+
 png("outputs/cluster/composition_pc2_hists_by_PC1bins.png")
-ggplot(fc.m, aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
   facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
 
@@ -1092,47 +1102,151 @@ ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Maple, color = period))+geom_p
 ggplot(fc.m[fc.m$PC1bins %in% "0 - 1",], aes(pc2, Elm, color = period))+geom_point()
 
 
-fc.bim <- fc.m[fc.m$PC1bins %in% c("0 - 1", "-1 - 0", "1 - 2"),]
+fc.bim <- fc.m[fc.m$PC1bins %in% c("0 - 1", "-1 - 0", "1 - 2", "2-3"),]
 
 fc.bim.m <- melt(fc.bim, id.vars = c('x', 'y','cell','X', 'period','pc1', 'pc2',
                          'ecotype','bimodal', 'PC1', "PC2", "PC1bins", "PC2bins", "PC1_bins_f"))
 
 
-
+# ploting the environmental bins
 ggplot(fc.bim.m, aes(pc2, value, color = variable))+geom_point()+stat_smooth(position = 'identity')+facet_wrap(~period)
 ggplot(fc.bim.m, aes(PC1, value, color = variable))+geom_point()+facet_wrap(~period)
 
 ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" ,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+facet_wrap(~period)
 
+png("outputs/cluster/PLS_envt_bins_map.png")
+ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()
+dev.off()
 
-# select species with higest compositions to look at in these graphs
-
-spec <- c("Oak","Maple","Hemlock", "Birch", "Beech", "Ash", "Cherry", "Poplar", "Pine")
-
-ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+geom_point()+facet_wrap(~period)
-
-env.PC0.1 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
-            geom_smooth(position = 'identity', method = 'loess')+
-            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
-
-env.PCn1.0 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("-1 - 0") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
-            geom_smooth(position = 'identity', method = 'loess')+
-            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range -1 - 0")
-
-env.PC1.2 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("1 - 2") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
-            geom_smooth(position = 'identity', method = 'loess')+
-            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 1- 2")
-
-source("R/grid_arrange_shared_legend.R")
-png(height = 6, width = 6, units = 'in', res = 300, "outputs/cluster/composition_by_species_bimodal_bins.png")
-grid_arrange_shared_legend(env.PCn1.0, env.PC0.1, ncol = 1, nrow = 2)
+png("outputs/cluster/FIA_envt_bins_map.png")
+ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()
 dev.off()
 
 
 
-ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec,], aes(pc2, value, color = variable))+
-  geom_point()+geom_density2d()+
-  scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
+# select species with higest compositions to look at in these graphs
+
+summary(fc.bim.m)
+spec <- c("Oak","Maple","Hemlock", "Birch", "Beech", "Ash", "Cherry", "Poplar", "Pine", "Elm")
+
+#ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" & fc.bim.m$variable %in% spec & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+geom_point()+facet_wrap(~period)
+
+env.PC0.1 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', "black"), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
+
+env.PCn1.0 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("-1 - 0") & fc.bim.m$variable %in% spec  & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', "black"), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range -1 - 0")
+
+env.PC1.2 <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("1 - 2") & fc.bim.m$variable %in% spec  & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+            geom_smooth(position = 'identity', method = 'loess')+
+            scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', "black"), limits = spec)+xlim(-3,2)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 1- 2")
+
+source("R/grid_arrange_shared_legend.R")
+png(height = 9, width = 6, units = 'in', res = 300, "outputs/cluster/composition_by_species_bimodal_bins.png")
+grid_arrange_shared_legend(env.PCn1.0, env.PC0.1,env.PC1.2, ncol = 1, nrow = 3)
+dev.off()
+
+
+
+env.PC0.1.point <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec  & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+  geom_point()+
+  scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', "black"), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
+
+env.PCn1.0.point <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("-1 - 0") & fc.bim.m$variable %in% spec  & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+  geom_point()+
+  scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', 'black'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range -1 - 0")
+
+env.PC1.2.point <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("1 - 2") & fc.bim.m$variable %in% spec & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+  geom_point()+
+  scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999','black'), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range -1 - 0")
+
+
+png(height = 9, width = 6, units = 'in', res = 300, "outputs/cluster/composition_by_species_bimodal_bins_points.png")
+grid_arrange_shared_legend(env.PCn1.0.point, env.PC0.1.point, env.PC1.2.point, ncol = 1, nrow = 3)
+dev.off()
+
+
+
+# lets find how much composition of each species has changed:
+PLS.oak <- fc.m[fc.m$period %in% "PLS",]
+PLS.oak <- merge(PLS.oak, dens.pr[,c("x", 'y', "cell", "PLSdensity")], by = c("x", "y", 'cell'))
+FIA.oak <- fc.m[fc.m$period %in% "FIA",]
+fcomps <- fia.by.cell
+fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
+FIA.oak <- merge(FIA.oak, fcomps[c("x", 'y', 'cell', "FIAdensity")], by = c('x', "y", "cell"))
+
+
+oaks <- merge(PLS.oak[,c("x", "y","cell", "Oak","Maple","Pine", "Beech", "Hemlock", "Cherry","PLSdensity")], FIA.oak[,c("x", "y", "cell", "Oak", "Maple","Pine", "Beech", "Hemlock", "Cherry", "FIAdensity")], by = c("x", "y", "cell"))
+
+oaks$oakdiff <- oaks$Oak.y - oaks$Oak.x
+oaks$maplediff <- oaks$Maple.y - oaks$Maple.x
+oaks$pinediff <- oaks$Pine.y - oaks$Pine.x
+oaks$beechdiff <- oaks$Beech.y - oaks$Beech.x
+oaks$hemlockdiff <- oaks$Hemlock.y - oaks$Hemlock.x
+oaks$cherrydiff <- oaks$Cherry.y - oaks$Cherry.x
+# negative values = a complete removal of oak on the modern landscape
+# positive values = a 100% increase in oak on the modern landscape, 0 = no change
+
+
+oak.diff <- ggplot(oaks, aes(x, y, fill = oakdiff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+            geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+                                                                                                   axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+
+
+
+maple.diff <- ggplot(oaks, aes(x, y, fill = maplediff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+    geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                     axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                     axis.title.x=element_blank(),
+                                                                                                     axis.title.y=element_blank())+
+    xlab("easting") + ylab("northing") +coord_equal()
+
+
+pine.diff<- ggplot(oaks, aes(x, y, fill = pinediff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+    geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+                                                                                                   axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+
+hemlock.diff<- ggplot(oaks, aes(x, y, fill = hemlockdiff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+                                                                                                   axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+
+
+
+
+beech.diff<- ggplot(oaks, aes(x, y, fill = beechdiff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+                                                                                                   axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+
+
+cherry.diff<- ggplot(oaks, aes(x, y, fill = cherrydiff)) + geom_raster()+coord_equal()+scale_fill_gradient2()+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+
+                                                                                                                                                                                                    axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+
+
+
+# add the density to the dataframe to evaluate:
+colnames(FIA.oak)[52] <- "Density"
+colnames(PLS.oak)[52] <- "Density"
+
+full <- rbind(FIA.oak, PLS.oak)
+
+ggplot(full[full$PC1bins %in% "-1 - 0",], aes(pc2, Density))+geom_point()+facet_grid(~period)
+ggplot(full[full$PC1bins %in% "1 - 2",], aes(pc2, Density))+geom_point()+facet_wrap(~period)
+ggplot(full[full$PC1bins %in% "0 - 1",], aes(pc2, Density))+geom_point()+facet_wrap(~period)
+
 
 
 write.csv(fc.m, "outputs/cluster/fullcomps_dataset.csv")

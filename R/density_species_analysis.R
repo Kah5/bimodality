@@ -830,8 +830,8 @@ ggplot(fc.m, aes(x=PC1, y = pc1,color=period))+geom_point()
 ggplot(fc.m, aes(x=PC2, y = pc1,color=period))+geom_point()
 
 png(width = 6, height = 4, units = 'in', res = 300, "outputs/cluster/species_pc2_envt_pc1.png")
-ggplot(fc.m, aes(x=PC1, y = pc2,color=period))+geom_point(size = 0.5)+theme_bw()+ 
-  ylab("species composition pc2")+xlab("Environmental data pc1")
+ggplot(fc.m, aes(x=PC1, y = pc2,color=period))+geom_point(size = 0.5)+theme_bw()+ #ylim(-2.5, 2.5)+
+  ylab("species composition pc2")+xlab("Environmental data pc1")+geom_density2d()+facet_wrap(~period)
 dev.off()
 
 png(width = 6, height = 4, units = 'in', res = 300, "outputs/cluster/species_pc2_envt_pc1_panels.png")
@@ -1077,6 +1077,7 @@ fc.m$PC1_bins_f = factor(fc.m$PC1bins, levels=c('-5 - -4','-4 - -3',
                                                 '1 - 2', '2 - 3', 
                                                 '3 - 4', '4 - 5', 
                                                 '5 - 6'))
+
 # plot the composition histograms by bin and period:
 png("outputs/cluster/composition_pc1_hists_by_PC1bins.png")
 ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
@@ -1148,6 +1149,9 @@ png(height = 9, width = 6, units = 'in', res = 300, "outputs/cluster/composition
 grid_arrange_shared_legend(env.PCn1.0, env.PC0.1,env.PC1.2, ncol = 1, nrow = 3)
 dev.off()
 
+#ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
+ # geom_density2d(position = 'stack')+
+  #scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33','#a65628','#f781bf','#999999', "black"), limits = spec)+facet_wrap(~period) + theme_bw() + ylab("Composition") + xlab("composition pc2 values")+ggtitle ("Composition over environmental PC1 range 0-1")
 
 
 env.PC0.1.point <- ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec  & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
@@ -1172,11 +1176,26 @@ dev.off()
 # lets find how much composition of each species has changed:
 PLS.oak <- fc.m[fc.m$period %in% "PLS",]
 PLS.oak <- merge(PLS.oak, dens.pr[,c("x", 'y', "cell", "PLSdensity")], by = c("x", "y", 'cell'))
+
 FIA.oak <- fc.m[fc.m$period %in% "FIA",]
 fcomps <- fia.by.cell
 fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
 FIA.oak <- merge(FIA.oak, fcomps[c("x", 'y', 'cell', "FIAdensity")], by = c('x', "y", "cell"))
 
+# look at the places that had more than 50% oak composition
+oak50 <- PLS.oak[PLS.oak$Oak >= 0.50,]$cell
+pls.oak50 <- PLS.oak[PLS.oak$cell %in% oak50,]
+fia.oak50 <- FIA.oak[FIA.oak$cell %in% oak50,]
+full.oak50 <- rbind(pls.oak50[,1:51], fia.oak50)
+
+
+scatter <- ggplot(full.oak50, aes(PC1, pc2, color = period))+geom_point()+theme_bw()+ylab("Species composition PC2")+xlab('Environmental PC1')
+histo <- ggplot(full.oak50, aes(pc2, fill = period))+geom_histogram(alpha=0.5, position = 'identity')+theme_bw()
+source("R/grid_arrange_shared_legend.R")
+
+png("outputs/cluster/PLS_oak_50pct_hist_scatter.png")
+grid_arrange_shared_legend(scatter, histo, nrow=2, ncol=1)
+dev.off()
 
 oaks <- merge(PLS.oak[,c("x", "y","cell", "Oak","Maple","Pine", "Beech", "Hemlock", "Cherry","PLSdensity")], FIA.oak[,c("x", "y", "cell", "Oak", "Maple","Pine", "Beech", "Hemlock", "Cherry", "FIAdensity")], by = c("x", "y", "cell"))
 
@@ -1243,9 +1262,166 @@ colnames(PLS.oak)[52] <- "Density"
 
 full <- rbind(FIA.oak, PLS.oak)
 
-png("outputs/cluster/species_comp_vs_density_all_bimodal.png")
-ggplot(full[full$PC1bins %in% c("-1 - 0", "0 - 1", "1 - 2"),], aes(pc2, Density))+geom_point()+facet_grid(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)
+#--------------------Does the bimodality occur at the same place?-------------
+library(ggExtra)
+# make plots of density vs composition with marginal histograms
+# for PLS
+p <- ggplot(full[full$period %in% "PLS",], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)
+q <- ggMarginal(p, type = "histogram")
+
+
+# for FIA
+b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)
+f<- ggMarginal(b, type = "histogram")
+
+png(width = 5, height = 10, units = "in", res = 200, "outputs/cluster/all_density_vs_comp.png")
+grid.arrange(f,q, ncol=1, top = "All regions")
 dev.off()
+
+# for the PLS places that were significantly bimodal
+p2 <- ggplot(full[full$period %in% "PLS" & full$PC1bins %in% c("0 - 1", "1 - 2", "-1 - 0"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)+ggtitle("PLS")
+q2 <- ggMarginal(p2, type = "histogram")
+
+
+b2 <- ggplot(full[full$period %in% "FIA" & full$PC1bins %in% c("0 - 1", "1 - 2", "-1 - 0"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-3, 2)+ggtitle("FIA")
+f2 <- ggMarginal(b2, type = "histogram")
+
+png(width = 5, height = 10, units = "in", res = 200, "outputs/cluster/sig_bimodal_density_vs_comp.png")
+grid.arrange(f2, q2, ncol=1, top = "Compositional bimodal regions")
+dev.off()
+
+# defining the number of grid cells that support PLS composition bimodality:
+summary(full[full$period %in% "PLS",] )
+
+
+#------------What is the support for/strength of the bimodality?--------------
+# define ecotype for both fia and pls
+ecotype  <- ifelse(full$Density == 0,  "prairie", 
+                             ifelse(full$Density <= 47, "Savanna",
+                                    ifelse(full$Density > 47, "Forest", "Check")))
+full$ecotype <- factor(ecotype)
+
+# for each environmental bin, calculate the ratio of forest to savanna:
+bins <- as.character(unique(full[full$period %in% "PLS",]$PC1_bins_f))
+ratio <- data.frame(bins = bins, 
+                    ratio = NA, 
+                    count = NA)
+
+coeffs <- matrix(NA, length(bins), 2)
+
+
+for(i in 1:length(bins)){
+  df <- summary(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i],]$ecotype)
+  ratio[i,]$ratio <- df[3]/df[1]
+  ratio[i,]$count<- sum(df, na.rm=TRUE)
+    coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'pc2']))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
+    
+    }
+
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins<- data.frame(cbind(coeffs, bins))
+  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+  library(plyr)
+  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+  colnames(coef.new) <- c("low", "high")
+  coef.bins <- cbind(coef.bins, coef.new)
+  
+  #merge bins with the "bins" column
+  merged <- merge(coef.bins, ratio, by = "bins")
+  #criteria for bimodality
+  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+  merged$bimodal <- bi
+  
+  
+  
+saveRDS(merged, "outputs/cluster/PLS_ratio_sav_forest.rds")
+
+merged$bins_factor = factor(merged$bins, levels=c('-5 - -4','-4 - -3',
+                                                '-3 - -2','-2 - -1',
+                                                '-1 - 0', '0 - 1',
+                                                '1 - 2', '2 - 3', 
+                                                '3 - 4', '4 - 5', 
+                                                '5 - 6'))
+
+# get the values for whether the bins are bimodal from above to color by significance:
+
+png("outputs/cluster/ratio_sav_for_comp_bimodality_PLS.png")
+ggplot(merged, aes(bins_factor,ratio, fill = bimodal))+geom_bar(stat='identity')+ylab('ratio of savanna to forest in PLS')+xlab("Environmental PC1 bins")
+dev.off()
+
+png("outputs/cluster/counts_sav_for_comp_bimodality_PLS.png")
+ggplot(merged, aes(bins_factor,count, fill = bimodal))+geom_bar(stat='identity')+ylab('number of grid cells in PLS')+xlab("Environmental PC1 bins")
+dev.off()
+
+
+
+# do the same for FIA:
+bins <- as.character(unique(full[full$period %in% "FIA",]$PC1_bins_f))
+ratiofia <- data.frame(bins = bins, 
+                    ratio = NA, 
+                    count=NA)
+coeffs <- matrix(NA, length(bins), 2)
+
+for(i in 1:length(bins)){
+  df <- summary(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i],]$ecotype)
+  ratiofia[i,]$ratio <- df[3]/df[1]
+  ratiofia[i,]$count <- sum(df, na.rm=TRUE)
+  coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i], 'pc2']))
+  coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
+  #coeffs[i,3]<- bimodality_coefficient(na.omit(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density']))
+  #coeffs[i,4] <- diptest::dip.test(na.omit(density(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density'])$y))$p
+  
+}
+
+coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+coef.bins<- data.frame(cbind(coeffs, bins))
+coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+coef.new <- strsplit(as.character(coef.bins$bins), " - ")
+library(plyr)
+coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
+colnames(coef.new) <- c("low", "high")
+coef.bins <- cbind(coef.bins, coef.new)
+
+#merge bins with the "bins" column
+merged <- merge(coef.bins, ratiofia, by = "bins")
+#criteria for bimodality
+bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+merged$bimodal <- bi
+
+saveRDS(merged, "outputs/cluster/FIA_ratio_sav_forest.rds")
+
+merged$bins_factor = factor(merged$bins, levels=c('-5 - -4','-4 - -3',
+                                                  '-3 - -2','-2 - -1',
+                                                  '-1 - 0', '0 - 1',
+                                                  '1 - 2', '2 - 3', 
+                                                  '3 - 4', '4 - 5', 
+                                                  '5 - 6'))
+
+png("outputs/cluster/ratio_sav_for_comp_bimodality_FIA.png")
+ggplot(merged, aes(bins_factor,ratio, fill=bimodal))+geom_bar(stat='identity')+ylab('ratio of savanna to forest in FIA')+xlab("Environmental PC1 bins")
+dev.off()
+
+png("outputs/cluster/count_sav_for_comp_bimodality_FIA.png")
+ggplot(merged, aes(bins_factor,count, fill=bimodal))+geom_bar(stat='identity')+ylab('count of points in FIA')+xlab("Environmental PC1 bins")
+dev.off()
+
+#------------Define the bimodality in termes of axes of environmetna and composition-------
+# plot composition vs environment:
+fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1bins","period",
+                          'Oak', "Hemlock", "Maple", "Beech", "Pine", "Fir", "Poplar", "Ash", "Basswood", "Birch", "Spruce")], id.vars = c('x', "y", "cell", "PC1", "PC2", "PC1bins", "period"))
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("0 - 1") ,], aes(PC1, value, color = variable))+geom_point()
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("1 - 2") ,], aes(PC1, value, color = variable))+geom_point()
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()
+
+# plot for all of the facets of environment:
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")+facet_wrap(~PC1bins, scales = "free")
+
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")
+
 
 
 a1.2 <- ggplot(full[full$PC1bins %in% "1 - 2",], aes(pc2, Density, color = Oak))+geom_point()+facet_wrap(~period)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+ggtitle('environmental PC 1-2')

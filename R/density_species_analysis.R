@@ -1513,12 +1513,49 @@ dev.off()
 png("outputs/cluster/maps_environmental_space.png")
 ggplot(full, aes(x, y, fill = PC1_bins_f))+geom_raster()+coord_equal()+facet_wrap(~period)+theme_bw()
 dev.off()
+
+# plots of environmental space over the bimodal regions of PC1
+a <-ggplot(dens.pr, aes(PC1, MAP1910))+geom_point()+ylab("Mean Annual Precip. (mm/yr)")
+b <- ggplot(dens.pr, aes(PC1, pasttmean))+geom_point()+ylab("Mean annual Temp. DegC")
+c <- ggplot(dens.pr, aes(PC1, pastdeltaP))+geom_point()+ylab("Precipitation seasonality")
+d <- ggplot(dens.pr, aes(PC1, deltaT))+geom_point()+ylab("Temperature Seasonality")
+e <- ggplot(dens.pr, aes(PC1, sandpct))+geom_point()+ylab('% sand')
+f <- ggplot(dens.pr, aes(PC1, ksat))+geom_point()+ylab("ksat")
+
+png(height = 9, width = 6, units = 'in', res=200, "outputs/cluster/environmental_pca_summary_fig.png")
+grid.arrange(a,b,c,d,e,f, ncol=2, top = "Enviromental variable relationships to PC1")
+dev.off()
+
 # plot composition vs environment:
-fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1bins","period",
-                          'Oak', "Hemlock", "Maple", "Beech", "Pine", "Fir", "Poplar", "Ash", "Basswood", "Birch", "Spruce")], id.vars = c('x', "y", "cell", "PC1", "PC2", "PC1bins", "period"))
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("0 - 1") ,], aes(PC1, value, color = variable))+geom_point()
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("1 - 2") ,], aes(PC1, value, color = variable))+geom_point()
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1bins %in% c("-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()
+
+ggplot(full[full$PC1bins %in% c("0 - 1", "1 - 2", "-1 - 0"),], aes(PC1, Oak))+geom_point()+facet_wrap(period~PC1bins)
+
+ggplot(full[], aes(PC1, Maple))+geom_point()+facet_wrap(~period)
+ggplot(full[], aes(PC1, Beech))+geom_point()+facet_wrap(~period)
+ggplot(full[], aes(PC1, Hemlock))+geom_point()+facet_wrap(~period)
+
+
+fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f","period",
+                          'Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar")], id.vars = c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f", "period"))
+png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("PLS species composition -1 to 2 PC1")
+dev.off()
+
+
+png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("FIA species composition -1 to 2 PC1")
+dev.off()
+
+
+png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS_northern_mn.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("PLS species composition -5 to -3 PC1")
+dev.off()
+
+png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA_northern_mn.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("FIA species composition -5 to -3 PC1")
+dev.off()
+#ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("1 - 2") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)
+#ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)
 
 # plot for all of the facets of environment:
 ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")+facet_wrap(~PC1bins, scales = "free")

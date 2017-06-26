@@ -1409,6 +1409,45 @@ png("outputs/cluster/count_sav_for_comp_bimodality_FIA.png")
 ggplot(merged, aes(bins_factor,count, fill=bimodal))+geom_bar(stat='identity')+ylab('count of points in FIA')+xlab("Environmental PC1 bins")
 dev.off()
 
+#------------Is there a bimodality between FIA and PLS?----------------
+# overall, the pc2 is not significantly bimoal
+png('outputs/cluster/pc2_FIA_PLS_histogram.png')
+a<- ggplot(full, aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = "identity")+xlab("Environmental PC2")+ggtitle("All, colored by period")
+b<- ggplot(full, aes(pc2)) + geom_histogram(alpha = 0.5, position = "identity")+xlab("Environmental PC2")+ggtitle("All (PLS and FIA)")
+grid.arrange(a, b, ncol = 1)
+dev.off()
+
+ggplot(full, aes(pc2, Density, fill = period))+geom_point()
+
+bimodality_coefficient(na.omit(full[, 'pc2']))
+# 0.3428977
+diptest::dip.test(na.omit(density(full[, 'pc2'])$y))$p
+# 0.009320621
+
+#overall, pc1 is not significantly bimodal:
+png("outputs/cluster/pc1_FIA_PLS_histogram.png")
+c<- ggplot(full, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = "identity")+xlab("Environmental PC1")+ggtitle("All, colored by period")
+d<- ggplot(full, aes(pc1)) + geom_histogram(alpha = 0.5, position = "identity")+xlab("Environmental PC1")+ggtitle("All (PLS and FIA)")
+grid.arrange(c, d, ncol = 1)
+dev.off()
+
+bimodality_coefficient(na.omit(full[, 'pc1']))
+#0.3765603
+diptest::dip.test(na.omit(density(full[, 'pc1'])$y))$p
+#0.3765603
+
+#overall, density is not significantly bimodal
+png("outputs/cluster/density_FIA_PLS_histogram.png")
+e <- ggplot(full, aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = "identity")+ggtitle("All, colored by period")
+f <- ggplot(full, aes(Density)) + geom_histogram(alpha = 0.5, position = "identity")+ggtitle("All, PLS and FIA combined")
+grid.arrange(e,f, ncol = 1)
+dev.off()
+
+bimodality_coefficient(na.omit(full[,'Density']))
+#0.3798221
+diptest::dip.test(na.omit(density(full[,'Density'])$y))$p
+#0
+
 #------------Define the bimodality in termes of axes of environmetna and composition-------
 # plot composition vs environment:
 fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1bins","period",

@@ -963,7 +963,7 @@ comp.bimodal.df <- function(data = fc.m, binby, density, time){
   #criteria for bimodality
   
   bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
-  merged$bimodal <- bi
+  merged[,c(paste0('bimodal_',density))] <- bi
   
   
   unique(merged$bimodal)
@@ -986,7 +986,7 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
 colnames(dens.pr)[1:13] <- c("X2", "densbins", "V1dens", "V2dens", "BCdens", "dipPdens", "lowdens", "highdens", "NA.", "X.1", "x", "y", "cell")
 colnames(dens.pr)[86] <- c("bimodaldensity")
-plspc2.m <- merge(pls.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2")], dens.pr, by = c("x", "y", "cell"))
+plspc2.m <- merge(pls.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2",'bimodal_pc2')], dens.pr, by = c("x", "y", "cell"))
 
 
 # map out the places that are bimodal density, bimodal comp, stable both, bimodal both:
@@ -1116,11 +1116,23 @@ ggplot(fc.bim.m, aes(PC1, value, color = variable))+geom_point()+facet_wrap(~per
 ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" ,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+facet_wrap(~period)
 
 png("outputs/cluster/PLS_envt_bins_map.png")
-ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()
+ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+ geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                      axis.title.x=element_blank(),
+                                                                      axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()+scale_fill_manual(values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c',
+    '#fb9a99','#e31a1c','#fdbf6f','#66c2a5','#cab2d6','#6a3d9a', "#878787"))
 dev.off()
 
 png("outputs/cluster/FIA_envt_bins_map.png")
-ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()
+ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+  geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                   axis.title.x=element_blank(),
+                                                                                                   axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()+
+  scale_fill_manual(name = "envPC1 bins",values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c',
+                               '#fb9a99','#e31a1c','#fdbf6f','#66c2a5','#cab2d6','#6a3d9a', '#543005',"#878787"))
+
 dev.off()
 
 
@@ -1263,15 +1275,43 @@ colnames(PLS.oak)[52] <- "Density"
 full <- rbind(FIA.oak, PLS.oak)
 
 #--------------------Does the bimodality occur at the same place?-------------
+# use the comp.bimodal.df function to get the bimodal designations:
+PLSdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "PLS")
+FIAdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "FIA")
+
+PLSpc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "PLS")
+FIApc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "FIA")
+
+
+ggplot(PLSdens, aes(x=x,y=y,fill = bimodal_Density))+geom_raster()
+ggplot(FIAdens, aes(x=x, y=y, fill = bimodal_Density))+geom_raster()
+
+ggplot(PLSpc2, aes(x=x,y=y,fill = bimodal_pc2))+geom_raster()
+ggplot(FIApc2, aes(x=x, y=y, fill = bimodal_pc2))+geom_raster()
+
+# need to merge back into the same df:
+bi.comp <- rbind(PLSpc2[,c("x", "y", 'cell','period','bimodal_pc2')], FIApc2[,c("x", "y", 'cell','period','bimodal_pc2')])
+bi.comp$bimodal_pc2 <- paste0(bi.comp$bimodal_pc2, " Composition")
+bi.dens <- rbind(PLSdens[,c("x", "y", 'cell','period','bimodal_Density')], FIAdens[,c("x", "y", 'cell','period','bimodal_Density')])
+bi.dens$bimodal_Density <- paste0(bi.dens$bimodal_Density, " Density")
+
+bi.df <-merge(bi.comp, bi.dens, by = c('x','y','cell','period'))
+
+full <- merge(full, bi.df, by = c('x','y','cell','period'))
+full$biboth <- paste(full$bimodal_pc2," & ",full$bimodal_Density)
+
 library(ggExtra)
 # make plots of density vs composition with marginal histograms
 # for PLS
-p <- ggplot(full[full$period %in% "PLS",], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('PLS')
+p <- ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('PLS')+facet_wrap(~biboth)
 q <- ggMarginal(p, type = "histogram")
+by.stabilityp<- ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('')+facet_wrap(~biboth)
+
+by.stabilityf<- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('')+facet_wrap(~biboth)
 
 
 # for FIA
-b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")
+b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")
 f<- ggMarginal(b, type = "histogram")
 
 png(width = 5, height = 10, units = "in", res = 200, "outputs/cluster/all_density_vs_comp.png")

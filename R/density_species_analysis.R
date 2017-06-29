@@ -1846,8 +1846,6 @@ ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("-
                     fullspec.m$variable %in% c('Oak', "Fir", "Maple", "Spruce", "Pine", "Poplar", "Tamarack") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("FIA species composition -5 to -3 PC1")
 dev.off()
 
-#ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("1 - 2") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)
-#ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)
 
 # plot for all of the facets of environment:
 ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")+facet_wrap(~PC1bins, scales = "free")
@@ -1865,4 +1863,4 @@ grid_arrange_shared_legend(a1.2, b0.1, c.1.0, ncol=1, nrow=3)
 dev.off()
 
 write.csv(fc.m, "outputs/cluster/fullcomps_dataset.csv")
-
+write.csv(full, "outputs/cluster/full_comp_dens_df.csv")

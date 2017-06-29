@@ -558,15 +558,21 @@ s.scores <- data.frame(s.scores)
 #stressplot(NMDS)
 
 #plot(NMDS)
+ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)
+ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.05,0.1)
+ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.05,0.1)+ylim(-0.05,0.05)
 
 #ordiplot(NMDS,type="n")
 #orditorp(NMDS,display="species",col="red",air=0.01)
 #orditorp(NMDS,display="sites",cex=1.25,air=0.01)
 
 # sycamore and blackgum are outliers outline in terms of MDS1--I removed these to get a better look at species we are interested in:
-png("outputs/cluster/NMDS_full_excluding_outliers.png")
-ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)
+png(height = 4, width = 8, units = "in",res = 200,"outputs/cluster/NMDS_full_excluding_outliers.png")
+full <- ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)
+zoom <- ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)
+grid.arrange(full, zoom, nrow = 1, ncol = 2)
 dev.off()
+
 # MDS2 seems to be the dominant separation of species
 
 fullcomps$MDS1 <- s.scores$MDS1
@@ -578,7 +584,7 @@ ggplot(fullcomps, aes(MDS1, MDS2, color = period))+geom_point(alpha = 0.5)+xlim(
 ggplot(fullcomps, aes(x=x, y=y, fill = MDS1))+geom_raster()+facet_wrap(~period)+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
 ggplot(fullcomps, aes(x=x, y=y, fill = MDS2))+geom_raster()+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
 
-
+ggplot(fullcomps, aes(MDS1, Oak))+geom_point()+facet_wrap(~period)+xlim(-0.05,0.05)
 
 # -----------------------Clustering of FIA data----------------------
 
@@ -807,7 +813,88 @@ dev.off()
 png("outputs/cluster/full_composition_PCA2_maps.png")
 ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
 dev.off()
-                                                                     
+
+#-------is the horeshoe shape present in the density data alone?----------
+density.full <- full.spec[,!names(full.spec) %in% c("Water", "No Tree", "Wet", "PLSdensity")]
+
+plscells <- density.full$cell
+
+density.fia <- fia.by.cell[fia.by.cell$cell %in% plscells, ]
+density.fia <- density.fia[,1:34]
+
+colnames(density.fia) <- c("x" , "y" , "cell"  ,"Alder",       
+                      "Ash" ,"Basswood" ,"Beech", "Birch" ,     
+                      "Black.gum", "Buckeye"    ,    "Cedar.juniper" , "Cherry" ,       
+                      "Dogwood" , "Douglas fir" ,   "Elm"  ,  "Fir",           
+                      "Hackberry"  ,"Hemlock"   ,  "Hickory"  ,   "Ironwood",      
+                      "Maple"   , "Oak"     ,  "Other.hardwood" ,"Other.softwood",
+                      "Pine"   ,  "Poplar"  ,  "Spruce" ,   "Sweet.gum",     
+                      "Sycamore"    ,   "Tamarack"     ,  "Tulip.poplar"  , "Unknown.tree",  
+                      "Walnut","Willow")
+
+density.fia$Fir <- rowSums(density.fia[,c("Douglas fir", "Fir")], na.rm=TRUE)
+
+density.fia <- density.fia[,!names(density.fia) %in% "Douglas fir"]
+
+plscols <- colnames(density.full)
+fiacols <- colnames(density.fia)
+
+notinfia <- plscols[ !plscols %in% fiacols ]
+notinpls <- fiacols[ !fiacols %in% plscols ] 
+
+density.full[,notinpls] <- 0
+density.fia[,notinfia] <-0 
+
+
+#reorder the columns so the comp.inil and comp.umw dataframes match
+density.full <- density.full[ ,order(names(density.full))]
+density.fia <- density.fia[ ,order(names(density.fia))]
+
+# add and fia vs. pls flag:
+density.full$period <- "PLS"
+density.fia$period<- "FIA"
+
+fulldens <- rbind( density.full, density.fia )
+
+#move around the columns
+require(dplyr)
+fulldens<- fulldens %>%
+  dplyr::select(period, everything())
+
+fulldens <- fulldens %>%
+  dplyr::select(cell, everything())
+
+fulldens <- fulldens %>%
+  dplyr::select(y, everything())
+
+fulldens <- fulldens %>%
+  dplyr::select(x, everything())
+
+fulldens <- fulldens[!duplicated(fulldens$cell),] # remove duplicated cells
+fd <- fulldens
+
+fulldens <- fulldens[,!names(fulldens) %in% c("Other.softwood", "No.tree", "Douglas fir", "Sweet.gum")]
+
+dens.pca <- princomp(fulldens[,5:39]) #need to scale to 0 variance
+plot(dens.pca)
+
+biplot(dens.pca)
+scores <- dens.pca$scores
+
+#######fix this below:
+fulldens$pc1 <- scores[,1]
+fulldens$pc2 <- scores[,2]
+
+
+library(ggbiplot)
+source("R/newggbiplot.R")
+
+#png("outputs/cluster/pca_scree_plot.png")
+ggbiplot(dens.pca, pc.biplot = TRUE)+geom_point(data= fulldens, aes(x=pc1, y=pc2, color = period))
+#dev.off()
+
+
+#---------------------------------------------------------------------------------                                                               
 # Is community composition bimodal across the environmental space?
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 dens.pr <- dens.pr[,c('x','y','cell','ecotype','bimodal', "PC1", "PC2")]#, "PC1bins", "PC2bins")]
@@ -1116,26 +1203,29 @@ ggplot(fc.bim.m, aes(PC1, value, color = variable))+geom_point()+facet_wrap(~per
 ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" ,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+facet_wrap(~period)
 
 png("outputs/cluster/PLS_envt_bins_map.png")
-ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+pls.envt <- ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
  geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                       axis.title.x=element_blank(),
                                                                       axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()+scale_fill_manual(values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c',
     '#fb9a99','#e31a1c','#fdbf6f','#66c2a5','#cab2d6','#6a3d9a', "#878787"))
+pls.envt
 dev.off()
 
 png("outputs/cluster/FIA_envt_bins_map.png")
-ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+fia.envt<- ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
   geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                    axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                    axis.title.x=element_blank(),
                                                                                                    axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()+
   scale_fill_manual(name = "envPC1 bins",values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c',
                                '#fb9a99','#e31a1c','#fdbf6f','#66c2a5','#cab2d6','#6a3d9a', '#543005',"#878787"))
-
+fia.envt
 dev.off()
 
-
+png(height = 4, width = 8, units ="in",res=200,"outputs/cluster/PC1_envt_bins_maps.png")
+grid_arrange_shared_legend(fia.envt + ggtitle("FIA"), pls.envt + ggtitle("PLS"), ncol = 2, nrow=1, position = 'right')
+dev.off()
 
 # select species with higest compositions to look at in these graphs
 
@@ -1328,7 +1418,7 @@ ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_de
 
 # for FIA
 b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")
-f<- ggMarginal(b, type = "histogram")
+f <- ggMarginal(b, type = "histogram")
 
 png(width = 5, height = 10, units = "in", res = 200, "outputs/cluster/all_density_vs_comp.png")
 grid.arrange(f,q, ncol=1, top = "All regions")
@@ -1688,7 +1778,7 @@ ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-
 dev.off()
 
 png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA_northern_mn.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("FIA species composition -5 to -3 PC1")
+ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "gam")+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("FIA species composition -5 to -3 PC1")
 dev.off()
 #ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("1 - 2") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)
 #ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-1 - 0") ,], aes(PC1, value, color = variable))+geom_point()+facet_wrap(~variable)

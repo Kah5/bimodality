@@ -549,8 +549,8 @@ dev.off()
 library(vegan)
 fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
 
-s.scores <- readRDS("NMDS.samp.scores.rds")
-v.scores <- readRDS("NMDS.var.scores.rds")
+s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS.rds")
+v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS.rds")
 #NMDS <- readRDS("NMDS.obj.rds") 
 v.scores <- data.frame(v.scores)
 v.scores$species <- row.names(v.scores)
@@ -559,7 +559,7 @@ s.scores <- data.frame(s.scores)
 
 #plot(NMDS)
 ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)
-ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.05,0.1)
+ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.1,0.1)
 ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.05,0.1)+ylim(-0.05,0.05)
 
 #ordiplot(NMDS,type="n")
@@ -569,7 +569,7 @@ ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS
 # sycamore and blackgum are outliers outline in terms of MDS1--I removed these to get a better look at species we are interested in:
 png(height = 4, width = 8, units = "in",res = 200,"outputs/cluster/NMDS_full_excluding_outliers.png")
 full <- ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)
-zoom <- ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)
+zoom <- ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.1, 0.1)
 grid.arrange(full, zoom, nrow = 1, ncol = 2)
 dev.off()
 

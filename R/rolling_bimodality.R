@@ -15,23 +15,25 @@ pls.full <- full[full$period %in% "PLS",]
 #rolling BC Function (this only works if the data are ordered by the environment)
 
 
-rollBC_r = function(x, y, xout, width) { # x and y are the environment val and the density/comp that we want to determin bimodality with
+rollBC_r = function(x, y, xout, width, df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
   
   out <- data.frame(xout = xout,
-                   bc = NA,
-                   pval = NA)
+                    bc = NA,
+                    pval = NA,
+                    n = NA)
   
   for( i in seq_along(xout) ){
     window = x >= (xout[i]-width) & x <= (xout[i]+width)
     out[i,]$bc <-  bimodality_coefficient( na.omit(y[ window ] ) )# what is the BC for places with less than 300 trees per hectare
-    #out[i,]$pval <- diptest::dip.test(na.omit(density(na.omit(y[window]))$y))$p
-    }
-  #out$bimodal <- ifelse(out$bc >= 0.55 & out$pval <= 0.05, "Bimodal", "Stable")
+    out[i,]$pval <- ifelse(length(na.omit(y[window])) > 2,diptest::dip.test(na.omit(density(na.omit(y[window]))$y))$p, NA)
+    out[i,]$n <- length(na.omit( y[ window ]))
+  }
   
-  ggplot(out, aes(x = xout, y = bc))+geom_point()+
-    geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
-    xlab('interval center') + ylab('Bimodality Coefficient') +ggtitle(paste0( 'Bimodality coefficient for binwidth = ', width))
+  df2 <- merge(df, out, by.x = "PC1", by.y = "xout")
+  df2$bimodal <- ifelse(df2$bc >= 0.55 & df2$pval < 0.05, "Bimodal", "Stable")
+  bim2 <- ifelse(y == ordered$Density, "Density", "species pc2")
   
+  ggplot(df2, aes(x= PC1, y = n, color = bimodal))+geom_point()+ggtitle(paste0(bim2, " samples binwidth = ", width))
 }
 
 
@@ -39,18 +41,22 @@ rollBC_r = function(x, y, xout, width) { # x and y are the environment val and t
 ordered <- pls.full[order(pls.full$PC1),]
 ordered$rownum <- 1:length(ordered$PC1)
 
-rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1)
-rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5)
-rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25)
+a<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered)
+b<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered)
+c<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df= ordered)
+d<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df= ordered)
 
-ordered <- pls.full[order(pls.full$PC1),]
-ordered$rownum <- 1:length(ordered$PC1)
+#ordered <- pls.full[order(pls.full$PC1),]
+#ordered$rownum <- 1:length(ordered$PC1)
 
-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1)
-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5)
-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25)
+e <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered)
+f <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered)
+g <-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered)
+h <-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered)
 
-
+png(height = 12, width = 7, units = "in", res = 200, "outputs/cluster/nsamples_rolling_bimodality.png")
+grid.arrange(a,e,b,f,c,g,d,h, ncol = 2, nrow=4)
+dev.off()
 
 
 # make a function that maps out the bimodal area:
@@ -81,8 +87,8 @@ rollBC_map = function(x, y, xout, width, df) { # x and y are the environment val
                                                                                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                         axis.title.x=element_blank(),
                                                                                         axis.title.y=element_blank())+ggtitle(paste0("N samples ", bim2, " width =", width))
-   
-    plot_grid(bim, samp, ncol = 2, nrow = 1, align = "hv")
+   #samp2 <- ggplot(df2, aes(x= PC1, y = n, color = bimodal))+geom_point()
+    plot_grid(bim, samp, ncol = 2, nrow = 1, align = 'hv')
    }
 
 a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered)
@@ -105,3 +111,6 @@ dev.off()
 png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_density_pls.png")
 grid.arrange(e,f,g,h, nrow=4, ncol = 1)
 dev.off()
+
+
+# the previous functions were for the purpuse of visualizing the datasets, now lets output the df:

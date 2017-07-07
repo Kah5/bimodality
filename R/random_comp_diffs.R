@@ -5,6 +5,8 @@ library(gridExtra)
 library(cowplot)
 library(vegan)
 library(cluster)
+library(sp)
+#library()
 
 full <- read.csv("outputs/cluster/full_comp_dens_df.csv")
 
@@ -56,7 +58,7 @@ newdf$PC1bins <- pls.full$PC1bins
 brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
 
 # start with the first grid cell, then find a random grid cell in the same envt:
- for (i in 1:length(pls.full$cell)){ 
+ for (i in length(pls.full$cell)){ 
    
     gridcell <- pls.full[i,]
     grid1 <- pls.full[i,]$cell
@@ -67,7 +69,7 @@ brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
     randcell <- subset[sample(x = nrow(subset) , size = 50, replace = TRUE),]
     
     diffs <- randcell
-    difmean<- randcell[1,]
+    difmean <- randcell[1,]
     # calculate the diffs between the average grid cell
       
         randmeans<- colMeans(randcell[,7:43], na.rm =TRUE)
@@ -83,10 +85,10 @@ brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
     newdf[i, 6:42] <- data.frame( lapply(difmean[7:43], abs) )
     #newdf[i,]$randcell <- randcell$cell
     newdf[i,]$bimodal <- as.factor(gridcell$biboth)
-    
+    cat(i)
  }
 
-
+write.csv(newdf, "outputs/random_comp_differences.csv")
 # ---------Visualize an ordination of these compositional differences-----------------
 # now we want to look at the PCA of these to see if there is any structure
 diffpca <- princomp(newdf[,6:42])
@@ -119,9 +121,9 @@ dev.off()
 
 # ------------Do the comp differences cluster?---------------------------
 # cacluate bray dists
-newdf.bray <- vegdist(newdf[,6:42])
+#newdf.bray <- vegdist(newdf[,6:42])
 
-test.agnes <- agnes(newdf[1:2000,])
+#test.agnes <- agnes(newdf[1:2000,])
 
 # kmeans clustering on the diff values between each grid cell and a random grid cell in the same envt bin:
 mydata <- new[,6:42]
@@ -158,17 +160,68 @@ plot(1:15, wss, type="b", xlab="Number of Clusters",
      pch=20, cex=2)
 
 set.seed(7)
-km2 = kmeans(mydata, 4, nstart=100)
+km2 = kmeans(mydata, 2, nstart=100)
+km5 = kmeans(mydata, 5, nstart = 100)
+km6 = kmeans(mydata, 6, nstart = 100)
+km3 = kmeans(mydata, 3, nstart = 100)
+km4 = kmeans(mydata, 4, nstart = 100)
+km7 = kmeans(mydata, 7, nstart = 100)
+km8 = kmeans(mydata, 8, nstart = 100)
 
 # Examine the result of the clustering algorithm
 km2
 
-newdf$cluster6 <- km2$cluster
+newdf$cluster2 <- km2$cluster
+newdf$cluster3 <- km3$cluster
+newdf$cluster4 <- km4$cluster
+newdf$cluster5 <- km5$cluster
+newdf$cluster6 <- km6$cluster
+newdf$cluster7 <- km7$cluster
+newdf$cluster8 <- km8$cluster
+
+#newdf$cluster3 <- km3$cluster
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
 
 png("outputs/cluster/kmeans_diffs_four.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster6)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
+ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
 dev.off()
 
+
+#X11(width = 12)
+png("outputs/cluster/rand_sample_cluster_2.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster2)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_3.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster3)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_4.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_5.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster5)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_6.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster6)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_7.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster7)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
+
+png("outputs/cluster/rand_sample_cluster_8.png")
+ggplot(newdf, aes(x,y, fill = as.factor(cluster8)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+dev.off()
 
 
 ggplot(newdf, aes(x,y, fill = bimodal))+geom_raster()+coord_equal()
@@ -194,6 +247,8 @@ hist(newdf[newdf$cluster6 == "4",]$bimodal)# a mix, buth mostl 1,2,3
 hist(newdf[newdf$cluster6 == "3",]$bimodal)# mostly bimodal = 3 and 4
 hist(newdf[newdf$cluster6 == "2",]$bimodal)# is mostly bimodal = 4 nd bimoal = 1
 hist(newdf[newdf$cluster6 == "1",]$bimodal)# cluster 1 is mostly bimodal = 4, but poplar
+
+
 # or we could use k-mediods:
 newdf.pam <- pam(newdf[,6:42], k = 4)
 summary(newdf.pam)

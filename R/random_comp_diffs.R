@@ -88,10 +88,14 @@ brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
     cat(i)
  }
 
-write.csv(newdf, "outputs/random_comp_differences.csv")
+#write.csv(newdf, "outputs/random_comp_differences.csv")
+
+newdf <- read.csv("outputs/newdf.csv")
+brays <- read.csv("outputs/brays_full.csv")
+
 # ---------Visualize an ordination of these compositional differences-----------------
 # now we want to look at the PCA of these to see if there is any structure
-diffpca <- princomp(newdf[,6:42])
+diffpca <- princomp(newdf[,7:43])
 
 plot(diffpca)
 biplot(diffpca)
@@ -121,9 +125,6 @@ dev.off()
 
 # ------------Do the comp differences cluster?---------------------------
 # cacluate bray dists
-#newdf.bray <- vegdist(newdf[,6:42])
-
-#test.agnes <- agnes(newdf[1:2000,])
 
 # kmeans clustering on the diff values between each grid cell and a random grid cell in the same envt bin:
 mydata <- new[,6:42]
@@ -150,14 +151,18 @@ dev.off()
 
 #----------------does selected more grid cells and averageing diffs make it less noisy?-------------
 # kmeans clustering on the averaged values:
-mydata <- newdf[,6:42]
+
+mydata <- newdf[,7:43]
 wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
 for (i in 2:15) wss[i] <- sum(kmeans(mydata,
                                      centers=i)$withinss)
+
+png("outputs/cluster/ncluster_within_ssq.png")
 plot(1:15, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares",
      main="Assessing the Optimal Number of Clusters with the Elbow Method",
      pch=20, cex=2)
+dev.off()
 
 set.seed(7)
 km2 = kmeans(mydata, 2, nstart=100)
@@ -182,61 +187,146 @@ newdf$cluster8 <- km8$cluster
 #newdf$cluster3 <- km3$cluster
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
-coordinates(states)<-~long+lat
+coordinates(states) <- ~long+lat
 class(states)
-proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
-mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+proj4string(states) <- CRS("+proj=longlat +datum=NAD83")
+mapdata <-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
+
+#ggplot(newdf, aes(x,y, fill = bimodal))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
 
 
 png("outputs/cluster/kmeans_diffs_four.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
+
+a<- ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
+a
 dev.off()
 
 
 #X11(width = 12)
 png("outputs/cluster/rand_sample_cluster_2.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster2)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+b<- ggplot(newdf, aes(x,y, fill = as.factor(cluster2)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 2")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+b
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_3.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster3)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+c<- ggplot(newdf, aes(x,y, fill = as.factor(cluster3)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 3")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+c
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_4.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+d<- ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 4")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+d
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_5.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster5)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+e<- ggplot(newdf, aes(x,y, fill = as.factor(cluster5)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 5")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+e
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_6.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster6)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+f<- ggplot(newdf, aes(x,y, fill = as.factor(cluster6)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 6")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+f
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_7.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster7)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+g<- ggplot(newdf, aes(x,y, fill = as.factor(cluster7)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 7")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+g
 dev.off()
 
 png("outputs/cluster/rand_sample_cluster_8.png")
-ggplot(newdf, aes(x,y, fill = as.factor(cluster8)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)
+h<- ggplot(newdf, aes(x,y, fill = as.factor(cluster8)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+ggtitle("K = 8")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+h
 dev.off()
 
+png(height = 8, width = 12, units = 'in', res = 300, "outputs/cluster/rand_sample_cluster_maps.png")
+grid.arrange(b,c,d,e,f,g,h, ncol = 4)
+dev.off()
 
 ggplot(newdf, aes(x,y, fill = bimodal))+geom_raster()+coord_equal()
 
 ggplot(newdf, aes(x,y, fill = Hemlock))+geom_raster()
 ggplot(newdf, aes(x,y, fill = Poplar))+geom_raster()
 
-#newdf.m <- melt(newdf[,7:47], id.vars=c("randcell", "bimodal", "PC1", "PC1bins", "cluster6"))
-agg <- aggregate(newdf,by=list(newdf$cluster6), mean)
-means.long<-melt(agg[,c(1,7:43)],id.vars="Group.1")
+
+
+# lets add xy coords to brays and calculate bimodality in brays disimilarity each grid cells
+brays$x <- newdf$x
+brays$y <- newdf$y
+brays$dipP <- NA
+brays$BC <- NA
+
+for (i in 1:8124){
+  brays[i,]$dipP <- diptest::dip.test(density(as.numeric(brays[i,2:51]))$y)$p
+  brays[i,]$BC <- modes::bimodality_coefficient(as.numeric(brays[i,2:51]))
+}
+
+brays$bimodal <- ifelse(brays$dipP < 0.05 & brays$BC >= 0.55, "Bimodal brays", "Unimodal brays")
+
+png("outputs/cluster/bimodal_brays_grid_cell_map.png")
+ggplot(brays, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()
+dev.off()
+
+# Are the clustered areas in cluster 4 bimodal in terms of brays overall?
+
+brays$cluster4 <- newdf$cluster4
+brays$dipPclust <- NA
+brays$BCclust <- NA
+
+for (i in 1:4){
+  val <- brays[brays$cluster4 == i, 2:51]
+  val.m <- melt(val)
+  dipP <- diptest::dip.test(density(as.numeric(val.m$value))$y)$p
+  BC <- modes::bimodality_coefficient(as.numeric(val.m$value))
+  brays[brays$cluster4 == i,]$dipPclust <- dipP
+  brays[brays$cluster4 == i,]$BCclust <- BC
+}
+
+brays$bimodalclust <- ifelse(brays$dipPclust <= 0.05 & brays$BCclust >= 0.55, "Bimodal brays", "Unimodal brays")
+
+ggplot(brays, aes(x, y, fill = bimodalclust))+geom_raster()+coord_equal()
+
+# what do these clusters really look like?
+# species differences averaged for each cluster:
+
+agg <- aggregate(newdf,by=list(newdf$cluster4), mean)
+means.long<-melt(agg[,c(1,8:44)],id.vars="Group.1")
 
 X11(width = 12)
 ggplot(means.long,aes(x=variable,y=value,fill=factor(variable)))+
   geom_bar(stat="identity",position="dodge")+facet_wrap(~Group.1)+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+
+# plot the differences in space:
+newdf.m <- melt(newdf, id.vars = c('X.1', "x", "y", "cell", "period", "X","randcell",
+                                   "bimodal", "PC1", "PC1bins", "cluster2",
+                                   "cluster3", "cluster4", "cluster5", "cluster6",
+                                   "cluster7", "cluster8"))
+
+ggplot(newdf.m, aes(x, y, fill = value))+geom_raster()+coord_equal()+scale_fill_gradientn(colours = rev(terrain.colors(6)))+facet_wrap(~variable, ncol = 10)+theme(axis.ticks = element_blank(), axis.text = element_blank())
+ggplot(newdf, aes(x, y, fill = Hemlock))+geom_raster()+coord_equal()
+ggplot(newdf, aes(x, y, fill = Maple))+geom_raster()+coord_equal()
+ggplot(newdf, aes(x, y, fill = Beech))+geom_raster()+coord_equal()
+ggplot(newdf, aes(x, y, fill = Basswood))+geom_raster()+coord_equal()
 
 summary(newdf[newdf$cluster6 == "4",])
 summary(newdf[newdf$cluster6 == "3",])
@@ -249,34 +339,4 @@ hist(newdf[newdf$cluster6 == "2",]$bimodal)# is mostly bimodal = 4 nd bimoal = 1
 hist(newdf[newdf$cluster6 == "1",]$bimodal)# cluster 1 is mostly bimodal = 4, but poplar
 
 
-# or we could use k-mediods:
-newdf.pam <- pam(newdf[,6:42], k = 4)
-summary(newdf.pam)
 
-mediods <- newdf$cell [newdf.pam$id.med]
-df5 <- newdf[newdf$cell %in% mediods,] # look at the rows that have the mediods
-df5
-
-old_classes <- newdf.pam
-#[1] 49221 29369 17193 16954 11274# mediods
-rem_class5 <- factor(old_classes$clustering,
-                     labels=c('one', # 1,
-                              'two', # 2
-                              'three',#3
-                              "four" 
-                              ))
-                              
-                              
-                    
-
-clust_plot5 <- data.frame(newdf, 
-                          cluster = rem_class5,
-                          clustNum = as.numeric(rem_class5))
-
-b <- ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
-a <- ggplot(clust_plot5, aes(x = x, y=y, fill=bimodal))+geom_raster()
-
-#X11(width = 12)
-png(width = 8, height = 4, units = "in", res = 300, "outputs/cluster/kmediods_diffs_four.png")
-grid.arrange(a,b, ncol = 2)
-dev.off()

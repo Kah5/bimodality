@@ -1113,6 +1113,11 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
 
 dev.off()
 
+ggplot(plspc2.m, aes(x, y, fill= bimodal_pc2))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#762a83','#1b7837'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)), legend.position = c(0.05,0.05),
+                      panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
 
 ggplot(plspc2.m, aes(PLSdensity, pc2))+geom_point()+geom_density2d()
 
@@ -1174,7 +1179,7 @@ fc.m$PC1_bins_f = factor(fc.m$PC1bins, levels=c('-5 - -4','-4 - -3',
                                                 '5 - 6'))
 
 # plot the composition histograms by bin and period:
-png("outputs/cluster/composition_pc1_hists_by_PC1bins.png")
+png(height = 6, width =8,units = 'in',res=300,"outputs/cluster/composition_pc1_hists_by_PC1bins.png")
 ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
   facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
@@ -1186,9 +1191,9 @@ FIA.cell <- fc.m[fc.m$period %in% "FIA",]
 common <- merge(PLS.cell[,c("x", "y","cell")], FIA.cell[,c("x", "y", "cell")], by = c("x", "y", "cell"))
 both <- common$cell
 
-png("outputs/cluster/composition_pc2_hists_by_PC1bins.png")
+png(height = 6, width =8,units = 'in',res=300,"outputs/cluster/composition_pc2_hists_by_PC1bins.png")
 ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
-  facet_wrap(~PC1_bins_f, ncol = 4 )
+  facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")
 dev.off()
 
 # digging into the bimodal places in envtPC1 from -1 to 2:
@@ -1371,6 +1376,11 @@ colnames(FIA.oak)[52] <- "Density"
 colnames(PLS.oak)[52] <- "Density"
 
 full <- rbind(FIA.oak, PLS.oak)
+
+png(height = 6, width =8,units = 'in',res=300, 'outputs/cluster/density_by_period_envtpc1.png')
+ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+xlim(0,800)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )
+dev.off()
 
 #--------------------Does the bimodality occur at the same place?-------------
 # use the comp.bimodal.df function to get the bimodal designations:

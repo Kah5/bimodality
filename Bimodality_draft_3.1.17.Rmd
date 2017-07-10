@@ -89,6 +89,22 @@ fig1A <- ggplot(densitys, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color
 fig1D<- ggplot(densitys, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
         theme_bw(base_size = 10)+ annotate("text", x=0, y=900,label= "D", size = 5)+theme(legend.title=element_blank())
 
+densitys.m <- melt(densitys, id.vars = c('X', 'x', 'y', 'cell'))
+
+png(height = 3, width = 4, units = 'in', res= 300,"outputs/PLS_FIA_overlaid_hist.png")
+ggplot(densitys.m, aes(value, fill = variable)) +geom_histogram(binwidth = 29, alpha=0.7, position = "identity")+scale_fill_manual(values = c("#ef8a62", "#67a9cf"), limits = c('FIAdensity', "PLSdensity")) +xlim(0, 700)+xlab('Tree density (stems/ha)')+ylab("# grid cells")+theme_bw(base_size = 10)
+dev.off()
+
+png(height = 3, width = 4, units = 'in', res= 300,'outputs/PLS_only_hist_dens.png')
+ggplot(densitys.m[densitys.m$variable == "PLSdensity",], aes(value, fill = variable)) +geom_histogram(binwidth = 29, alpha=0.7, color = 'black', position = "identity")+scale_fill_manual(values = c( "#67a9cf"), limits = c( "PLSdensity")) +
+  xlim(0, 700)+xlab('Tree density (stems/ha)')+ylab("# grid cells")+theme_bw(base_size = 10)
+dev.off()
+
+png(height = 3, width = 4, units = 'in', res= 300,"outputs/FIA_only hist_dens.png")
+ggplot(densitys.m[densitys.m$variable == "FIAdensity",], aes(value, fill = variable)) +geom_histogram(binwidth = 29, alpha=0.7, color = 'black', position = "identity")+scale_fill_manual(values = c("#ef8a62"), limits = c('FIAdensity')) +
+  xlim(0, 700)+xlab('Tree density (stems/ha)')+ylab("# grid cells")+theme_bw(base_size = 10)
+dev.off()
+
 dens <- densitys
 dens$diff <- dens$FIAdensity - dens$PLSdensity
 
@@ -116,6 +132,10 @@ dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
 fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)
+
+png("outputs/PLS_5c_bimodality_denisity_map.png")
+fig1C
+dev.off()
 
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 

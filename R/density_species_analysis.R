@@ -943,6 +943,10 @@ png("outputs/cluster/Composition_PC1_histograms.png")
 ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
 dev.off()
 
+#png("outputs/cluster/Composition_PC1_histograms.png")
+ggplot(data = fc, aes(pc1, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+theme_bw()+xlab("Species PC1")
+#dev.off()
+
 library(modes)
 #test for significance
 bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
@@ -1113,11 +1117,12 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
 
 dev.off()
 
+png(height=6, width = 6, units="in", res=300, 'outputs/cluster/map_pls_comp_bimodality.png')
 ggplot(plspc2.m, aes(x, y, fill= bimodal_pc2))+geom_raster()+theme_bw()+
   scale_fill_manual(values = c('#762a83','#1b7837'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  coord_equal()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)), legend.position = c(0.05,0.05),
+  coord_equal()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.8,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)), legend.position = c(0.2,0.1),legend.title=element_blank(),
                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
-
+dev.off()
 
 ggplot(plspc2.m, aes(PLSdensity, pc2))+geom_point()+geom_density2d()
 
@@ -1194,6 +1199,16 @@ both <- common$cell
 png(height = 6, width =8,units = 'in',res=300,"outputs/cluster/composition_pc2_hists_by_PC1bins.png")
 ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
   facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")
+dev.off()
+
+png("outputs/cluster/overlaid_PC2_hists.png")
+ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+   xlab("Species composition PC2")+theme_bw(base_size = 10)
+dev.off()
+
+png("outputs/cluster/overlaid_PC1_hists.png")
+ggplot(fc.m[fc.m$cell %in% both,], aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+  xlab("Species composition PC1")+theme_bw(base_size = 10)
 dev.off()
 
 # digging into the bimodal places in envtPC1 from -1 to 2:
@@ -1752,8 +1767,9 @@ ggplot(full[], aes(PC1, Hemlock))+geom_point()+facet_wrap(~period)
 fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f","period",
                           'Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar", "Fir", "Spruce", "Tamarack", "Cherry", "Maple")], id.vars = c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f", "period"))
 
-png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar"),], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("PLS species composition -1 to 2 PC1")
+png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar"),], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "gam", color = 'black')+xlab("PC1 environment")+
+  facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("PLS species composition -1 to 2 PC1")
 dev.off()
 
 
@@ -1841,8 +1857,12 @@ dev.off()
 
 
 # plot the rest of the species clusteres
-png(height = 10, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("FIA species composition -1 to 2 PC1")
+png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA.png")
+ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar") ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = 'gam', color = 'black')+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("FIA species composition -1 to 2 PC1")
+dev.off()
+
+png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_both_0_1.png")
+ggplot(fullspec.m[fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar") ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = 'gam', color = 'black')+xlab("PC1 environment")+facet_wrap(variable~period, scales = "free", ncol = 2)+ggtitle("species composition 0 to 1 PC1")
 dev.off()
 
 

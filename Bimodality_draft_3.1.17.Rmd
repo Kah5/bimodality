@@ -150,6 +150,18 @@ grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2
 dev.off()
 
 
+# using plotly to make density plots of the data:
+library(plotly)
+test <- dens.pr[,c("MAP1910","PLSdensity")]
+test <- test[complete.cases(test),]
+kd <- MASS::kde2d( test$PLSdensity,test$MAP1910, n = 25)
+p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
+
+p
+
+
+
+
 #lets see how many bimodal grid cells are not in the FIA datasets now:
 bimodal.cells <- bimodalpls[bimodalpls$bimodal == 'Bimodal',]$cell
 
@@ -199,13 +211,13 @@ source("R/map.future.scenarios.R")
 
 
 
-a <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc60bins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+a <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc60bins', density = "PLSdensity", binby2 ='PC1_cc60bins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)+ggtitle("")
 
-b <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+b <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-c <- bimodal.future.NA(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc45bins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+c <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc45bins', density = "PLSdensity", binby2 ='PC1_cc45bins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
 
 

@@ -185,7 +185,10 @@ plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Preci
 #read in soils data--soils data from gssurgo database, aggregated in ArcGIS
 # percent sand 0-100cm soil
 sand8km <- raster("data/8km_UMW_sand1.tif")
+
 plot(sand8km)
+
+
 
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
@@ -534,11 +537,7 @@ proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
-#pdf("outputs/binned_histograms_pr_AGU_12_6_16_large_bins.pdf")
-#png(paste0('outputs/v',version,'/full/PLS_full_density_histogram.png'))#
-#ggplot(dens.pr, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
- # theme_bw(base_size = 25)#+ facet_wrap(~plsprbins)
-#dev.off()
+
 
 
 #-------------------- CREATE HEXBIN PLOTS of Density vs. envtl variables--------------------#
@@ -691,7 +690,7 @@ map.bimodal <- function(data, binby, density){
   coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   
@@ -772,7 +771,7 @@ map.bimodal.5c <- function(data, binby, density){
   coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
@@ -874,7 +873,7 @@ bimodal.future <- function(data, binby, density, binby2){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
@@ -948,7 +947,7 @@ bimodal.future.NA <- function(data, binby, density, binby2, rcp){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
@@ -1074,7 +1073,7 @@ qplot(data=df, x=x, y=y, colour=colour)+stat_ellipse()
 library(scatterplot3d)
 scatterplot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct,color = as.character(df.new$bimodal), angle=20) 
 df.new$color <- 1
-df.new[df.new$bimodal %in% c("Stable"),]$color <- 2
+df.new[df.new$bimodal %in% c("Unimodal"),]$color <- 2
 
 #3d plot of climate space that is bimodal
 png(height = 3, width = 4, units = 'in',res = 300, filename = "outputs/v1.6-5/full/3d-plot-pr_t_sand.png")
@@ -1082,7 +1081,7 @@ s3d <- with(df.new, scatterplot3d( MAP1910, pasttmean, sandpct,color = color, pc
 legend("topleft", inset=.01,      # location and inset
                     bty="n", cex=1,              # suppress legend box, shrink text 50%
                     title="Climate space",
-                    c("Bimodal", "Stable"), fill=c("red", "black"))
+                    c("Bimodal", "Unimodal"), fill=c("red", "black"))
 dev.off()
 
 #another dimension of climate
@@ -1091,7 +1090,7 @@ s3d <- with(df.new, scatterplot3d( MAP1910, deltaT,sandpct, color = color, pch =
 legend("topleft", inset=.01,      # location and inset
        bty="n", cex=1,              # suppress legend box, shrink text 50%
        title="Climate space",
-       c("Bimodal", "Stable"), fill=c("red", "black"))
+       c("Bimodal", "Unimodal"), fill=c("red", "black"))
 dev.off()
 
 plot3d(df.new$pasttmean, df.new$MAP1910, df.new$sandpct, col = df.new$color)

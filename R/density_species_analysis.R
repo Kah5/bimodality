@@ -538,10 +538,10 @@ comp.bimodal <- function(data = fc.m, binby, density, time){
     
     
     #define bimodality
-    #merged$bimodal <- "Stable"
+    #merged$bimodal <- "Unimodal"
     #criteria for bimodality
     
-    bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+    bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
     merged$bimodal <- bi
     
     
@@ -554,7 +554,7 @@ comp.bimodal <- function(data = fc.m, binby, density, time){
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())+
-      scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
+      scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Unimodal"))+
       xlab("easting") + ylab("northing") +coord_equal() 
 
 }
@@ -604,7 +604,7 @@ comp.bimodal.df <- function(data = fc.m, binby, density, time){
   
   
   #define bimodality
-  #merged$bimodal <- "Stable"
+  #merged$bimodal <- "Unimodal"
   #criteria for bimodality
   
   bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
@@ -698,10 +698,10 @@ comp.bimodal.full <- function(data = fc.m, binby, density){
   
   
   #define bimodality
-  #merged$bimodal <- "Stable"
+  #merged$bimodal <- "Unimodal"
   #criteria for bimodality
   
-  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
   merged$bimodal <- bi
   
   
@@ -715,7 +715,7 @@ comp.bimodal.full <- function(data = fc.m, binby, density){
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),
                       axis.title.y=element_blank())+
-    scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Stable"))+
+    scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Unimodal"))+
     xlab("easting") + ylab("northing") +coord_equal() +facet_grid(~period)
   
 }
@@ -1099,7 +1099,7 @@ for(i in 1:length(bins)){
   #merge bins with the "bins" column
   merged <- merge(coef.bins, ratio, by = "bins")
   #criteria for bimodality
-  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+  bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
   merged$bimodal <- bi
   
   
@@ -1163,7 +1163,7 @@ coef.bins <- cbind(coef.bins, coef.new)
 #merge bins with the "bins" column
 merged <- merge(coef.bins, ratiofia, by = "bins")
 #criteria for bimodality
-bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
 merged$bimodal <- bi
 
 saveRDS(merged, "outputs/cluster/FIA_ratio_sav_forest.rds")
@@ -1255,7 +1255,7 @@ coef.bins <- cbind(coef.bins, coef.new)
 #merge bins with the "bins" column
 merged <- merge(coef.bins, ratiofia, by = "bins")
 #criteria for bimodality
-bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Stable")
+bi <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, "Bimodal", "Unimodal")
 merged$bimodal <- bi
 
 saveRDS(merged, "outputs/cluster/full_ratio_sav_forest.rds")

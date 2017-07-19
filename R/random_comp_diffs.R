@@ -93,6 +93,7 @@ brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
 newdf <- read.csv("outputs/newdf.csv")
 brays <- read.csv("outputs/brays_full.csv")
 
+
 # ---------Visualize an ordination of these compositional differences-----------------
 # now we want to look at the PCA of these to see if there is any structure
 diffpca <- princomp(newdf[,7:43])
@@ -128,6 +129,8 @@ dev.off()
 
 # kmeans clustering on the diff values between each grid cell and a random grid cell in the same envt bin:
 mydata <- new[,6:42]
+
+# plot out the within group sum of squares
 wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
 for (i in 2:15) wss[i] <- sum(kmeans(mydata,
                                      centers=i)$withinss)
@@ -149,10 +152,12 @@ ggplot(newdf, aes(x,y, fill = as.factor(cluster6)))+geom_raster()+coord_equal()+
 dev.off()
 
 
-#----------------does selected more grid cells and averageing diffs make it less noisy?-------------
+#----------------doe selected more grid cells and averageing diffs make it less noisy?-------------
 # kmeans clustering on the averaged values:
-
+# make a mydata object that we will cluster on:
 mydata <- newdf[,7:43]
+
+# calculate sum of squares to make the elbow plots:
 wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
 for (i in 2:15) wss[i] <- sum(kmeans(mydata,
                                      centers=i)$withinss)
@@ -160,7 +165,7 @@ for (i in 2:15) wss[i] <- sum(kmeans(mydata,
 png("outputs/cluster/ncluster_within_ssq.png")
 plot(1:15, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares",
-     main="Assessing the Optimal Number of Clusters with the Elbow Method",
+     main="Optimal Number of Clusters with the Elbow Method",
      pch=20, cex=2)
 dev.off()
 
@@ -176,6 +181,7 @@ km8 = kmeans(mydata, 8, nstart = 100)
 # Examine the result of the clustering algorithm
 km2
 
+# add the cluster values to the "newdf"
 newdf$cluster2 <- km2$cluster
 newdf$cluster3 <- km3$cluster
 newdf$cluster4 <- km4$cluster
@@ -184,7 +190,7 @@ newdf$cluster6 <- km6$cluster
 newdf$cluster7 <- km7$cluster
 newdf$cluster8 <- km8$cluster
 
-#newdf$cluster3 <- km3$cluster
+#get map data for the Midwest:
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states) <- ~long+lat
@@ -195,10 +201,10 @@ mapdata <- data.frame(mapdata)
 
 #ggplot(newdf, aes(x,y, fill = bimodal))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
 
-
+# map out the correlations:
 png("outputs/cluster/kmeans_diffs_four.png")
 
-a<- ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
+a <- ggplot(newdf, aes(x,y, fill = as.factor(cluster4)))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
 a
 dev.off()
 

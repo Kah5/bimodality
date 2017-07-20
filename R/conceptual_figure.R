@@ -22,8 +22,8 @@ ggplot(full, aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position =
 dev.off()
 
 png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 5)#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+xlab("Species composition")+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 
 dev.off()
 
@@ -71,7 +71,7 @@ ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")
 dev.off()
 
-png(height = 6, width = 8, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
+png(height = 3, width = 8, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
 ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=4)+xlab("Tree Density")
 dev.off()
@@ -83,4 +83,31 @@ library(plotly)
 
 kd <- MASS::kde2d(one$value, one$climate, n = 25)
 p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
+p
 
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+
+a <- dens.pr[complete.cases(dens.pr),]
+#a <- a[a$PC1 <= 1 & a$PC1 >= 0,]
+kd <- MASS::kde2d(a$PLSdensity, a$PC1, n =  100)
+p <- plot_ly(x = kd$x, y = kd$y, z = t(kd$z)) %>% add_surface() %>%
+layout(
+  title = "Surface plot of Tree density in the Environment",
+  scene = list(
+    xaxis = list(title = "Tree density"),
+    yaxis = list(title = "PC1 environment"),
+    zaxis = list(title = "frequency")
+  ))
+p
+
+library(sm)
+sm.density(cbind(a$PLSdensity, a$PC1), display="image",
+           props=seq(from=5, to=95, by=10), ylab="Tree Density", xlab="Environmental PC1")
+
+test <- sm.density(cbind(a$PLSdensity, a$PC1), display="none",
+           props=seq(from=5, to=95, by=10))
+
+new.df <- data.frame(x = testdf$x[,1],
+           y= testdf$x[,2],
+            freq = testdf$freq)
+psm <- plot_ly(x = new.df$x, y = new.df$y, z = new.df$freq) %>% add_surface()

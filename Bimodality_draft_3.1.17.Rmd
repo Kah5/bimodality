@@ -152,10 +152,18 @@ dev.off()
 
 # using plotly to make density plots of the data:
 library(plotly)
-test <- dens.pr[,c("MAP1910","PLSdensity")]
+test <- dens.pr[,c("PC1","PLSdensity")]
 test <- test[complete.cases(test),]
-kd <- MASS::kde2d( test$PLSdensity,test$MAP1910, n = 25)
-p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
+kd <- MASS::kde2d( test$PC1,test$PLSdensity, n = 25)
+p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()%>%
+  layout(
+    title = "Layout options in a 3d scatter plot",
+    scene = list(
+      xaxis = list(title = "PC1 environment"),
+      yaxis = list(title = "Tree Density"),
+      zaxis = list(title = "frequency")
+    ))
+
 
 p
 
@@ -477,7 +485,7 @@ dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_
 
 
 
-pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+pls.new <- dens.pr[dens.pr$bimodal == "Unimodal",] # remove all bimodal places for now
 pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
 
 pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places

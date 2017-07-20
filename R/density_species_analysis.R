@@ -203,8 +203,8 @@ allf <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_f
 library(vegan)
 fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
 
-s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS.rds")
-v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS.rds")
+s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS_trymax50.rds")
+v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS_trymax50.rds")
 #NMDS <- readRDS("NMDS.obj.rds") 
 v.scores <- data.frame(v.scores)
 v.scores$species <- row.names(v.scores)

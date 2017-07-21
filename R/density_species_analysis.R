@@ -202,22 +202,25 @@ allf <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_f
 #NMDS: run on the CRC
 library(vegan)
 fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
-
+pls.comps <- fullcomps[fullcomps$period %in% "PLS",]
 s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS_trymax50.rds")
 v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS_trymax50.rds")
-#NMDS <- readRDS("NMDS.obj.rds") 
+pls.comps2 <- pls.comps[!names(pls.comps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
+samps <- sample(1:8792, size = 100, replace = FALSE)
+NMDS <- metaMDS(pls.comps2[samps,5:39], distance = 'bray',trymax = 50, smin = 0.1, sratmax = 0.9999999999) 
 v.scores <- data.frame(v.scores)
 v.scores$species <- row.names(v.scores)
 s.scores <- data.frame(s.scores)
-#stressplot(NMDS)
+stressplot(NMDS)
 
-#plot(NMDS)
+plot(NMDS)
 ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)
 ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.1,0.1)
 ggplot(v.scores, aes(MDS1, MDS2))+geom_point()+geom_text(data=v.scores,aes(x=MDS1,y=MDS2,label=species),alpha=0.5)+xlim(-0.05,0.1)+ylim(-0.05,0.05)
 
-#ordiplot(NMDS,type="n")
-#orditorp(NMDS,display="species",col="red",air=0.01)
+ordiplot(NMDS,type="n")
+orditorp(NMDS,display="species",col="red",air=0.01)
+
 #orditorp(NMDS,display="sites",cex=1.25,air=0.01)
 
 # sycamore and blackgum are outliers outline in terms of MDS1--I removed these to get a better look at species we are interested in:
@@ -229,16 +232,18 @@ dev.off()
 
 # MDS2 seems to be the dominant separation of species
 
-fullcomps$MDS1 <- s.scores$MDS1
-fullcomps$MDS2 <- s.scores$MDS2
+pls.comps$MDS1 <- s.scores$MDS1
+pls.comps$MDS2 <- s.scores$MDS2
 
 # it seems like the Oak separates well from pin, hemlock, alder on MDS1
 # but MDS2 separates Oak from cherry, hickory, dogwood, other speices
-ggplot(fullcomps, aes(MDS1, MDS2, color = period))+geom_point(alpha = 0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)+facet_wrap(~period)
-ggplot(fullcomps, aes(x=x, y=y, fill = MDS1))+geom_raster()+facet_wrap(~period)+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
-ggplot(fullcomps, aes(x=x, y=y, fill = MDS2))+geom_raster()+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
+ggplot(pls.comps, aes(MDS1, MDS2, color = period))+geom_point(alpha = 0.5)+xlim(-0.01, 0.015)+ylim(-0.0075,0.005)+facet_wrap(~period)
+ggplot(pls.comps, aes(x=x, y=y, fill = MDS1))+geom_raster()+facet_wrap(~period)+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
+ggplot(pls.comps, aes(x=x, y=y, fill = MDS2))+geom_raster()+scale_fill_gradient(low = 'blue', high='red', limits= c(-0.0025, 0.0025))+facet_wrap(~period)
 
-ggplot(fullcomps, aes(MDS1, Oak))+geom_point()+facet_wrap(~period)+xlim(-0.05,0.05)
+ggplot(pls.comps, aes(MDS1, Maple))+geom_point()
+ggplot(pls.comps, aes(MDS1))+geom_histogram(bins = 50)
+ggplot(pls.comps, aes(MDS2))+geom_histogram()
 
 # -----------------------Clustering of FIA data----------------------
 
@@ -420,6 +425,11 @@ fulldens <- fulldens[!duplicated(fulldens[,c('x',"y","cell","period")]),] # remo
 fd <- fulldens
 
 fulldens <- fulldens[,!names(fulldens) %in% c("Other.softwood", "No.tree", "Douglas fir", "Sweet.gum")]
+summary(scale(fulldens[,5:39]))
+
+standardize <- function(x) {(x - mean(x))/sd(x)}
+X <- apply(fulldens[,5:39], MARGIN=2, FUN=standardize) 
+
 
 dens.pca <- princomp(fulldens[,5:39]) #need to scale to 0 variance
 plot(dens.pca)
@@ -448,6 +458,8 @@ g
 dev.off()
 
 
+ggplot(fulldens, aes(pc1))+geom_histogram()+facet_wrap(~period)
+ggplot(fulldens, aes(pc2))+geom_histogram()+facet_wrap(~period)
 #---------------------------------------------------------------------------------                                                               
 # Is community composition bimodal across the environmental space?
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 

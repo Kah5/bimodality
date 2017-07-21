@@ -14,20 +14,33 @@ full <- rbind(one, two)
 
 full$bins <-  cut(full$climate, breaks = seq(-16, 16, by = 2))
 
+levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "Low",   "(-4,-2]",   "Intermediate",    "(0,2]",    
+                       "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
 
 
 png("outputs/conceptual_fig_mesophication.png")
-ggplot(full, aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
+ggplot(full, aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))#+theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 dev.off()
 
 png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+xlab("Species composition")+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+xlab("Species composition")+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)+coord_flip()#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 
 dev.off()
 
-# conceptual figure for tree density:
+xlab <- c('Species Composition \n')
+xlab <- bquote(.(labNames[1]) ~ decreasing %<->% increasing)
+
+png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
+ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+xlab(expression(atop("Species Composition","Mesic Species         " %<->% "        Oak")))+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                                                 axis.text=element_blank(),
+                                                                                                                                                                 axis.ticks=element_blank())
+  
+dev.off()
+
+#------------- conceptual figure for tree density:
 
 #one <- data.frame(time = "PLS", value = rnorm(n = 1000, mean = 40, sd=20))
 #three <- data.frame(time = "PLS", value = rnorm(n = 1000, mean = 20, sd = 20))
@@ -67,17 +80,39 @@ ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes
 
 # write outputs
 png("outputs/conceptual_fig_density.png")
-ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")
+ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")+coord_flip()
 dev.off()
 
 png(height = 3, width = 8, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
-ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=4)+xlab("Tree Density")
+ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=4)+xlab("Tree Density")+coord_flip()
+dev.off()
+
+levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "Low",   "(-4,-2]",   "Intermediate",    "(0,2]",    
+                       "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
+
+png(height = 3, width = 5, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
+ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity", adjust = 1.3)+theme_bw()+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=3)+xlab("Tree Density")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                                                                   axis.text.x=element_blank(),
+                                                                                                                                                                                   axis.ticks.x=element_blank())
+
 dev.off()
 
 
 ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
+
+
+# Plotin curves
+df <- data.frame(x1 = 0, x2 = 5,x3= 2, x4=6, y1 = 0, y2 = 1, y3 = 4, y4 = 5)
+ggplot()+geom_curve(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "curve"), data = df, curvature = 0.2) +
+  geom_curve(aes(x = x2, y = y2, xend = x3, yend = y3, colour = "segment"), data = df, curvature = 0.2)
+
+
+
+
+
 
 library(plotly)
 

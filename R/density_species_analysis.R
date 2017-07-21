@@ -203,11 +203,11 @@ allf <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_f
 library(vegan)
 fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
 pls.comps <- fullcomps[fullcomps$period %in% "PLS",]
-s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS_trymax50.rds")
-v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS_trymax50.rds")
+s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS_trymax100.rds")
+v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS_trymax100.rds")
 pls.comps2 <- pls.comps[!names(pls.comps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
-samps <- sample(1:8792, size = 100, replace = FALSE)
-NMDS <- metaMDS(pls.comps2[samps,5:39], distance = 'bray',trymax = 50, smin = 0.1, sratmax = 0.9999999999) 
+samps <- sample(1:8792, size = 50, replace = FALSE)
+NMDS <- metaMDS(pls.comps2[samps,5:39], distance = 'bray',trymax = 50, k=2,smin = 0.1, sratmax = 0.9999999999) 
 v.scores <- data.frame(v.scores)
 v.scores$species <- row.names(v.scores)
 s.scores <- data.frame(s.scores)

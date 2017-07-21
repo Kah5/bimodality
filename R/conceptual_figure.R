@@ -32,9 +32,9 @@ dev.off()
 xlab <- c('Species Composition \n')
 xlab <- bquote(.(labNames[1]) ~ decreasing %<->% increasing)
 
-png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+xlab(expression(atop("Species Composition","Mesic Species         " %<->% "        Oak")))+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
+ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw(base_size = 12)+xlab(expression(atop("Species Composition","Mesic Species     " %<->% "     Oak")))+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 3)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                                  axis.text=element_blank(),
                                                                                                                                                                  axis.ticks=element_blank())
   
@@ -93,10 +93,11 @@ levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,
                        "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
 
 png(height = 3, width = 5, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
-ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity", adjust = 1.3)+theme_bw()+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=3)+xlab("Tree Density")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
+ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity", adjust = 1.3)+theme_bw(base_size = 12)+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=3)+xlab("Tree Density \n")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                                                    axis.text.x=element_blank(),
-                                                                                                                                                                                   axis.ticks.x=element_blank())
+                                                                                                                                                                                   axis.ticks.x=element_blank(), 
+                                                                                                                                                                                    )
 
 dev.off()
 

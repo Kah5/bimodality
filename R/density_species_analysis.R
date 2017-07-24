@@ -202,7 +202,7 @@ allf <- ggplot(highest, aes(x=x, y=y, fill = highest)) + geom_raster() + scale_f
 #NMDS: run on the CRC
 library(vegan)
 fullcomps<- read.csv("outputs/cluster/fullcomps.csv")
-pls.comps <- fullcomps[fullcomps$period %in% "PLS",]
+pls.comps <- fullcomps[fullcomps$period %in% "Past",]
 s.scores <- readRDS("outputs/cluster/NMDS.samp.scores.PLS_trymax100.rds")
 v.scores <- readRDS("outputs/cluster/NMDS.var.scores.PLS_trymax100.rds")
 pls.comps2 <- pls.comps[!names(pls.comps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
@@ -300,8 +300,8 @@ comps <- comps[ ,order(names(comps))]
 fcomps <- fcomps[ ,order(names(fcomps))]
 
 # add and fia vs. pls flag:
-comps$period <- "PLS"
-fcomps$period<- "FIA"
+comps$period <- "Past"
+fcomps$period<- "Modern"
 
 fullcomps <- rbind( comps, fcomps )
 
@@ -468,8 +468,8 @@ fc.m <- merge(fc, dens.pr, by = c('x','y','cell'))
 PLSbins<- read.csv('data/PLS_full_dens_pr_with_bins.csv')
 FIAbins <- read.csv('outputs/FIA_pls_density_with_bins.csv')
 
-pls.fc <- fc.m[fc.m$period %in% "PLS",]
-fia.fc <- fc.m[fc.m$period %in% "FIA",]
+pls.fc <- fc.m[fc.m$period %in% "Past",]
+fia.fc <- fc.m[fc.m$period %in% "Modern",]
 
 plsmerged <- merge(pls.fc[!names(pls.fc) %in% c("PC1", "PC2")], PLSbins[,c("x", "y", "cell", "PC1","PC2","PC1bins", "PC2bins")], by = c("x", "y", "cell"))
 
@@ -507,9 +507,9 @@ ggplot(data = fc, aes(pc1, fill = period))+geom_histogram(position = "identity",
 
 library(modes)
 #test for significance
-bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
+bimodality_coefficient(density(fc.m[fc.m$period %in% "Past",]$pc1)$y)
 #[1] 0.7789676
-diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc1)$y)
+diptest::dip.test(density(fc.m[fc.m$period %in% "Past",]$pc1)$y)
 # p valueu =0.4296
 
 png("outputs/cluster/Composition_PC2_histograms.png")
@@ -517,9 +517,9 @@ ggplot(data = fc, aes(pc2, fill = period))+geom_histogram()+facet_wrap(~period,n
 dev.off()
 
 #test for significance
-bimodality_coefficient(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
+bimodality_coefficient(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
 #[1] 0.8892039
-diptest::dip.test(density(fc.m[fc.m$period %in% "PLS",]$pc2)$y)
+diptest::dip.test(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
 # pvalue < 2.2e-16
 # the pls might be significantly bimodal....it has alot of grid cells with slightly negative values
 
@@ -572,15 +572,15 @@ comp.bimodal <- function(data = fc.m, binby, density, time){
 }
 
 png(width = 10, height = 4, units='in',res=300,'outputs/cluster/PLS_composition_pca_maps.png')
-ppc1 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")+ ggtitle("Modes for PLS pc1 of composition")
-ppc2 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")+ ggtitle("Modes for PLS pc2 of composition")
+ppc1 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "Past")+ ggtitle("Modes for PLS pc1 of composition")
+ppc2 <-comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "Past")+ ggtitle("Modes for PLS pc2 of composition")
 grid.arrange(arrangeGrob(ppc1, ppc2,  widths=c(1.1,1.1), ncol=2))
 dev.off()
 
 
 png(width = 10, height = 4, units='in',res=300,'outputs/cluster/FIA_composition_pca_maps.png')
-fpc1 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "FIA")+ ggtitle("Modes for FIA pc1 of composition")
-fpc2 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "FIA")+ ggtitle("Modes for FIA pc2 of composition")
+fpc1 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc1", time= "Modern")+ ggtitle("Modes for FIA pc1 of composition")
+fpc2 <- comp.bimodal(data=fc.m, binby = "PC1bins", density = "pc2", time= "Modern")+ ggtitle("Modes for FIA pc2 of composition")
 grid.arrange(arrangeGrob(fpc1, fpc2,  widths=c(1.1,1.1), ncol=2))
 dev.off()
 
@@ -641,8 +641,8 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 # read in bimodality file from density:
 #dens.bi <- read.csv('data/PLS_full_dens_pr_with_bins.csv')
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
-colnames(dens.pr)[1:13] <- c("X2", "densbins", "V1dens", "V2dens", "BCdens", "dipPdens", "lowdens", "highdens", "NA.", "X.1", "x", "y", "cell")
-colnames(dens.pr)[86] <- c("bimodaldensity")
+colnames(dens.pr)[1:12] <- c("X2", "densbins", "V1dens", "V2dens", "BCdens", "dipPdens", "lowdens", "highdens", "NA.", "x", "y", "cell")
+colnames(dens.pr)[85] <- c("bimodaldensity")
 plspc2.m <- merge(pls.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2",'bimodal_pc2')], dens.pr, by = c("x", "y", "cell"))
 
 
@@ -748,8 +748,8 @@ ggplot(fc.m, aes(pc1, fill = period)) + geom_histogram(alpha = 0.5, position = '
 dev.off()
 
 # get the cells that have data in PLS and FIA
-PLS.cell <- fc.m[fc.m$period %in% "PLS",]
-FIA.cell <- fc.m[fc.m$period %in% "FIA",]
+PLS.cell <- fc.m[fc.m$period %in% "Past",]
+FIA.cell <- fc.m[fc.m$period %in% "Modern",]
 
 common <- merge(PLS.cell[,c("x", "y","cell")], FIA.cell[,c("x", "y", "cell")], by = c("x", "y", "cell"))
 both <- common$cell
@@ -757,6 +757,19 @@ both <- common$cell
 png(height = 6, width =8,units = 'in',res=300,"outputs/cluster/composition_pc2_hists_by_PC1bins.png")
 ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
   facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")
+dev.off()
+
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comphist_by_period_envtpc1_mid.png")
+
+ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 26)+xlim(-3, 2)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()
+dev.off()
+
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comp_smooth_by_period_envtpc1_mid.png")
+ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period))  + geom_density(alpha = 0.5, position = 'identity')+xlim(-3,2)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                              axis.text.x=element_blank(),
+                                                                                                                                              axis.ticks.x=element_blank())+xlab("Species composition PC2")
 dev.off()
 
 png("outputs/cluster/overlaid_PC2_hists.png")
@@ -789,7 +802,7 @@ ggplot(fc.bim.m, aes(PC1, value, color = variable))+geom_point()+facet_wrap(~per
 ggplot(fc.bim.m[fc.bim.m$PC1bins %in% "0 - 1" ,], aes(pc2, value, color = variable))+geom_smooth(position = 'identity', method = 'loess')+facet_wrap(~period)
 
 png("outputs/cluster/PLS_envt_bins_map.png")
-pls.envt <- ggplot(fc.m[fc.m$period %in% "PLS",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+pls.envt <- ggplot(fc.m[fc.m$period %in% "Past",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
  geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                       axis.title.x=element_blank(),
@@ -799,7 +812,7 @@ pls.envt
 dev.off()
 
 png("outputs/cluster/FIA_envt_bins_map.png")
-fia.envt<- ggplot(fc.m[fc.m$period %in% "FIA",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
+fia.envt<- ggplot(fc.m[fc.m$period %in% "Modern",], aes(x,y, fill= PC1_bins_f))+geom_raster()+coord_equal()+theme_bw()+
   geom_polygon( data = mapdata,aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                    axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                    axis.title.x=element_blank(),
@@ -862,10 +875,10 @@ dev.off()
 
 
 # lets find how much composition of each species has changed:
-PLS.oak <- fc.m[fc.m$period %in% "PLS",]
+PLS.oak <- fc.m[fc.m$period %in% "Past",]
 PLS.oak <- merge(PLS.oak, dens.pr[,c("x", 'y', "cell", "PLSdensity")], by = c("x", "y", 'cell'))
 
-FIA.oak <- fc.m[fc.m$period %in% "FIA",]
+FIA.oak <- fc.m[fc.m$period %in% "Modern",]
 fcomps <- fia.by.cell
 fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
 fcomps$FIAdensity <- rowSums(fcomps[,4:34], na.rm=TRUE)
@@ -886,7 +899,7 @@ png("outputs/cluster/PLS_oak_50pct_hist_scatter.png")
 grid_arrange_shared_legend(scatter, histo, nrow=2, ncol=1)
 dev.off()
 
-oaks <- merge(PLS.oak[,c("x", "y","cell", "Oak","Maple","Pine", "Beech", "Hemlock", "Cherry","PLSdensity")], FIA.oak[,c("x", "y", "cell", "Oak", "Maple","Pine", "Beech", "Hemlock", "Cherry", "FIAdensity")], by = c("x", "y", "cell"))
+oaks <- merge(PLS.oak[,c("x", "y","cell", "Oak","Maple","Pine", "Beech", "Hemlock", "Cherry")], FIA.oak[,c("x", "y", "cell", "Oak", "Maple","Pine", "Beech", "Hemlock", "Cherry", "FIAdensity")], by = c("x", "y", "cell"))
 
 oaks$oakdiff <- oaks$Oak.y - oaks$Oak.x
 oaks$maplediff <- oaks$Maple.y - oaks$Maple.x
@@ -956,6 +969,17 @@ ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogra
   facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
 
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/densityhist_by_period_envtpc1_mid.png")
+ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 - 2"), ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 26)+xlim(0,700)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()
+dev.off()
+
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/densitysmooth_by_period_envtpc1_mid.png")
+ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 - 2"), ], aes(Density, fill = period)) + geom_density(alpha = 0.5, position = 'identity')+xlim(0,700)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                               axis.text.x=element_blank(),
+                                                                                                                                               axis.ticks.x=element_blank())
+dev.off()
 #--------------------Does the bimodality occur at the same place?-------------
 # use the comp.bimodal.df function to get the bimodal designations:
 PLSdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "PLS")
@@ -985,20 +1009,20 @@ full$biboth <- paste(full$bimodal_Density," & ",full$bimodal_pc2)
 library(ggExtra)
 # make plots of density vs composition with marginal histograms
 # for PLS
-p <- ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75, alpha = 0.75)+scale_color_manual(values = c('#ca0020',
+p <- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75, alpha = 0.75)+scale_color_manual(values = c('#ca0020',
                                                                                                                                     '#f4a582',
                                                                                                                                     '#92c5de',
                                                                                                                                     '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+theme(legend.position = "bottom")+xlim(-5, 2)+ggtitle('PLS')+guides(color=guide_legend(nrow=2,byrow=TRUE))
 q <- ggMarginal(p, type = "histogram")
 
 # plot out with colors for which is bimodal compositions and density
-by.stabilityp<- ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
+by.stabilityp<- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
                                                                                                                                               '#f4a582',
                                                                                                                                               '#92c5de',
                                                                                                                                               '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+
   ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('PLS')+facet_wrap(~biboth, ncol = 1)
 
-by.stabilityf<- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
+by.stabilityf<- ggplot(full[full$period %in% "Modern",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
                                                                                                                                                '#f4a582',
                                                                                                                                                '#92c5de',
                                                                                                                                                '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle('FIA')+facet_wrap(~biboth, ncol=1)
@@ -1008,7 +1032,7 @@ X11(width = 6)
 full$label <- sample.int(13595, 13595, replace = TRUE)
 full<- full[order(full$label,decreasing=TRUE),]
 
-a<- ggplot(full[full$period %in% "PLS",], aes(pc2, Density, color = biboth))+geom_point(alpha= 0.5)+scale_color_manual(values = c('#ca0020',
+a<- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(alpha= 0.5)+scale_color_manual(values = c('#ca0020',
                                                                                                                                '#f4a582',
                                                                                                                                '#92c5de',
                                                                                                                                '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+
@@ -1021,7 +1045,7 @@ a
 dev.off()
 
 # do the same for FIA
-b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(alpha= 0.5)+scale_color_manual(values = c('#ca0020',
+b <- ggplot(full[full$period %in% "Modern",], aes(pc2, Density, color = biboth))+geom_point(alpha= 0.5)+scale_color_manual(values = c('#ca0020',
                                                                                                                                   '#f4a582',
                                                                                                                                   '#92c5de',
                                                                                                                                   '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+
@@ -1040,7 +1064,7 @@ dev.off()
 
 
 # for FIA
-b <- ggplot(full[full$period %in% "FIA",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
+b <- ggplot(full[full$period %in% "Modern",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
                                                                                                                                     '#f4a582',
                                                                                                                                     '#92c5de',
                                                                                                                                     '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+theme(legend.position = "bottom")+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")+guides(color=guide_legend(nrow=2,byrow=TRUE))
@@ -1052,11 +1076,11 @@ dev.off()
 
 #---------------- subsets of plots for only bimodal places-----------------------------
 # for the PLS places that were significantly bimodal
-p2 <- ggplot(full[full$period %in% "PLS" & full$PC1bins %in% c("0 - 1", "1 - 2", "-5 - -4", "-4 - -3"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("PLS")
+p2 <- ggplot(full[full$period %in% "Past" & full$PC1bins %in% c("0 - 1", "1 - 2", "-5 - -4", "-4 - -3"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("PLS")
 q2 <- ggMarginal(p2, type = "histogram")
 
 
-b2 <- ggplot(full[full$period %in% "FIA" & full$PC1bins %in% c("0 - 1", "1 - 2", "-5 - -4", "-4 - -3"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")
+b2 <- ggplot(full[full$period %in% "Modern" & full$PC1bins %in% c("0 - 1", "1 - 2", "-5 - -4", "-4 - -3"),], aes(pc2, Density))+geom_point()+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+xlim(-5, 2)+ggtitle("FIA")
 f2 <- ggMarginal(b2, type = "histogram")
 
 png(width = 5, height = 10, units = "in", res = 200, "outputs/cluster/sig_bimodal_density_vs_comp.png")
@@ -1066,7 +1090,7 @@ dev.off()
 
 
 # defining the number of grid cells that support PLS composition bimodality:
-summary(full[full$period %in% "PLS",] )
+summary(full[full$period %in% "Past",] )
 
 
 #------------What is the support for/strength of the bimodality?--------------
@@ -1077,7 +1101,7 @@ ecotype  <- ifelse(full$Density == 0,  "prairie",
 full$ecotype <- factor(ecotype)
 
 # for each environmental bin, calculate the ratio of forest to savanna:
-bins <- as.character(unique(full[full$period %in% "PLS",]$PC1_bins_f))
+bins <- as.character(unique(full[full$period %in% "Past",]$PC1_bins_f))
 ratio <- data.frame(bins = bins, 
                     ratio = NA, 
                     count = NA,
@@ -1088,13 +1112,13 @@ coeffs <- matrix(NA, length(bins), 2)
 
 library(modes)
 for(i in 1:length(bins)){
-  df <- summary(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i],]$ecotype)
+  df <- summary(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i],]$ecotype)
   ratio[i,]$ratio <- df[3]/df[1]
   ratio[i,]$count<- sum(df, na.rm=TRUE)
   ratio[i,]$savanna <- df[3]
   ratio[i,]$forest <- df[1]
-    coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'pc2']))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
+    coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'pc2']))
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
     
     }
 
@@ -1140,7 +1164,7 @@ dev.off()
 
 
 # do the same for FIA:
-bins <- as.character(unique(full[full$period %in% "FIA",]$PC1_bins_f))
+bins <- as.character(unique(full[full$period %in% "Modern",]$PC1_bins_f))
 ratiofia <- data.frame(bins = bins, 
                     ratio = NA, 
                     count=NA,
@@ -1150,15 +1174,15 @@ ratiofia <- data.frame(bins = bins,
 coeffs <- matrix(NA, length(bins), 2)
 
 for(i in 1:length(bins)){
-  df <- summary(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i],]$ecotype)
+  df <- summary(full[full$period %in% "Modern" & full$PC1_bins_f %in% bins[i],]$ecotype)
   ratiofia[i,]$ratio <- df[3]/df[1]
   ratiofia[i,]$count <- sum(df, na.rm=TRUE)
   ratiofia[i,]$savanna <- df[3]
   ratiofia[i,]$forest <- df[1]
-  coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i], 'pc2']))
-  coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "FIA" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
-  #coeffs[i,3]<- bimodality_coefficient(na.omit(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density']))
-  #coeffs[i,4] <- diptest::dip.test(na.omit(density(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density'])$y))$p
+  coeffs[i,1]<- bimodality_coefficient(na.omit(full[full$period %in% "Modern" & full$PC1_bins_f %in% bins[i], 'pc2']))
+  coeffs[i,2] <- diptest::dip.test(na.omit(density(full[full$period %in% "Modern" & full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
+  #coeffs[i,3]<- bimodality_coefficient(na.omit(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'Density']))
+  #coeffs[i,4] <- diptest::dip.test(na.omit(density(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'Density'])$y))$p
   
 }
 
@@ -1249,8 +1273,8 @@ for(i in 1:length(bins)){
   ratiofia[i,]$count <- sum(df, na.rm=TRUE)
   coeffs[i,1]<- bimodality_coefficient(na.omit(full[ full$PC1_bins_f %in% bins[i], 'pc2']))
   coeffs[i,2] <- diptest::dip.test(na.omit(density(full[ full$PC1_bins_f %in% bins[i], 'pc2'])$y))$p
-  #coeffs[i,3]<- bimodality_coefficient(na.omit(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density']))
-  #coeffs[i,4] <- diptest::dip.test(na.omit(density(full[full$period %in% "PLS" & full$PC1_bins_f %in% bins[i], 'Density'])$y))$p
+  #coeffs[i,3]<- bimodality_coefficient(na.omit(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'Density']))
+  #coeffs[i,4] <- diptest::dip.test(na.omit(density(full[full$period %in% "Past" & full$PC1_bins_f %in% bins[i], 'Density'])$y))$p
   
 }
 
@@ -1327,83 +1351,83 @@ fullspec.m <- melt(full[,c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f","period"
                           'Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar", "Fir", "Spruce", "Tamarack", "Cherry", "Maple")], id.vars = c('x', "y", "cell", "PC1", "PC2", "PC1_bins_f", "period"))
 
 png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar"),], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "gam", color = 'black')+xlab("PC1 environment")+
+ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar"),], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "gam", color = 'black')+xlab("PC1 environment")+
   facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("PLS species composition -1 to 2 PC1")
 dev.off()
 
 
 
 # I have to manually add histgrams marginally because this doesnt work in facet_wrap..annoying
-oak <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Oak" ,], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition 0 to 1 PC1")+
+oak <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Oak" ,], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 oak<- ggMarginal(oak, type = "histogram")
 
-hem <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition 0 to 1 PC1")+
+hem <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 hem<- ggMarginal(hem, type = "histogram")
 
-maple <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition 0 to 1 PC1")+
+maple <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 maple<- ggMarginal(maple, type = "histogram")
 
-beech <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition 0 to 1 PC1")+
+beech <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 beech<- ggMarginal(beech, type = "histogram")
 
-pine <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition 0 to 1 PC1")+
+pine <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 pine<- ggMarginal(pine, type = "histogram")
 
-poplar <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition 0 to 1 PC1")+
+poplar <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("0 - 1") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition 0 to 1 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 poplar <- ggMarginal(poplar, type = "histogram")
 
 # plot the other places:
-oakn1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Oak",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition -1 to 0 PC1")+
+oakn1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Oak",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 oakn1<- ggMarginal(oakn1, type = "histogram")
 
-hemn1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition -1 to 0 PC1")+
+hemn1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 hemn1<- ggMarginal(hemn1, type = "histogram")
 
-maplen1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition -1 to 0 PC1")+
+maplen1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 maplen1<- ggMarginal(maplen1, type = "histogram")
 
-beechn1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition -1 to 0 PC1")+
+beechn1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 beechn1<- ggMarginal(beechn1, type = "histogram")
 
-pinen1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition -1 to 0 PC1")+
+pinen1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 pinen1<- ggMarginal(pinen1, type = "histogram")
 
-poplarn1 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition -1 to 0 PC1")+
+poplarn1 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-1 - 0") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition -1 to 0 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 poplarn1 <- ggMarginal(poplarn1, type = "histogram")
 
-oak2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Oak",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition 1 - 2 PC1")+
+oak2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Oak",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS Oak composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 oak2<- ggMarginal(oak2, type = "histogram")
 
-hem2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition 1 - 2 PC1")+
+hem2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Hemlock",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS hemlock composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 hem2<- ggMarginal(hem2, type = "histogram")
 
-maple2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition 1 - 2 PC1")+
+maple2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Maple",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS maple composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 maple2<- ggMarginal(maple2, type = "histogram")
 
-beech2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition 1 - 2 PC1")+
+beech2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Beech",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS beech composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 beech2<- ggMarginal(beech2, type = "histogram")
 
-pine2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition 1 - 2 PC1")+
+pine2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Pine",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS pine composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 pine2<- ggMarginal(pine2, type = "histogram")
 
-poplar2 <- ggplot(fullspec.m[fullspec.m$period %in% "PLS" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition 1 - 2 PC1")+
+poplar2 <- ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("1 - 2") & fullspec.m$variable %in% "Poplar",], aes(PC1, value))+geom_point()+xlab("PC1 environment")+ggtitle("PLS poplar composition 1 - 2 PC1")+
   theme(plot.title = element_text(hjust = 0.5))
 poplar2 <- ggMarginal(poplar2, type = "histogram")
 
@@ -1417,7 +1441,7 @@ dev.off()
 
 # plot the rest of the species clusteres
 png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar") ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = 'gam', color = 'black')+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("FIA species composition -1 to 2 PC1")
+ggplot(fullspec.m[fullspec.m$period %in% "Modern" & fullspec.m$PC1_bins_f %in% c("0 - 1","1 - 2","-1 - 0") & fullspec.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech", "Pine", "Poplar") ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = 'gam', color = 'black')+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 3)+ggtitle("FIA species composition -1 to 2 PC1")
 dev.off()
 
 png(height = 10, width = 7, units = 'in', res= 300, "outputs/cluster/species_composition_changes_both_0_1.png")
@@ -1426,20 +1450,20 @@ dev.off()
 
 
 png(height = 12, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_PLS_northern_mn.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") &  
+ggplot(fullspec.m[fullspec.m$period %in% "Past" & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") &  
                     fullspec.m$variable %in% c('Oak', "Fir", "Maple", "Spruce", "Pine", "Poplar", "Tamarack") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("PLS species composition -5 to -3 PC1")
 dev.off()
 
 png(height = 12, width = 6, units = 'in', res= 300, "outputs/cluster/species_composition_changes_FIA_northern_mn.png")
-ggplot(fullspec.m[fullspec.m$period %in% 'FIA' & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") &
+ggplot(fullspec.m[fullspec.m$period %in% "Modern" & fullspec.m$PC1_bins_f %in% c("-4 - -3","-5 - -4") &
                     fullspec.m$variable %in% c('Oak', "Fir", "Maple", "Spruce", "Pine", "Poplar", "Tamarack") ,], aes(PC1, value, color = variable))+geom_point()+xlab("PC1 environment")+facet_wrap(variable~PC1_bins_f, scales = "free_x", ncol = 2)+ggtitle("FIA species composition -5 to -3 PC1")
 dev.off()
 
 
 # plot for all of the facets of environment:
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")+facet_wrap(~PC1bins, scales = "free")
+ggplot(fullspec.m[fullspec.m$period %in% "Past"  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")+facet_wrap(~PC1bins, scales = "free")
 
-ggplot(fullspec.m[fullspec.m$period %in% 'PLS'  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")
+ggplot(fullspec.m[fullspec.m$period %in% "Past"  ,], aes(PC1, value, color = variable))+geom_point()+stat_smooth(method = "loess")
 
 
 

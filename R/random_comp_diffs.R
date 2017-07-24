@@ -199,7 +199,7 @@ proj4string(states) <- CRS("+proj=longlat +datum=NAD83")
 mapdata <-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
-#ggplot(newdf, aes(x,y, fill = bimodal))+geom_raster()+coord_equal()+guides(fill=guide_legend(title="Cluster"))
+
 
 # map out the correlations:
 png("outputs/cluster/kmeans_diffs_four.png")
@@ -313,16 +313,28 @@ ggplot(brays, aes(x, y, fill = bimodalclust))+geom_raster()+coord_equal()
 
 # what do these clusters really look like?
 # species differences averaged for each cluster:
-
-agg <- aggregate(newdf,by=list(newdf$cluster4), mean)
+test <- newdf[! names(newdf) %in% c("randcell", 'period'),]
+agg <- aggregate(newdf, by=list(newdf$cluster4), mean)
 means.long<-melt(agg[,c(1,8:44)],id.vars="Group.1")
 
 X11(width = 12)
 ggplot(means.long,aes(x=variable,y=value,fill=factor(variable)))+
   geom_bar(stat="identity",position="dodge")+facet_wrap(~Group.1)+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+common.spec <- as.character(unique(means.long[means.long$value > 0.07,]$variable))
 
-# plot the differences in space:
+set.seed(12)
+p<- ggplot(means.long[means.long$variable %in% common.spec,],aes(x=variable,y=value,fill=factor(variable)))+
+  geom_bar(stat="identity")+facet_wrap(~Group.1)+ theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.1))+ylab('Mean species differences within clusters')+xlab(' ')
+cols <- c("#E65C5CFF", "#775CE6FF", "#CA5CE6FF", "#E6AE5CFF", "#5C93E6FF", "#E65CAEFF",
+          "#5CE693FF", "#5CE6E6FF", "#77E65CFF", "#CAE65CFF")
+p<- p + scale_fill_manual(values=cols)+theme_bw()+theme(legend.title = element_blank())
+
+png(width = 7, height = 6, units = 'in',res = 200,"outputs/cluster/mean_species_diffs_clust4.png")
+p
+dev.off()
+
+# plot the differences in space: 
 newdf.m <- melt(newdf, id.vars = c('X.1', "x", "y", "cell", "period", "X","randcell",
                                    "bimodal", "PC1", "PC1bins", "cluster2",
                                    "cluster3", "cluster4", "cluster5", "cluster6",

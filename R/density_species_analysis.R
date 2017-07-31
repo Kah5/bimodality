@@ -331,7 +331,7 @@ fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "pe
 
 
 # pca on the scaled data
-full.pca <- princomp(scale(fullcomps[,5:39])) #scale to 0 variance
+full.pca <- princomp(scale(fullcomps[,6:ncol(fullcomps)])) #scale to 0 variance
 plot(full.pca)
 
 biplot(full.pca)
@@ -498,12 +498,18 @@ hist(fc.m$pc2) # same with pc2
 
 # how about FIA or PLS by itself?
 png("outputs/cluster/Composition_PC1_histograms.png")
-ggplot(data = fc, aes(pc1, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
+ggplot(data = fc, aes(pc2, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
 dev.off()
 
-#png("outputs/cluster/Composition_PC1_histograms.png")
-ggplot(data = fc, aes(pc1, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+theme_bw()+xlab("Species PC1")
-#dev.off()
+png(height = 6, width = 5, units = 'in',res = 300, "outputs/cluster/Composition_pc2_histogram_overlay.png")
+ggplot(data = fc, aes(pc2, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+theme_bw(base_size = 15)+xlab("Species PC2")+
+  coord_flip()+xlim(2.5,-5)
+dev.off()
+
+png(height = 4, width = 7, units = 'in',res = 300, "outputs/cluster/Composition_pc2_histogram_overlay_horizontal.png")
+ggplot(data = fc, aes(pc2, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+theme_bw(base_size = 15)+xlab("Species PC2")+
+  xlim(2.5,-5)
+dev.off()
 
 library(modes)
 #test for significance
@@ -521,7 +527,6 @@ bimodality_coefficient(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
 #[1] 0.8892039
 diptest::dip.test(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
 # pvalue < 2.2e-16
-# the pls might be significantly bimodal....it has alot of grid cells with slightly negative values
 
 # Using the PC1 bins of with add the data -- FIA or PLS:
 library(modes)
@@ -588,7 +593,7 @@ dev.off()
 #data = fc.m
 #binby = "PC1bins"
 #density = "pc2"
-#time = "FIA"
+#time = "Modern"
 
 
 comp.bimodal.df <- function(data = fc.m, binby, density, time){
@@ -629,8 +634,8 @@ comp.bimodal.df <- function(data = fc.m, binby, density, time){
   merged
 }
 
-pls.pc1 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc1", time= "PLS")
-pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= "PLS")
+pls.pc1 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc1", time= "Past")
+pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= "Past")
 
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
@@ -670,7 +675,7 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
     '#f4a582',
     '#92c5de',
     '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  coord_equal()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
                       panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
 
 dev.off()
@@ -759,10 +764,12 @@ ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alp
   facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")
 dev.off()
 
-png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comphist_by_period_envtpc1_mid.png")
+# zoom in on intermediate environment space:
+png(height = 4, width = 6, units = 'in', res = 300, "outputs/cluster/comphist_by_period_envtpc1_mid.png")
 
-ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 26)+xlim(-3, 2)+
-  facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()
+ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 26)+xlim(2.5, -3)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")+#scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+
+  coord_flip()+theme_bw(base_size =15)+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
 dev.off()
 
 png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comp_smooth_by_period_envtpc1_mid.png")
@@ -793,6 +800,21 @@ fc.bim <- fc.m[fc.m$PC1bins %in% c("0 - 1", "-1 - 0", "1 - 2", "2-3"),]
 
 fc.bim.m <- melt(fc.bim, id.vars = c('x', 'y','cell','X', 'period','pc1', 'pc2',
                          'ecotype','bimodal', 'PC1', "PC2", "PC1bins", "PC2bins", "PC1_bins_f"))
+
+impt.spec <- fc.bim.m[fc.bim.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech"),] 
+impt.spec$variable_f  = factor(impt.spec$variable, levels=c('Oak','Maple','Hemlock','Beech'))
+
+  
+png(height = 3, width = 9, units = 'in',res=300,'outputs/cluster/species_composition_nonzero_mid_hists.png')
+ggplot(impt.spec[ impt.spec$value > 0 & impt.spec$PC1_bins_f %in% c("-1 - 0", "0 - 1", "1 - 2") & impt.spec$cell %in% both,], aes(value*100, fill = period))+geom_histogram(position = 'identity', alpha = 0.5)+facet_wrap(~variable_f, ncol = 4)+
+  xlab("Species Percent Composition")+theme_bw(base_size = 12)
+dev.off()
+
+#ggplot(fc.bim.m[fc.bim.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech") & fc.bim.m$value > 0 & fc.bim.m$PC1_bins_f %in% c("-1 - 0", "0 - 1", "1 - 2"),], aes(value*100,pc2, fill = period))+geom_point()+facet_wrap(~variable)+
+ # xlab("Species Percent Composition")
+
+ggplot(fc.bim.m[fc.bim.m$variable %in% c('Oak', "Hemlock", "Maple", "Beech") & fc.bim.m$value > 0,], aes(PC1,value))+geom_point()+facet_wrap(~variable)
+
 
 
 # ploting the environmental bins
@@ -849,6 +871,8 @@ source("R/grid_arrange_shared_legend.R")
 png(height = 9, width = 6, units = 'in', res = 300, "outputs/cluster/composition_by_species_bimodal_bins.png")
 grid_arrange_shared_legend(env.PCn1.0, env.PC0.1,env.PC1.2, ncol = 1, nrow = 3)
 dev.off()
+
+
 
 #ggplot(fc.bim.m[fc.bim.m$PC1bins %in% c("0 - 1") & fc.bim.m$variable %in% spec & fc.bim.m$cell %in% both,], aes(pc2, value, color = variable))+
  # geom_density2d(position = 'stack')+
@@ -969,9 +993,10 @@ ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogra
   facet_wrap(~PC1_bins_f, ncol = 4 )
 dev.off()
 
-png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/densityhist_by_period_envtpc1_mid.png")
+png(height = 4, width = 6, units = 'in', res = 300, "outputs/cluster/densityhist_by_period_envtpc1_mid.png")
 ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 - 2"), ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 26)+xlim(0,700)+
-  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw(base_size = 12)+#scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+
+  coord_flip()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
 dev.off()
 
 png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/densitysmooth_by_period_envtpc1_mid.png")

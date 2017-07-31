@@ -5,8 +5,8 @@ library(ggplot2)
 x3 = rnorm(2000, -3, 2)
 x4 = rnorm(2000,3,2)
 x3 <- c(x3,x4)
-one <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = -2, sd = 2), climate = x3)
-two <- data.frame(time = "Past", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
+one <- data.frame(time = "Past", value = rnorm(n = 4000, mean = -2, sd = 2), climate = x3)
+two <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
 full <- rbind(one, two)
 
 
@@ -23,17 +23,17 @@ ggplot(full, aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))#+theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 dev.off()
 
-png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
+#png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
 ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+xlab("Species composition")+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)+coord_flip()#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 
-dev.off()
+#dev.off()
 
 xlab <- c('Species Composition \n')
 xlab <- bquote(.(labNames[1]) ~ decreasing %<->% increasing)
 
 png(height = 3, width = 5, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw(base_size = 12)+xlab(expression(atop("Species Composition","Mesic Species     " %<->% "     Oak")))+
+ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw(base_size = 12)+xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 3)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                                  axis.text=element_blank(),
                                                                                                                                                                  axis.ticks=element_blank())

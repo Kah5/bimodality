@@ -988,6 +988,10 @@ colnames(PLS.oak)[52] <- "Density"
 
 full <- rbind(FIA.oak, PLS.oak)
 
+png(height = 6, width = 4, units = "in", res = 300, "outputs/cluster/density_histogram_masked.png")
+ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 25)+xlim(0,700)+coord_flip()+theme_bw(base_size = 12)+xlab("Tree Density (stems/ha)")
+dev.off()
+
 png(height = 6, width =8,units = 'in',res=300, 'outputs/cluster/density_by_period_envtpc1.png')
 ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+xlim(0,800)+
   facet_wrap(~PC1_bins_f, ncol = 4 )

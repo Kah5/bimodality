@@ -9,6 +9,16 @@ one <- data.frame(time = "Past", value = rnorm(n = 4000, mean = -2, sd = 2), cli
 two <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
 full <- rbind(one, two)
 
+library(ggplot2) 
+
+# make dummy datasets of Modern and PLS:
+
+x3 = rnorm(2000, -3, 2)
+x4 = rnorm(2000,3,2)
+x3 <- c(x3,x4)
+one <- data.frame(time = "Past", value = rnorm(n = 4000, mean = -2, sd = 2), climate = x3)
+two <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
+full <- rbind(one, two)
 
 # use the label.breaks function and cut to cut environmental data up into different bins
 

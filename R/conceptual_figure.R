@@ -4,10 +4,13 @@ library(ggplot2)
 
 x3 = rnorm(2000, -3, 2)
 x4 = rnorm(2000,3,2)
-x3 <- c(x3,x4)
-one <- data.frame(time = "Past", value = rnorm(n = 4000, mean = -2, sd = 2), climate = x3)
-two <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
-full <- rbind(one, two)
+x3 <- c(x3, x4)
+x3<- x3[order(x3)]
+one <- data.frame(time = "Past", value = rnorm(n = 1100, mean = -2, sd = 2), climate = x3[c(1501:2600)])
+two <- data.frame(time = "Modern", value = rnorm(n = 1100, mean = 2, sd = 2), climate=x3[c(1501:2600)])
+test <- data.frame(time = "Modern", value = rnorm(n = 100, mean = 2, sd = 2), climate=x3[c(2801:2900)])
+test2 <- data.frame(time = "Past", value = rnorm(n = 1000, mean = -2, sd = 2), climate=x3[c(2601:3100)])
+full <- rbind(one, two, test, test2)
 
 library(ggplot2) 
 
@@ -16,35 +19,49 @@ library(ggplot2)
 x3 = rnorm(2000, -3, 2)
 x4 = rnorm(2000,3,2)
 x3 <- c(x3,x4)
-one <- data.frame(time = "Past", value = rnorm(n = 4000, mean = -2, sd = 2), climate = x3)
+one <- data.frame(time = "Past", value = rnorm(n = 500, mean = -2, sd = 2), climate = x3[101:600])
 two <- data.frame(time = "Modern", value = rnorm(n = 4000, mean = 2, sd = 2), climate=x3)
-full <- rbind(one, two)
+one1 <- data.frame(time = "Past", value = rnorm(n = 100, mean = 2, sd = 2), climate = x3[1:100])
+two2 <- data.frame(time = "Modern", value = rnorm(n = 400, mean = 2, sd = 2), climate=x3[1:400])
+
+# high envt
+high.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = 1.5, sd = 2), climate = x3[701:900], envt = "High")
+high.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[701:900], envt = "High")
+
+
+low.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[301:500], envt = "Low")
+low.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 0, sd = 2), climate=x3[301:500], envt = "Low")
+
+int.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[501:700], envt = "Intermediate")
+int.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[501:700], envt = "Intermediate")
+
+
+full <- rbind(low.p, low.m, int.p, int.m, high.p, high.m)
+
 
 # use the label.breaks function and cut to cut environmental data up into different bins
 
-full$bins <-  cut(full$climate, breaks = seq(-16, 16, by = 2))
+#full$bins <-  cut(full$climate, breaks = seq(-16, 16, by = 2))
 
-levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "Low",   "(-4,-2]",   "Intermediate",    "(0,2]",    
-                       "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
+#levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"High",  "(-8,-6]",   "test2",   "(-4,-2]",   "Intermediate",    "(0,2]",    
+                     #  "Low",     "(4,6]",     "test"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
 
 
 png("outputs/conceptual_fig_mesophication.png")
-ggplot(full, aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+
+ggplot(full, aes(x = value, fill = time))+geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))#+theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 dev.off()
 
 #png(height = 3, width = 8, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw()+xlab("Species composition")+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 4)+coord_flip()#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+ggplot(full, aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity", adjust = 1.5)+theme_bw()+xlab("Species composition")+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~envt, scales = "free_x", ncol = 4)+coord_flip()#theme(axis.text.x = element_blank(), axis.title.x = element_blank())
 
 #dev.off()
 
-xlab <- c('Species Composition \n')
-xlab <- bquote(.(labNames[1]) ~ decreasing %<->% increasing)
 
 png(height = 3, width = 5, units = 'in', res = 300, "outputs/conceptual_fig_mesophication_panel.png")
-ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity")+theme_bw(base_size = 12)+xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales = "free_x", ncol = 3)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
+ggplot(full[full$envt %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time))+geom_density(alpha = 0.5, position = "identity", adjust = 1.2)+theme_bw(base_size = 12)+xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~envt, scales = "free_x", ncol = 3)+ylab("Frequency")+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                                  axis.text=element_blank(),
                                                                                                                                                                  axis.ticks=element_blank())
   

@@ -640,6 +640,7 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 fia.pc1 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc1", time= "Modern")
 fia.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= "Modern")
 
+
 # using the same criteria as density, there are no significantly bimodal places
 # if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
 
@@ -683,6 +684,15 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
 
 dev.off()
 
+png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_pls_dens_bimodality.png")
+ggplot(plspc2.m, aes(x, y, fill= bimodaldensity))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#ca0020',
+                               #'#f4a582',
+                               #'#92c5de',
+                               '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
+                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+dev.off()
 
 #------------- make the same map of both bimodalities for the modern landscape:-----
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
@@ -691,20 +701,20 @@ dens.prfia <- merge(fia.dens[,c("x", "y", "cell","FIAdensity")], dens.pr, by = c
 ggplot(dens.prfia, aes(x,y,fill = FIAdensity))+geom_raster()
 
 # get bimodal places in FIA
-fia.bim <- bimodal.df(data = dens.prfia, binby = "PC1fiabins",density = "FIAdensity", binby2 = "PC1fiabins")
+fia.bim <- bimodal.df(data = fia.dens, binby = "PC1fiabins",density = "FIAdensity", binby2 = "PC1fiabins")
 
-colnames(fia.bim)[1:12] <- c("X2", "densbins", "V1dens", "V2dens", "BCdens", "dipPdens", "lowdens", "highdens", "NA.", "x", "y", "cell")
-colnames(fia.bim)[85] <- c("bimodaldensity")
-fiapc2.m <- merge(fia.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2",'bimodal_pc2')], fia.bim, by = c("x", "y", "cell"))
+colnames(fia.bim)[1:8] <- c("fiadensbins", "fiaV1dens", "fiaV2dens", "fiaBCdens", "fiadipPdens", "fialowdens", "fiahighdens", "fiaNA.")
+colnames(fia.bim)[93] <- c("fiabimodaldensity")
+fiapc2.m <- merge(fia.pc2[,c("x", "y", "cell", "BC", "dipP", "pc1","pc2",'bimodal_pc2')], fia.bim, by.x = c("x", "y", "cell"), by.y = c("x", "y", "cell"))
 
 
 # map out the places that are bimodal density, bimodal comp, stable both, bimodal both:
 
 fcomp.bi <- ifelse (fiapc2.m$BC > 0.55 & fiapc2.m$dipP <= 0.05, "Bimodal Composition", "Unimodal Composition")
-fiapc2.m$bimodaldensity <- paste(fiapc2.m$bimodaldensity, "Density")
+fiapc2.m$bimodaldensity <- paste(fiapc2.m$fiabimodaldensity, "Density")
 fiapc2.m$bimodalcomp <- fcomp.bi
 
-fiapc2.m$bimodalboth <- paste(fiapc2.m$bimodaldensity, "&", fiapc2.m$bimodalcomp)
+fiapc2.m$bimodalboth <- paste(paste0(fiapc2.m$fiabimodaldensity, " Density"), "&", fiapc2.m$bimodalcomp)
 
 unique(fiapc2.m$bimodalboth)
 
@@ -714,6 +724,17 @@ ggplot(fiapc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
   scale_fill_manual(values = c('#ca0020',
                                #'#f4a582',
                                '#92c5de',
+                               '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
+                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+dev.off()
+
+png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_FIA_dens_bimodality.png")
+
+ggplot(fiapc2.m, aes(x, y, fill= fiabimodaldensity))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#ca0020',
+                               #'#f4a582',
+                               #'#92c5de',
                                '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
                                             panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
@@ -1060,6 +1081,7 @@ ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 -
                                                                                                                                                axis.text.x=element_blank(),
                                                                                                                                                axis.ticks.x=element_blank())
 dev.off()
+
 #--------------------Does the bimodality occur at the same place?-------------
 # use the comp.bimodal.df function to get the bimodal designations:
 PLSdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "PLS")

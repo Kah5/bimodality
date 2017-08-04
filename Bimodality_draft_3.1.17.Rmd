@@ -186,13 +186,13 @@ notinfia <- bimodal[!bimodal$cell %in% fcell, ]
 
 infia <- bimodal[bimodal$cell %in% fcellsbim$cell, ]
 
-summary(infia$classification)
-summary(notinfia$classification)
+summary(infia$bimodal)
+summary(notinfia$bimodal)
 
-ggplot(infia, aes(x = x, y = y, color = classification))+geom_point()
+ggplot(infia, aes(x = x, y = y, color == bimodal))+geom_point()
 
-
-ggplot(notinfia, aes(x = x, y = y, color = classification))+geom_point()
+quartz()
+ggplot(notinfia, aes(x = x, y = y, fill = biomdal))+geom_raster()
 
 #make a plot of the places removed
 # bar plot or plot showing proportion of these
@@ -215,6 +215,8 @@ ggplot(kept.table, aes(x = classification, y = freq))+geom_bar(stat='identity')+
 Projected stability of the Midwestern vegetation in 2070-2099 based on RCP8.5 CMIP5 climate projections from model CCESM4 and historic vegetation-environment relationships (A), and modern vegetation-environment relationships (B). Bimodal places in the future are those with climates matching the bimodal climate space (based on PC1) in the past and modern landscape respectively. No-analog climates were determined with respect to the climate space of the past in (A), and with respect to modern climate in (B).
 ```{r, echo=FALSE,warning = FALSE}
 
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+
 source("R/map.future.scenarios.R")
 
 
@@ -225,8 +227,12 @@ panel.grid.major = element_blank(),panel.border = element_rect(colour = "black",
 b <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-c <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc45bins', density = "PLSdensity", binby2 ='PC1_cc45bins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
-panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+c <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc85bins', density = "PLSdensity", binby2 ='PC1_cc85bins', rcp = '45' )+ ggtitle("RCP 8.5")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank()) +ggtitle(" ")#+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)
+
+png(height=6, width = 6, units="in", res=300, "outputs/RCPpreds/map_PLSdens_rcp8.5.png")
+c
+dev.off()
 
 
 png(width = 12, height=4, units="in", res=300, "outputs/paper_figs/PLS_supplemental_rcp_map.png")
@@ -251,6 +257,14 @@ panel.grid.major = element_blank(),panel.border = element_rect(colour = "black",
 
 cf <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+df <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '45' )+ ggtitle("RCP 8.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") #+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+# output on only a map of FIA based prediations for RCP8.5
+png(height=6, width = 6, units="in", res=300, "outputs/RCPpreds/map_FIAdens_rcp8.5.png")
+df
+dev.off()
 
 png(width = 12, height=4, units="in", res=300, "outputs/paper_figs/FIA_supplemental_rcp_map.png")
 grid.arrange(bf,cf,af, ncol = 3)

@@ -27,13 +27,13 @@ bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  if(merged$BC >= 0.55 & merged$dipP <= 0.05){
-    merged$bimodal <- "Bistable"
-  }else{ merged$bimodal <- "Stable"}
+  bimodal<- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, 
+   "Bimodal", "Unimodal")
+  merged$bimodal <- bimodal
   
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
+  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "out-of-sample"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   
@@ -44,7 +44,7 @@ bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
       '#2c7bb6',
       'black',
       '#d7191c'
-    ), limits = c('Stable',"no-analog",'Bistable') )+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+
+    ), limits = c('Unimodal',"out-of-sample",'Bimodal') )+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),
@@ -58,14 +58,22 @@ bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
 bimodal.future.NA <- function(data, binby, density, binby2, rcp){
   bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-  }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  
+  
+    for (i in 1:length(bins)){
+      if(nrow(na.omit(data[data[,binby] %in% bins[i],])) > 1){
+      coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]), na.rm=TRUE)
+      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    
+        }else{
+          coeffs[i,1] <- "NA"
+          coeffs[i,2] <- "NA"
+        }
+    }
+  coeffs[is.nan(coeffs)]<- 0 # replace NANs with 0 values here
   coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.bins$BC <- as.numeric(as.character(coef.bins[,1]))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins[,2]))
   coef.new <- strsplit(as.character(coef.bins$bins), " - ")
   library(plyr)
   coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
@@ -77,10 +85,14 @@ bimodal.future.NA <- function(data, binby, density, binby2, rcp){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bistable"
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
+  bimodal <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05,
+    "Bimodal", "Unimodal")
+  merged$bimodal <- bimodal
+  
+  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   
@@ -91,7 +103,7 @@ bimodal.future.NA <- function(data, binby, density, binby2, rcp){
       '#2c7bb6',
       'black',
       '#d7191c'
-    ), limits = c('Stable',"no-analog",'Bistable') )+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+
+    ), limits = c('Unimodal',"out-of-sample",'Bimodal') )+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),
@@ -124,10 +136,10 @@ bimodal.pls.mod <- function(data, binby,binby2, density){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  #[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "no-analog"
+  #[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   
@@ -136,7 +148,7 @@ bimodal.pls.mod <- function(data, binby,binby2, density){
     geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
       '#d7191c','#2c7bb6'
       #'black',
-      ), limits = c('Bimodal',"Stable") )+
+      ), limits = c('Bimodal',"Unimodal") )+
     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+theme_classic()+ xlim(-150000, 1150000)+
     xlab("easting") + ylab("northing")+coord_equal()+xlim(-150000, 1150000) 
   
@@ -167,7 +179,7 @@ bimodal.df <- function(data, binby, density, binby2){
   
   
   #define bimodality
-  merged$bimodal <- "Stable"
+  merged$bimodal <- "Unimodal"
   #criteria for bimodality
   merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
   
@@ -176,7 +188,7 @@ bimodal.df <- function(data, binby, density, binby2){
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$ecotype)
     merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Unimodal prairie',]$classification <- "Prairie"
     
   }else{
     merged$classification <- "test"

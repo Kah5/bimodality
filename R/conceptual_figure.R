@@ -30,7 +30,7 @@ high.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), 
 
 
 low.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[301:500], envt = "Low")
-low.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 0, sd = 2), climate=x3[301:500], envt = "Low")
+low.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = -3, sd = 2), climate=x3[301:500], envt = "Low")
 
 int.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[501:700], envt = "Intermediate")
 int.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[501:700], envt = "Intermediate")
@@ -91,17 +91,33 @@ two <- data.frame( time = "Modern", value = rnorm(n = 4000, mean = 100, sd = 40 
 two[two$value <0,]$value <- 0
 
 full <- rbind(one, two)
+high.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = 1.5, sd = 2), climate = x3[701:900], envt = "High")
+high.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[701:900], envt = "High")
+
+
+low.p <- data.frame(time = "Past", value = rnorm(n = 500, mean = 30, sd = 10), climate = x3[301:800], bins = "Low")
+low.m <- data.frame(time = "Modern", value = rnorm(n = 500, mean = 25, sd = 10), climate=x3[301:800], bins = "Low")
+
+int.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[501:700], envt = "Intermediate")
+int.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[501:700], envt = "Intermediate")
+
+
+#full <- rbind(low.p, low.m, full)
+
+
+ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
+
 
 # use the label.breaks function and cut to cut environmental data up into different bins
 
 full$bins <-  cut(full$climate, breaks = seq(-16, 16, by = 2))
-
+full <- rbind(full, low.p, low.m)
 ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
 
 
 
 ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")+facet_wrap(~bins)
 
 
 
@@ -116,20 +132,22 @@ ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=4)+xlab("Tree Density")+coord_flip()
 dev.off()
 
-levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "Low",   "(-4,-2]",   "Intermediate",    "(0,2]",    
-                       "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"  )
+levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "test",   "(-4,-2]",   "Intermediate",    "(0,2]",    
+                       "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]", "Low")
+
+full$bins_f <-  factor(full$bins, levels = c("Low","(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "test",   "(-4,-2]",   "Intermediate",    "(0,2]",    
+                                             "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"))
 
 png(height = 3, width = 5, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
 ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity", adjust = 1.3)+theme_bw(base_size = 12)+
-  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=3)+xlab("Tree Density \n")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
+  scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins_f, scales ="free_x", ncol=3)+xlab("Tree Density \n")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                                                    axis.text.x=element_blank(),
-                                                                                                                                                                                   axis.ticks.x=element_blank(), 
+                                                                          
+                                                                                                                                                                                                                                                                                            axis.ticks.x=element_blank(), 
                                                                                                                                                                                     )
 
 dev.off()
-
-
-ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
+# high envt
 
 
 # Plotin curves

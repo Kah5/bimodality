@@ -1,0 +1,411 @@
+version <- "1.6-5"
+setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
+library(data.table)
+library(reshape2)
+library(dtplyr)
+library(ggplot2)
+library(hexbin)
+library(grid)
+library(gridExtra)
+library(sp)
+library(raster)
+library(rgdal)
+
+#--------------------------------load data-----------------------------------
+# read in pont level data
+pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+
+# find the mean density by species
+#pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
+#pls.inil <- pls.inil[, c("x", "y", "cell", ".")] # just keep mean 
+
+#colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
+#hist(pls.inil$PLSdensity, xlim = c(0, 600),breaks = 100)
+
+
+# read in point level data
+pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+
+# find mean denisty for all species in a grid cell
+pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
+pls.spec$total <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
+hist(pls.spec$total, breaks = 50)
+pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
+colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
+
+# read in Uppermidwest data at paleon grid scale
+umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
+#umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
+umdw$total <- rowSums(umdw[,5:32], na.rm= TRUE)
+umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
+
+
+colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
+umdw.n <- umdw.new[,c('x', 'y', 'PLSdensity')]
+coordinates(umdw.n) <- ~x+y
+gridded(umdw.n) <- TRUE
+umdw.rast <- raster(umdw.n)
+plot(umdw.rast)
+proj4string(umdw.rast) <- '+init=epsg:3175'
+
+writeRaster(umdw.rast, "data/upper_midwest.ascii", overwrite = TRUE)
+
+
+
+# -----------rename species and join upper and lower midwest spec. tables----------------
+
+#this is to join the species tables
+colnames(pls.spec) <- c("x" ,  "y" , "cell" ,"Alder","Ash",
+                        "Bald cypress","Basswood","Beech","Birch", "Black.gum" ,         
+                        "Black gum.sweet gum", "Buckeye" , "Cedar.juniper" ,"Cherry" ,"Chestnut" ,          
+                        "Dogwood","Elm" , "Hackberry", "Hickory", "Ironwood",    
+                        "Locust" ,"Maple" ,"Mulberry" ,"No.tree","Oak",                
+                        "Other.hardwood","Pine","Poplar", "Poplar.tulip poplar", "Sweet gum" ,         
+                        "Sycamore" ,"Tamarack" ,"Tulip.poplar" ,"Unknown.tree","Walnut" ,            
+                        "Water","Wet" ,"Willow","total" )
+umdw.names<- colnames(umdw)
+pls.names<- colnames(pls.spec)
+
+
+#create name vectors for species columns missing in the upper and lower midewst
+to.add.umdw <-pls.names[!pls.names %in% umdw.names]
+to.add.pls <- umdw.names[!umdw.names %in% pls.names]
+
+#add these species columns to the respective dataframes, but with 0 for data values
+pls.spec[,to.add.pls] <- 0
+umdw[,to.add.umdw] <-0 
+
+
+
+#reorder the columns so the pls.spec and umdw dataframes match
+pls.spec<- pls.spec[ , order(names(pls.spec))]
+umdw <- umdw[,order(names(umdw))]
+
+full.spec <- rbind(pls.spec, umdw)
+
+#move around the columns
+require(dplyr)
+full.spec<- full.spec %>%
+  dplyr::select(cell, everything())
+
+full.spec<- full.spec %>%
+  dplyr::select(y, everything())
+
+full.spec<- full.spec %>%
+  dplyr::select(x, everything())
+
+full.spec<- full.spec %>%
+  dplyr:: select(X, everything())
+
+full.spec<- full.spec %>%
+  dplyr:: select(-total, everything())
+
+#now add totals to the 'total columns
+#full.spec$total <- rowSums(full.spec[,4:41], na.rm = TRUE)
+summary(full.spec$total)
+hist(full.spec$total, breaks = 1000, xlim = c(0,600))
+
+colnames(full.spec)[42] <- 'PLSdensity'
+
+
+
+#------------------------------map out pls density for some species----------------
+
+spec.melt <- melt(full.spec[,1:41], id.vars = c("x", "y", "cell"))
+ggplot(full.spec, aes(x=x, y=y, fill = Beech))+geom_raster()
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+r2bpalette <- c('#ca0020',
+                '#f4a582',
+                '#92c5de',
+                '#0571b0')
+
+
+full.spec[is.na(full.spec)]<- 0
+density.full <- full.spec
+full.spec[is.na(full.spec)]<- 0
+
+
+
+
+#----------------------cluster analysis---------------------------------
+# we want to cluster the data based on % species composition: based on tree density, not the counts
+# using clusters similar to simons mediod clustering scheme: 
+library(cluster)
+library(fpc)
+
+comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
+#comps <- comps[!is.na(comps),]
+comps[,4:39] <- comps[,4:39]/comps[,40] # calculate the proportion of the total density that each species takes up
+comps <- comps[,1:39]
+
+# remove prairie cells:
+comps <- data.frame( comps[ complete.cases(comps),] )
+# write as a csv so we don't have to keep doing this:
+write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
+
+
+classes.3 <- pam(comps[,4:ncol(comps)], k = 3)
+classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
+classes.5 <- pam(comps[,4:ncol(comps)], k = 5)
+classes.6 <- pam(comps[,4:ncol(comps)], k = 6)
+classes.7 <- pam(comps[,4:ncol(comps)], k = 7)
+classes.8 <- pam(comps[,4:ncol(comps)], k = 8)
+
+plot(classes.8)
+plot(classes.7)
+plot(classes.6)
+plot(classes.5)
+plot(classes.4)
+plot(classes.3)
+
+#summary(classes.8) # Avg. Silhouette width = 
+summary(classes.7) # Avg. Silhouette width = 0.2506271
+summary(classes.6) # Avg. Silhouette width = 0.2677659
+summary(classes.5) # Avg. Silhouette width = 0.2610493
+summary(classes.4) # Avg. Silhouette width = 0.2006347
+summary(classes.3) # Avg. Silhouette width = 0.2393605
+
+
+
+# 5 classes:
+
+
+mediods <- comps$cell [classes.5$id.med]
+
+
+df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
+
+old_classes <- classes.5
+#[1] 49221 29369 17193 16954 11274# mediods
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c('Maple/Elm/Hickory/Oak/Basswood', # 1,
+                              'Oak', # 2
+                              'Poplar',#3
+                              "Pine/Tamarack/Poplar/Spruce/Birch", # 4,
+                              'PineTamarack' 
+                              
+                              
+                     ))
+
+clust_plot5 <- data.frame(comps, 
+                          cluster = rem_class5,
+                          clustNum = as.numeric(rem_class5))
+
+ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+
+
+
+# 6 classes
+mediods <- comps$cell [classes.6$id.med]
+#mediods
+#[1] 35637 29369 20805 19885  7144 19029
+
+df6 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
+write.csv(df, "outputs/species_comp_clusters_6_class_mediods.csv")
+
+old_classes <- classes.6
+rem_class <- factor(old_classes$clustering,
+                    labels=c('Elm/Maple/Hickory/Oak/Beech', # 1,
+                             'Oak', # 2
+                             'Hemlock/Beech/Cedar/Birch/Maple',#3
+                             #'Oak/Poplar/Basswood/Maple',
+                             "Poplar/Oak", # 4,
+                             'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', #5,
+                             'Pine/Tamarack/Poplar' #6
+                             
+                             
+                    ))
+
+clust_plot6 <- data.frame(comps, 
+                          speciescluster = rem_class,
+                          clustNum = as.numeric(rem_class))
+
+
+# merge the clusters with denisty estimates:
+dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum")], by = c("x","y","cell"),keep = all)
+
+write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
+
+# map out the clusters in space:
+png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_pls.png")
+ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+dev.off()
+
+
+
+# do the same clustering for FIA data and plot:
+# -----------------------Clustering of FIA data----------------------
+
+FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
+speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
+
+FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum the total density in each plot
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
+fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+
+fcomps <- fia.by.cell
+fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
+
+fcomps[,4:34] <- fcomps[,4:34]/fcomps[,35] # calculate the proportion of the total density that each species takes up
+fcomps <- fcomps[,1:34]
+
+# remove prairie cells:
+fcomps <- data.frame(fcomps[complete.cases(fcomps),])
+# write as a csv so we don't have to keep doing this:
+write.csv(fcomps, "data/outputs/FIA_pct_density_composition.csv")
+
+library(cluster)
+library(fpc)
+
+# need to match up the species with pls and fia
+colnames(fcomps) <- c("x" , "y" , "cell"  ,"Alder",       
+                      "Ash" ,"Basswood" ,"Beech", "Birch" ,     
+                      "Black.gum", "Buckeye"    ,    "Cedar.juniper" , "Cherry" ,       
+                      "Dogwood" , "Douglas fir" ,   "Elm"  ,  "Fir",           
+                      "Hackberry"  ,"Hemlock"   ,  "Hickory"  ,   "Ironwood",      
+                      "Maple"   , "Oak"     ,  "Other.hardwood" ,"Other.softwood",
+                      "Pine"   ,  "Poplar"  ,  "Spruce" ,   "Sweet.gum",     
+                      "Sycamore"    ,   "Tamarack"     ,  "Tulip.poplar"  , "Unknown.tree",  
+                      "Walnut","Willow")
+
+# add douglas fir to fir
+fcomps$Fir <- rowSums(fcomps[,c("Fir", "Douglas fir")], na.rm=TRUE)
+fcomps <- fcomps[,-14] # get rid of douglas fir
+
+plscols <- colnames(comps)
+fiacols <- colnames(fcomps)
+
+notinfia <- plscols[ !plscols %in% fiacols ]
+notinpls <- fiacols[ !fiacols %in% plscols ] 
+
+comps[,notinpls] <- 0
+fcomps[,notinfia] <-0 
+
+
+#reorder the columns so the comp.inil and comp.umw dataframes match
+comps <- comps[ ,order(names(comps))]
+fcomps <- fcomps[ ,order(names(fcomps))]
+
+# add and fia vs. pls flag:
+comps$period <- "PLS"
+fcomps$period<- "FIA"
+
+fullcomps <- rbind( comps, fcomps )
+
+#move around the columns
+require(dplyr)
+fullcomps<- fullcomps %>%
+  dplyr::select(period, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(cell, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(y, everything())
+
+fullcomps<- fullcomps %>%
+  dplyr::select(x, everything())
+
+
+#fcomps classifcation only
+
+classes.3 <- pam(fcomps[,4:ncol(fullcomps)], k = 3)
+classes.4 <- pam(fcomps[,4:ncol(fullcomps)], k = 4)
+classes.5 <- pam(fcomps[,4:ncol(fullcomps)], k = 5)
+classes.6 <- pam(fcomps[,4:ncol(fullcomps)], k = 6)
+classes.7 <- pam(fcomps[,4:ncol(fullcomps)], k = 7)
+classes.8 <- pam(fcomps[,4:ncol(fullcomps)], k = 8)
+
+plot(classes.8)
+plot(classes.7)
+plot(classes.6)
+plot(classes.5)
+plot(classes.4)
+plot(classes.3)
+
+#summary(classes.8) # Avg. Silhouette width = 
+summary(classes.7) # Avg. Silhouette width = 0.2553684
+summary(classes.6) # Avg. Silhouette width = 0.2348445
+summary(classes.5) # Avg. Silhouette width = 0.2350457
+summary(classes.4) # Avg. Silhouette width = 
+summary(classes.3) # Avg. Silhouette width = 
+fullcomps$idvar <- 1:nrow(fullcomps)
+mediods <- fullcomps$idvar [classes.5$id.med]
+
+
+df5 <- fullcomps[fullcomps$idvar %in% mediods,] # look at the rows that have the mediods
+
+old_classes <- classes.5
+#[1] 1292 2201 4618 4978 4604# idvars of the mediods
+#rem_class5 <- factor(old_classes$clustering,
+#                    labels=c('Oak/OtherHardwood/Elm', # 1,
+#                            'Maple/Ash/Birch', # 2
+#                            'Poplar/Spruce/Maple',#3
+#                           "Pine/Poplar", # 4,
+#                          'Cedar.juniper/Tamarack' 
+
+
+#  ))
+
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c('Ash/Beech/Elm/Hickory/Oak', # 1,
+                              'Poplar/Spruce/Tamarack', # 2
+                              'Hemlock/Maple/Birch/Cedar.juniper',#3
+                              "Tamarack/Cedar.juniper/Spruce", # 4,
+                              'Cedar.juniper/Hemlock/Spruce' 
+                              
+                              
+                     ))
+
+clust_plot5 <- data.frame(fullcomps, 
+                          cluster = rem_class5,
+                          clustNum = as.numeric(rem_class5))
+
+ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+
+
+
+
+# 6 classes
+mediods <- fcomps$cell [classes.6$id.med]
+#mediods
+#[1] 45094 27585 14273  9203 22622 15808
+
+df6 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
+write.csv(df, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
+
+old_classes <- classes.6
+rem_class <- factor(old_classes$clustering,
+                    labels=c('Oak', # 1,
+                             'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
+                             'Maple',#3
+                             #'Oak/Poplar/Basswood/Maple',
+                             "Poplar/Spruce/Maple/Fir", # 4,
+                             'Pine/Poplar', #5,
+                             'Cedar.juniper/Poplar/Maple' #6
+                             
+                             
+                    ))
+
+clust_plot6 <- data.frame(fcomps, 
+                          speciescluster = rem_class,
+                          clustNum = as.numeric(rem_class))
+
+png(width = 6, height = 6, units= 'in',res=300,"outputs/cluster/six_cluster_map_fia.png")
+ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#386cb0','#beaed4','#e41a1c','#ffff33', '#7fc97f','#fdc086'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+dev.off()

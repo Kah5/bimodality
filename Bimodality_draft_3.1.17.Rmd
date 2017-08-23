@@ -186,12 +186,24 @@ notinfia <- bimodal[!bimodal$cell %in% fcell, ]
 
 infia <- bimodal[bimodal$cell %in% fcellsbim$cell, ]
 
+# how much of each ecotype have we lost?
 summary(infia$bimodal)
 summary(notinfia$bimodal)
 
-ggplot(infia, aes(x = x, y = y, color == bimodal))+geom_point()
+# places that are no longer in the FIA:
+notinfia.eco<- summary(notinfia[notinfia$bimodal == "Bimodal",]$ecotype)
+notinfia.eco*8*8 # find the square km of historically bimodal forest and savanna lost
 
-quartz()
+# places that are still in the FIA:
+infia.eco<- summary(infia[infia$bimodal == "Bimodal",]$ecotype)
+infia.eco*8*8 # find the square km of historically bimodal forest and savanna still present on modern landscape
+total.bimodal<- nrow(bimodalpls[bimodalpls$bimodal == 'Bimodal',])*8*8 
+total.bimodal/(nrow(bimodalpls)*8*8) 
+((infia.eco*8*8) / total.bimodal)*100
+((notinfia.eco*8*8) / total.bimodal)*100
+ggplot(infia, aes(x = x, y = y, color = bimodal))+geom_point()
+
+
 ggplot(notinfia, aes(x = x, y = y, fill = biomdal))+geom_raster()
 
 #make a plot of the places removed
@@ -220,17 +232,15 @@ dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 source("R/map.future.scenarios.R")
 
 
-
 a <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc60bins', density = "PLSdensity", binby2 ='PC1_cc60bins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)+ggtitle("")
 
 b <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-c <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc85bins', density = "PLSdensity", binby2 ='PC1_cc85bins', rcp = '45' )+ ggtitle("RCP 8.5")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
-panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank()) +ggtitle(" ")#+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)
-
-png(height=6, width = 6, units="in", res=300, "outputs/RCPpreds/map_PLSdens_rcp8.5.png")
+c <- bimodal.future.NA(data = na.omit(dens.pr), binby = 'PC1_cc85bins', density = "PLSdensity", binby2 ='PC1_cc85bins', rcp = '45' )+ ggtitle("RCP 8.5")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(2,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.text=element_text(size=15),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank()) +ggtitle(" ")
+png(height=6, width = 6, units="in", res=300,"outputs/RCPpreds/map_PLSdens_rcp8.5.png")
 c
 dev.off()
 
@@ -258,7 +268,7 @@ panel.grid.major = element_blank(),panel.border = element_rect(colour = "black",
 cf <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc45fbins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
 
-df <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '45' )+ ggtitle("RCP 8.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+df <- bimodal.future.rNA(data = fia.dens, binby = 'PC1fiabins', density = "FIAdensity", binby2 ='PC1_cc85fbins', rcp = '45' )+ ggtitle("RCP 8.5 PC1")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(2,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.text=element_text(size=15),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") #+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
 
 # output on only a map of FIA based prediations for RCP8.5

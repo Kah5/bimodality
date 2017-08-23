@@ -123,7 +123,7 @@ r2bpalette <- c('#ca0020',
   '#92c5de',
   '#0571b0')
 
-X11(width = 18, height = 12)
+#X11(width = 18, height = 12)
 ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                 axis.title.x=element_blank(),
@@ -147,7 +147,7 @@ fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.v
 
 
 # grid cells with PLS 
-pls.cells <- spec[,c('x','y','cell','bimodal','classification')]
+pls.cells <- full.spec[,c('x','y','cell')]
 fia.inpls<- merge(pls.cells, fia.by.cell, by = c('x','y','cell'))
 ggplot(fia.inpls, aes(x=x,y=y, fill=Oak))+geom_raster()
 
@@ -160,12 +160,12 @@ all <- fia.inpls
 # caluclate the % of total denisty that the taxa makes up of the grid cell:
 
 compss <- all
-compss[,6:25] <- compss[,6:25]/compss[,26] # calculate the proportion of the total density that each species takes up
-comp.melt <- melt(compss, id.vars = c('x', 'y', 'cell', 'bimodal', 'classification', 'FIAdensity'))
+compss[,4:24] <- compss[,4:23]/compss[,24] # calculate the proportion of the total density that each species takes up
+comp.melt <- melt(compss, id.vars = c('x', 'y', 'cell', 'FIAdensity'))
 
 # find the grid cell with highest % of denisty in all bimodal places
 compss[is.na(compss)]<- 0
-compss$highest <- colnames(compss[,6:25])[max.col(compss[,6:25],ties.method="first")]
+compss$highest <- colnames(compss[,4:23])[max.col(compss[,4:23],ties.method="first")]
 taxa <- unique(compss$highest)
 
 
@@ -431,7 +431,7 @@ standardize <- function(x) {(x - mean(x))/sd(x)}
 X <- apply(fulldens[,5:39], MARGIN=2, FUN=standardize) 
 
 
-dens.pca <- princomp(fulldens[,5:39]) #need to scale to 0 variance
+dens.pca <- princomp(scale(fulldens[,5:39])) #need to scale to 0 variance
 plot(dens.pca)
 
 biplot(dens.pca)
@@ -503,7 +503,7 @@ dev.off()
 
 png(height = 6, width = 5, units = 'in',res = 300, "outputs/cluster/Composition_pc2_histogram_overlay.png")
 ggplot(data = fc, aes(pc2, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+theme_bw(base_size = 15)+xlab("Species PC2")+
-  coord_flip()+xlim(2.5,-5)
+  coord_flip()+xlim(2.5,-5)+theme(legend.title = element_blank())
 dev.off()
 
 png(height = 4, width = 7, units = 'in',res = 300, "outputs/cluster/Composition_pc2_histogram_overlay_horizontal.png")
@@ -512,17 +512,20 @@ ggplot(data = fc, aes(pc2, fill = period))+geom_histogram(position = "identity",
 dev.off()
 
 library(modes)
-#test for significance
+#test for significance of species pc1
 bimodality_coefficient(density(fc.m[fc.m$period %in% "Past",]$pc1)$y)
 #[1] 0.7789676
+#test for significance of species pc1
 diptest::dip.test(density(fc.m[fc.m$period %in% "Past",]$pc1)$y)
 # p valueu =0.4296
+
+
 
 png("outputs/cluster/Composition_PC2_histograms.png")
 ggplot(data = fc, aes(pc2, fill = period))+geom_histogram()+facet_wrap(~period,ncol=1)
 dev.off()
 
-#test for significance
+#test for significance of species pc2
 bimodality_coefficient(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
 #[1] 0.8892039
 diptest::dip.test(density(fc.m[fc.m$period %in% "Past",]$pc2)$y)
@@ -684,15 +687,27 @@ ggplot(plspc2.m, aes(x, y, fill= bimodalboth))+geom_raster()+theme_bw()+
 
 dev.off()
 
+# plot bimodal in terms of tree density
 png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_pls_dens_bimodality.png")
 ggplot(plspc2.m, aes(x, y, fill= bimodaldensity))+geom_raster()+theme_bw()+
   scale_fill_manual(values = c('#ca0020',
                                #'#f4a582',
                                #'#92c5de',
                                '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
-                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") 
 dev.off()
+
+png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_pls_comp_bimodality.png")
+ggplot(plspc2.m, aes(x, y, fill= bimodalcomp))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#ca0020',
+                               #'#f4a582',
+                               #'#92c5de',
+                               '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") 
+dev.off()
+
 
 #------------- make the same map of both bimodalities for the modern landscape:-----
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
@@ -736,8 +751,19 @@ ggplot(fiapc2.m, aes(x, y, fill= fiabimodaldensity))+geom_raster()+theme_bw()+
                                #'#f4a582',
                                #'#92c5de',
                                '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'),legend.background = element_rect(fill=alpha('transparent', 0.4)),legend.position = "bottom", legend.direction = "vertical",legend.title = element_blank(),
-                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                             panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") 
+dev.off()
+
+png(height=6, width = 6, units="in", res=300, "outputs/cluster/map_FIA_comp_bimodality.png")
+
+ggplot(fiapc2.m, aes(x, y, fill= bimodalcomp))+geom_raster()+theme_bw()+
+  scale_fill_manual(values = c('#ca0020',
+                               #'#f4a582',
+                               #'#92c5de',
+                               '#0571b0'))+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  coord_equal() +xlab(" ")+ ylab(" ")+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                            panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("") 
 dev.off()
 ##--------------------------------------------------------------------------
 

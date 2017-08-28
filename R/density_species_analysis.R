@@ -1148,22 +1148,45 @@ df.pls <- density(full[full$cell %in% both & full$period %in% "Past",]$Density, 
 df.fia <- density(full[full$cell %in% both & full$period %in% "Modern",]$Density, bw=15)
 
 # find points where 
-poi <- which(diff(df.pls$y > df.fia$y) !=0)
-poi # 34  69 171
+max(df.pls$y[df.pls$x < 150])
+peak1x <- which (df.pls$y == max(df.pls$y[df.pls$x < 150]))
+peak2x <- which (df.pls$y == max(df.pls$y[df.pls$x > 75]))
 
-df.pls$x[poi]
 
-plot(df.fia)
-lines(df.pls, col = "red")
-points(df.pls$x[poi], rep(0,))
-points(157.5, 0)
+df.pls$x[peak1x]
+df.pls$x[peak2x]
+
+xminima <- d$x[d$y==min(d$y[which(d$x >75 & d$x <150)])]
+xminimay <- d$y[d$y==min(d$y[which(d$x >75 & d$x <150)])]
+
+
+
+
+# the total width is x2-x1
+width1 <- xminima-peak1x
+width2 <- peak2x-xminima
+# range of the "Modern Intermediate state" should be 149.9-(1/2)*224.1
+min.int <- xminima-abs(0.5*width1)
+max.int <- xminima+abs(0.5*width2)
+
+d <- density(full[full$cell %in% both & full$period %in% "Past",]$Density)
+plot(d)
+xminima <- d$x[d$y==min(d$y[which(d$x >75 & d$x <150)])]
+
+x1 <- min.int
+x2 <- max.int
+points(c(x1, x2), c(0, 0), col="red")
+
+full$distn.class <- ifelse(full$Density >= min.int & full$Density <= max.int, "Intermediate", ifelse(full$Density < min.int, "Low", "High"))
+
 
 # of these, 53 and 172 seem to capture the intemediate peak well and separate the PLS peaks
-ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 25)+xlim(0,700)+coord_flip()+theme_bw(base_size = 12)+xlab("Tree Density (stems/ha)")+geom_vline(aes(xintercept=53))+geom_vline(aes(xintercept=69))+geom_vline(aes(xintercept=172))
+png("outputs/cluster/hist_distn_classes.png")
+ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 25)+xlim(0,700)+coord_flip()+theme_bw(base_size = 12)+xlab("Tree Density (stems/ha)")+geom_vline(aes(xintercept=82.3))+geom_vline(aes(xintercept=155))
+dev.off()
 
 #classify the full dataset based on these criteria
 
-full$distn.class <- ifelse(full$Density >= 40 & full$Density <= 157.5, "Intermediate", ifelse(full$Density < 69, "Low", "High"))
 
 # map out the classes for the full dataset (not exculding points not in FIA):
 

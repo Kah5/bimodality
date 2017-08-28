@@ -143,8 +143,36 @@ fig1F <- map.bimodal.5c( data = fia.dens, binby = 'PC1fiabins', density = "FIAde
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)
 
 
+source('R/bimodal.df.R')
+a <- bimodal.df( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" , binby2 = "PC1bins")
+b <- bimodal.df( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" , binby2 = "PC1fiabins")
+
+# plot of pls with pls climate and pls with fia climate
+ggplot(b, aes(x, y, fill = bimodal))+geom_raster()
+ggplot(a, aes(x, y, fill = bimodal))+geom_raster()
+
+nrow(b[b$bimodal == "Bimodal",])*8*8 # modern projected bimodal 
+nrow(a[a$bimodal == "Bimodal",])*8*8 # historic bimodal
+
+difference <- (nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8)
+
+pctdifference <- (((nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8))/(nrow(a[a$bimodal == "Bimodal",])*8*8))*100
 # Write out to a png to control size
  
+#plot out the region that should be bimodal under modern climate
+png(width = 5, height = 4, units='in',res=300,'outputs/paper_figs/supplemental_modern_climaate_pls_data.png')
+
+mod.pls<- ggplot(b, aes(x, y, fill = bimodal))+geom_raster()+
+      theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())+
+      scale_fill_manual(values = c("red", 'blue'), limits= c("Bimodal", "Unimodal"))+
+      xlab("easting") + ylab("northing") +coord_equal() 
+mod.pls
+dev.off()
+
+# make figure 1 with all the panels
 png(width = 7, height = 9, units = "in", res= 300,"outputs/paper_figs/Figure_1.png")
 grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4), widths=c(1.1,1.1), ncol=2))
 dev.off()
@@ -198,7 +226,10 @@ notinfia.eco*8*8 # find the square km of historically bimodal forest and savanna
 infia.eco<- summary(infia[infia$bimodal == "Bimodal",]$ecotype)
 infia.eco*8*8 # find the square km of historically bimodal forest and savanna still present on modern landscape
 total.bimodal<- nrow(bimodalpls[bimodalpls$bimodal == 'Bimodal',])*8*8 
-total.bimodal/(nrow(bimodalpls)*8*8) 
+total.bimodal/(nrow(bimodalpls)*8*8)  # percent of the Bimodal area in the past
+
+
+# find the pwercent of each that was lost and remaining
 ((infia.eco*8*8) / total.bimodal)*100
 ((notinfia.eco*8*8) / total.bimodal)*100
 ggplot(infia, aes(x = x, y = y, color = bimodal))+geom_point()

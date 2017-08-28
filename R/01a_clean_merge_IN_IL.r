@@ -36,9 +36,14 @@ library(Rcpp)
 
 
 #---------------------read in data and clean up the column names------------------------
-version <- "1.6-5" # version using 1.7 IL data and 1.6 IN data
+version <- "1.7-5" # version using 1.8 IL data and 1.7 IN data
 # Read in the data
-ind <- read.csv("data/ndinpls_v1.6-1.csv", stringsAsFactors = FALSE) # version 1.6-1 
+ind <- read.csv("data/ndinpls_v1/ndinpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6-1 
+
+# read in the version 1.7 shapefile for Indiana
+
+X11(width = 12)
+ggplot(ind[ind$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x,y, color = L3_tree1))+geom_point(size = 0.1)+coord_equal()
 
 # this version has several errors in the column names--I think it is an artefact of exporting from ArcGIS after georeferencing.
 colnames(ind)[41] <- "speciescode2"
@@ -52,7 +57,7 @@ colnames(ind)[68] <- "bearingdir4"
 colnames(ind)[69] <- "chainstree4"
 
 # Read in the il data
-il <- read.csv("data/ndilpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
+il <- read.csv("data/ndilpls_v1.8.csv", stringsAsFactors = FALSE) # version 1.6
 #il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
 
 
@@ -153,6 +158,11 @@ inil <- rbind(data.frame(ind.data), data.frame(il.data))
 
 
 inil<-data.frame(inil, stringsAsFactors = FALSE)
+
+# visualize the data:
+X11(width = 12)
+ggplot(inil[inil$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x,y, color = L3_tree1))+geom_point(size = 0.05)+coord_equal()+
+  scale_color_manual(limits = c("No tree", "Oak", "Beech", "Maple", "Hickory"),values = c("Tan", "Brown", "Blue", "Red","ForestGreen"))
 
 #  There are a set of 99999 values for distances which I assume are meant to be NAs. 
 inil$DIST1[inil$DIST1 == 88888] <- NA

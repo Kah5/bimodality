@@ -29,7 +29,7 @@ bimodal.df<- function(data, binby, density, binby2){
     merged$classification <- "test"
     merged$classification <- paste(merged$bimodal, merged$ecotype)
     merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
+    merged[merged$classification %in% 'Unimodal prairie',]$classification <- "Prairie"
     
   }else{
     merged$classification <- "test"

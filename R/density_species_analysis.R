@@ -85,7 +85,7 @@ umdw <- umdw[,order(names(umdw))]
 
 full.spec <- rbind(pls.spec, umdw)
 
-#move around the columns
+#move around the columns to that x and y are the first columns
 require(dplyr)
 full.spec<- full.spec %>%
   dplyr::select(cell, everything())
@@ -96,8 +96,8 @@ full.spec<- full.spec %>%
 full.spec<- full.spec %>%
   dplyr::select(x, everything())
 
-full.spec<- full.spec %>%
-  dplyr:: select(X, everything())
+#full.spec<- full.spec %>%
+ # dplyr:: select(X, everything())
 
 full.spec<- full.spec %>%
   dplyr:: select(-total, everything())
@@ -112,7 +112,7 @@ colnames(full.spec)[42] <- 'PLSdensity'
 
 
 #------------------------------map out pls density for some species----------------
-
+# melt data fram to be able to plot using ggplot
 spec.melt <- melt(full.spec[,1:41], id.vars = c("x", "y", "cell"))
 ggplot(full.spec, aes(x=x, y=y, fill = Beech))+geom_raster()
 
@@ -124,6 +124,7 @@ r2bpalette <- c('#ca0020',
   '#0571b0')
 
 #X11(width = 18, height = 12)
+# map out species desities
 ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                 axis.title.x=element_blank(),
@@ -146,7 +147,7 @@ fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn', 'Var.5')
 fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 
 
-# grid cells with PLS 
+# get the grid cells from FIA where we have PLS records
 pls.cells <- full.spec[,c('x','y','cell')]
 fia.inpls<- merge(pls.cells, fia.by.cell, by = c('x','y','cell'))
 ggplot(fia.inpls, aes(x=x,y=y, fill=Oak))+geom_raster()
@@ -174,7 +175,7 @@ highest$x <- compss$x
 highest$y <- compss$y
 highest$highest <- compss$highest
 
-# plot with colors by mesophytic vs non mesophytic:
+# plot the highest density with colors by mesophytic vs non mesophytic:
 # blues => Oak, hickory, pines
 # reds = > Maple, elm, Basswood, Beech, blackgum.sweet gum, Black.gum, Buckeye
 # yellows => spruce, tamarack
@@ -1075,8 +1076,8 @@ cherry.diff<- ggplot(oaks, aes(x, y, fill = cherrydiff)) + geom_raster()+coord_e
 #----------Does the species bimodality correspond to density bimodality?
 
 # add the density to the dataframe to evaluate:
-colnames(FIA.oak)[52] <- "Density"
-colnames(PLS.oak)[52] <- "Density"
+colnames(FIA.oak)[53] <- "Density"
+colnames(PLS.oak)[53] <- "Density"
 
 full <- rbind(FIA.oak, PLS.oak)
 
@@ -1106,6 +1107,73 @@ ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 -
   facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                axis.text.x=element_blank(),
                                                                                                                                                axis.ticks.x=element_blank())
+dev.off()
+
+# map out the intemediate places on modern landscape, and the two modes on the pls land scape:
+plot(density(full[full$cell %in% both & full$period %in% "Past",]$Density))
+plot(density(full[full$cell %in% both & full$period %in% "Modern",]$Density))
+
+# find width at half maximum for modern data:
+
+d <- density(full[full$cell %in% both & full$period %in% "Past",]$Density)
+plot(d)
+xmax <- d$x[d$y==max(d$y)]
+
+x1 <- d$x[d$x < xmax][which.min(abs(d$y[d$x < xmax]-max(d$y)/2))]
+x2 <- d$x[d$x > xmax][which.min(abs(d$y[d$x > xmax]-max(d$y)/2))]
+
+points(c(x1, x2), c(d$y[d$x==x1], d$y[d$x==x2]), col="red")
+
+# the total width is x2-x1
+width <- x2-x1
+
+# range of the "Modern Intermediate state" should be 149.9-(1/2)*224.1
+min.int <- xmax-abs(0.5*width)
+max.int <- xmax+abs(0.5*width)
+full$distn.range <- "test"
+full$distn.range <- ifelse(full$Density >= min.int & full$Density <= max.int, "Intermediate", ifelse(full$Density < min.int, "Low", "High"))
+
+X11(width = 12)
+ggplot(full[full$cell %in% both,], aes(x,y, fill = distn.range))+geom_raster()+facet_wrap(~period)+theme_bw()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                                                                                                               axis.title.x=element_blank(),
+                                                                                                                                                                                                               axis.title.y=element_blank())+
+  xlab("easting") + ylab("northing") +coord_equal()
+
+ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 25)+xlim(0,700)+coord_flip()+theme_bw(base_size = 12)+xlab("Tree Density (stems/ha)")+geom_vline(aes(xintercept=53))+geom_vline(aes(xintercept=69))+geom_vline(aes(xintercept=172))
+
+
+# Altenative methods: find where the kernal density estimates intersect:
+df.pls <- density(full[full$cell %in% both & full$period %in% "Past",]$Density, bw=15)
+df.fia <- density(full[full$cell %in% both & full$period %in% "Modern",]$Density, bw=15)
+
+# find points where 
+poi <- which(diff(df.pls$y > df.fia$y) !=0)
+poi # 34  69 171
+
+df.pls$x[poi]
+
+plot(df.fia)
+lines(df.pls, col = "red")
+points(df.pls$x[poi], rep(0,))
+points(157.5, 0)
+
+# of these, 53 and 172 seem to capture the intemediate peak well and separate the PLS peaks
+ggplot(full[full$cell %in% both, ], aes(Density, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity', bins = 25)+xlim(0,700)+coord_flip()+theme_bw(base_size = 12)+xlab("Tree Density (stems/ha)")+geom_vline(aes(xintercept=53))+geom_vline(aes(xintercept=69))+geom_vline(aes(xintercept=172))
+
+#classify the full dataset based on these criteria
+
+full$distn.class <- ifelse(full$Density >= 40 & full$Density <= 157.5, "Intermediate", ifelse(full$Density < 69, "Low", "High"))
+
+# map out the classes for the full dataset (not exculding points not in FIA):
+
+png(height = 4, width = 8, units = "in", res=300,"outputs/cluster/distn_class_maps.png")
+ggplot(full, aes(x,y, fill = distn.class))+geom_raster()+coord_equal()+facet_wrap(~period)+theme_bw()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                                                                                                                             axis.title.x=element_blank(),
+                                                                                                                                                                                                                             axis.title.y=element_blank())+
+  xlab("easting") + ylab("northing")
+
 dev.off()
 
 #--------------------Does the bimodality occur at the same place?-------------

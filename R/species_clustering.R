@@ -231,12 +231,13 @@ write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
 
 # map out the clusters in space:
 png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_pls.png")
-ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+pls.clust<- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+pls.clust 
 dev.off()
 
 
@@ -293,38 +294,36 @@ fcomps[,notinfia] <-0
 
 
 #reorder the columns so the comp.inil and comp.umw dataframes match
-comps <- comps[ ,order(names(comps))]
 fcomps <- fcomps[ ,order(names(fcomps))]
 
 # add and fia vs. pls flag:
 comps$period <- "PLS"
 fcomps$period<- "FIA"
 
-fullcomps <- rbind( comps, fcomps )
 
 #move around the columns
 require(dplyr)
-fullcomps<- fullcomps %>%
+fcomps<- fcomps %>%
   dplyr::select(period, everything())
 
-fullcomps<- fullcomps %>%
+fcomps<- fcomps %>%
   dplyr::select(cell, everything())
 
-fullcomps<- fullcomps %>%
+fcomps<- fcomps %>%
   dplyr::select(y, everything())
 
-fullcomps<- fullcomps %>%
+fcomps<- fcomps %>%
   dplyr::select(x, everything())
 
 
 #fcomps classifcation only
 
-classes.3 <- pam(fcomps[,4:ncol(fullcomps)], k = 3)
-classes.4 <- pam(fcomps[,4:ncol(fullcomps)], k = 4)
-classes.5 <- pam(fcomps[,4:ncol(fullcomps)], k = 5)
-classes.6 <- pam(fcomps[,4:ncol(fullcomps)], k = 6)
-classes.7 <- pam(fcomps[,4:ncol(fullcomps)], k = 7)
-classes.8 <- pam(fcomps[,4:ncol(fullcomps)], k = 8)
+classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3)
+classes.4 <- pam(fcomps[,5:ncol(fcomps)], k = 4)
+classes.5 <- pam(fcomps[,5:ncol(fcomps)], k = 5)
+classes.6 <- pam(fcomps[,5:ncol(fcomps)], k = 6)
+classes.7 <- pam(fcomps[,5:ncol(fcomps)], k = 7)
+classes.8 <- pam(fcomps[,5:ncol(fcomps)], k = 8)
 
 plot(classes.8)
 plot(classes.7)
@@ -339,11 +338,11 @@ summary(classes.6) # Avg. Silhouette width = 0.2348445
 summary(classes.5) # Avg. Silhouette width = 0.2350457
 summary(classes.4) # Avg. Silhouette width = 
 summary(classes.3) # Avg. Silhouette width = 
-fullcomps$idvar <- 1:nrow(fullcomps)
-mediods <- fullcomps$idvar [classes.5$id.med]
+fcomps$idvar <- 1:nrow(fcomps)
+mediods <- fcomps$idvar [classes.5$id.med]
 
 
-df5 <- fullcomps[fullcomps$idvar %in% mediods,] # look at the rows that have the mediods
+df5 <- fcomps[fcomps$idvar %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
 #[1] 1292 2201 4618 4978 4604# idvars of the mediods
@@ -367,7 +366,7 @@ rem_class5 <- factor(old_classes$clustering,
                               
                      ))
 
-clust_plot5 <- data.frame(fullcomps, 
+clust_plot5 <- data.frame(fcomps, 
                           cluster = rem_class5,
                           clustNum = as.numeric(rem_class5))
 
@@ -382,7 +381,7 @@ mediods <- fcomps$cell [classes.6$id.med]
 #[1] 45094 27585 14273  9203 22622 15808
 
 df6 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
-write.csv(df, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
+write.csv(df6, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
 
 old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,
@@ -397,15 +396,21 @@ rem_class <- factor(old_classes$clustering,
                              
                     ))
 
-clust_plot6 <- data.frame(fcomps, 
+clust_plot6f <- data.frame(fcomps, 
                           speciescluster = rem_class,
                           clustNum = as.numeric(rem_class))
 
-png(width = 6, height = 6, units= 'in',res=300,"outputs/cluster/six_cluster_map_fia.png")
-ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_fia.png")
+fia.clust<- ggplot(clust_plot6f, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#386cb0','#beaed4','#e41a1c','#ffff33', '#7fc97f','#fdc086'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank())+xlab("easting") + ylab("northing") +coord_equal()
+                                                                                                             axis.title.y=element_blank(), legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "D", size = 5)+ggtitle("")
+fia.clust 
+dev.off()
+
+# plot pls and fia cluster figures together:
+png(width = 10, height=4, units="in", res=300, "outputs/paper_figs/Fig_S1CD.png")
+grid.arrange(pls.clust, fia.clust, ncol = 2)
 dev.off()

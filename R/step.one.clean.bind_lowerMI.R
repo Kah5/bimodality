@@ -43,60 +43,21 @@ mich <- readOGR('data/southern_MI/southern_MI/so_michigan.shp', 'so_michigan')
 #  The files are in unique projections, this standardizes the projections to
 #  a long-lat projection:
 
-#wisc <- spTransform(wisc, CRS('+proj=longlat +ellps=WGS84'))
-#minn <- spTransform(minn, CRS('+proj=longlat +ellps=WGS84'))
+
 mich <- spTransform(mich, CRS('+proj=longlat +ellps=WGS84'))
 
-#  The wisconsin Range is set as a single value, the 'E' and 'W' codes are in
-#  RANGDIR.  Looking at the data it also looks like there are a few ranges
-#  that are miscoded.
-#wisc$RANGDIR[wisc$RANGDIR %in% '2'] <- 'W'
-#wisc$RANGDIR[wisc$RANGDIR %in% '4'] <- 'E'
+# convert to a data.frame
+mich <- as.data.frame(mich)
+ggplot(mich, aes(coords.x1, coords.x2, color = species1))+geom_point()
 
-#wisc$RANGDIR[wisc$RANGDIR %in% 'W' & coordinates(wisc)[,1] > 5e+05] <- 'E'
+pt <- data.frame(lat =42.083225,long= -86.283076, name = "Jerad")
+coordinates(pt) <- ~lat + long
 
-#  Michigan's point numbers are wrong in the dataset.  I'm not sure where the 
-#  error arose from, but we need them to be able to assign section & quartersection
-#  points.
-#mich$pnt <- as.numeric((substr(as.character(mich$RECNUM_C), 9,11)))
 
-#  The index of column names in Minnesota becomes the same as the Wisconsin.
-#names(minn)[c(8, 10:25)] <- names(wisc)[c(5, 13:28)]
-#names(mich)[c(36, 13:28)] <- names(wisc)[c(5, 13:28)]
 
-#  This step throws up four warnings, the warnings seem to come from 
-#  the distance fields, which are stored as a factor for some reason.
-#minn$DIST1 <- as.numeric(levels(minn$DIST1)[minn$DIST1])
-#minn$DIST2 <- as.numeric(levels(minn$DIST2)[minn$DIST2])
-#minn$DIST3 <- as.numeric(levels(minn$DIST3)[minn$DIST3])
-#minn$DIST4 <- as.numeric(levels(minn$DIST4)[minn$DIST4])
-
-#  We have made a choice to say that all taxa labelled 'Beech' in Minnesota are likely
-#  Bluebeech, or, in our dataset, Ironwood.
-#minn@data[minn@data == 'BE'] <- 'IR'
-
-#  We want the Minnesota data to reflect water in the same way that the Wisconsin data does.
-#  Almendinger references the following land cover codes that are likely to have water:
-#  'A' - Creek (unlikely to be exclusively water)
-#  'M' - Marsh
-#  'S' - Swamp
-#  'L' - Lake
-
-#minn$SP1 <- as.character(minn$SP1)
-#minn$SP2 <- as.character(minn$SP2)
-#minn$SP1[minn$VEGTYPE %in% c('L', 'M', 'S', 'R', 'A') & minn$SP1 %in% '_'] <- 'QQ'
-#minn$SP2[minn$VEGTYPE %in% c('L', 'M', 'S', 'R', 'A') & minn$SP2 %in% '_'] <- 'QQ'
-
-#  There are also some weird Michigan points:
-#  1.  Michigan has a set of points with NA as SPP1 but identifiable trees listed as
-#      'tree'.  1549 of these are quartersection points, 45 are section points.  This
-#      is clearly an artifact of the sampling method.  We remove these points.
-#  2.  There are also 2909 'no tree points in Michigan.  Most of these points are quarter
-#      section points, and there is clear grographic bias.  We assume these points are
-#      early survey points and remove them entirely.
 not.no.tree <- !(!is.na(mich$TREE) & is.na(mich$SP1))
 no.tree     <- is.na(mich$species1)
-mich <- mich[not.no.tree & !no.tree,]
+#mich <- mich[not.no.tree & !no.tree,]
 
 #  Character vectors are read into R as factors, to merge them they need to
 #  be converted to character strings first and then bound together.  To ensure
@@ -111,7 +72,7 @@ rng <- c(#as.character(minn$RNG),
 
 #  The merged dataset is called nwmw, Minnesota comes first, then Wisconsin.
 #nwmw <- rbind(minn[,c(8, 10:25)], wisc[,c(5, 13:28)], mich[,c(36, 13:28)])
-nwmw <- lowermi
+nwmw <- mich
 nwmw$twp <- twp
 nwmw$rng <- rng
 
@@ -325,8 +286,8 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
 final.data$corner <- "allMI"
 
 # now kill missing cells:
-final.data <- final.data[!final.data$species1 %in% c('Water', 'Missing'),]
-final.data <- final.data[!final.data$species2 %in% c('Water', 'Missing'),]
+final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
+final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
 
 
 

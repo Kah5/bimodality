@@ -1,10 +1,9 @@
 version <- "1.6-5"
-setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
+
 library(data.table)
 library(reshape2)
 library(dtplyr)
 library(ggplot2)
-library(hexbin)
 library(grid)
 library(gridExtra)
 library(sp)
@@ -12,18 +11,11 @@ library(raster)
 library(rgdal)
 
 #--------------------------------load data-----------------------------------
-# read in pont level data
+# read in pont level density data
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 
-# find the mean density by species
-#pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
-#pls.inil <- pls.inil[, c("x", "y", "cell", ".")] # just keep mean 
 
-#colnames(pls.inil) <- c('x', 'y', 'cell','PLSdensity')
-#hist(pls.inil$PLSdensity, xlim = c(0, 600),breaks = 100)
-
-
-# read in point level data
+# read in point level density data
 pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
 
 # find mean denisty for all species in a grid cell
@@ -133,7 +125,7 @@ full.spec[is.na(full.spec)]<- 0
 # we want to cluster the data based on % species composition: based on tree density, not the counts
 # using clusters similar to simons mediod clustering scheme: 
 library(cluster)
-library(fpc)
+#library(fpc)
 
 comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
 #comps <- comps[!is.na(comps),]
@@ -145,7 +137,7 @@ comps <- data.frame( comps[ complete.cases(comps),] )
 # write as a csv so we don't have to keep doing this:
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
 
-
+# use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each
 classes.3 <- pam(comps[,4:ncol(comps)], k = 3)
 classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
 classes.5 <- pam(comps[,4:ncol(comps)], k = 5)
@@ -153,25 +145,21 @@ classes.6 <- pam(comps[,4:ncol(comps)], k = 6)
 classes.7 <- pam(comps[,4:ncol(comps)], k = 7)
 classes.8 <- pam(comps[,4:ncol(comps)], k = 8)
 
-plot(classes.8)
-plot(classes.7)
-plot(classes.6)
-plot(classes.5)
-plot(classes.4)
-plot(classes.3)
 
-#summary(classes.8) # Avg. Silhouette width = 
+
+# Use Avg. Silhouette width to evaluate the clusters:  
+# SIlhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
 summary(classes.7) # Avg. Silhouette width = 0.2506271
 summary(classes.6) # Avg. Silhouette width = 0.2677659
 summary(classes.5) # Avg. Silhouette width = 0.2610493
 summary(classes.4) # Avg. Silhouette width = 0.2006347
 summary(classes.3) # Avg. Silhouette width = 0.2393605
+# these sihouette widths are low, but this is likely due to the large amount of data and noise in composition
 
 
+# both 5 and 6 classes have the highest average silhouetted widths:
 
-# 5 classes:
-
-
+# lets assign groups based on 5 clusters (similar to simon's groups)
 mediods <- comps$cell [classes.5$id.med]
 
 
@@ -179,6 +167,7 @@ df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
 #[1] 49221 29369 17193 16954 11274# mediods
+# had to look at the compositoin  of the mediod values to determine the speces
 rem_class5 <- factor(old_classes$clustering,
                      labels=c('Maple/Elm/Hickory/Oak/Basswood', # 1,
                               'Oak', # 2
@@ -198,13 +187,13 @@ ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
 
 
 
-# 6 classes
+# Now lets look at the clustering of 6 classes
 mediods <- comps$cell [classes.6$id.med]
 #mediods
 #[1] 35637 29369 20805 19885  7144 19029
 
 df6 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
-write.csv(df, "outputs/species_comp_clusters_6_class_mediods.csv")
+write.csv(df6, "outputs/species_comp_clusters_6_class_mediods.csv")
 
 old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,

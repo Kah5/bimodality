@@ -38,7 +38,7 @@ library(Rcpp)
 #---------------------read in data and clean up the column names------------------------
 version <- "1.7-5" # version using 1.8 IL data and 1.7 IN data
 # Read in the data
-ind <- read.csv("data/ndinpls_v1/ndinpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6-1 
+ind <- read.csv("data/ndinpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6-1 
 
 # read in the version 1.7 shapefile for Indiana
 
@@ -46,15 +46,15 @@ X11(width = 12)
 ggplot(ind[ind$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x,y, color = L3_tree1))+geom_point(size = 0.1)+coord_equal()
 
 # this version has several errors in the column names--I think it is an artefact of exporting from ArcGIS after georeferencing.
-colnames(ind)[41] <- "speciescode2"
-colnames(ind)[48] <- "bearingdir2"
-colnames(ind)[49] <- "chainstree2"
-colnames(ind)[51] <- "speciescode2"
-colnames(ind)[58] <- "bearingdir3"
-colnames(ind)[59] <- "chainstree3"
-colnames(ind)[61] <- "speciescode4"
-colnames(ind)[68] <- "bearingdir4"
-colnames(ind)[69] <- "chainstree4"
+#colnames(ind)[41] <- "speciescode2"
+#colnames(ind)[48] <- "bearingdir2"
+#colnames(ind)[49] <- "chainstree2"
+#colnames(ind)[51] <- "speciescode2"
+#colnames(ind)[58] <- "bearingdir3"
+#colnames(ind)[59] <- "chainstree3"
+#colnames(ind)[61] <- "speciescode4"
+#colnames(ind)[68] <- "bearingdir4"
+#colnames(ind)[69] <- "chainstree4"
 
 # Read in the il data
 il <- read.csv("data/ndilpls_v1.8.csv", stringsAsFactors = FALSE) # version 1.6
@@ -104,6 +104,7 @@ ind$DIST4 <- as.numeric(ind$chainstree4)
 il$DIST1 <- as.numeric(il$chainstree)
 il$DIST2 <- as.numeric(il$chainstree2)
 il$DIST3 <- as.numeric(il$chainstree3)
+
 il$DIST4 <- as.numeric(il$chainstree4)
 
 

@@ -8,7 +8,7 @@
 library(plyr)
 library(reshape2)
 library(raster)
-version <- "1.6-5"
+version <- "1.7-5"
 
 #-----------------------load data------------------------------------------------
 

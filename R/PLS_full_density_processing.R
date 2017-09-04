@@ -1,7 +1,7 @@
 # PLS_full_density_processing.R
 # This script performs many of the bimodality funcitons that FIA_density_processing.R does, but 
 # this script includes all of the PLS data, not just the data that overlaps with FIA
-version <- "1.6-5"
+version <- "1.7-5"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
@@ -111,12 +111,13 @@ pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   labs(x="easting", y="northing", title="PLS tree density") + 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
-png(paste0("outputs/v",version,"/PLS__full_tree_density_map.png"))
+
+png(paste0("/outputs/v",version,"/PLS_full_tree_density_map.png"))
 pls.map
 dev.off()
 
 # write out combinded datasets:
-write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_alb", version,".csv"))
+write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"))
 
 #--------------------load associated environmental data----------------------
 

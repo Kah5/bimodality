@@ -23,6 +23,7 @@
 #  Kelly Heilman 1.5: April 14, 2015
 #  Updated (1.5-2: illinois georeferenced): October 24th, 2016
 #  Updated (v1.6: Illinois + Indiana georeferenced): Jan 7th, 2017
+
 library(sp)
 library(spdep)
 library(rgdal)

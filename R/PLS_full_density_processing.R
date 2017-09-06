@@ -117,7 +117,7 @@ pls.map
 dev.off()
 
 # write out combinded datasets:
-write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"))
+write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"), row.names = FALSE)
 
 #--------------------load associated environmental data----------------------
 

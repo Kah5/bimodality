@@ -848,7 +848,7 @@ common <- merge(PLS.cell[,c("x", "y","cell")], FIA.cell[,c("x", "y", "cell")], b
 both <- common$cell
 
 png(height = 6, width =8,units = 'in',res=300,"outputs/cluster/composition_pc2_hists_by_PC1bins.png")
-ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period)) + geom_histogram(alpha = 0.5, position = 'identity')+
+ggplot(fc.m[fc.m$cell %in% both,], aes(pc2, fill = period,alpha = period)) + geom_histogram( position = 'identity')+ scale_alpha_discrete(limits=c("Past", "Modern"),range=c(0.4, 1))
   facet_wrap(~PC1_bins_f, ncol = 4 )+ xlab("Species composition PC2")
 dev.off()
 
@@ -865,11 +865,20 @@ ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f2 %in% c('0 - 1', '1 - 2','-1 -
   coord_flip()+theme_bw(base_size =15)+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5), legend.position = "bottom", legend.title=element_blank())
 dev.off()
 
-png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comp_smooth_by_period_envtpc1_mid.png")
-ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period))  + geom_density(alpha = 0.5, position = 'identity')+xlim(-3,2)+
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comp_smooth_by_period_envtpc1_mid_ghostfigs.png")
+fia.ghost.c<- ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(pc2, fill = period, alpha = period, linetype = period))  + geom_density( position = 'identity')+ scale_alpha_discrete(limits=c("Past", "Modern"),range=c(0.1, 1), guide = FALSE)+xlim(-3,2)+
   facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                               axis.text.x=element_blank(),
                                                                                                                                               axis.ticks.x=element_blank())+xlab("Species composition PC2")
+fia.ghost.c
+dev.off()
+
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/comp_smooth_PLSonly_envtpc1_mid_ghostfigs.png")
+pls.only.c<- ggplot(fc.m[fc.m$cell %in% both & fc.m$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2') & fc.m$period %in% "Past",], aes(pc2, fill = period))  + geom_density( position = 'identity')+ xlim(-3,2)+#scale_alpha_discrete(limits=c("Past", "Modern"),range=c(1, 1), guide = FALSE)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                              axis.text.x=element_blank(),
+                                                                                                                                              axis.ticks.x=element_blank())+xlab("Species composition PC2")
+pls.only.c
 dev.off()
 
 png("outputs/cluster/overlaid_PC2_hists.png")
@@ -1107,6 +1116,35 @@ ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', "0 - 1", "1 -
   facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
                                                                                                                                                axis.text.x=element_blank(),
                                                                                                                                                axis.ticks.x=element_blank())
+dev.off()
+
+# make the ghost figures the intemediate envrionment for figure two:
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/density_smooth_by_period_envtpc1_mid_ghostfigs.png")
+fia.ghost.d<- ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2'),], aes(Density, fill = period, alpha = period, linetype = period))  + geom_density( position = 'identity')+ scale_alpha_discrete(limits=c("Past", "Modern"),range=c(0.2, 1), guide = FALSE)+xlim(0,700)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                              axis.text.x=element_blank(),
+                                                                                                                                              axis.ticks.x=element_blank())+xlab("Tree Density (trees/ha)")
+fia.ghost.d
+dev.off()
+
+# make a figure with the PLS only (no modern ghost) for figure 2
+png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/density_smooth_PLSonly_envtpc1_mid_ghostfigs.png")
+pls.only.d<- ggplot(full[full$cell %in% both & full$PC1_bins_f %in% c('-1 - 0', '0 - 1', '1 - 2') & full$period %in% "Past",], aes(Density, fill = period))  + geom_density( position = 'identity')+ xlim(0,700)+#scale_alpha_discrete(limits=c("Past", "Modern"),range=c(1, 1), guide = FALSE)+
+  facet_wrap(~PC1_bins_f, ncol = 4 )+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(),
+                                                                                                                                              axis.text.x=element_blank(),
+                                                                                                                                              axis.ticks.x=element_blank())+xlab("Tree Density (trees/ha)")
+pls.only.d
+dev.off()
+
+# combine Density and compositon into the same figure for figure 2 and 3 
+source("R/grid_arrange_shared_legend.R")
+png(height = 5, width = 5, units = 'in', res = 300, "outputs/paper_figs/fig2_pls_density_comp.png")
+grid_arrange_shared_legend(pls.only.d, pls.only.c, ncol = 1, nrow = 2)
+dev.off()
+
+# combine composition and density for the FIA ghost figures
+png(height = 5, width = 5, units = 'in', res = 300, "outputs/paper_figs/fig3_fia_plsghost_density_comp.png")
+grid_arrange_shared_legend(fia.ghost.d, fia.ghost.c, ncol = 1, nrow = 2)
 dev.off()
 
 # map out the intemediate places on modern landscape, and the two modes on the pls land scape:

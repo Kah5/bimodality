@@ -35,6 +35,7 @@ library(sp)
 library(spdep)
 library(rgdal)
 library(raster)
+library(ggplot2)
 
 #wisc <- readOGR('data/raw_data/wisc/glo_corn.shp', 'glo_corn')
 #minn <- readOGR('data/raw_data/minn/Minnesota.shp', 'Minnesota')
@@ -48,12 +49,20 @@ mich <- spTransform(mich, CRS('+proj=longlat +ellps=WGS84'))
 
 # convert to a data.frame
 mich <- as.data.frame(mich)
-ggplot(mich, aes(coords.x1, coords.x2, color = species1))+geom_point()
+head(mich) # look at df
+# the dist1 and diam1 columns are switched, so we need to fix this
+dist1 <- mich$diam1
+diam1 <- mich$dist1
 
-pt <- data.frame(lat =42.083225,long= -86.283076, name = "Jerad")
-coordinates(pt) <- ~lat + long
+mich$dist1 <- dist1
+mich$diam1 <- diam1
+
+ggplot(mich, aes(coords.x1, coords.x2, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
+#df <- mich[mich$quad %in% c("Sodus", "BentonHarbor", "SisterLakes"),]
+#write.csv(df, "test_mich_quad.csv", row.names= FALSE)
+#unique(mich[mich$coords.x1 >= pt$long+0.01,]$quad)
 
 not.no.tree <- !(!is.na(mich$TREE) & is.na(mich$SP1))
 no.tree     <- is.na(mich$species1)
@@ -104,10 +113,10 @@ dists <-  cbind(as.numeric(nwmw$dist1),
                 as.numeric(nwmw$dist3), 
                 as.numeric(nwmw$dist4))
 
-azimuths <- cbind(as.character(nwmw$az1), 
-                  as.character(nwmw$az2),
-                  as.character(nwmw$az3),
-                  as.character(nwmw$az4))
+azimuths <- cbind(as.numeric(nwmw$az1), 
+                  as.numeric(nwmw$az2),
+                  as.numeric(nwmw$az3),
+                  as.numeric(nwmw$az4))
 
 #  michigan data already has raw azimuths, so skip this part:
 #source('R/process_raw/get_angle.R')
@@ -286,13 +295,31 @@ colnames(final.data) <- c('PointX','PointY', 'Township',
 final.data$corner <- "allMI"
 
 # now kill missing cells:
-final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
-final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
+#final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
+#final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
 
 
 
 #write data to a csv:
 write.csv(final.data, "data/lower_mi_final_data.csv")
+#note there are still many NA values in the dataset--need to remove these!
 
+X11(width=12)
+ggplot(final.data[final.data$species1 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species1))+geom_point()
+hist(final.data$diam1)
+hist(final.data$diam2)
+hist(final.data$dist1)
+hist(final.data$dist2)
 
-ggplot(final.data, aes(x, y, color = diam1))+geom_point()
+Pair <- paste0(as.character(final.data$corner))
+
+# --------------------generate correction factors------------------------------:
+# read in the correction factors provided by Charlie Cogbill:
+corr.factor <- read.csv('data//charlie_corrections.csv')
+test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
+
+colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
+require(plyr)
+corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
+
+write.csv(corrections, 'data/MI_correction_factors.csv')

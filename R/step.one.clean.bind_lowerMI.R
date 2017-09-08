@@ -39,16 +39,16 @@ library(ggplot2)
 
 #wisc <- readOGR('data/raw_data/wisc/glo_corn.shp', 'glo_corn')
 #minn <- readOGR('data/raw_data/minn/Minnesota.shp', 'Minnesota')
-mich <- readOGR('data/southern_MI/southern_MI/so_michigan.shp', 'so_michigan')
-
+#mich <- readOGR('data/southern_MI/southern_MI/so_michigan.shp', 'so_michigan')
+mich <- read.csv("data/southernMI_projected_v0.3.csv", stringsAsFactors = FALSE)
 #  The files are in unique projections, this standardizes the projections to
 #  a long-lat projection:
 
 
-mich <- spTransform(mich, CRS('+proj=longlat +ellps=WGS84'))
+
 
 # convert to a data.frame
-mich <- as.data.frame(mich)
+
 head(mich) # look at df
 # the dist1 and diam1 columns are switched, so we need to fix this
 dist1 <- mich$diam1
@@ -57,7 +57,7 @@ diam1 <- mich$dist1
 mich$dist1 <- dist1
 mich$diam1 <- diam1
 
-ggplot(mich, aes(coords.x1, coords.x2, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
+ggplot(mich, aes(POINT_X, POINT_Y, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
 #df <- mich[mich$quad %in% c("Sodus", "BentonHarbor", "SisterLakes"),]

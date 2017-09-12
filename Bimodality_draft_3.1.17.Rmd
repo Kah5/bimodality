@@ -82,10 +82,126 @@ mapdata <- data.frame(mapdata)
 densitys <- read.csv("data/midwest_pls_fia_density_alb1.6-5.csv")
 
 # fia and pls plots
-fig1A <- ggplot(densitys, aes(PLSdensity)) +geom_histogram(fill= "#D55E00",color = "black") +xlim(0, 700)+ xlab("PLS tree density (stems/ha)")+ ylab('# grid cells')+ 
-        theme_bw(base_size = 10)+ annotate("text", x=0, y=900,label= "A", size = 5)
+sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS tree density") + 
+  scale_fill_gradientn(colours = cbPalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_map.png")
+pls.map
+dev.off()
+
+# read in the composition data for PLS and FIA (PC1 and PC2):
+full.comps<- read.csv("outputs/cluster/fullcomps_dataset.csv")
+
+pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = pc2))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(cbpalette), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+# ---------------plot out the environmental PC:
+
+
+# using "scale dens" from PLS_full_density_processing.R
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+dens.rm <- na.exclude(dens.pr)
+dens.rm <- data.frame(dens.rm)
+# using ggbiplot
+library(ggbiplot)
+source("R/newggbiplot.R")
+scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
+                                "pastdeltaP", "modtmean", "pasttmean",
+                                "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
+
+pretty.scale <- scale.dens[,c('MAP1910',   
+                              "pastdeltaP", "pasttmean",
+                              "deltaT", "sandpct", "awc")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc")
+
+pretty.pca <- princomp(pretty.scale,
+                     na.rm=TRUE) 
+
+g <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+              = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5)
+
+# layer the points from pls underneath the pca biplot
+# using a clever trick to manipulate the layers
+g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS), size = 0.2), g$layers)
+g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
+
+#write to png
+png(width = 8, height = 4,unit="in", res=300, paste0("outputs/paper_figs/pca_biplot.png"))
+g 
+dev.off()
+
+
+# --------------plot out the species Principal component:
+
+
+fullcomps <- read.csv("outputs/cluster/fullcomps.csv")
+fc <- fullcomps
+fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
+
+
+# pca on the scaled data
+full.pca <- princomp(scale(fullcomps[,6:ncol(fullcomps)])) #scale to 0 variance
+plot(full.pca)
+
+biplot(full.pca)
+scores <- full.pca$scores
+
+fc$pc1 <- scores[,1]
+fc$pc2 <- scores[,2]
+
+
+#library(ggbiplot)
+source("R/newggbiplot.R")
+
+gcomp <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+gcomp$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), gcomp$layers)
+
+png("outputs/paper_figs/full_composition_PCA_biplot.png")
+gcomp + theme_bw()
+dev.off()
+
+
+# --------------plot out density vs. envt and pc2 vs envt
+# hexbin plot for pls composition:
+pls.comp.hex<- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
+  theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Species Composition PC2') +ylab("Environmental PC1")
+
+new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
+
+# hexbin plot for PLS density:
+pls.dens.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
+  theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
+
+
+comp.envt <- ggplot(data=full.comps[full.comps$period %in% "PLS",], aes(x=PC1, y=pc2)) + geom_hex()
+
+# plot the geom_denisty values belowP
+
+
+##################################
 fig1D<- ggplot(densitys, aes(FIAdensity)) +geom_histogram(binwidth = 30,fill ="#0072B2",  color = 'black') +xlim(0, 700)+xlab('Modern Tree density (stems/ha)')+ylab("# grid cells")+
         theme_bw(base_size = 10)+ annotate("text", x=0, y=900,label= "D", size = 5)+theme(legend.title=element_blank())
 

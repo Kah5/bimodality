@@ -283,9 +283,6 @@ H <- arrangeGrob(pls.comps.hists, top = textGrob("H", x = unit(0.1, "npc"),
         y = unit(1.1, "npc"), just=c("left","top"),
         gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
 
-#png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2new.png")
-#grid.arrange(pls.map,pls.comp.map,g,gcomp + theme_bw(),pls.dens.hex,pls.comp.hex, pls.density.hists, pls.comps.hists, ncol = 2, nrow=4) 
-#dev.off()
 
 # take all these figures and mash into one big mega figure
 png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2new.png")
@@ -293,7 +290,7 @@ grid.arrange(A,B,C,D,E,Fp,G,H, ncol = 2, nrow=4)
 dev.off()
 
 ###############################################################################
-# New figure 3
+# New figure 3--FIA figures
 ###############################################################################
 
 # fia density data map:
@@ -344,9 +341,68 @@ fia.comp.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, pc2))
 
 
 # fia density ghost figures:
+# for Tree density:
+fia <- fia.dens[,c("x","y","cell", "FIAdensity", "PC1fia", "PC1fiabins")]
+colnames(fia) <- c("x","y","cell", "density", "PC1", "PC1bins")
+fia$period <- "Modern"
+pls <- dens.pr[,c("x","y","cell", "PLSdensity", "PC1", "PC1bins")]
+colnames(pls) <- c("x","y","cell", "density", "PC1", "PC1bins")
+pls$period <- "Past"
+
+full.dens<- rbind(pls, fia)
+
+full.dens$PC1_bins_f2 <- factor(full.dens$PC1bins, levels = c("5 - 6", "4 - 5", "3 - 4",
+                                                       "2 - 3", "1 - 2", "0 - 1", "-1 - 0",
+                                                       "-2 - -1", "-3 - -2", "-4 - -3",
+                                                       "-5 - -4"))
+
+# rename based on open, closed, and bimodal
+full.dens$newPCbins <- ifelse(full.dens$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open", ifelse(full.dens$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2","NA"), "Closed", "Bimodal"))
+
+full.dens$newPCbins_f <- factor(full.dens$newPCbins, levels=c("Open", "Bimodal", "Closed"))
+
+
+# use BW of 40 to create smoother Unimoadal group
+fia.density.hists <- ggplot(full.dens, aes(density, fill = period, alpha = period, linetype = period)) + geom_density( position = 'identity', bw = 40) +xlim(0,700)+ scale_alpha_discrete(limits=c("Past", "Modern"),range=c(0.1, 1), guide = FALSE)+xlab("Tree Density (trees/ha)")+ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
 
 
 # fia composition ghost figures:
+fia.comps.hists <- ggplot(full.comps, aes(pc2, fill = period, alpha = period, linetype = period)) + geom_density(position = 'identity', bw = 0.3)+ scale_alpha_discrete(limits=c("PLS", "FIA"),range=c(0.1, 1), guide = FALSE)+xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+
+  facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
+# now put them all together into one figure:
+Af<- arrangeGrob(fia.map, top = textGrob("A", x = unit(0.1, "npc")
+         , y   = unit(1, "npc"), just=c("left","top"),
+         gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+Bf <- arrangeGrob(fia.comp.map, top = textGrob("B", x = unit(0.1, "npc")
+         , y = unit(1, "npc"), just=c("left","top"),
+         gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+Cf <- arrangeGrob(fia.dens.hex, top = textGrob("C", x = unit(0.1, "npc")
+        , y  = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+Df <- arrangeGrob(fia.comp.hex, top = textGrob("D", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+Ef <- arrangeGrob(fia.density.hists, top = textGrob("E", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+Ff <- arrangeGrob(fia.comps.hists, top = textGrob("F", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+
+
+
+# take all these figures and mash into one big mega figure
+png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig3new.png")
+grid.arrange(Af,Bf,Cf,Df,Ef,Ff, ncol = 2, nrow=3) 
+dev.off()
 
 
 ##################################

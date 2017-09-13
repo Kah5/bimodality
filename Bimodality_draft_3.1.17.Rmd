@@ -79,7 +79,8 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 
-densitys <- read.csv("data/midwest_pls_fia_density_alb1.6-5.csv")
+
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
 # fia and pls plots
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
@@ -88,7 +89,7 @@ cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2",
 
 
 pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
@@ -291,6 +292,61 @@ png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2ne
 grid.arrange(A,B,C,D,E,Fp,G,H, ncol = 2, nrow=4) 
 dev.off()
 
+###############################################################################
+# New figure 3
+###############################################################################
+
+# fia density data map:
+densitys <- read.csv("data/midwest_pls_fia_density_alb1.6-5.csv")
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=densitys, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/fia_density_map.png")
+fia.map
+dev.off()
+
+# fia composition map:
+# read in the composition data for PLS and FIA (PC1 and PC2):
+full.comps<- read.csv("outputs/cluster/fullcomps_dataset.csv")
+
+fia.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = pc2))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(cbpalette), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+
+
+# fia density vs. envt:
+fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
+fia.dens.hex <- ggplot(fia.dens, aes( PC1fia, FIAdensity)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab(" FIA Tree Density /n (stems/ha)")
+
+
+#fia composition vs. envt:
+# use full.comps:
+fia.comp.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, pc2)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+
+# fia density ghost figures:
+
+
+# fia composition ghost figures:
 
 
 ##################################

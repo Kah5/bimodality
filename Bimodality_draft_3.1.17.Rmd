@@ -90,16 +90,13 @@ cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2",
 pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="PLS tree density") #+ 
+  labs(x="easting", y="northing")+ #+ 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
 
-fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=dens, aes(x=x, y=y, fill = FIAdensity))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="PLS tree density") + 
-  scale_fill_gradientn(colours = cbPalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
 
 png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_map.png")
 pls.map
@@ -113,7 +110,10 @@ pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing") + 
   scale_fill_gradientn(colours = rev(cbpalette), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey') +
-  coord_equal()+theme_bw()
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
 
 # ---------------plot out the environmental PC:
 
@@ -122,8 +122,8 @@ pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
 dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
-# using ggbiplot
-library(ggbiplot)
+# using newggbiplot
+
 source("R/newggbiplot.R")
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
@@ -140,10 +140,20 @@ pretty.pca <- princomp(pretty.scale,
 g <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
               = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5)
 
+
+scores <- data.frame(pretty.pca$scores[,1:2])
+scores$PLS <- dens.rm$PLSdensity
+
+dens.rm$PC1 <- scores[,1]
+dens.rm$PC2 <- scores[,2]
+dens.rm <- data.frame(dens.rm)
+PC <- dens.pca
+
+
 # layer the points from pls underneath the pca biplot
 # using a clever trick to manipulate the layers
-g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS), size = 0.2), g$layers)
-g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
+g$layers <- c(geom_point(data = dens.rm, aes(x = PC1, y = PC2, color = PLSdensity), size = 0.2), g$layers)
+g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 10) 
 
 #write to png
 png(width = 8, height = 4,unit="in", res=300, paste0("outputs/paper_figs/pca_biplot.png"))
@@ -178,47 +188,109 @@ gcomp <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
 gcomp$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), gcomp$layers)
 
 png("outputs/paper_figs/full_composition_PCA_biplot.png")
-gcomp + theme_bw()
+gcomp + theme_bw(base_size = 10)
 dev.off()
 
 
 # --------------plot out density vs. envt and pc2 vs envt
 # hexbin plot for pls composition:
-pls.comp.hex<- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
-  theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Species Composition PC2') +ylab("Environmental PC1")
+pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
 
 new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
 
 # hexbin plot for PLS density:
 pls.dens.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
-  theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
 
 
 comp.envt <- ggplot(data=full.comps[full.comps$period %in% "PLS",], aes(x=PC1, y=pc2)) + geom_hex()
 
-# plot the geom_denisty values below each hexbin plot:
+#-------------------------------plot the geom_denisty values below each hexbin plot:
 
-
+# for Tree density:
 dens.pr$PC1_bins_f2 <- factor(dens.pr$PC1bins, levels = c("5 - 6", "4 - 5", "3 - 4",
                                                        "2 - 3", "1 - 2", "0 - 1", "-1 - 0",
                                                        "-2 - -1", "-3 - -2", "-4 - -3",
                                                        "-5 - -4"))
 
+# rename based on open, closed, and bimodal
+dens.pr$newPCbins <- ifelse(dens.pr$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open", ifelse(dens.pr$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2","NA"), "Closed", "Bimodal"))
 
-
-#png(height = 3, width = 5, units = 'in', res = 300, "outputs/cluster/densitysmooth_by_period_envtpc1_mid.png")
-# regroup to encompass all the data
-dens.pr$newPCbins <- ifelse(dens.pr$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open", ifelse(dens.pr$PC1_bins_f2 %in% c( "-3 - -2","NA"), "Closed", "Bimodal"))
-
+dens.pr$newPCbins_f <- factor(dens.pr$newPCbins, levels=c("Open", "Bimodal", "Closed"))
 full<- dens.pr
 full$period <- "Past"
 
-pls.density.hists<- ggplot(full, aes(PLSdensity, fill = period)) + geom_density(alpha = 0.5, position = 'identity')+xlim(0,700)+
-  facet_wrap(~newPCbins, ncol = 3 , scales = "free_x")+theme_bw()+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+# use BW of 40 to create smoother Unimoadal group
+pls.density.hists<- ggplot(full, aes(PLSdensity, fill = period)) + geom_density(alpha = 0.5, position = 'identity', bw = 40) +xlim(0,700)+ xlab("Tree Density (trees/ha)")+ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
 #dev.off()
 pls.density.hists
+
+# for species composition:
+
+full.comps$PC1_bins_f2 <- factor(full.comps$PC1bins, levels = c("5 - 6", "4 - 5", "3 - 4",
+                                                       "2 - 3", "1 - 2", "0 - 1", "-1 - 0",
+                                                       "-2 - -1", "-3 - -2", "-4 - -3",
+                                                       "-5 - -4"))
+
+# rename based on open, closed, and bimodal
+full.comps$newPCbins <- ifelse(full.comps$PC1_bins_f2 %in% c("2 - 3", "1 - 2"), "Oak", ifelse(full.comps$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2", "NA","5 - 6", "4 - 5", "3 - 4", "-5 - -4", "-4 - -3"), "Mesic/Other", "Bimodal"))
+
+full.comps$newPCbins_f <- factor(full.comps$newPCbins, levels=c("Oak", "Bimodal", "Mesic/Other"))
+
+
+
+# use BW of 40 to create smoother Unimoadal group
+pls.comps.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(pc2, fill = period)) + geom_density(alpha = 0.5, position = 'identity', bw = 0.3) +xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
+pls.comps.hists
+
+# use cowplot to add all these together
+
+A <- arrangeGrob(pls.map, top = textGrob("A", x = unit(0.1, "npc")
+         , y   = unit(1, "npc"), just=c("left","top"),
+         gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+B <- arrangeGrob(pls.comp.map, top = textGrob("B", x = unit(0.1, "npc")
+         , y = unit(1, "npc"), just=c("left","top"),
+         gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+C <- arrangeGrob(g, top = textGrob("C", x = unit(0.1, "npc")
+        , y  = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
+
+D <- arrangeGrob(gcomp, top = textGrob("D", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+E <- arrangeGrob(pls.dens.hex, top = textGrob("E", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+Fp <- arrangeGrob(pls.comp.hex, top = textGrob("F", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+G <- arrangeGrob(pls.density.hists, top = textGrob("G", x = unit(0.1, "npc")
+        , y = unit(1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+H <- arrangeGrob(pls.comps.hists, top = textGrob("H", x = unit(0.1, "npc"), 
+        y = unit(1.1, "npc"), just=c("left","top"),
+        gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
+
+#png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2new.png")
+#grid.arrange(pls.map,pls.comp.map,g,gcomp + theme_bw(),pls.dens.hex,pls.comp.hex, pls.density.hists, pls.comps.hists, ncol = 2, nrow=4) 
+#dev.off()
+
+# take all these figures and mash into one big mega figure
+png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2new.png")
+grid.arrange(A,B,C,D,E,Fp,G,H, ncol = 2, nrow=4) 
+dev.off()
+
 
 
 ##################################

@@ -67,6 +67,51 @@ pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
 
+# make a map of Oak composition:
+pls.Oak.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Oak))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Oak Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+
+# make a map of Maple composition:
+pls.Maple.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Maple))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Maple Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+# make a map of Hemlock composition:
+pls.Hemlock.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Hemlock))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Hemlock Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+# make a map of Beech composition:
+pls.Beech.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Beech))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Beech Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
 # ---------------plot out the environmental PC:
 
 
@@ -135,35 +180,108 @@ fc$pc1 <- scores[,1]
 fc$pc2 <- scores[,2]
 
 # merge fc dataset with the dens.rm dataset that has environmental PCA datasets:
-
+fc.dens <- merge(fc[fc$period %in% "Past",], dens.rm, by = c("x","y", "cell"))
 
 #library(ggbiplot)
 source("R/newggbiplot.R")
 
-gcomp <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
+fc.dens[sample(1:nrow(fc.dens)),]
+
+gcomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
-gcomp$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), gcomp$layers)
+gcomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = pc2), size = 0.5), gcomp$layers)
+# color points by species composition PC:
+gcomp <- gcomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey')
 
 png("outputs/paper_figs/full_composition_PCA_biplot.png")
 gcomp + theme_bw(base_size = 10)
 dev.off()
 
+# make this same figure, but with oak composition:
+ocomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "black",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+ocomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = Oak), size = 0.5), ocomp$layers)
+# color points by species composition PC:
+ocomp <- ocomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Oak Composition", na.value = 'darkgrey')
+
+png("outputs/paper_figs/Oak_composition_PCA_biplot.png")
+ocomp + theme_bw(base_size = 10)
+dev.off()
+
+#make pca plot with Maple composition:
+mcomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "black",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+mcomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = Maple), size = 0.5), mcomp$layers)
+# color points by species composition PC:
+mcomp <- mcomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Maple Composition", na.value = 'darkgrey')
+
+png("outputs/paper_figs/Maple_composition_PCA_biplot.png")
+mcomp + theme_bw(base_size = 10)
+dev.off()
+
+# make pca with Beech composition
+bcomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "black",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+bcomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = Beech), size = 0.5), bcomp$layers)
+# color points by species composition PC:
+bcomp <- bcomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Beech Composition", na.value = 'darkgrey')
+
+png("outputs/paper_figs/Beech_composition_PCA_biplot.png")
+bcomp + theme_bw(base_size = 10)
+dev.off()
+
+# make with Hemlock compsition:
+hcomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "black",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+hcomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = Hemlock), size = 0.5), hcomp$layers)
+# color points by species composition PC:
+hcomp <- ocomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Hemlock Composition", na.value = 'darkgrey')
+
+png("outputs/paper_figs/Hemlock_composition_PCA_biplot.png")
+hcomp + theme_bw(base_size = 10)
+dev.off()
+
+
 
 # --------------plot out density vs. envt and pc2 vs envt
-# hexbin plot for pls composition:
-pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
-  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab("Species Composition PC2")
-
-new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
 
 # hexbin plot for PLS density:
+new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
+
 pls.dens.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
 
 
-comp.envt <- ggplot(data=full.comps[full.comps$period %in% "PLS",], aes(x=PC1, y=pc2)) + geom_hex()
+# hexbin plot for pls composition:
+pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+
+# hexbin for pls oak comp:
+pls.oak.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Oak)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+# hexbin for pls maple composition
+pls.maple.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Maple)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+# hexbin for pls hemlock compsition:
+pls.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Hemlock)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+
+# hexbin for pls beech composition:
+pls.beech.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Beech)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+
+
 
 #-------------------------------plot the geom_denisty values below each hexbin plot:
 
@@ -174,14 +292,14 @@ dens.pr$PC1_bins_f2 <- factor(dens.pr$PC1bins, levels = c("5 - 6", "4 - 5", "3 -
                                                        "-5 - -4"))
 
 # rename based on open, closed, and bimodal
-dens.pr$newPCbins <- ifelse(dens.pr$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open", ifelse(dens.pr$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2","NA"), "Closed", "Bimodal"))
+dens.pr$newPCbins <- ifelse(dens.pr$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open (1-6 PC1)", ifelse(dens.pr$PC1_bins_f2 %in% c( "-3 - -2","NA"), "Closed (-3 - -2)", "Bimodal (-1 - 1)"))
 
-dens.pr$newPCbins_f <- factor(dens.pr$newPCbins, levels=c("Open", "Bimodal", "Closed"))
+dens.pr$newPCbins_f <- factor(dens.pr$newPCbins, levels=c("Open (1-6 PC1)", "Bimodal (-1 - 1)", "Closed (-3 - -2)"))
 full<- dens.pr
 full$period <- "Past"
 
 # use BW of 40 to create smoother Unimoadal group
-pls.density.hists<- ggplot(full, aes(PLSdensity, fill = period)) + geom_density(alpha = 0.5, position = 'identity', bw = 40) +xlim(0,700)+ xlab("Tree Density (trees/ha)")+ylab("Frequecny")+
+pls.density.hists <- ggplot(full, aes(PLSdensity, fill = period)) + geom_density(alpha = 0.5, position = 'identity', bw = 40) +xlim(0,700)+ xlab("Tree Density (trees/ha)")+ylab("Frequecny")+
   facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
 #dev.off()
 pls.density.hists
@@ -194,9 +312,9 @@ full.comps$PC1_bins_f2 <- factor(full.comps$PC1bins, levels = c("5 - 6", "4 - 5"
                                                        "-5 - -4"))
 
 # rename based on open, closed, and bimodal
-full.comps$newPCbins <- ifelse(full.comps$PC1_bins_f2 %in% c("2 - 3", "1 - 2"), "Oak", ifelse(full.comps$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2", "NA","5 - 6", "4 - 5", "3 - 4", "-5 - -4", "-4 - -3"), "Mesic/Other", "Bimodal"))
+full.comps$newPCbins <- ifelse(full.comps$PC1_bins_f2 %in% c("2 - 3", "1 - 2"), "Oak", ifelse(full.comps$PC1_bins_f2 %in% c("-2 - -1" ,"-3 - -2", "NA","5 - 6", "4 - 5", "3 - 4", "-5 - -4", "-4 - -3"), "Mesic/Other", "Bimodal (-1 - 1)"))
 
-full.comps$newPCbins_f <- factor(full.comps$newPCbins, levels=c("Oak", "Bimodal", "Mesic/Other"))
+full.comps$newPCbins_f <- factor(full.comps$newPCbins, levels=c("Oak", "Bimodal (-1 - 1)", "Mesic/Other"))
 
 
 
@@ -205,6 +323,20 @@ pls.comps.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(pc2, fi
   facet_wrap(~newPCbins_f, ncol = 3 , scales = "free_x")+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
 
 pls.comps.hists
+
+pls.oaks.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(Oak, fill = period)) + geom_density(alpha = 0.5, position = 'identity') +xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 )+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
+
+pls.Maple.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(Maple, fill = period)) + geom_density(alpha = 0.5, position = 'identity') +xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 )+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
+pls.Hemlock.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(Hemlock, fill = period)) + geom_density(alpha = 0.5, position = 'identity') +xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 )+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
+pls.Beech.hists <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(Beech, fill = period)) + geom_density(alpha = 0.5, position = 'identity') +xlim(2.5,-6)+ xlab(expression(atop("Species Composition","Oak         " %<->% "        Mesic Species")))+ ylab("Frequecny")+
+  facet_wrap(~newPCbins_f, ncol = 3 )+theme_bw(base_size = 10)+scale_fill_manual(values = c("red", "blue"), limits = c("FIA", "PLS"))+coord_flip()+theme(axis.title.x=element_blank(), axis.text.x=element_blank(),                                                          axis.ticks.x=element_blank())
+
 
 # use cowplot to add all these together
 

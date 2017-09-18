@@ -233,6 +233,10 @@ species <- data.frame(species1 = sp.levels[as.numeric(ranked.data[, 9])],
                       species3 = sp.levels[as.numeric(ranked.data[,11])],
                       species4 = sp.levels[as.numeric(ranked.data[,12])])
 
+year <- rep("NA", length(species$species1))
+state <- data.frame(state = rep("MI", length(species$species1)))
+corner <- rep("allMI", length(species$species1))
+
 #  We need to bin the year information so that we can use it to calculate
 #  appropriate Cottam Correction factors.  The survey instructions for the PLS
 #  change at a number of points during the sirveys in Wisconsin, but are
@@ -276,24 +280,26 @@ species <- data.frame(species1 = sp.levels[as.numeric(ranked.data[, 9])],
 
 #  These are the columns for the final dataset.
 
-final.data <- data.frame(nwmw$coords.x1,
-                         nwmw$coords.x2,
+final.data <- data.frame(nwmw$POINT_X,
+                         nwmw$POINT_Y,
                         nwmw$twp,
-                        
+                        state,
                         ranked.data[,1:8],
                         species,
                         ranked.data[,13:16],
-                        #survey.year,
+                        corner,
+                        year ,
                         stringsAsFactors = FALSE)
 
-colnames(final.data) <- c('PointX','PointY', 'Township',
+colnames(final.data) <- c('PointX','PointY', 'Township',"state",
                           paste('diam',    1:4, sep =''),
                           paste('dist',    1:4, sep = ''), 
                           paste('species', 1:4, sep = ''),
-                          paste('az',      1:4, sep = ''))#, 'year')
+                          paste('az',      1:4, sep = ''), 'corner','surveyyear')
 
-final.data$corner <- "allMI"
 
+summary(final.data)
+final.data <- final.data[!is.na(final.data$PointX),]
 # now kill missing cells:
 #final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
 #final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
@@ -323,3 +329,4 @@ require(plyr)
 corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
 write.csv(corrections, 'data/MI_correction_factors.csv')
+

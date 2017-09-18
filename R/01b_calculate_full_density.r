@@ -14,10 +14,21 @@ version <- "1.7-5"
 
 #read in final.data from the step_one_clean_IN.r script:
 final.data <- read.csv(paste0("outputs/ndilin_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
-# calculate stem density:
+# corrections for stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
+final.data <- final.data[,1:23]
 
+# read in final data from michigan
+final.data.mi <- read.csv(paste0("data/lower_mi_final_data.csv"), stringsAsFactors = FALSE)
+# corrections for stem density:
+correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
 
+# add the lower MI data below the INIL data: 
+final.data <- rbind(final.data, final.data.mi)
+correction.factor <- rbind(correction.factor, correction.factor.mi)
+
+# also join together the lower MI species and upper mi species
+species <- final.data[,14:17]
 #------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
 # & no diameter veil
@@ -32,7 +43,7 @@ basal.area <- estimates[[2]]
 # there are some very high estimates of stem density 
 summary(stem.density)
 summary(basal.area)
-zero.trees <- is.na(stem.density) & (species[,2] %in% c('No tree', 'Water', 'Wet') | species[,1] %in% c('No tree', 'Water', 'Wet'))
+zero.trees <- is.na(stem.density) 
 
 #plot Histogram of point estimates of stem density
 hist(stem.density, breaks = 1000, xlim = c(0,1000))
@@ -59,7 +70,7 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
 
 
 
-coordinates(final.data)<- ~PointX+PointY
+#coordinates(final.data)<- ~PointX+PointY
 
 #create spatial object with density, basal area & diameters data
 stem.density <- data.frame(x = final.data$PointX, 
@@ -80,6 +91,9 @@ stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct
 
 ggplot(stem.density, aes(x, y, color=density))+geom_point()
 # ---------------------fixing some lingering data naming issues:-------------------
+
+
+
 species[species==""]<- "No tree"
 #fix the captalized "No tree" problem
 species[species == 'No Tree'] <- 'No tree'
@@ -98,6 +112,8 @@ stem.density$basal[zero.trees] <- 0
 stem.density$density[wet.trees] <- 0
 stem.density$basal[wet.trees] <- 0
 
+# kill cells with na for x or y:
+stem.density <- stem.density[!is.na(stem.density$x),]
 
 # make stem.density spatial
 coordinates(stem.density)<- ~x+y
@@ -115,7 +131,7 @@ numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+in
 
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
 final.data <- data.frame(final.data)
-final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
+#final.data <- read.csv(paste0("outputs/ndilinpls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 
 #create dataframe with stem density, speceies
 spec.table <- data.frame(PointX = final.data$PointX, 
@@ -188,12 +204,12 @@ spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already
 
 colnames(spec.table)[1:2] <- c("x", "y")# rename grid cell x and y colnames
 write.csv(spec.table, 
-        file = paste0('outputs/density_biomass_pointwise.ests','_v', 
+        file = paste0('outputs/density_biomass_pointwise.ests_inilmi','_v', 
                       version, 
                       '.csv'))
 
 # in case you don't want to redo the biomass calcuations
-spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests','_v', 
+spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests_inilmi','_v', 
                        version, 
                        '.csv'))
 
@@ -218,7 +234,7 @@ spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.p
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table  <- spec.table[!is.na(spec.table$density), ]
 
-write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests','_v',version, '.csv'))
+write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'))
 
 #-------------------------Paleon gridding----------------------------------------------
 

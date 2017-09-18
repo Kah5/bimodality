@@ -294,7 +294,7 @@ dens.pr$PC1_bins_f2 <- factor(dens.pr$PC1bins, levels = c("5 - 6", "4 - 5", "3 -
 # rename based on open, closed, and bimodal
 dens.pr$newPCbins <- ifelse(dens.pr$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open (1-6 PC1)", ifelse(dens.pr$PC1_bins_f2 %in% c( "-3 - -2","NA"), "Closed (-3 - -2)", "Bimodal (-1 - 1)"))
 
-dens.pr$newPCbins_f <- factor(dens.pr$newPCbins, levels=c("Open (1-6 PC1)", "Bimodal (-1 - 1)", "Closed (-3 - -2)"))
+dens.pr$newPCbins_f <- factor(dens.pr$newPCbins, levels=c("Closed (-3 - -2)", "Bimodal (-1 - 1)", "Open (1-6 PC1)"))
 full<- dens.pr
 full$period <- "Past"
 
@@ -314,7 +314,7 @@ full.comps$PC1_bins_f2 <- factor(full.comps$PC1bins, levels = c("5 - 6", "4 - 5"
 # rename based on open, closed, and bimodal
 full.comps$newPCbins <- ifelse(full.comps$PC1_bins_f2 %in% c("2 - 3", "1 - 2"), "Oak", ifelse(full.comps$PC1_bins_f2 %in% c("-2 - -1" ,"-3 - -2", "NA","5 - 6", "4 - 5", "3 - 4", "-5 - -4", "-4 - -3"), "Mesic/Other", "Bimodal (-1 - 1)"))
 
-full.comps$newPCbins_f <- factor(full.comps$newPCbins, levels=c("Oak", "Bimodal (-1 - 1)", "Mesic/Other"))
+full.comps$newPCbins_f <- factor(full.comps$newPCbins, levels=c("Mesic/Other", "Bimodal (-1 - 1)", "Oak"))
 
 
 
@@ -352,7 +352,7 @@ C <- arrangeGrob(g, top = textGrob("C", x = unit(0.1, "npc")
         , y  = unit(1, "npc"), just=c("left","top"),
         gp=gpar(col="black", fontsize=18, fontfamily="Times Roman")))
 
-D <- arrangeGrob(gcomp, top = textGrob("D", x = unit(0.1, "npc")
+D <- arrangeGrob(gcomp+theme_bw(), top = textGrob("D", x = unit(0.1, "npc")
         , y = unit(1, "npc"), just=c("left","top"),
         gp=gpar(col="black",    fontsize=18, fontfamily="Times Roman")))
 
@@ -387,7 +387,7 @@ fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   geom_raster(data=densitys, aes(x=x, y=y, fill = FIAdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
@@ -406,11 +406,57 @@ fia.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
   geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = pc2))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing") + 
-  scale_fill_gradientn(colours = rev(cbpalette), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey') +
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(-10.5,3), name ="Species \n composition \n PC2", na.value = 'darkgrey') +
   coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
+
+# make a map of Oak composition:
+fia.Oak.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = Oak))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Oak Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+
+# make a map of Maple composition:
+fia.Maple.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = Maple))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Maple Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+# make a map of Hemlock composition:
+fia.Hemlock.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = Hemlock))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Hemlock Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+# make a map of Beech composition:
+fia.Beech.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "FIA",], aes(x=x, y=y, fill = Beech))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Beech Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
 
 
 
@@ -427,9 +473,28 @@ fia.comp.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, pc2))
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Species Composition PC2")
 
+# oak composition hex
+fia.oak.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, Oak)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
 
-# fia density ghost figures:
+#maple hex
+fia.maple.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, Maple)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+fia.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, Hemlock)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+fia.beech.hex <- ggplot(full.comps[full.comps$period %in% "FIA",], aes(PC1, Beech)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+
+
+# ---------------fia density ghost figures:
 # for Tree density:
+
 fia <- fia.dens[,c("x","y","cell", "FIAdensity", "PC1fia", "PC1fiabins")]
 colnames(fia) <- c("x","y","cell", "density", "PC1", "PC1bins")
 fia$period <- "Modern"
@@ -445,9 +510,10 @@ full.dens$PC1_bins_f2 <- factor(full.dens$PC1bins, levels = c("5 - 6", "4 - 5", 
                                                        "-5 - -4"))
 
 # rename based on open, closed, and bimodal
-full.dens$newPCbins <- ifelse(full.dens$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open", ifelse(full.dens$PC1_bins_f2 %in% c( "-2 - -1","-3 - -2","NA"), "Closed", "Bimodal"))
+# rename based on open, closed, and bimodal
+full.dens$newPCbins <- ifelse(full.dens$PC1_bins_f2 %in% c("5 - 6", "4 - 5", "3 - 4","2 - 3", "1 - 2"), "Open (1-6 PC1)", ifelse(full.dens$PC1_bins_f2 %in% c( "-3 - -2","NA"), "Closed (-3 - -2)", "Bimodal (-1 - 1)"))
 
-full.dens$newPCbins_f <- factor(full.dens$newPCbins, levels=c("Open", "Bimodal", "Closed"))
+full.dens$newPCbins_f <- factor(full.dens$newPCbins, levels=c("Closed (-3 - -2)", "Bimodal (-1 - 1)", "Open (1-6 PC1)"))
 
 
 # use BW of 40 to create smoother Unimoadal group
@@ -488,7 +554,7 @@ Ff <- arrangeGrob(fia.comps.hists, top = textGrob("F", x = unit(0.1, "npc")
 
 
 # take all these figures and mash into one big mega figure
-png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig3new.png")
+png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig3.png")
 grid.arrange(Af,Bf,Cf,Df,Ef,Ff, ncol = 2, nrow=3) 
 dev.off()
 

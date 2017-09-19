@@ -201,12 +201,12 @@ spec.table$biom <- biomass * spec.table$density / 1000
 
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already be corrected
 
-
+#spec.table <- spec.table[,2:14]
 colnames(spec.table)[1:2] <- c("x", "y")# rename grid cell x and y colnames
 write.csv(spec.table, 
         file = paste0('outputs/density_biomass_pointwise.ests_inilmi','_v', 
                       version, 
-                      '.csv'))
+                      '.csv'), row.names = FALSE)
 
 # in case you don't want to redo the biomass calcuations
 spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests_inilmi','_v', 
@@ -234,7 +234,7 @@ spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.p
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table  <- spec.table[!is.na(spec.table$density), ]
 
-write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'))
+write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'), row.names = FALSE)
 
 #-------------------------Paleon gridding----------------------------------------------
 
@@ -290,7 +290,7 @@ density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
 X11(width =12)
-ggplot(data = basal.table, aes(x = x, y = y, fill = Oak)) + geom_raster()+coord_equal()+
+ggplot(data = density.table, aes(x = x, y = y, fill = Maple)) + geom_raster()+coord_equal()+
   scale_fill_gradient(low = "yellow", high= "red")
 
 
@@ -449,3 +449,4 @@ add.v(diam.table, 'plss_diam', row.names=FALSE)
   #                       ifelse(density.table$total > 47, "Forest", "Check")))
 #density.table$ecotype <- ecotype
 #ggplot(density.table, aes(x = x, y=y, fill = ecotype)) + geom_raster()
+

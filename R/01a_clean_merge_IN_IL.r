@@ -238,17 +238,17 @@ inil <- data.frame(inil)
 # ----------------------------reorganizing data -------------------------------------
 
 # create data frames for diameters, distances, bearings and degrees
-#diameters in centimeters
-diams <-  cbind(as.numeric(inil$diameter), 
-                as.numeric(inil$diameter2), 
-                as.numeric(inil$diameter3), 
-                as.numeric(inil$diameter4))
+#diameters convertedto cm
+diams <-  cbind(as.numeric(inil$diameter)*2.54, 
+                as.numeric(inil$diameter2)*2.54, 
+                as.numeric(inil$diameter3)*2.54, 
+                as.numeric(inil$diameter4)*2.54)
 
-#distances in meters
-dists <-  cbind(as.numeric(inil$DIST1), 
-                as.numeric(inil$DIST2), 
-                as.numeric(inil$DIST3), 
-                as.numeric(inil$DIST4))
+#distances converted to meters
+dists <-  cbind(as.numeric(inil$DIST1)* 0.201168, 
+                as.numeric(inil$DIST2)*0.201168, 
+                as.numeric(inil$DIST3)*0.201168, 
+                as.numeric(inil$DIST4)*0.201168)
 
 bearings <- cbind(as.character(inil$bearing), 
                   as.character(inil$bearing2),

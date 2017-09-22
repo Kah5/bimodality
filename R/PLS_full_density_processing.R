@@ -18,7 +18,8 @@ library(rgdal)
 #-----------------------------Load PLS data--------------------------------------
 
 # read in pont level data
-pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
+
 
 # find the mean density by species
 pls.inil <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
@@ -29,7 +30,7 @@ hist(pls.inil$PLSdensity, xlim = c(0, 600),breaks = 100)
 
 
 # read in point level data
-pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_v',version, '.csv'))
+pls.spec <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
 
 # find mean denisty for all species in a grid cell
 pls.spec <- dcast(pls.spec, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
@@ -284,6 +285,7 @@ dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
                                 "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
+
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE 

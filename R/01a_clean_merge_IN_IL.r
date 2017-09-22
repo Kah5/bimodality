@@ -270,7 +270,7 @@ degrees <- cbind(as.numeric(inil$degrees),
 #  The code for getAngles is a bit scuzzy, but it leaves only 231 azimuths 
 #  untranslated, this is a manageable number.
 source('R/get_angle_IN.R')
-azimuths <- get_angle_IN(bearings,degrees, dists)
+azimuths <- get_angle_IN(bearings, degrees, dists)
 
 #####  Cleaning Trees:  Kelly thinks this is already done in the CSV file, but this is from Simon's Code
 #      Changing tree codes to lumped names:
@@ -496,3 +496,4 @@ write.csv(corrections, 'data/correction_factors.csv')
 
 #write the data as a csv
 write.csv(full.final, paste0("outputs/ndilin_pls_for_density_v",version,".csv"))
+

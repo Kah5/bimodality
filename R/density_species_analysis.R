@@ -1239,11 +1239,11 @@ dev.off()
 
 #--------------------Does the bimodality occur at the same place?-------------
 # use the comp.bimodal.df function to get the bimodal designations:
-PLSdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "PLS")
-FIAdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "FIA")
+PLSdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "Past")
+FIAdens <- comp.bimodal.df(full, binby = "PC1bins", density = "Density", time = "Modern")
 
-PLSpc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "PLS")
-FIApc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "FIA")
+PLSpc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "Past")
+FIApc2 <- comp.bimodal.df(full, binby = "PC1bins", density = "pc2", time = "Modern")
 
 
 ggplot(PLSdens, aes(x=x,y=y,fill = bimodal_Density))+geom_raster()
@@ -1266,14 +1266,46 @@ full$biboth <- paste(full$bimodal_Density," & ",full$bimodal_pc2)
 library(ggExtra)
 # make plots of density vs composition with marginal histograms
 # for PLS
-p <- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75, alpha = 0.75)+scale_color_manual(values = c('#ca0020',
+
+p <- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.6, alpha = 0.75)+theme_bw(base_size= 15)+scale_color_manual(values = c('#ca0020',
                                                                                                                                     '#f4a582',
-                                                                                                                                    '#92c5de',
-                                                                                                                                    '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+theme(legend.position = "bottom")+xlim(-5, 2)+ggtitle('PLS')+guides(color=guide_legend(nrow=2,byrow=TRUE))
+                                                                                                                                    #'#92c5de',
+                                                                                                                                    '#33a02c',
+                                                                                                                                    '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+theme(legend.position = "bottom", legend.direction = "vertical", legend.title = element_blank())+xlim(-5, 2)+ggtitle('PLS')+guides(color=guide_legend(nrow=4,byrow=TRUE))
 q <- ggMarginal(p, type = "histogram")
 
+
+png(height = 6, width = 6, units = 'in',res = 300,"outputs/cluster/density_v_comp_pls.png")
+q
+dev.off()
+
+ppc1 <- ggplot(full[full$period %in% "Past",], aes(pc1, Density))+geom_hex()+theme_bw(base_size= 15)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC1")+theme(legend.position = "bottom", legend.direction = "vertical", legend.title = element_blank())+xlim(-5, 2)+ggtitle('PLS')+guides(color=guide_legend(nrow=4,byrow=TRUE))
+qpc1 <- ggMarginal(ppc1, type = "histogram")
+
+ppc1f <- ggplot(full[full$period %in% "Modern",], aes(pc1, Density))+geom_hex()+theme_bw(base_size= 15)+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC1")+theme(legend.position = "bottom", legend.direction = "vertical", legend.title = element_blank())+xlim(-5, 2)+ggtitle('FIA')+guides(color=guide_legend(nrow=4,byrow=TRUE))
+qpc1f <- ggMarginal(ppc1f, type = "histogram")
+
+png(height = 4, width = 6, units = 'in',res = 300,"outputs/cluster/density_v_comp_pc1_pls.png")
+qpc1
+dev.off()
+
+png(height = 4, width = 6, units = 'in',res = 300,"outputs/cluster/density_v_comp_pc1_fia.png")
+qpc1f
+dev.off()
+
+pf <- ggplot(full[full$period %in% "Modern",], aes(pc2, Density, color = biboth))+geom_point(size = 0.6, alpha = 0.75)+theme_bw(base_size= 15)+scale_color_manual(values = c('#ca0020',
+                                                                                                                                                                          '#f4a582',
+                                                                                                                                                                          #'#92c5de',
+                                                                                                                                                                          '#33a02c',
+                                                                                                                                                                          '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+ylab("Tree Density (stems/hectare)")+xlab("Species Composition PC2")+theme(legend.position = "bottom", legend.title = element_blank())+xlim(-5, 2)+ggtitle('FIA')+guides(color=guide_legend(nrow=4,byrow=TRUE))
+qf <- ggMarginal(pf, type = "histogram")
+
+png(height = 6, width = 6, units = 'in',res = 300,"outputs/cluster/density_v_comp_fia.png")
+qf
+dev.off()
+
 # plot out with colors for which is bimodal compositions and density
-by.stabilityp<- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
+by.stabilityp <- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(size = 0.75)+scale_color_manual(values = c('#ca0020',
                                                                                                                                               '#f4a582',
                                                                                                                                               '#92c5de',
                                                                                                                                               '#0571b0'), limits =c("Bimodal Density  &  Bimodal Composition" ,"Bimodal Density  &  Unimodal Composition","Unimodal Density  &  Bimodal Composition" ,"Unimodal Density  &  Unimodal Composition"))+
@@ -1287,7 +1319,7 @@ by.stabilityf<- ggplot(full[full$period %in% "Modern",], aes(pc2, Density, color
 #png(height = 6, width = 5)
 X11(width = 6)
 full$label <- sample.int(13595, 13595, replace = TRUE)
-full<- full[order(full$label,decreasing=TRUE),]
+full <- full[order(full$label,decreasing=TRUE),]
 
 a<- ggplot(full[full$period %in% "Past",], aes(pc2, Density, color = biboth))+geom_point(alpha= 0.5)+scale_color_manual(values = c('#ca0020',
                                                                                                                                '#f4a582',

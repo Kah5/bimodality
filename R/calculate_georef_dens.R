@@ -8,7 +8,7 @@ library(reshape2)
 library(ggplot2)
 
 #
-correction.factor <- read.csv("Data//correction_factors.csv", header = TRUE)
+correction.factor <- read.csv("data//mi_correction_factors.csv", header = TRUE)
 
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
 # & no diameter veil
@@ -45,12 +45,12 @@ stem.dens$basal.area[stem.dens$basal.area > nine.nine.pct['basal']] <- nine.nine
 
 
 #create a spatial points dataframe that has density & basal area on it
-coordinates(final.data)<- ~PointX+PointY 
-density <- SpatialPointsDataFrame(coordinates(final.data), 
-                                  data=data.frame(density = stem.dens$stem.density,
-                                                  basal   = stem.dens$basal.area))
+#coordinates(final.data)<- ~PointX+PointY 
+density <- data.frame(x =final.data$PointX ,
+                                                  y=final.data$PointY, density = stem.dens$stem.density,
+                                                  basal   = stem.dens$basal.area)
 
-proj4string(density)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
+#proj4string(density)<-CRS('+init=epsg:3175') # assign the great lakes albers projection to dataset
 
 #writeOGR(density, dsn = "Shapefiles/in_point_density_alb.shp", layer = "Shapefiles/in_point_density_alb", driver = "ESRI Shapefile")
 
@@ -58,11 +58,11 @@ proj4string(density)<-CRS('+init=epsg:3175') # assign the great lakes albers pro
 #setwd("C:/Users/Kelly/Documents/biomodality/Shapefiles")
 #test <- readOGR(dsn = "il_point_density_alb.shp", layer = "il_point_density_alb", dropNULLGeometries = TRUE)
 
-spplot(density, "density")
+#spplot(density, "density")
 density.df <- data.frame(density)
 
 final.data <- data.frame(final.data)
-density.df <- merge(final.data, density.df, by = c("PointX", "PointY"))
+#density.df <- merge(final.data, density.df, by = c("PointX", "PointY"))
 
 density.df$spec1summ <- "Other Taxa"
 density.df$spec1summ[density.df$species1 == "Oak"] <- "Oak"
@@ -77,7 +77,7 @@ density.df$spec2summ[density.df$species2 == "Water" | density.df$species2 == 'We
 
 #plot
 X11(width =12)
-ggplot(data = density.df, aes(x = PointX, y = PointY, color = density)) + geom_point()
+ggplot(data = density, aes(x = x, y = y, color = density)) + geom_point()
 
 X11(width =12)
 ggplot(data = density.df, aes(x = PointX, y = PointY, color = spec1summ)) + geom_point()

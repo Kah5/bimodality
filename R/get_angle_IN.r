@@ -35,7 +35,7 @@ get_angle_IN <- function(bearings, degrees, dists) {
   quad <- ne | se | sw | nw
   
   #  Special case of the trees with a unidirectional direction.
-  uni  <- (!quad) & (north | south | east | west) 
+  uni  <- (!quad) & !(north | south | east | west) 
   
   angl[ uni & north ] <- 0
   angl[ uni & south ] <- 180
@@ -59,15 +59,15 @@ get_angle_IN <- function(bearings, degrees, dists) {
   ##########
   
   #  Another set of special cases:
-  angl[ fx.na(bearings == 'NORT') ] <- 0
-  angl[ fx.na(bearings == 'EAST') ] <- 90
-  angl[ fx.na(bearings == 'WEST') ] <- 270
-  angl[ fx.na(bearings == 'SOUT') ] <- 180
-  
-  angl[ ne ] <- angl[ ne ]
-  angl[ se ] <- 180 - angl[ se ]
-  angl[ sw ] <- 180 + angl[ sw ]
-  angl[ nw ] <- 360 - angl [ nw ]
+ # angl[ fx.na(bearings == 'NORT') ] <- 0
+  #angl[ fx.na(bearings == 'EAST') ] <- 90
+  #angl[ fx.na(bearings == 'WEST') ] <- 270
+  #angl[ fx.na(bearings == 'SOUT') ] <- 180
+  degrees <- apply(degrees, 2, as.numeric)
+  angl[ north ] <- degrees[ north ]
+  angl[ east ] <- 180 - degrees[ east ]
+  angl[ south ] <- 180 + degrees[ south ]
+  angl[ west ] <- 360 - degrees [ west ]
   
   return(angl)
   

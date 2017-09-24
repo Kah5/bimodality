@@ -2,18 +2,18 @@ library(plyr)
 library(raster)
 library(data.table)
 library(rgdal)
-version <- "1.6-5"
+version <- "1.7-5"
 
 # set the working dir (where the prism data folder is)
-workingdir <- "C:/Users/JMac/Documents/Kelly/biomodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 
 # read in and average prism data (this is modern 30year normals)
-prism<- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
-prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
+prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
 
 
 # spec. table is a data frame that has the xy coordinates of the grid that you want the prism data on
-spec.table <- read.csv(paste0(workingdir,"/data/midwest_pls_full_density_pr_alb1.6-5.csv"))
+spec.table <- read.csv(paste0(workingdir,"midwest_pls_full_density_alb", version,".csv"))
 
 # extract 30 year normals at the xy points of teh grid
 spec.table$pr30yr <- extract(prism.alb, spec.table[,c("x","y")])
@@ -43,21 +43,21 @@ for (i in 1:length(month)) {
   #colnames(y) <- c("x", "y", month.abb)
   y$month <- month[i]
   y$gridNumber <- cellFromXY(t, y[, 1:2])
-  write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_',month[i],'_precip.csv' )) 
+  write.csv(y ,paste0('/Users/kah/Documents/bimodality/outputs/30yrnorm_',month[i],'_precip.csv' )) 
 }
 
-jan<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_01_precip.csv')
-feb<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_02_precip.csv')
-mar<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_03_precip.csv')
-apr<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_04_precip.csv')
-may<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_05_precip.csv')
-jun<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_06_precip.csv')
-jul<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_07_precip.csv')
-aug<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_08_precip.csv')
-sep<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_09_precip.csv')
-oct<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_10_precip.csv')
-nov<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_11_precip.csv')
-dec<- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_12_precip.csv')
+jan<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_01_precip.csv')
+feb<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_02_precip.csv')
+mar<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_03_precip.csv')
+apr<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_04_precip.csv')
+may<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_05_precip.csv')
+jun<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_06_precip.csv')
+jul<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_07_precip.csv')
+aug<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_08_precip.csv')
+sep<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_09_precip.csv')
+oct<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_10_precip.csv')
+nov<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_11_precip.csv')
+dec<- read.csv('/Users/kah/Documents/bimodality/outputs/30yrnorm_12_precip.csv')
 
 # create a full dataset with all months
 full <- cbind(jan[,1:4], feb[,4],mar[,4], apr[,4], may[,4], jun[,4], jul[,4], aug[,4], sep[,4], oct[, 4], nov[,4], dec[,4])
@@ -81,7 +81,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
+write.csv(avgs.df, "/Users/kah/Documents/bimodality/outputs/pr_monthly_Prism_30yrnorms_full.csv")
 
 
 
@@ -93,7 +93,7 @@ write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/pr_monthly
 setwd(paste0(workingdir,'PRISM_ppt_stable_4kmM2_189501_198012_bil/'))
 
 # again read in the 8km grid for extracting
-spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_pr_alb1.6-5.csv'))
+spec.table <- read.csv(paste0(workingdir,"midwest_pls_full_density_alb", version,".csv"))
 coordinates(spec.table) <- ~x + y
 proj4string(spec.table) <- '+init=epsg:3175'
 spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
@@ -148,7 +148,7 @@ avgs.df$y <- spec.table$y
 write.csv(avgs.df, paste0(workingdir,"outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
 
-#ggplot(avgs.df, aes(x = x, y=y, color = total))+geom_point()
+
 ###################################################
 #extract mean temperature data from the prism data#
 ###################################################
@@ -158,7 +158,7 @@ write.csv(avgs.df, paste0(workingdir,"outputs/pr_monthly_Prism_",yrs,"_full.csv"
 setwd(paste0(workingdir,'PRISM_tmean_stable_4kmM2_189501_198012_bil/'))
 
 #read in the grid again
-spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_pr_alb1.6-5.csv'))
+spec.table <- read.csv(paste0(workingdir,"midwest_pls_full_density_alb", version,".csv"))
 coordinates(spec.table) <- ~x + y
   
 # project the grid to lat long
@@ -172,7 +172,8 @@ yrs <- "1900"
 filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
 s <- stack(filenames) #make all into a raster
 t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
-s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+s <- t
+#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
 y <- data.frame(rasterToPoints(s)) #covert to dataframe
 years <- rep(years, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
@@ -186,7 +187,10 @@ yearly <- test
 melted.mo <- melt(monthly, id.var = c('x', 'y'))
 melted.mo$yrs <- substring(melted.mo$variable, first = 26, last = 29)
 melted.mo$mos <- substring(melted.mo$variable, first = 30, last = 31)
-full<- dcast(melted.mo, x + y ~ mos, mean , value.var='value', na.rm = TRUE)
+
+
+
+full <- dcast(melted.mo, x + y ~ mos, mean , value.var='value', na.rm = TRUE)
 full$Mean <- rowMeans(full[,3:14])
 colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
@@ -231,7 +235,7 @@ for (i in 1:length(month)) {
   #colnames(y) <- c("x", "y", month.abb)
   y$month <- month[i]
   y$gridNumber <- cellFromXY(t, y[, 1:2])
-  write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/30yrnorm_',month[i],'_tmean.csv' )) 
+  write.csv(y ,paste0(workingdir,'30yrnorm_',month[i],'_tmean.csv' )) 
 }
 
 # above loop doesn't add all teh 
@@ -278,7 +282,7 @@ avgs.df$y <- spec.table$y
 avgs.df$cv <- (apply(avgs.df[,1:12],1, sd, na.rm = TRUE)/avgs.df[,13])*100
 
 
-write.csv(avgs.df, "C:/Users/JMac/Documents/Kelly/biomodality/outputs/tmean_monthly_Prism_30yrnorms_full.csv")
+write.csv(avgs.df, "/Users/kah/Documents/bimodality/outputs/tmean_monthly_Prism_30yrnorms_full.csv")
 
 
 ggplot(avgs.df, aes(x=x, y=y, color = Mean)) + geom_point()
@@ -289,10 +293,10 @@ ggplot(avgs.df, aes(x=x, y=y, color = Mean)) + geom_point()
 
 #now for the 30yr mean temperature data
 # read in and average prism data
-prism<- raster(paste0(workingdir,"PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil"))
+prism <- raster(paste0(workingdir,"PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil"))
 prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 #spec.table<- read.csv(paste0(workingdir,"midwest_pls_fia_density_alb.csv")
-#spec.table <- read.csv('C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb1.6.csv')
+#spec.table <- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_fia_density_alb1.6.csv')
 spec.table <- data.frame(spec.table)
 temp30yr <- data.frame(extract(prism.alb, spec.table[,c("x","y")]))
 temp30yr$x <- spec.table$x

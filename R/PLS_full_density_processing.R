@@ -2,7 +2,7 @@
 # This script performs many of the bimodality funcitons that FIA_density_processing.R does, but 
 # this script includes all of the PLS data, not just the data that overlaps with FIA
 version <- "1.7-5"
-setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
+setwd( "/Users/kah/Documents/bimodality")
 library(data.table)
 library(reshape2)
 library(dtplyr)
@@ -123,7 +123,8 @@ write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"), 
 #--------------------load associated environmental data----------------------
 
 # precipitation, temperature, seasonality are all calculated in R/Extract_Prism.R
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
+outputs/pr_monthly_Prism_1985-1925_full.csv
+past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1985-1925_full.csv')
 
 past.precip.mo$deltaP <- past.precip.mo$SI
 
@@ -206,9 +207,9 @@ awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
 #ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #write albers rasters to files:
-writeRaster(awc8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awcalb.tif", overwrite = TRUE)
-writeRaster(sand8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_sandalb.tif", overwrite = TRUE)
-writeRaster(ksat8km.alb, "C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksatalb.tif", overwrite = TRUE)
+writeRaster(awc8km.alb, "data/8km_UMW_awcalb.tif", overwrite = TRUE)
+writeRaster(sand8km.alb, "data/8km_UMW_sandalb.tif", overwrite = TRUE)
+writeRaster(ksat8km.alb, "data/8km_UMW_ksatalb.tif", overwrite = TRUE)
 
 #extract soils data using PLS points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')

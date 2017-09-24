@@ -113,15 +113,21 @@ dists <-  cbind(as.numeric(nwmw$dist1),
                 as.numeric(nwmw$dist3), 
                 as.numeric(nwmw$dist4))
 
+# mi azimuths are from 0 to 60
 azimuths <- cbind(as.numeric(nwmw$az1), 
                   as.numeric(nwmw$az2),
                   as.numeric(nwmw$az3),
                   as.numeric(nwmw$az4))
 
-#  michigan data already has raw azimuths, so skip this part:
-#source('R/process_raw/get_angle.R')
-#azimuths <- apply(azimuths, 2, get_angle)
+# make a dataframe with the values from Q1, Q2, Q3, Q4:
+qvals <- cbind(as.numeric(nwmw$Q1), 
+               as.numeric(nwmw$Q2),
+               as.numeric(nwmw$Q3),
+               as.numeric(nwmw$Q4))
 
+#  michigan data already has raw azimuths, but they range from 0-100, so we need to convert these:
+source('R/get_angle_MI.R')
+azimuths <- get_angle_MI(azimuths, qvals)
 #####  Cleaning Trees:  
 #      Changing tree codes to lumped names:
 spec.codes <- read.csv('WitnessTrees-1.0/WitnessTrees-1.0/data/input/relation_tables/fullpaleon_conversion_v0.3-3.csv', stringsAsFactor = FALSE)
@@ -235,7 +241,8 @@ species <- data.frame(species1 = sp.levels[as.numeric(ranked.data[, 9])],
 
 year <- rep("NA", length(species$species1))
 state <- data.frame(state = rep("MI", length(species$species1)))
-corner <- rep("allMI", length(species$species1))
+
+corner <- mich$sec_corner
 
 #  We need to bin the year information so that we can use it to calculate
 #  appropriate Cottam Correction factors.  The survey instructions for the PLS
@@ -300,6 +307,9 @@ colnames(final.data) <- c('PointX','PointY', 'Township',"state",
 
 summary(final.data)
 final.data <- final.data[!is.na(final.data$PointX),]
+# kill ths cells that are not == Extsec or ==Intsec
+
+final.data <- final.data[final.data$corner %in% c("Extsec", "Intsec"),]
 # now kill missing cells:
 #final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
 #final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
@@ -312,12 +322,13 @@ write.csv(final.data, "data/lower_mi_final_data.csv")
 
 X11(width=12)
 ggplot(final.data[final.data$species1 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species1))+geom_point()
+ggplot(final.data, aes(PointX, PointY, color = az1))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 hist(final.data$diam1)
 hist(final.data$diam2)
 hist(final.data$dist1)
 hist(final.data$dist2)
 
-Pair <- paste0(as.character(final.data$corner))
+Pair <- paste0(as.character(final.data$corner), "MI")
 
 # --------------------generate correction factors------------------------------:
 # read in the correction factors provided by Charlie Cogbill:

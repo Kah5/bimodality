@@ -46,7 +46,7 @@ summary(basal.area)
 zero.trees <- is.na(stem.density) 
 
 #plot Histogram of point estimates of stem density
-hist(stem.density, breaks = 1000, xlim = c(0,1000))
+hist(stem.density, breaks = 100, xlim = c(0,1000))
 
 #set stem.density where there are zero trees due to No tree or Wet or Water to 0
 stem.density[zero.trees] <- 0
@@ -89,7 +89,7 @@ stem.density <- data.frame(x = final.data$PointX,
 stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-ggplot(stem.density, aes(x, y, color=density))+geom_point()
+ggplot(stem.density, aes(x, y, color=density))+geom_point(size =0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
 
 

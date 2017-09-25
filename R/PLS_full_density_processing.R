@@ -123,8 +123,8 @@ write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"), 
 #--------------------load associated environmental data----------------------
 
 # precipitation, temperature, seasonality are all calculated in R/Extract_Prism.R
-outputs/pr_monthly_Prism_1985-1925_full.csv
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1985-1925_full.csv')
+#outputs/pr_monthly_Prism_1985-1925_full.csv
+past.precip.mo <- read.csv('data/outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 past.precip.mo$deltaP <- past.precip.mo$SI
 
@@ -136,11 +136,11 @@ mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 #read in mean annual precipitaiton for modern and past
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
-past.precip <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
+past.precip <- read.csv('data/outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 #read in mean annual temperature for modern and the past:
-mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
-past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
+mod.tmean <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
+past.tmean <- read.csv('data/outputs/tmean_yr_Prism_1895-1925_full.csv')
 
 
 mod.tmean.mo <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')

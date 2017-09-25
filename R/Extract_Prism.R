@@ -231,7 +231,7 @@ for (i in 1:length(month)) {
   t <- crop(s, extent(spec.table.ll))#make all into a raster
   s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
   #crop to the extent of indiana & illinois 
-  y <- data.frame(rasterToPoints(t)) #covert to dataframe
+  y <- data.frame(rasterToPoints(s)) #covert to dataframe
   #colnames(y) <- c("x", "y", month.abb)
   y$month <- month[i]
   y$gridNumber <- cellFromXY(t, y[, 1:2])
@@ -258,8 +258,8 @@ colnames(full) <- c('X','x', 'y' ,'Jan', 'Feb', 'Mar', "Apr", "May",
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec")
 
 #calculate annual means
-full$Mean <- rowMeans(full[,4:15])
-colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
+full$Mean <- rowMeans(full[,4:15], na.rm=TRUE)
+colnames(full) <- c("X",'x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
 
 test <- full

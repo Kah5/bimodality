@@ -7,20 +7,29 @@
 
 bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
+  coeffs <- matrix(NA, length(bins), 4)
   for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
+    peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
+    
+    # if there is more than one peak, list the first 2 peaks
+    if(length(peaks > 1)) {
+      coeffs[i,3]  <- peaks[1]
+      coeffs[i,4]  <- peaks[2]
+    }else{
+      coeffs[i,3]  <- 0
+      coeffs[i,4]  <- 0
+    }
   }
+  
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
+  coef.bins <- data.frame(cbind(coeffs, bins))
+  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
+  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
+  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
+  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
   
   #merge bins iwth the second binby -> here is is future climate
   merged <- merge(coef.bins, data, by.x = "bins", by.y = binby2)
@@ -29,11 +38,11 @@ bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
   #define bimodality
   merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  bimodal<- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05, 
+  bimodal<- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, 
    "Bimodal", "Unimodal")
   merged$bimodal <- bimodal
   
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'no-analog',]$bimodal <- "out-of-sample"
+  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   
@@ -57,41 +66,40 @@ bimodal.future.rNA <- function(data, binby, density, binby2, rcp){
 # for PLS veg-envrionment relationships:
 bimodal.future.NA <- function(data, binby, density, binby2, rcp){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
+  coeffs <- matrix(NA, length(bins), 4)
   
-  
-    for (i in 1:length(bins)){
-      if(nrow(na.omit(data[data[,binby] %in% bins[i],])) > 1){
-      coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]), na.rm=TRUE)
-      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+  for (i in 1:length(bins)){
+    coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
+    peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
     
-        }else{
-          coeffs[i,1] <- "NA"
-          coeffs[i,2] <- "NA"
-        }
+    # if there is more than one peak, list the first 2 peaks
+    if(length(peaks > 1)) {
+      coeffs[i,3]  <- peaks[1]
+      coeffs[i,4]  <- peaks[2]
+    }else{
+      coeffs[i,3]  <- 0
+      coeffs[i,4]  <- 0
     }
-  coeffs[is.nan(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins[,1]))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins[,2]))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
+  }
+  
+  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins <- data.frame(cbind(coeffs, bins))
+  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
+  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
+  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
+  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
+  
   
   #merge bins iwth the second binby -> here is is future climate
   merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
   
   
   #define bimodality
-  
   merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  bimodal <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05,
-    "Bimodal", "Unimodal")
-  merged$bimodal <- bimodal
-  
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
   merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
@@ -103,44 +111,61 @@ bimodal.future.NA <- function(data, binby, density, binby2, rcp){
       '#2c7bb6',
       'black',
       '#d7191c'
-    ), limits = c('Unimodal',"out-of-sample",'Bimodal') )+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'NA')+
+    ), limits = c('Unimodal',"out-of-sample",'Bimodal') )+
     theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                       axis.title.x=element_blank(),
                       axis.title.y=element_blank())+
-    xlab("easting") + ylab("northing") +coord_equal() +ggtitle(binby)
+    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
   
 }
 
 
 
-bimodal.pls.mod <- function(data, binby,binby2, density){
+bimodal.future <- function(data, binby,binby2, density){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
+  coeffs <- matrix(NA, length(bins), 4)
+  
+  
   for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    if(nrow(na.omit(data[data[,binby] %in% bins[i],])) > 1){
+      coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
+      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
+      peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
+      
+      # if there is more than one peak, list the first 2 peaks
+      if(length(peaks > 1)) {
+        coeffs[i,3]  <- peaks[1]
+        coeffs[i,4]  <- peaks[2]
+      }else{
+        coeffs[i,3]  <- 0
+        coeffs[i,4]  <- 0
+      }
+    }else{
+      coeffs[i,1] <- "NA"
+      coeffs[i,2] <- "NA"
+    }
   }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
+  
+  coeffs[is.nan(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins <- data.frame(cbind(coeffs, bins))
+  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
+  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
+  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
+  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
   
   #merge bins iwth the second binby -> here is is future climate
   merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
   
   
   #define bimodality
+  
   merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  #[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
-  
+  bimodal<- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, 
+                   "Bimodal", "Unimodal")
+  merged$bimodal <- bimodal
   #define bimodal savanna/forest and not bimodal savanna & forest 
   
   
@@ -159,29 +184,48 @@ bimodal.pls.mod <- function(data, binby,binby2, density){
 
 bimodal.df <- function(data, binby, density, binby2){
   bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
+  coeffs <- matrix(NA, length(bins), 4)
+  
+  
   for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+    if(nrow(na.omit(data[data[,binby] %in% bins[i],])) > 1){
+      coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
+      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
+      peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
+      
+      # if there is more than one peak, list the first 2 peaks
+      if(length(peaks > 1)) {
+        coeffs[i,3]  <- peaks[1]
+        coeffs[i,4]  <- peaks[2]
+      }else{
+        coeffs[i,3]  <- 0
+        coeffs[i,4]  <- 0
+      }
+    }else{
+      coeffs[i,1] <- "NA"
+      coeffs[i,2] <- "NA"
+    }
   }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  coef.new <- strsplit(as.character(coef.bins$bins), " - ")
-  library(plyr)
-  coef.new<- rbind.fill(lapply(coef.new, function(X) data.frame(t(X))))
-  colnames(coef.new) <- c("low", "high")
-  coef.bins <- cbind(coef.bins, coef.new)
+  
+  coeffs[is.nan(coeffs)]<- 0 # replace NANs with 0 values here
+  coef.bins <- data.frame(cbind(coeffs, bins))
+  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
+  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
+  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
+  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
   
   #merge bins iwth the second binby -> here is is future climate
   merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
   
   
   #define bimodality
+  
   merged$bimodal <- "Unimodal"
   #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  bimodal<- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, 
+                   "Bimodal", "Unimodal")
+  merged$bimodal <- bimodal
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){
@@ -198,3 +242,4 @@ bimodal.df <- function(data, binby, density, binby2){
   
   merged
 }
+

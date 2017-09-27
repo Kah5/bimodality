@@ -65,11 +65,10 @@ colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
 hist(umdw.new$PLSdensity, breaks = 25)
 
 pls.inil <- rbind(pls.inil, umdw.new)
-#coordinates(pls.inil)<- ~x+y
-ggplot(pls.inil, aes(x, y, color = PLSdensity))+geom_raster()
-#test.ex<- extract(density.FIA.table, extent(pls.inil))
-#write.csv(pls.inil,C:/Users/JMac/Documents/Kelly/biomodality/outputs )
-#plot raw data
+
+ggplot(pls.inil, aes(x, y, fill = PLSdensity))+geom_raster()
+
+
 
 
 #merge inil pls and inilFIA
@@ -114,7 +113,7 @@ ggplot(dens, aes(x = PLSdensity, y = diff))+ geom_point()+geom_density_2d() +geo
   theme_bw()+ ylab('increase in density \n since PLS (trees/ha)') + xlab('PLS tree density (trees/ha)') + annotate("text", x=400, y=900,label= paste("R-squared =", round(summary(lm(dens$PLSdensity ~ dens$diff))$adj.r.squared,2)), size = 5)
 dev.off()
 
-#map out 
+#map out with polygon overlay
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states)<-~long+lat
@@ -126,7 +125,7 @@ mapdata <- data.frame(mapdata)
 #plot maps of tree density
 #################################
 #dens.pr<- data.frame(dens.pr)
-library(ggplot2)
+
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
@@ -139,6 +138,8 @@ pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   labs(x="easting", y="northing", title="PLS tree density") + 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+
+#save to png
 png(paste0('outputs/v',version,'/PLS_tree_density_map.png'))
 pls.map
 dev.off()
@@ -149,6 +150,8 @@ fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   labs(x="easting", y="northing", title="FIA tree density") + 
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+
+#save to png
 png(paste0('outputs/v',version,'/FIA_tree_density_map.png'))
 fia.map
 dev.off()
@@ -160,16 +163,18 @@ print(pls.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(fia.map, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 
-write.csv(densitys, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_fia_density_alb", version,".csv"))
+write.csv(densitys, paste0("data/midwest_pls_fia_density_alb", version,".csv"))
 
 #this is to join the species tables
 pls.names<- colnames(pls.spec)
 umdw.names<- colnames(umdw)
 colnames(pls.spec)[6] <- 'Bald.cypress'
 colnames(pls.spec)[10] <- 'Black.gum'
+colnames(pls.spec)[24] <- "No.tree"
 colnames(pls.spec)[13] <- 'Cedar.juniper'
-colnames(pls.spec)[25] <- 'Other.hardwood'
-colnames(pls.spec)[32] <- 'Tulip.poplar'
+colnames(pls.spec)[26] <- 'Other.hardwood'
+colnames(pls.spec)[33] <- 'Tulip.poplar'
+colnames(pls.spec)[34] <- 'Unknown.tree'
 
 pls.names<- colnames(pls.spec)
 umdw.names<- colnames(umdw)
@@ -195,7 +200,7 @@ umdw <- umdw[,order(names(umdw))]
 
 full.spec <- rbind(pls.spec, umdw)
 
-#move around the columns
+#move around the  columns so that x and y are at the front
 require(dplyr)
 full.spec<- full.spec %>%
   dplyr::select(cell, everything())
@@ -206,14 +211,12 @@ full.spec<- full.spec %>%
 full.spec<- full.spec %>%
   dplyr::select(x, everything())
 
-full.spec<- full.spec %>%
-  dplyr:: select(X, everything())
 
 full.spec<- full.spec %>%
   dplyr:: select(-total, everything())
 
 #now add totals to the 'total columns
-full.spec$total <- rowSums(full.spec[,5:41], na.rm = TRUE)
+full.spec$total <- rowSums(full.spec[,!names(full.spec) %in% c('x','y','cell',"No.tree", "Water", "Wet", "total")], na.rm = TRUE)
 summary(full.spec$total)
 hist(full.spec$total, breaks = 1000, xlim = c(0,600))
 
@@ -226,14 +229,14 @@ fia.names<- colnames(density.FIA.table)
 fia.names[!fia.names %in% pls.full.n]
 pls.full.n[!pls.full.n %in% fia.names]
 
-colnames(density.FIA.table)[11] <- 'Cedar.juniper'
-colnames(density.FIA.table)[19] <- 'Other.hardwood'
+colnames(density.FIA.table)[10] <- 'Cedar.juniper'
+colnames(density.FIA.table)[18] <- 'Other.hardwood'
 fia.names[!fia.names %in% pls.full.n]
 pls.full.n[!pls.full.n %in% fia.names]
 
-density.FIA.table<- density.FIA.table[,-4] # remove Var.4
+
 density.FIA.table<- density.FIA.table[,-5]# remove atlantic white cedar
-density.FIA.table<- density.FIA.table[,-23] #remove total
+density.FIA.table<- density.FIA.table[,-23] #remove total density
 
 pls.names<- colnames(full.spec)
 fia.names<- colnames(density.FIA.table)
@@ -258,21 +261,15 @@ FIA.full<- FIA.full %>%
 FIA.full<- FIA.full %>%
   dplyr::select(x, everything())
 
-FIA.full<- FIA.full %>%
-  dplyr::select(X, everything())
-
-#FIA.full<- FIA.full %>%
- # dplyr::select(-total, everything())
 
 #now add totals to the 'total columns
-FIA.full$FIAdensity <- rowSums(FIA.full[,5:41], na.rm = TRUE)
+FIA.full$FIAdensity <- rowSums(FIA.full[,!names(FIA.full) %in% c('x','y','cell',"No.tree", "Water", "Wet", "total")], na.rm = TRUE)
 summary(FIA.full$FIAdensity)
 hist(FIA.full$FIAdensity, breaks = 50, xlim = c(0,600))
 dens.pr <- dens.pr[dens.pr$FIAdensity < 650,]
 
 #estimating density of data
-plot(density(dens.pr$PLSdensity))
-plot(density(dens.pr$FIAdensity))
+
 
 find_modes<- function(x) {
   modes <- NULL
@@ -309,28 +306,30 @@ get.modes <- function(x,bw,spar) {
 mm <- c(418, 527, 540, 553, 554, 558, 613, 630, 634, 636, 645, 648, 708, 714, 715, 725, 806, 807, 822, 823, 836, 837, 855, 903, 908, 910, 911, 913, 915, 923, 935, 945, 955, 957, 958, 1003, 1006, 1015, 1021, 1021, 1022, 1034, 1043, 1048, 1051, 1054, 1058, 1100, 1102, 1103, 1117, 1125, 1134, 1138, 1145, 1146, 1150, 1152, 1210, 1211, 1213, 1223, 1226, 1334)
 mmdf<-as.data.frame(mm)
 library(ggplot2)
-ggplot(dens.pr,aes(PLSdensity)) +geom_density(bw= "nrd0")
-ggplot(dens.pr,aes(FIAdensity)) +geom_density(bw= "nrd0")
-get.modes(dens.pr$PLSdensity,20,0.5)
-get.modes(dens.pr$FIAdensity,20,0.5)
+ggplot(dens,aes(PLSdensity)) +geom_density(bw= "nrd0")
+ggplot(dens,aes(FIAdensity)) +geom_density(bw= "nrd0")
+get.modes(dens$PLSdensity,20,0.5)
+get.modes(dens$FIAdensity,20,0.5)
 
 #find modes for pls density
-find_modes(density(dens.pr[dens.pr$PLSdensity < 450,]$PLSdensity)$y)
-plot(density(dens.pr$PLSdensity))
+find_modes(density(dens[dens$PLSdensity < 450,]$PLSdensity)$y)
+plot(density(dens$PLSdensity))
 
-bimodality_coefficient(density(dens.pr$PLSdensity)$y)
-diptest::dip.test(dens.pr$PLSdensity)
+bimodality_coefficient(density(dens$PLSdensity)$y)
+diptest::dip.test(dens$PLSdensity)
 
-find_modes(density(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)$y)
-plot(density(dens.pr$FIAdensity))
+find_modes(density(dens[dens$FIAdensity < 400,]$FIAdensity)$y)
+plot(density(dens$FIAdensity))
 
-bimodality_coefficient(density(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)$y)
-diptest::dip.test(dens.pr[dens.pr$FIAdensity < 400,]$FIAdensity)
+bimodality_coefficient(density(dens[dens$FIAdensity < 400,]$FIAdensity)$y)
+diptest::dip.test(dens[dens$FIAdensity < 400,]$FIAdensity)
 
 ################################################################
 #comparison of FIA and PLS datasets to climate
 ###############################################################
-past.precip.mo <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
+# precipitation, temperature, seasonality are all calculated in R/Extract_Prism.R
+#outputs/pr_monthly_Prism_1985-1925_full.csv
+past.precip.mo <- read.csv('data/outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 past.precip.mo$deltaP <- past.precip.mo$SI
 
@@ -342,11 +341,11 @@ mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 #read in mean annual precipitaiton for modern and past
 mod.precip <- read.csv('data/spec_table_30yr_prism_full.csv')
-past.precip <- read.csv('outputs/pr_monthly_Prism_1895-1925_full.csv')
+past.precip <- read.csv('data/outputs/pr_monthly_Prism_1895-1925_full.csv')
 
 #read in mean annual temperature for modern and the past:
-mod.tmean <- read.csv('outputs/tmean_30yr_prism.csv')
-past.tmean <- read.csv('outputs/tmean_yr_Prism_1895-1925_full.csv')
+mod.tmean <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
+past.tmean <- read.csv('data/outputs/tmean_yr_Prism_1895-1925_full.csv')
 
 
 mod.tmean.mo <- read.csv('outputs/tmean_monthly_Prism_30yrnorms_full.csv')
@@ -368,7 +367,7 @@ nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 
 dens.pr <- nodups
 #now add the mean temperature to the dataframe
-dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'Mean')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[10:12] <- c('modtmean','pasttmean', 'deltaT')
 
@@ -380,23 +379,12 @@ dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
 dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
 
-write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_density_pr_alb",version,".csv"))
+write.csv(nodups, paste0("data/midwest_pls_fia_density_pr_alb",version,".csv"))
 
 
 #plot histograms
 hist(dens.pr$PLSdensity, breaks = 50, xlim = c(0,550), xlab = 'PLS density (stems/ha)', main = 'PLS Midwest Density')
 hist(dens.pr$FIAdensity, breaks = 50, xlim = c(0,550), xlab = 'FIA density(stems/ha)',main = 'FIA Midwest Density')
-
-#plot raw data
-plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
-plot(dens.pr$MAP2011,dens.pr$FIAdensity, xlab = 'Modern MAP', ylab = 'Modern density')
-plot(dens.pr$pastdeltaP, dens.pr$PLSdensity, xlab = "Past P seasonality", ylab = "PLS density")
-plot(dens.pr$moderndeltaP, dens.pr$FIAdensity, xlab = "Modern P seasonality", ylab = "FIA density")
-plot(dens.pr$pasttmean, dens.pr$PLSdensity, xlab = 'Past Tmean', ylab = "PLSdensity")
-#plot(dens.pr$MAP2011, dens.pr$PLSdensity, xlab = 'Modern MAP', ylab = 'PLS density')
-#plot(dens.pr$MAP1910, dens.pr$FIAdensity, xlab = 'Past MAP', ylab = 'Modern density')
-plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Precip")
-
 
 
 ##########################
@@ -405,28 +393,20 @@ plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Preci
 sand8km <- raster("data/8km_UMW_sand1.tif")
 plot(sand8km)
 
-sand1km <- raster("data/1km_UMW_sand1.tif")
-plot(sand1km)
 
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
-sand1km.alb <- projectRaster(sand1km, crs = '+init=epsg:3175')
-
 
 #awc
-awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
-awc1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_awc1.tif")
+awc8km <- raster("data/8km_UMW_awc1.tif")
 
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
-awc1km.alb <- projectRaster(awc1km, crs = '+init=epsg:3175')
 
 #ksat
 
-ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
-ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
+ksat8km <- raster("data/8km_UMW_ksatalb.tif")
 
 ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
-ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
 
 #extract soils data using FIA and ps points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
@@ -466,6 +446,7 @@ ggplot(data = dens.pr, aes(x = x, y = y, color = fiaecotype)) + geom_point()
 #fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
 #dens.pr$kmeans <- fit.km$cluster
 #plot(dens.pr$kmeans, dens.pr$PLSdensity)
+
 #############################################
 # PCA analysis of environmental variables:
 ############################################
@@ -767,7 +748,7 @@ library(ggExtra)
 library(ggplot2)
 
 png(paste0('outputs/v',version,'/PLS_precip_hist_prism.png'))
-#X11(width = 5)
+
 p <- ggplot(dens.pr, aes(MAP1910, PLSdensity)) + geom_point() + theme_classic() + xlab('Mean Annual Precipitation (mm)') + ylab('Pre-Settlement \n Tree Density \n (Trees/hectare)')+
   xlim(450, 1200) + ylim(0, 800)+theme_bw()+
   theme(text = element_text(size = 20))
@@ -858,9 +839,11 @@ ksatpls <- ggplot(dens.pr, aes(ksat, PLSdensity)) + geom_point() + theme_classic
 png(paste0('outputs/v',version,'/PLS_sand.png'))
 sandpls
 dev.off()
+
 png(paste0('outputs/v',version,'/PLS_awc.png'))
 awcpls
 dev.off()
+
 png(paste0('outputs/v',version,'/PLS_ksat.png'))
 ksatpls
 dev.off()
@@ -900,25 +883,6 @@ dev.off()
 
 
 
-#linear regression model for sand
-sand.lm <- lm(dens.pr$sandpct ~dens.pr$PLSdensity)
-summary(sand.lm)
-sand.fia.lm <- lm(dens.pr$sandpct~dens.pr$FIAdensity)
-summary(sand.fia.lm)
-
-#linear model for ksat
-ksat.lm<- lm(dens.pr$ksat~dens.pr$PLSdensity)
-summary(ksat.lm)
-
-ksat.fia.lm <- lm(dens.pr$ksat~dens.pr$FIAdensity)
-summary(ksat.fia.lm)
-
-#linear regression model for awc
-awc.lm <- lm(dens.pr$awc~ dens.pr$PLSdensity)
-summary(awc.lm)
-
-awc.fia.lm <- lm(dens.pr$awc ~ dens.pr$FIAdensity)
-summary(awc.fia.lm)
 
 library(MASS)  # in case it is not already loaded 
 set.seed(101)
@@ -932,6 +896,30 @@ my.cols <- rev(brewer.pal(k, "RdYlBu"))
 
 ## compute 2D kernel density, see MASS book, pp. 130-131
 z <- kde2d(dens.pr$PLSdensity, dens.pr$diff, n=50)
+
+
+summary(lm(dens.pr$diff ~ dens.pr$PLSdensity))
+diff.lm<- lm(dens.pr$diff ~ dens.pr$PLSdensity)
+
+test<- dens.pr 
+
+
+test$residuals <- diff.lm$residuals
+
+library(spdep)
+data(test)
+coordinates(test) <- c("x", "y")
+gridded(test) <- TRUE
+dst <- max(slot(slot(test, "grid"), "cellsize"))
+mg_nb <- dnearneigh(coordinates(test), 0, dst)
+mg_nb
+
+plot(test)
+plot(mg_nb, coordinates(test), col='red', lwd=2, add=TRUE)
+#ggplot(test, aes(x,y, fill=residuals))+geom_raster()
+
+
+
 
 plot(dens.pr$PLSdensity, dens.pr$diff, xlab='PLS tree density (trees/ha)', xlim= c(0,600),ylim = c(-1000, 1000),ylab='increase in density since PLS (trees/ha)', pch=19, cex=.4)
 contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE)
@@ -1082,9 +1070,6 @@ ggplot(dens.pr, aes(MAP2011,FIAdensity))+geom_bin2d(bins = 75) +ylim(0,600)+ xli
 dev.off()
 
 
-#hbin <- hexbin(dens.pr$MAP1910, dens.pr$PLSdensity, xbins = 100)
-#plot(hbin)
-
 
 png(paste0('outputs/v',version,'/PLS_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP1910,PLSdensity))+geom_bin2d(bins = 75) +ylim(0,600) + xlim(400, 1400)+
@@ -1107,14 +1092,14 @@ rbpalette <- c('red', "blue")
 # plot out density distributions binned by climate
 ######################################################
 
-png(width = 600, height = 600, paste0('outputs/v',version,'/precipitation_by_bins_100.png'))
-ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins100, scales = 'free_y')+
+png(width = 600, height = 600, paste0('outputs/v',version,'/fia_precipitation_by_bins_100.png'))
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~fiaprbins100, scales = 'free_y')+
  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 #ggplot(melted, aes(value, fill = variable)) +geom_histogram(binwidth = 35, alpha = 0.3)  +xlim(0, 600)+ facet_wrap(~plsprbins)+scale_fill_brewer(palette = "Set1")
 
 png(width = 600, height = 600, paste0('outputs/v',version,'/PC1_by_bins.png'))
-ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~PC1bins, scales = 'free_y')+
+ggplot(na.omit(melted), aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~PC1fiabins, scales = 'free_y')+
   scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 dev.off()
 
@@ -1164,24 +1149,24 @@ dens.pr <- read.csv("outputs/FIA_pls_density_with_bins.csv")
 #bimodality coefficient of the density (FIA or PLS) within a given set of bins (climate, sand, etc)
 
 calc.BC <- function(data, binby, density){
-bins <- as.character(unique(data[,binby]))
-coeffs <- matrix(NA, length(bins), 2)
-for (i in 1:length(bins)){
-coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-}
-
-coef.bins<- data.frame(cbind(coeffs, bins))
-coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-#coef.bins
-coef.bins <- coef.bins[order(as.numeric(as.character(coef.bins$bins))),]
-coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeric(as.character(coef.bins$bins)))])# reorder so it plots well
-ggplot(coef.bins, aes(x = bins, y = BC))+geom_point()+
- geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
-  theme(axis.text = element_text(angle = 90))+
-  xlab('bins') + ylab('Bimodality Coefficient')+
-  ggtitle(paste0('Bimodality coefficients for ', binby,' ', density))
+      bins <- as.character(unique(data[,binby]))
+      coeffs <- matrix(NA, length(bins), 2)
+      for (i in 1:length(bins)){
+      coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
+      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+      }
+      
+      coef.bins<- data.frame(cbind(coeffs, bins))
+      coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
+      coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+      #coef.bins
+      coef.bins <- coef.bins[order(as.numeric(as.character(coef.bins$bins))),]
+      coef.bins$bins <- factor(coef.bins$bins, levels = coef.bins$bins[order(as.numeric(as.character(coef.bins$bins)))])# reorder so it plots well
+      ggplot(coef.bins, aes(x = bins, y = BC))+geom_point()+
+       geom_hline( yintercept = 5/9)+ylim(0,1)+theme_bw()+
+        theme(axis.text = element_text(angle = 90))+
+        xlab('bins') + ylab('Bimodality Coefficient')+
+        ggtitle(paste0('Bimodality coefficients for ', binby,' ', density))
 }
 
 pdf(paste0('outputs/v',version,'/bimodality_coefficient_binplots.pdf'))
@@ -1224,46 +1209,9 @@ calc.BC(data = dens.pr, binby = 'PC2bins', density = "FIAdensity")
 
 
 #this function maps out the region that is bimodal 
-map.bimodal <- function(data, binby, density){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-    }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
-  #define bimodality
-  merged$bimodal <- "Stable"
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  if(density == "PLSdensity"){
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$ecotype)
-  }else{
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-    
-  }
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#1a9641', # dark green
-      '#fdae61', # light orange
-      '#a6d96a', # light green
-      '#d7191c', # red
-      '#fee08b', # tan
-      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Bimodal prairie', 'Stable prairie') )+
-    theme_bw()+
-    xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0(binby, ' for ',density))
-  
-}
 
 
+source("R/map.bimodal.5c.R")
 #map out bimodalities--note the region varies by bin size
 pdf(paste0('outputs/v',version,'/bimodal_maps.pdf'))
 map.bimodal(data = dens.pr, binby = 'plsprbins', density = "PLSdensity")

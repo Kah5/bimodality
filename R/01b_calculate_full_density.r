@@ -24,8 +24,9 @@ final.data.mi <- read.csv(paste0("data/lower_mi_final_data.csv"), stringsAsFacto
 correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
 
 # add the lower MI data below the INIL data: 
-final.data <- rbind(final.data, final.data.mi)
-correction.factor <- rbind(correction.factor, correction.factor.mi)
+
+#final.data <- rbind(final.data, final.data.mi)
+#correction.factor <- rbind(correction.factor, correction.factor.mi)
 
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]

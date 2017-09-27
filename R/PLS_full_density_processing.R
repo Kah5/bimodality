@@ -174,8 +174,9 @@ nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
 
+ggplot(dens.pr, aes(x, y, fill=MAP1910))+geom_raster()
 
-write.csv(nodups, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
+write.csv(nodups, paste0("data/midwest_pls_full_density_pr_alb",version,".csv"))
 
 #plot raw data
 plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density')
@@ -201,10 +202,7 @@ awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
 
 # issues with ksat raster--missing all of IL
-#ksat8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif")
-#ksat1km <- raster ("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_ksat1.tif")
-#ksat8km.alb <- projectRaster(ksat8km, crs ='+init=epsg:3175')
-#ksat1km.alb <- projectRaster(ksat1km, crs = '+init=epsg:3175')
+
 
 #write albers rasters to files:
 writeRaster(awc8km.alb, "data/8km_UMW_awcalb.tif", overwrite = TRUE)
@@ -680,22 +678,60 @@ calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 #dev.off()
 
 
-#this function maps out the region that is bimodal & uses the ecotypes to classify this
-map.bimodal <- function(data, binby, density){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)]))
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
+# find the minima of the bimodal distribution overall:
+d <- density(dens.pr$PLSdensity)
+d<- data.frame(y= d$y,
+               x = d$x)
+d$x[d$y == min(d[d$x < 200 & d$x >= 0, ]$y)]
+# minimum value in the density dist == 98.79787 #
+#this doesnt match as well with 47 trees per hectare classification of anderson
+# we will use this to make sure the bimodality has modes on either side of 99 trees/ha
+find_modes<- function(x) {
+  modes <- NULL
+  for ( i in 2:(length(x)-1) ){
+    if ( (x[i] > x[i-1]) & (x[i] > x[i+1]) ) {
+      modes <- c(modes,i)
+    }
   }
+  if ( length(modes) == 0 ) {
+    modes = 'This is a monotonic distribution'
+  }
+  return(modes)
+}
+
+
+#this function maps out the region that is bimodal & uses the ecotypes to classify this
+map.bimodal.dens <- function(data, binby, density){
+  bins <- as.character(unique(data[,binby]))
+  coeffs <- matrix(NA, length(bins), 4)
+  for (i in 1:length(bins)){
+    coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
+    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
+    peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
+    
+    # if there is more than one peak, list the first 2 peaks
+    if(length(peaks > 1)) {
+    coeffs[i,3]  <- peaks[1]
+    coeffs[i,4]  <- peaks[2]
+      }else{
+        coeffs[i,3]  <- 0
+        coeffs[i,4]  <- 0
+      }
+  }
+  
   coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
+  coef.bins <- data.frame(cbind(coeffs, bins))
+  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
+  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
+  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
+  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
+  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
+  
   merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
-  #define bimodality
+  
+  #define bimodality: a distirbution is bimoal if it has bc > 0.55, dip test >0.05, and 
   merged$bimodal <- "Unimodal"
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
+  merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
   
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
@@ -714,7 +750,7 @@ map.bimodal <- function(data, binby, density){
       '#a6d96a', # light green
       '#d7191c', # red
       '#fee08b', # tan
-      'black'), limits = c("Stable Forest" , 'Stable Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Bimodal prairie', 'Stable prairie') )+
+      'black'), limits = c("Unimodal Forest" , 'Unimodal Savanna', 'Bimodal Forest', "Bimodal Savanna", 'Bimodal prairie', 'Unimodal prairie') )+
     theme_bw()+
     xlab("easting") + ylab("northing") +coord_equal()+
     ggtitle(paste0(binby, ' for ',density))
@@ -724,18 +760,18 @@ map.bimodal <- function(data, binby, density){
 
 #map out bimodalities--note the region varies by bin size
 pdf(paste0('outputs/v',version,'/full/bimodal_maps.pdf'))
-map.bimodal(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
-map.bimodal(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
-map.bimodal(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
-map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
 #map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
-map.bimodal(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
-map.bimodal(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
-map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 dev.off()
 
 png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map.png'))

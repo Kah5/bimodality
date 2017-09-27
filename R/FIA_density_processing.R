@@ -1322,7 +1322,7 @@ map.bimodal.5c <- function(data, binby, density){
     ggtitle(paste0(binby, ' for ',density))
   
 }
-
+source("R/map.bimodal.5c.R")
 pdf(paste0('outputs/v',version,'/full/bimodal_maps_5col.pdf'))
 map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")

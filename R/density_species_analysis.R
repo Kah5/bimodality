@@ -461,6 +461,7 @@ dev.off()
 
 ggplot(fulldens, aes(pc1))+geom_histogram()+facet_wrap(~period)
 ggplot(fulldens, aes(pc2))+geom_histogram()+facet_wrap(~period)
+
 #---------------------------------------------------------------------------------                                                               
 # Is community composition bimodal across the environmental space?
 dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
@@ -558,10 +559,17 @@ pls.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= 
 fia.pc1 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc1", time= "Modern")
 fia.pc2 <- comp.bimodal.df(data=fc.m, binby = "PC1bins", density = "pc2", time= "Modern")
 
+# ------------------------Is Oak composition bimodal?------------------------------
+ggplot(fc.m, aes(Oak, fill = period))+geom_histogram(binwidth = 0.1)+facet_wrap(~period)
+ggplot(fc.m, aes(Maple, fill = period))+geom_histogram()+facet_wrap(~period)
 
-# using the same criteria as density, there are no significantly bimodal places
-# if you only evaluate on the BC being > 0.55, then the bimodal density places have bimodal composition
+ggplot(fc.m, aes(PC1, Oak))+geom_point()+facet_wrap(~period)
+ggplot(fc.m, aes(PC1, Oak))+geom_hex()+facet_wrap(~period)+scale_fill_distiller(palette = "Spectral")
 
+ggplot(fc.m, aes(x,y, fill = Oak))+geom_raster()+facet_wrap(~period)
+
+comp.bimodal(data=fc.m[fc.m$period %in% "Past", ], binby="PC1bins", density="Oak", time = "Past")
+comp.bimodal(data=fc.m[fc.m$period %in% "Modern", ], binby="PC1bins", density="Oak", time = "Modern")
 
 #----Are the bimodal places in composition the same as those in density?
 

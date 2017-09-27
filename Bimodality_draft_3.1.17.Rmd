@@ -262,23 +262,23 @@ pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2))
 # hexbin for pls oak comp:
 pls.oak.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Oak)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab("Species Composition PC2")
+  xlab('Environmental PC1') +ylab("Oak Composition")
 
 # hexbin for pls maple composition
 pls.maple.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Maple)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab("Species Composition PC2")
+  xlab('Environmental PC1') +ylab("Maple composition")
 
 # hexbin for pls hemlock compsition:
 pls.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Hemlock)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab("Species Composition PC2")
+  xlab('Environmental PC1') +ylab("Hemlock Composition")
 
 
 # hexbin for pls beech composition:
 pls.beech.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Beech)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab("Species Composition PC2")
+  xlab('Environmental PC1') +ylab("Beech Composition")
 
 
 

@@ -798,64 +798,8 @@ dev.off()
 
 
 #make alternative maps that only plot prairie as one type of prairie:
-map.bimodal.5c <- function(data, binby, density){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 2)
-  for (i in 1:length(bins)){
-    coeffs[i,1]<- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # should we also do BC on the denisty estimated function?
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p
-  }
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins<- data.frame(cbind(coeffs, bins))
-  coef.bins$BC <- as.numeric(as.character(coef.bins$V1))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$V2))
-  merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
-  #define bimodality
-  merged$bimodal <- "Unimodal"
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05,]$bimodal <- "Bimodal"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  if(density == "PLSdensity"){
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$ecotype)
-    merged[merged$classification %in% 'Bimodal prairie',]$classification <- "Prairie"
-    merged[merged$classification %in% 'Stable prairie',]$classification <- "Prairie"
-    
-    }else{
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-    
-  }
-  
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ scale_fill_manual(values = c(
-      '#01665e', # light green
-      '#5ab4ac', # dark teal
-      '#8c510a', # red
-      '#d8b365', # light tan
-      '#fee08b', # tan
-      'black'), limits = c('Bimodal Forest',"Stable Forest" ,   "Bimodal Savanna", 'Stable Savanna','Prairie') )+
-    theme_bw()+
-    xlab("easting") + ylab("northing") +coord_equal()+
-    ggtitle(paste0(binby, ' for ',density))
-  
-}
 
-pdf(paste0('outputs/v',version,'/full/bimodal_maps_5col.pdf'))
-map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
-#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
-map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
-map.bimodal.5c(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
-#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
-map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
-#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
-map.bimodal.5c(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
-#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
-#map.bimodal.5c(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
-map.bimodal.5c(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
-map.bimodal.5c(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
-map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
-dev.off()
+source("R/map.bimodal.5c.R")
 
 
 png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_map_5col.png'))
@@ -890,79 +834,17 @@ dev.off()
 #function for plotting where bimodality would be under future climate (assuming pls relationship with cliamte)
 library(splitstackshape)
 library(modes)
+source("R/map.future.scenarios.R") # script for future bimodal calculations
 
-bimodal.future <- function(data, binby, density, binby2){
- 
-    bins <- as.character(unique(data[,binby]))
-    coeffs <- matrix(NA, length(bins), 4)
-    for (i in 1:length(bins)){
-      coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
-      coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
-      peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
-      
-      # if there is more than one peak, list the first 2 peaks
-      if(length(peaks > 1)) {
-        coeffs[i,3]  <- peaks[1]
-        coeffs[i,4]  <- peaks[2]
-      }else{
-        coeffs[i,3]  <- 0
-        coeffs[i,4]  <- 0
-      }
-    }
-    
-    coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-    coef.bins <- data.frame(cbind(coeffs, bins))
-    colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
-    coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
-    coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
-    coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
-    coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
-    
-    merged <- merge(coef.bins, dens.pr, by.x = "bins",by.y = binby)
-    
-    #define bimodality: a distirbution is bimoal if it has bc > 0.55, dip test >0.05, and 
-    merged$bimodal <- "Unimodal"
-    merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
-    
-    
-    #define bimodal savanna/forest and not bimodal savanna & forest 
-    if(density == "PLSdensity"){
-      merged$classification <- "test"
-      merged$classification <- paste(merged$bimodal, merged$ecotype)
-    }else{
-      merged$classification <- "test"
-      merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-      
-    }
-    
-  
-  
-  #merged
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = classification))+ #scale_fill_manual(values = c(
-      #'#1a9641',
-     #'#fdae61',
-     #'#d7191c',
-     #'#ffffbf'
-    #  ), limits = c('Unimodal Forest',"Unimodal Savanna",'Bimodal Savanna', "Prairie") )+
-    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                      axis.text.y=element_blank(),axis.ticks=element_blank(),
-                      axis.title.x=element_blank(),
-                      axis.title.y=element_blank())+
-    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
-  
-}
 
-source("R/grid_arrange_shared_legend.R")
 
 a <- bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1bins' ) + ggtitle ("PLS PC1")
 b <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc26bins' ) + ggtitle("RCP 2.6 PC1")
 c <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc45bins' )+ ggtitle("RCP 4.5 PC1")
 d <- bimodal.future(data = dens.pr, binby = 'PC1_cc26bins', density = "PLSdensity", binby2 ='PC1_cc85bins' )+ ggtitle("RCP 8.5 PC1")
-
-
 e<-bimodal.future(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1fiabins' ) + ggtitle ("PLS PC1")
 
+source("R/grid_arrange_shared_legend.R")
 png(height = 4, width = 12, units = "in",res = 300, filename = paste0('outputs/v1.6-5/full/RCP_scenario_PC1_maps.png'))
 grid_arrange_shared_legend(a,b,c,d, nrow = 1, ncol=4, position = c("bottom"))
 dev.off()
@@ -971,62 +853,8 @@ dev.off()
 #plot the projections into the future, 
 #but highlight the no-analog climates:
 #######################################
+# source of the function is "R/map.future.scenarios.R"
 
-bimodal.future.NA <- function(data, binby, density, binby2, rcp){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 4)
-  
-  for (i in 1:length(bins)){
-    coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
-    peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
-    
-    # if there is more than one peak, list the first 2 peaks
-    if(length(peaks > 1)) {
-      coeffs[i,3]  <- peaks[1]
-      coeffs[i,4]  <- peaks[2]
-    }else{
-      coeffs[i,3]  <- 0
-      coeffs[i,4]  <- 0
-    }
-  }
-  
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins <- data.frame(cbind(coeffs, bins))
-  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
-  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
-  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
-  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
-  
-  
-  #merge bins iwth the second binby -> here is is future climate
-  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
-  
-  
-  #define bimodality
-  merged$bimodal <- "Unimodal"
-  #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
-  merged[merged[,c(paste0("rcp",rcp,"NA"))] %in% 'out-of-sample',]$bimodal <- "out-of-sample"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  
-  
-  #merged
-  ggplot()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), color = 'black', fill = 'white')+
-    geom_raster(data = merged, aes(x = x, y = y, fill = bimodal))+ scale_fill_manual(values = c(
-      '#1a9641',
-      'black',
-      '#d7191c'
-    ), limits = c('Unimodal',"out-of-sample",'Bimodal') )+
-    theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                      axis.text.y=element_blank(),axis.ticks=element_blank(),
-                      axis.title.x=element_blank(),
-                      axis.title.y=element_blank())+
-    xlab("easting") + ylab("northing") +coord_equal() + ggtitle(binby2)
-  
-}
 a <- bimodal.future.NA(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc60bins', rcp = "60" ) + ggtitle ("RCP 6.0 PC1")
 b <- bimodal.future.NA(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc26bins',  rcp = "26") + ggtitle("RCP 2.6 PC1")
 c <- bimodal.future.NA(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1_cc45bins', rcp = '45' )+ ggtitle("RCP 4.5 PC1")
@@ -1040,53 +868,7 @@ dev.off()
 # bimodal.df function outputs the dataframe of bimodal/not bimodal 
 dens.pr <- dens.pr[!is.na(dens.pr$PLSdensity), ]
 
-bimodal.df <- function(data, binby, density, binby2){
-  bins <- as.character(unique(data[,binby]))
-  coeffs <- matrix(NA, length(bins), 4)
-  for (i in 1:length(bins)){
-    coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient
-    coeffs[i,2] <- diptest::dip.test(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y))$p # calculate p-value for hte diptest
-    peaks <-  find_modes(na.omit(density(data[data[,binby] %in% bins[i], c(density)])$y)) # calculate the modes or peaks of the distribution
-    
-    # if there is more than one peak, list the first 2 peaks
-    if(length(peaks > 1)) {
-      coeffs[i,3]  <- peaks[1]
-      coeffs[i,4]  <- peaks[2]
-    }else{
-      coeffs[i,3]  <- 0
-      coeffs[i,4]  <- 0
-    }
-  }
-  
-  coeffs[is.na(coeffs)]<- 0 # replace NANs with 0 values here
-  coef.bins <- data.frame(cbind(coeffs, bins))
-  colnames(coef.bins) <- c("BC", "dipP", "mode1", "mode2", "bins") # rename columns
-  coef.bins$BC <- as.numeric(as.character(coef.bins$BC))
-  coef.bins$dipP <- as.numeric(as.character(coef.bins$dipP))
-  coef.bins$mode1 <- as.numeric(as.character(coef.bins$mode1))
-  coef.bins$mode2 <- as.numeric(as.character(coef.bins$mode2))
-  
-  #merge bins iwth the second binby -> here is is future climate
-  merged <- merge(coef.bins, dens.pr, by.x = "bins", by.y = binby2)
-  
-  
-  #define bimodality
-  merged$bimodal <- "Unimodal"
-  #criteria for bimodality
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
-  
-  #define bimodal savanna/forest and not bimodal savanna & forest 
-  if(density == "PLSdensity"){
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$ecotype)
-  }else{
-    merged$classification <- "test"
-    merged$classification <- paste(merged$bimodal, merged$fiaecotype)
-    
-  }
-  
-merged
-}
+source("R/bimodal.df.R")
 
 df.new <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1bins')
 df.mod <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 = 'PC1fiabins')

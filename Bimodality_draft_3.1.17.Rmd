@@ -68,6 +68,7 @@ pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
                         axis.title.y=element_blank())
 
 # make a map of Oak composition:
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/Oak_map_pls.png")
 pls.Oak.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Oak))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -77,9 +78,11 @@ pls.Oak.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, 
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
-
+pls.Oak.map
+dev.off()
 
 # make a map of Maple composition:
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/Maple_map_pls.png")
 pls.Maple.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Maple))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -89,8 +92,11 @@ pls.Maple.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
+pls.Maple.map
+dev.off()
 
 # make a map of Hemlock composition:
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/hemlock_map_pls.png")
 pls.Hemlock.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Hemlock))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -100,8 +106,11 @@ pls.Hemlock.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
+pls.Hemlock.map
+dev.off()
 
 # make a map of Beech composition:
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/Beech_map_pls.png")
 pls.Beech.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Beech))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -111,7 +120,22 @@ pls.Beech.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
+pls.Beech.map
+dev.off()
 
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/Pine_map_pls.png")
+
+pls.Pine.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = Pine))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing") + 
+  scale_fill_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Oak Composition", na.value = 'darkgrey') +
+  coord_equal() + theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+pls.Pine.map
+dev.off()
 # --------------------What is the relationship between tree density and Oak % composition?------------------------------------------------------------------
 comp.dens<- merge(full.comps[full.comps$period %in% "PLS",], dens.pr[,c("x","y", "cell", "PLSdensity")],, by = c("x", "y", "cell"))
 
@@ -144,6 +168,13 @@ png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_hemlock_
 Hemlockvdens<- ggplot(comp.dens, aes(PLSdensity, Hemlock))+geom_point(size = 0.5)
 H <- ggExtra::ggMarginal(Hemlockvdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
 H
+dev.off()
+
+# pine vs. dens
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_pine_v_dens.png")
+Pinevdens <- ggplot(comp.dens, aes(PLSdensity, Pine))+geom_point(size = 0.5)
+P <- ggExtra::ggMarginal(Oakvdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
+P
 dev.off()
 # ---------------plot out the environmental PC:
 
@@ -274,6 +305,16 @@ png("outputs/paper_figs/Hemlock_composition_PCA_biplot.png")
 hcomp + theme_bw(base_size = 10)
 dev.off()
 
+# make with Pine compsition:
+pcomp <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+                 = 25,alpha = 0,color = "black",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
+pcomp$layers <- c(geom_point(data = fc.dens, aes(x = PC1, y = PC2, color = Pine), size = 0.5), hcomp$layers)
+# color points by species composition PC:
+pcomp <- pcomp+ scale_color_gradientn(colours = rev(rainbow(3)), limits = c(0,1), name ="Pine Composition", na.value = 'darkgrey')
+
+png("outputs/paper_figs/Pine_composition_PCA_biplot.png")
+hcomp + theme_bw(base_size = 10)
+dev.off()
 
 
 # --------------plot out density vs. envt, pc2 vs envt, and individual species compositions vs. the envt---------------------------------------------------
@@ -281,23 +322,31 @@ dev.off()
 # hexbin plot for PLS density:
 new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
 
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/dens_PC1_hex.png")
+
 pls.dens.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
-
+pls.dens.hex
+dev.off()
 
 # hexbin plot for pls composition:
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/comppc2_PC1_hex.png")
+
 pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Species Composition PC2")
-
+pls.comp.hex
+dev.off()
 
 # hexbin for pls oak comp:
+
 pls.oak.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Oak)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Oak Composition")
 
-png("outputs/oak_PC1_hexbin.png")
+
+png(height = 6, width = 6, units ="in",res=200,"outputs/oak_PC1_hexbin.png")
 pls.oak.hex
 dev.off()
 
@@ -306,7 +355,7 @@ pls.maple.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Mapl
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Maple composition")
 
-png("outputs/maple_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/maple_PC1_hexbin.png")
 pls.maple.hex
 dev.off()
 
@@ -315,7 +364,7 @@ pls.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, He
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Hemlock Composition")
 
-png("outputs/hemlock_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/hemlock_PC1_hexbin.png")
 pls.hemlock.hex
 dev.off()
 
@@ -324,11 +373,18 @@ pls.beech.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Beec
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Beech Composition")
 
-png("outputs/beech_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/beech_PC1_hexbin.png")
 pls.beech.hex
 dev.off()
 
+# hexbin for pls pine composition:
+pls.pine.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Pine)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Pine Composition")
 
+png(height = 6, width = 6, units ="in",res=200,"outputs/pine_PC1_hexbin.png")
+pls.pine.hex
+dev.off()
 
 
 #-------------------------------plot the geom_denisty values below each hexbin plot:

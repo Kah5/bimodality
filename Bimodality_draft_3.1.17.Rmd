@@ -112,6 +112,39 @@ pls.Beech.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
 
+# --------------------What is the relationship between tree density and Oak % composition?------------------------------------------------------------------
+comp.dens<- merge(full.comps[full.comps$period %in% "PLS",], dens.pr[,c("x","y", "cell", "PLSdensity")],, by = c("x", "y", "cell"))
+
+# plot the density (x-axis) vs. species composition (y-axis), with marginal histograms
+
+library(ggExtra)
+# Oak vs. dens
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_oak_v_dens.png")
+Oakvdens <- ggplot(comp.dens, aes(PLSdensity, Oak))+geom_point(size = 0.5)
+O <- ggExtra::ggMarginal(Oakvdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
+O
+dev.off()
+
+# beech vs. dens
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_beech_v_dens.png")
+Beechvdens <- ggplot(comp.dens, aes(PLSdensity, Beech))+geom_point(size = 0.5)
+B <- ggExtra::ggMarginal(Beechvdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
+B
+dev.off()
+
+# maple vs. dens
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_maple_v_dens.png")
+Maplevdens <- ggplot(comp.dens, aes(PLSdensity, Maple))+geom_point(size = 0.5)
+C <- ggExtra::ggMarginal(Maplevdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
+C
+dev.off()
+
+#hemlocak vs. dens
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/supp_hemlock_v_dens.png")
+Hemlockvdens<- ggplot(comp.dens, aes(PLSdensity, Hemlock))+geom_point(size = 0.5)
+H <- ggExtra::ggMarginal(Hemlockvdens, type = "histogram",size = 3, colour = 'black', fill = 'blue')
+H
+dev.off()
 # ---------------plot out the environmental PC:
 
 

@@ -243,7 +243,7 @@ dev.off()
 
 
 
-# --------------plot out density vs. envt and pc2 vs envt
+# --------------plot out density vs. envt, pc2 vs envt, and individual species compositions vs. the envt---------------------------------------------------
 
 # hexbin plot for PLS density:
 new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
@@ -264,21 +264,36 @@ pls.oak.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Oak)) 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Oak Composition")
 
+png("outputs/oak_PC1_hexbin.png")
+pls.oak.hex
+dev.off()
+
 # hexbin for pls maple composition
 pls.maple.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Maple)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Maple composition")
+
+png("outputs/maple_PC1_hexbin.png")
+pls.maple.hex
+dev.off()
 
 # hexbin for pls hemlock compsition:
 pls.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Hemlock)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Hemlock Composition")
 
+png("outputs/hemlock_PC1_hexbin.png")
+pls.hemlock.hex
+dev.off()
 
 # hexbin for pls beech composition:
 pls.beech.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Beech)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Beech Composition")
+
+png("outputs/beech_PC1_hexbin.png")
+pls.beech.hex
+dev.off()
 
 
 

@@ -31,7 +31,12 @@ years <- 1895:1925
 yrs <- "1895-1925"
 
 # this chunk of code reads in the filenames within the PRISM data folder
-filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
+filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
+
+# use substring to index filenames that match the years designated:
+
+filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
+
 s <- stack(filenames) #make all into a raster
 t <- crop(s, extent(spec.table.ll)) 
 s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
@@ -76,10 +81,10 @@ avgs.df$y <- spec.table$y
 write.csv(avgs.df, paste0(workingdir,"outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
 
-#ggplot(avgs.df, aes(x = x, y=y, color = total))+geom_point()
-###################################################
+
+######################################################################################
 #extract mean temperature data from the prism data#
-###################################################
+######################################################################################
 
 
 #setwd to data directory
@@ -97,7 +102,12 @@ years <- 1895:1925
 yrs <- "1895-1925"
 
 # read in the filenames, stack as rasters, extract raster to points
-filenames <- list.files(pattern=paste(".*_","190",".*\\.bil$", sep = ""))
+filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
+
+# use substring to index filenames that match the years designated:
+
+filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
+
 s <- stack(filenames) #make all into a raster
 t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
 s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
@@ -139,4 +149,80 @@ avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
 write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
+
+######################################################################################
+# calculate PET from the temperature data:
+######################################################################################
+
+library(SPEI)
+#setwd to data directory
+setwd(paste0(workingdir,'PRISM_tmean_stable_4kmM2_189501_198012_bil/'))
+
+#read in the grid again
+spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
+coordinates(spec.table) <- ~x + y
+
+# project the grid to lat long
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+
+years <- 1895:1905
+yrs <- "1895-1905"
+
+# read in the filenames, stack as rasters, extract raster to points
+filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
+
+# use substring to index filenames that match the years designated:
+
+filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
+
+s <- stack(filenames) #make all into a raster
+t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
+#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+y <- data.frame(rasterToPoints(t)) #covert to dataframe
+
+
+test <- y
+# this does not work in pulling out the data from one grid cell
+y$CellID <- seq(1:nrow(y))
+
+# this for loop calculates thornthwaite PET for each month in each grid cell
+for(i in 1:length(y$y)){
+  
+   ynew <- t(y[i,3:122])
+   lat <- y[i,]$y
+   long <- y[i,]$x
+   cellID <- y[i,]$CellID
+   # get month an year from row.names
+   year <-  data.frame(year =substring(row.names(ynew), first = 26, last = 29))
+   month <- data.frame(month = substring(row.names(ynew), first = 30, last = 31))
+   ynew2 <- data.frame(Tave = ynew[,1], 
+                       year <- year, 
+                       month <- month)
+   
+   # use the thorthwaite equation to attach the PET data to the 
+   ynew2$PET_tho <- as.numeric(thornthwaite(ynew2$Tave, lat))
+   ynew2$lat <- lat
+   ynew2$long <- long
+   ynew2$CellID <- cellID
+   
+   # if PET.df already exists, then add to the df, if not, then create "PET.df"
+   if(exists  ("PET.df")){
+   PET.df <- rbind(PET.df, ynew2)
+   }else{
+     PET.df <- ynew2
+   }
+}
+
+# rename the object:
+full.PET <- PET.df
+#remove PET.df
+rm(PET.df)
+
+
+PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
+colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
+                         "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
+# get the precipitation data in the same format:
 

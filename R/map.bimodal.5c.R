@@ -30,7 +30,7 @@ map.bimodal.5c <- function(data, binby, density){
   merged <- merge(coef.bins, data, by.x = "bins",by.y = binby)
   #define bimodality
   merged$bimodal <- "Unimodal"
-  merged[merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, ]$bimodal <- "Bimodal"
+  merged$bimodal <- ifelse(merged$BC >= 0.55 & merged$dipP <= 0.05 & na.omit(merged$mode1) <= 99 & na.omit(merged$mode2) >=99, "Bimodal","Unimodal")
   
   #define bimodal savanna/forest and not bimodal savanna & forest 
   if(density == "PLSdensity"){

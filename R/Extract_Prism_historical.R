@@ -4,14 +4,15 @@
 library(plyr)
 library(raster)
 library(data.table)
-library(rgdal)
+#ibrary(rgdal)
 library(reshape2)
 
 version <- "1.7-5" # pls version
 
 # set the working dir (where the prism data folder is)
-workingdir <- "/Users/kah/Documents/bimodality/data/"
-
+#workingdir <- "/Users/kah/Documents/bimodality/data/"
+# for crc:
+workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
 
 ##########################################################################
 # extracting PRISM  precip data from the 1895-1980 historic prism dataset#
@@ -22,9 +23,12 @@ setwd(paste0(workingdir,'PRISM_ppt_stable_4kmM2_189501_198012_bil/'))
 
 # again read in the 8km grid for extracting
 spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
-coordinates(spec.table) <- ~x + y
-proj4string(spec.table) <- '+init=epsg:3175' 
-spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+#coordinates(spec.table) <- ~x + y
+#proj4string(spec.table) <- '+init=epsg:3175' 
+#spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+
+#spec.table.11<- data.frame(spec.table.ll)
+spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
 
 #designate the years we want to extract/ average over
 years <- 1895:1925
@@ -39,8 +43,8 @@ filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
 
 s <- stack(filenames) #make all into a raster
 t <- crop(s, extent(spec.table.ll)) 
-s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
-y <- data.frame(rasterToPoints(s)) #covert to dataframe
+#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+y <- data.frame(rasterToPoints(t)) #covert to dataframe
 years <- rep(1895:1924, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
@@ -96,7 +100,7 @@ coordinates(spec.table) <- ~x + y
 
 # project the grid to lat long
 proj4string(spec.table) <- '+init=epsg:3175'
-spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+#spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
 years <- 1895:1925
 yrs <- "1895-1925"
@@ -109,9 +113,9 @@ filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
 filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
 
 s <- stack(filenames) #make all into a raster
-t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
-s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
-y <- data.frame(rasterToPoints(s)) #covert to dataframe
+t <- crop(s, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
+#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+y <- data.frame(rasterToPoints(t)) #covert to dataframe
 years <- rep(years, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
@@ -153,8 +157,9 @@ write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
 ######################################################################################
 # calculate PET from the temperature data:
 ######################################################################################
+# may need to do this in CRC:
 
-library(SPEI)
+#library(SPEI)
 #setwd to data directory
 setwd(paste0(workingdir,'PRISM_tmean_stable_4kmM2_189501_198012_bil/'))
 
@@ -164,7 +169,7 @@ coordinates(spec.table) <- ~x + y
 
 # project the grid to lat long
 proj4string(spec.table) <- '+init=epsg:3175'
-spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+#spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
 
 years <- 1895:1905
 yrs <- "1895-1905"
@@ -177,7 +182,7 @@ filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
 filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
 
 s <- stack(filenames) #make all into a raster
-t <- crop(s, extent(spec.lat)) #crop to the extent of indiana & illinois 
+t <- crop(s, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
 #s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
 y <- data.frame(rasterToPoints(t)) #covert to dataframe
 
@@ -187,8 +192,8 @@ test <- y
 y$CellID <- seq(1:nrow(y))
 
 # this for loop calculates thornthwaite PET for each month in each grid cell
-for(i in 1:length(y$y)){
-  
+#for(i in 1:length(y$y)){
+for(i in 1:25){
    ynew <- t(y[i,3:122])
    lat <- y[i,]$y
    long <- y[i,]$x
@@ -201,7 +206,7 @@ for(i in 1:length(y$y)){
                        month <- month)
    
    # use the thorthwaite equation to attach the PET data to the 
-   ynew2$PET_tho <- as.numeric(thornthwaite(ynew2$Tave, lat))
+  # ynew2$PET_tho <- as.numeric(thornthwaite(ynew2$Tave, lat))
    ynew2$lat <- lat
    ynew2$long <- long
    ynew2$CellID <- cellID
@@ -220,9 +225,9 @@ full.PET <- PET.df
 rm(PET.df)
 
 
-PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
-colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
+#PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
+#colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
                          "jun", "jul", "aug", "sep", "oct", "nov", "dec")
-ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
+#ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
 # get the precipitation data in the same format:
-
+write.rds(full.PET, paste0(workingdir, "full.PET.rds"))

@@ -473,7 +473,7 @@ for(i in 1:length(compositions)){
  hex.comp <- ggplot(full.comps, aes(PC1, full.comps[,compositions[i]]))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
  
-   xlab('Environmental PC1') +ylab("% Composition")+facet_wrap(~period)
+   xlab('Environmental PC1') +ylab(paste("%", compositions[i]," Composition"))+facet_wrap(~period)
   #comphist<- ggplot(full.comps, aes(compositions[i], fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
  # comp.envt.hist <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 

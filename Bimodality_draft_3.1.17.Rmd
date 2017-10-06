@@ -466,12 +466,13 @@ HBirM.map <- ggplot(full.comps, aes(x,y, fill = HBirM))+geom_raster()
 HBir.hex <- ggplot(full.comps, aes(PC1, HBirM))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab(" FIA Tree Density /n (stems/ha)")
-
+HBirMhist<- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
 HBirMhists <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 
 # 2. Beech, Hemlock, Mapme (BHM)
 full.comps$BHM <- rowSums(full.comps[,c("Hemlock", "Beech", "Maple")])
 BHM.map <- ggplot(full.comps, aes(x,y, fill = BHM))+geom_raster()
+BHMhist<- ggplot(full.comps, aes(BHM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
 BHMhists <- ggplot(full.comps, aes(BHM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 BHM.hex <- ggplot(full.comps, aes(PC1, BHM))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
@@ -480,23 +481,30 @@ BHM.hex <- ggplot(full.comps, aes(PC1, BHM))+geom_hex() +
 # 3. Cedar, Hemlock, Pine (CHP)
 full.comps$CHP <- rowSums(full.comps[,c("Hemlock", "Cedar.juniper", "Pine")])
 CHP.map <- ggplot(full.comps, aes(x,y, fill = CHP))+geom_raster()
+CHPhist<- ggplot(full.comps, aes(CHP, fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
+CHPhists <- ggplot(full.comps, aes(CHP, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 CHP.hex <- ggplot(full.comps, aes(PC1, CHP))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') 
 
 # 4. Tamarack, Pine, Birch, Spruce, Poplar (TPBSP)
 full.comps$TPBSP <- rowSums(full.comps[,c("Tamarack", "Pine", "Birch","Spruce", "Poplar")])
-TPBSP.map <- ggplot(full.comps, aes(x,y, fill = TPBSP ))+geom_raster()
+TPBSP.map <- ggplot(full.comps, aes(x,y, fill = TPBSP ))+geom_raster
+TPBSPhist<- ggplot(full.comps, aes(TPBSP, fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
+TPBSPhists <- ggplot(full.comps, aes(TPBSP, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 TPBSP.hex <- ggplot(full.comps, aes(PC1, TPBSP))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') 
 
 # 5. Elm, Oak, Basswood, Ironwood
-full.comps$EOBI <- rowSums(full.comps[,c("Elm",  "Oak","Basswood","Ironwood")])
+full.comps$EOBI <- rowSums(full.comps[,c("Elm",  "Oak", "Basswood","Ironwood")])
 EOBI.map <- ggplot(full.comps, aes(x,y, fill = EOBI ))+geom_raster()
+EOBIhist<- ggplot(full.comps, aes(EOBI, fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
+EOBIhists <- ggplot(full.comps, aes(EOBI, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 EOBI.hex <- ggplot(full.comps, aes(PC1, EOBI))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') 
+
 
 # full:
 oakhistsfull <- ggplot(full.comps[full.comps$PC1_bins_f %in% c("0 - 1"),], aes(Oak, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)

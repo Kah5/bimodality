@@ -482,6 +482,40 @@ hex.comp
 ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex.png"))
 }
 
+for(i in 1:length(compositions)){
+ 
+ hex.comp <- ggplot(full.comps, aes(PC1, full.comps[,compositions[i]]))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+xlab('Environmental PC1') +ylab(paste("%", compositions[i]," Composition"))+facet_wrap(~period)
+  #comphist<- ggplot(full.comps, aes(compositions[i], fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
+ # comp.envt.hist <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+hex.comp
+
+ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex.png"))
+}
+
+for(i in 1:length(compositions)){
+ 
+ 
+  comphist<- ggplot(full.comps, aes(full.comps[,compositions[i]], fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+xlab(compositions[i]) # full hist
+ # comp.envt.hist <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+comphist
+
+ggsave(filename=paste0("outputs/Composition/full_hist/", compositions[i], "-hist.png"))
+}
+
+for(i in 1:length(compositions)){
+ 
+ 
+ 
+     comp.envt.hist <- ggplot(full.comps, aes(full.comps[,compositions[i]], fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+    
+    comp.envt.hist
+    
+    ggsave(filename=paste0("outputs/Composition/envt_hist/", compositions[i], "-hist.png"))
+}
+
 # plot histograms of all species by period:
 comps.m<- melt(full.comps, id.vars = c("X.1","x","y", "cell","X","period","pc1" ,               "pc2" , "ecotype","bimodal","PC1" ,             
 "PC2","PC1bins","PC2bins" , "PC1_bins_f"))

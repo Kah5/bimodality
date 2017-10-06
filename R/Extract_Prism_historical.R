@@ -193,7 +193,7 @@ y$CellID <- seq(1:nrow(y))
 
 # this for loop calculates thornthwaite PET for each month in each grid cell
 #for(i in 1:length(y$y)){
-for(i in 1:25){
+for(i in 1:length(y$y)){
    ynew <- t(y[i,3:122])
    lat <- y[i,]$y
    long <- y[i,]$x
@@ -227,7 +227,7 @@ rm(PET.df)
 
 #PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
 #colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
-                         "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+                     #    "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 #ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
 # get the precipitation data in the same format:
-write.rds(full.PET, paste0(workingdir, "full.PET.rds"))
+saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))

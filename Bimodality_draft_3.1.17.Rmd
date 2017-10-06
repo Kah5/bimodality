@@ -430,9 +430,75 @@ oakpls <- ggplot(Oaks.d, aes(PLSdensity, PLSoak, color = diff))+geom_point(size 
 oakpls <- ggplot(Oaks.d, aes(PLSoak, diff, color = diff))+geom_point(size = 0.5)+ylab("PLS - FIA Oak composition")
 
 
-# --------------------Plot each species composition against envt-------------
-oakhists <- ggplot(full.comps, aes(Oak, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 
+# --------------------Plot each species composition against envt-------------
+# plot histograms of all species by period:
+comps.m<- melt(full.comps, id.vars = c("X.1","x","y", "cell","X","period","pc1" ,               "pc2" , "ecotype","bimodal","PC1" ,             
+"PC2","PC1bins","PC2bins" , "PC1_bins_f"))
+
+allhists <- ggplot(comps.m, aes(value, fill = period))+geom_histogram(position = 'identity')+facet_wrap(~variable, scales = "free_y")
+
+# make histogrmas for each species over the range of climate
+oakhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Oak, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+hemhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Hemlock, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+maphists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Maple, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+beechhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Beech, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+Hickhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Hickory, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+Tamhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Tamarack, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+Sprucehists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Spruce, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+Elmhists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Elm, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+Pinehists <- ggplot(full.comps[full.comps$ecotype %in% "Forest",], aes(Pine, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+# make species groups and plot histograms over the range of climate:
+# using the groupings of lost forests outlined in simon's paper:
+
+# 1. Hemlock, Birch, Maple (HBirM)
+
+full.comps$HBirM <- rowSums(full.comps[,c("Hemlock", "Birch", "Maple")])
+HBirM.map <- ggplot(full.comps, aes(x,y, fill = HBirM))+geom_raster()
+HBir.hex <- ggplot(full.comps, aes(PC1, HBirM))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab(" FIA Tree Density /n (stems/ha)")
+
+HBirMhists <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+
+# 2. Beech, Hemlock, Mapme (BHM)
+full.comps$BHM <- rowSums(full.comps[,c("Hemlock", "Beech", "Maple")])
+BHM.map <- ggplot(full.comps, aes(x,y, fill = BHM))+geom_raster()
+BHMhists <- ggplot(full.comps, aes(BHM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
+BHM.hex <- ggplot(full.comps, aes(PC1, BHM))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') 
+
+# 3. Cedar, Hemlock, Pine (CHP)
+full.comps$CHP <- rowSums(full.comps[,c("Hemlock", "Cedar.juniper", "Pine")])
+CHP.map <- ggplot(full.comps, aes(x,y, fill = CHP))+geom_raster()
+CHP.hex <- ggplot(full.comps, aes(PC1, CHP))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') 
+
+# 4. Tamarack, Pine, Birch, Spruce, Poplar (TPBSP)
+full.comps$TPBSP <- rowSums(full.comps[,c("Tamarack", "Pine", "Birch","Spruce", "Poplar")])
+TPBSP.map <- ggplot(full.comps, aes(x,y, fill = TPBSP ))+geom_raster()
+TPBSP.hex <- ggplot(full.comps, aes(PC1, TPBSP))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') 
+
+# 5. Elm, Oak, Basswood, Ironwood
+full.comps$EOBI <- rowSums(full.comps[,c("Elm",  "Oak","Basswood","Ironwood")])
+EOBI.map <- ggplot(full.comps, aes(x,y, fill = EOBI ))+geom_raster()
+EOBI.hex <- ggplot(full.comps, aes(PC1, EOBI))+geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') 
+
+# full:
 oakhistsfull <- ggplot(full.comps[full.comps$PC1_bins_f %in% c("0 - 1"),], aes(Oak, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)
 
 

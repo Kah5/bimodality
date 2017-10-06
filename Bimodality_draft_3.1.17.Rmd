@@ -452,7 +452,7 @@ compositions <- c( "Alder" ,"Ash","Bald.cypress"  ,
 
 
 for(i in 1:length(compositions)){
- # map.comp <- ggplot(full.comps, aes(x,y, fill = full.comps[,compositions[i]]))+geom_raster()
+ 
   map.comp <- ggplot(full.comps, aes(x,y, fill=full.comps[,compositions[i]]))+geom_raster()+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing") +
@@ -461,13 +461,7 @@ for(i in 1:length(compositions)){
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())+facet_wrap(~period)
- # hex.comp <- ggplot(full.comps, aes(PC1, compositions[i]))+geom_hex() + 
- # theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
  
-  # xlab('Environmental PC1') +ylab("% Composition")
- # comphist<- ggplot(full.comps, aes(compositions[i], fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
- # comp.envt.hist <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
-
 map.comp
 
 ggsave(filename=paste0("outputs/Composition/Maps/", compositions[i], "-maps.png"))
@@ -475,12 +469,11 @@ ggsave(filename=paste0("outputs/Composition/Maps/", compositions[i], "-maps.png"
 
 
 for(i in 1:length(compositions)){
- # map.comp <- ggplot(full.comps, aes(x,y, fill = full.comps[,compositions[i]]))+geom_raster()
-
+ 
  hex.comp <- ggplot(full.comps, aes(PC1, full.comps[,compositions[i]]))+geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
  
-   xlab('Environmental PC1') +ylab("% Composition")
+   xlab('Environmental PC1') +ylab("% Composition")+facet_wrap(~period)
   #comphist<- ggplot(full.comps, aes(compositions[i], fill = period))+geom_histogram(position = 'identity', alpha = 0.7) # full hist
  # comp.envt.hist <- ggplot(full.comps, aes(HBirM, fill = period))+geom_histogram(position = 'identity', alpha = 0.7)+facet_wrap(~PC1_bins_f, nrow = 3, scales = "free_y")
 

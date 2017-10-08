@@ -127,10 +127,10 @@ full.spec[is.na(full.spec)]<- 0
 library(cluster)
 #library(fpc)
 
-comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree")]
+comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree", "No.tree")]
 #comps <- comps[!is.na(comps),]
-comps[,4:39] <- comps[,4:39]/comps[,40] # calculate the proportion of the total density that each species takes up
-comps <- comps[,1:39]
+comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total density that each species takes up
+comps <- comps[,1:38]
 
 # remove prairie cells:
 comps <- data.frame( comps[ complete.cases(comps),] )
@@ -138,14 +138,19 @@ comps <- data.frame( comps[ complete.cases(comps),] )
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
 
 # use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each
-classes.3 <- pam(comps[,4:ncol(comps)], k = 3)
-classes.4 <- pam(comps[,4:ncol(comps)], k = 4)
-classes.5 <- pam(comps[,4:ncol(comps)], k = 5)
-classes.6 <- pam(comps[,4:ncol(comps)], k = 6)
-classes.7 <- pam(comps[,4:ncol(comps)], k = 7)
-classes.8 <- pam(comps[,4:ncol(comps)], k = 8)
+classes.3 <- pam(comps[,4:ncol(comps)], k = 3, diss = FALSE, keep.diss = TRUE)
+classes.4 <- pam(comps[,4:ncol(comps)], k = 4, diss = FALSE)
+classes.5 <- pam(comps[,4:ncol(comps)], k = 5, diss = FALSE,  keep.diss = TRUE)
+classes.6 <- pam(comps[,4:ncol(comps)], k = 6, diss = FALSE, keep.diss = TRUE)
+classes.7 <- pam(comps[,4:ncol(comps)], k = 7, diss = FALSE, keep.diss = TRUE)
+classes.8 <- pam(comps[,4:ncol(comps)], k = 8, diss = FALSE)
 
+diss.6 <- as.matrix(classes.6$diss)
+diss.6
 
+brays <- vegdist(comps[,4:ncol(comps)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+        na.rm = FALSE) 
+brays2<- as.matrix(brays)
 
 # Use Avg. Silhouette width to evaluate the clusters:  
 # SIlhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
@@ -161,8 +166,9 @@ summary(classes.3) # Avg. Silhouette width = 0.2393605
 
 # lets assign groups based on 5 clusters (similar to simon's groups)
 mediods <- comps$cell [classes.5$id.med]
-
-
+index <- rownames(comps[comps$cell %in% mediods,])
+#diss.5 <- as.matrix(classes.5$diss)
+diss.5.dissimilarity <- brays2[,index]
 df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
@@ -173,22 +179,37 @@ rem_class5 <- factor(old_classes$clustering,
                               'Oak', # 2
                               'Poplar',#3
                               "Pine/Tamarack/Poplar/Spruce/Birch", # 4,
-                              'PineTamarack' 
+                              'PineTamarack' #5
                               
                               
                      ))
 
 clust_plot5 <- data.frame(comps, 
                           cluster = rem_class5,
-                          clustNum = as.numeric(rem_class5))
+                          clustNum = as.numeric(rem_class5),
+                          diss1 = diss.5.dissimilarity[,1],
+                          diss2 = diss.5.dissimilarity[,2],
+                          diss3 = diss.5.dissimilarity[,3],
+                          diss4 = diss.5.dissimilarity[,4],
+                          diss5 = diss.5.dissimilarity[,5]
+                         )
 
-ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
-
-
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss1))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss2))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss3))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss4))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss5))+geom_raster()
 
 
 # Now lets look at the clustering of 6 classes
 mediods <- comps$cell [classes.6$id.med]
+index <- rownames(comps[comps$cell %in% mediods,])
+brays <- vegdist(comps[,4:ncol(comps)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+                 na.rm = FALSE) 
+brays2 <- as.matrix(brays)
+
+diss.6.dissimilarity <- brays2[,index]
+
 #mediods
 #[1] 35637 29369 20805 19885  7144 19029
 
@@ -210,17 +231,23 @@ rem_class <- factor(old_classes$clustering,
 
 clust_plot6 <- data.frame(comps, 
                           speciescluster = rem_class,
-                          clustNum = as.numeric(rem_class))
+                          clustNum = as.numeric(rem_class),
+                          diss1 = diss.6.dissimilarity[,1],
+                          diss2 = diss.6.dissimilarity[,2],
+                          diss3 = diss.6.dissimilarity[,3],
+                          diss4 = diss.6.dissimilarity[,4],
+                          diss5 = diss.6.dissimilarity[,5],
+                          diss6 = diss.6.dissimilarity[,6])
 
 
 # merge the clusters with denisty estimates:
-dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum")], by = c("x","y","cell"),keep = all)
+dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum", 'diss1','diss2','diss3','diss4','diss5','diss6')], by = c("x","y","cell"),keep = all)
 
 write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
 
 # map out the clusters in space:
 png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_pls.png")
-pls.clust<- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -229,9 +256,35 @@ pls.clust<- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raste
 pls.clust 
 dev.off()
 
+ggplot(clust_plot6, aes(x = x, y=y, fill=diss3))+geom_raster()+
+   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+colnames(clust_plot6)[41:46] <- c("Elm.Maple.Hickory.Oak.Beech.diss",
+                                  "Oak.diss",
+                                  "Hemlock.Beech.Cedar.Birch.Maple.diss",
+                                  "Poplar.Oak.diss",
+                                  "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
+                                  "Pine.Tamarack.Poplar.diss")                                                                                             
 
 
-# do the same clustering for FIA data and plot:
+ggplot(clust_plot6, aes(x = x, y=y, fill=Oak.diss))+geom_raster()+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+clust6.m <- melt(clust_plot6[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.diss",
+                                "Oak.diss",
+                                "Hemlock.Beech.Cedar.Birch.Maple.diss",
+                                "Poplar.Oak.diss",
+                                "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
+                                "Pine.Tamarack.Poplar.diss")], id.vars = c('x',"y","cell"))
+
+
+ggplot(clust6.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                                                                  axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
+                                                                                                                                                                                                                                                  axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("")+facet_wrap(~variable, ncol = 3)
+
+#do the same clustering for FIA data and plot:
 # -----------------------Clustering of FIA data----------------------
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')

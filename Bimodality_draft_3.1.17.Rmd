@@ -137,7 +137,7 @@ pls.Pine.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
 pls.Pine.map
 dev.off()
 # --------------------What is the relationship between tree density and Oak % composition?------------------------------------------------------------------
-comp.dens<- merge(full.comps[full.comps$period %in% "PLS",], dens.pr[,c("x","y", "cell", "PLSdensity")],, by = c("x", "y", "cell"))
+comp.dens<- merge(full.comps[full.comps$period %in% "PLS",], dens.pr[,c("x","y", "cell", "PLSdensity")], by = c("x", "y", "cell"))
 
 # plot the density (x-axis) vs. species composition (y-axis), with marginal histograms
 
@@ -479,7 +479,7 @@ for(i in 1:length(compositions)){
   coord_equal()+theme_bw(base_size = 10)+ theme(legend.position = "bottom",axis.line=element_blank(),axis.text.x=element_blank(),
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
-                        axis.title.y=element_blank())+facet_wrap(~period)
+                        axis.title.y=element_blank())#+facet_wrap(~period)
  
 map.comp
 
@@ -540,6 +540,7 @@ for(i in 1:length(compositions)){
     ggsave(filename=paste0("outputs/Composition/envt_hist/", compositions[i], "-hist.png"))
 }
 
+#-------------------making the classifications from simons paper explicity----------
 
 
 

@@ -271,7 +271,8 @@ colnames(clust_plot6)[41:46] <- c("Elm.Maple.Hickory.Oak.Beech.diss",
 ggplot(clust_plot6, aes(x = x, y=y, fill=Oak.diss))+geom_raster()+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+                                                                                                           axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+#map out the dissimilarities in space
 clust6.m <- melt(clust_plot6[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.diss",
                                 "Oak.diss",
                                 "Hemlock.Beech.Cedar.Birch.Maple.diss",
@@ -280,9 +281,38 @@ clust6.m <- melt(clust_plot6[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.d
                                 "Pine.Tamarack.Poplar.diss")], id.vars = c('x',"y","cell"))
 
 
-ggplot(clust6.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+
+# create relabeller
+composition_names <- list(
+  'Elm.Maple.Hickory.Oak.Beech.diss'="Elm/Maple/Hickory/ \n Oak/Beech",
+  'Oak.diss'="Oak",
+  'Hemlock.Beech.Cedar.Birch.Maple.diss'="Hemlock/Beech/Cedar/ \n Birch/Maple",
+  'Poplar.Oak.diss'="Poplar/Oak",
+  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss' = 'Tamarack/Spruce/Birch/ \n Pine/Spruce/Poplar',
+  'Pine.Tamarack.Poplar.diss' = 'Pine/Tamarack/Poplar'
+)
+
+composition_labeller <- function(variable,value){
+  return(composition_names[value])
+}
+
+png(width = 10, height = 6, units="in",res=300,"outputs/Composition/six_cluster_dissimilarity_maps.png")
+dis.maps <- ggplot(clust6.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "YlGnBu"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                                                                                                                                                                   axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
-                                                                                                                                                                                                                                                  axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("")+facet_wrap(~variable, ncol = 3)
+                                                                                                                                                                                                                                                  axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.background = element_rect(fill=alpha('transparent', 0)))+
+                                                                                                                                                                                                                                                  xlab("easting") + ylab("northing") +coord_equal()+ggtitle("")+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.maps
+dev.off()
+
+# lets look at the histograms of these overall
+png(width = 10, height = 6, units = "in", res=300, 'outputs/Composition/six_cluster_dissimilarity_hists.png')
+dis.hist <- ggplot(clust6.m, aes(value))+geom_histogram(bw = 35)+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.hist
+dev.off()
+
+# write as csv for future 
+write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
+
 
 #do the same clustering for FIA data and plot:
 # -----------------------Clustering of FIA data----------------------
@@ -360,12 +390,12 @@ fcomps<- fcomps %>%
 
 #fcomps classifcation only
 
-classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3)
-classes.4 <- pam(fcomps[,5:ncol(fcomps)], k = 4)
-classes.5 <- pam(fcomps[,5:ncol(fcomps)], k = 5)
-classes.6 <- pam(fcomps[,5:ncol(fcomps)], k = 6)
-classes.7 <- pam(fcomps[,5:ncol(fcomps)], k = 7)
-classes.8 <- pam(fcomps[,5:ncol(fcomps)], k = 8)
+classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3, diss = FALSE,  keep.diss = TRUE)
+classes.4 <- pam(fcomps[,5:ncol(fcomps)], k = 4, diss = FALSE,  keep.diss = TRUE)
+classes.5 <- pam(fcomps[,5:ncol(fcomps)], k = 5, diss = FALSE,  keep.diss = TRUE)
+classes.6 <- pam(fcomps[,5:ncol(fcomps)], k = 6, diss = FALSE,  keep.diss = TRUE)
+classes.7 <- pam(fcomps[,5:ncol(fcomps)], k = 7, diss = FALSE,  keep.diss = TRUE)
+classes.8 <- pam(fcomps[,5:ncol(fcomps)], k = 8, diss = FALSE,  keep.diss = TRUE)
 
 plot(classes.8)
 plot(classes.7)
@@ -381,8 +411,18 @@ summary(classes.5) # Avg. Silhouette width = 0.2350457
 summary(classes.4) # Avg. Silhouette width = 
 summary(classes.3) # Avg. Silhouette width = 
 fcomps$idvar <- 1:nrow(fcomps)
-mediods <- fcomps$idvar [classes.5$id.med]
+mediods <- classes.5$medoids
+#mediods <- fcomps[fcomps$idvar %in%  classes.5$medoids,]
+#mediods <- fcomps$idvar [classes.5$id.med]
+mediods <- fcomps$cell [classes.6$id.med]
+index <- rownames(fcomps[fcomps$cell %in% mediods,])
 
+#index <- fcomps[fcomps$cell %in% mediods,]$idvar
+brays.f <- vegdist(fcomps[,5:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+                 na.rm = FALSE) 
+brays.f2 <- as.matrix(brays.f)
+
+diss.f5.dissimilarity <- brays.f2[,index]
 
 df5 <- fcomps[fcomps$idvar %in% mediods,] # look at the rows that have the mediods
 
@@ -410,9 +450,14 @@ rem_class5 <- factor(old_classes$clustering,
 
 clust_plot5 <- data.frame(fcomps, 
                           cluster = rem_class5,
-                          clustNum = as.numeric(rem_class5))
+                          clustNum = as.numeric(rem_class5),
+                          diss1 = diss.f5.dissimilarity[,1],
+                          diss2 = diss.f5.dissimilarity[,2],
+                          diss3 = diss.f5.dissimilarity[,3],
+                          diss4 = diss.f5.dissimilarity[,4],
+                          diss5 = diss.f5.dissimilarity[,5])
 
-ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=diss2))+geom_raster()
 
 
 
@@ -421,7 +466,14 @@ ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
 mediods <- fcomps$cell [classes.6$id.med]
 #mediods
 #[1] 45094 27585 14273  9203 22622 15808
+index <- rownames(fcomps[fcomps$cell %in% mediods,])
 
+#index <- fcomps[fcomps$cell %in% mediods,]$idvar
+brays.f <- vegdist(fcomps[,5:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+                   na.rm = FALSE) 
+brays.f2 <- as.matrix(brays.f)
+
+diss.f6.dissimilarity <- brays.f2[,index]
 df6 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
 write.csv(df6, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
 
@@ -440,7 +492,15 @@ rem_class <- factor(old_classes$clustering,
 
 clust_plot6f <- data.frame(fcomps, 
                           speciescluster = rem_class,
-                          clustNum = as.numeric(rem_class))
+                          clustNum = as.numeric(rem_class),
+                          diss1 = diss.f6.dissimilarity[,1],
+                          diss2 = diss.f6.dissimilarity[,2],
+                          diss3 = diss.f6.dissimilarity[,3],
+                          diss4 = diss.f6.dissimilarity[,4],
+                          diss5 = diss.f6.dissimilarity[,5],
+                          diss6 = diss.f6.dissimilarity[,6])
+
+#ggplot(clust_plot6f, aes(x = x, y=y, fill=diss1))+geom_raster()
 
 png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_fia.png")
 fia.clust<- ggplot(clust_plot6f, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
@@ -450,7 +510,57 @@ fia.clust<- ggplot(clust_plot6f, aes(x = x, y=y, fill=speciescluster))+geom_rast
                                                                                                               axis.title.x=element_blank(),
                                                                                                              axis.title.y=element_blank(), legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "D", size = 5)+ggtitle("")
 fia.clust 
+
 dev.off()
+
+# reassign names
+colnames(clust_plot6f)[44:49] <- c('OakComp', # 1,
+                                   'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
+                                   'MapleComp',#3
+                                   "Poplar/Spruce/Maple/Fir", # 4,
+                                   'Pine/Poplar', #5,
+                                   'Cedar.juniper/Poplar/Maple')
+# save the fia clusters to a csv:
+#map out the dissimilarities in space
+clust6f.m <- melt(clust_plot6f[,c("x", "y", "cell", 'speciescluster',"clustNum",'OakComp', # 1,
+                                  'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
+                                  'MapleComp',#3
+                                  "Poplar/Spruce/Maple/Fir", # 4,
+                                  'Pine/Poplar', #5,
+                                  'Cedar.juniper/Poplar/Maple')], id.vars = c('x',"y","cell", "speciescluster","clustNum"))
+
+
+
+# create relabeller
+composition_names <- list(
+  'OakComp'="Oak",
+  'Oak/Hickory/Otherhardwood/Maple/Birch/Ash'="Oak/Hickory/Other hardwood/ \n Maple/Birch/Ash",
+  'MapleComp'="Maple",
+  'Poplar/Spruce/Maple/Fir'="Poplar/Spruce/ \n Maple/Fir",
+  'Pine/Poplar' = 'Pine/Poplar',
+  'Cedar.juniper/Poplar/Maple' = 'Cedar juniper/Poplar/Maple'
+)
+
+composition_labeller <- function(variable,value){
+  return(composition_names[value])
+}
+
+png(width = 10, height = 6, units="in",res=300,"outputs/Composition/six_cluster_dissimilarity_fia_maps.png")
+dis.fia.maps <- ggplot(clust6f.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "YlGnBu"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                                                                                axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
+                                                                                                                                                                                                                                                                axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.background = element_rect(fill=alpha('transparent', 0)))+
+  xlab("easting") + ylab("northing") +coord_equal()+ggtitle("")+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.fia.maps
+dev.off()
+
+# lets look at the histograms of these overall
+png(width = 10, height = 6, units = "in", res=300, 'outputs/Composition/six_cluster_dissimilarity_hists.png')
+dis.fia.hist <- ggplot(clust6f.m, aes(value))+geom_histogram()+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.fia.hist
+dev.off()
+
+# write as csv for future 
+write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
 
 # plot pls and fia cluster figures together:
 png(width = 10, height=4, units="in", res=300, "outputs/paper_figs/Fig_S1CD.png")

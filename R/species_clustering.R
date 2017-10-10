@@ -219,12 +219,14 @@ write.csv(df6, "outputs/species_comp_clusters_6_class_mediods.csv")
 old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,
                     labels=c('Elm/Maple/Hickory/Oak/Beech', # 1,
-                             'Oak', # 2
-                             'Hemlock/Beech/Cedar/Birch/Maple',#3
-                             #'Oak/Poplar/Basswood/Maple',
+                             'Pine/Tamarack/Poplar',
+                              # 2
+                             'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', # 3
+                             
                              "Poplar/Oak", # 4,
-                             'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', #5,
-                             'Pine/Tamarack/Poplar' #6
+                             
+                             'Hemlock/Beech/Cedar/Birch/Maple',##5,
+                             'Oak'#6
                              
                              
                     ))
@@ -260,12 +262,15 @@ ggplot(clust_plot6, aes(x = x, y=y, fill=diss3))+geom_raster()+
    geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
                                                                                                               axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
-colnames(clust_plot6)[41:46] <- c("Elm.Maple.Hickory.Oak.Beech.diss",
-                                  "Oak.diss",
-                                  "Hemlock.Beech.Cedar.Birch.Maple.diss",
-                                  "Poplar.Oak.diss",
-                                  "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
-                                  "Pine.Tamarack.Poplar.diss")                                                                                             
+colnames(clust_plot6)[41:46] <- c('Elm.Maple.Hickory.Oak.Beech.diss', # 1,
+                                  'Pine.Tamarack.Poplar.diss',
+                                  # 2
+                                  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss', # 3
+                                  
+                                  "Poplar.Oak.diss", # 4,
+                                  
+                                  'Hemlock.Beech.Cedar.Birch.Maple.diss',##5,
+                                  'Oak.diss') #6)                                                                                             
 
 
 ggplot(clust_plot6, aes(x = x, y=y, fill=Oak.diss))+geom_raster()+

@@ -82,7 +82,8 @@ pls.spec<- pls.spec[ , order(names(pls.spec))]
 umdw <- umdw[,order(names(umdw))]
 
 full.spec <- rbind(pls.spec, umdw)
-
+is.nan.data.frame<- function(x){do.call(cbind, lapply(x, is.nan))}
+full.spec[is.nan.data.frame(full.spec)] <- 0
 ggplot(full.spec, aes(x,y, fill = total))+geom_raster()
 
 hist(full.spec$total, breaks = 1000, xlim = c(0,600))
@@ -107,14 +108,14 @@ compositions <- c( "Alder" ,"Ash","Bald cypress"  ,
                    "Poplar", "Poplar.tulip poplar", "Spruce" ,            
                    "Sweet gum" , "Sycamore" , "Tamarack"  ,         
                    "Tulip.poplar","Unknown.tree","Walnut" ,            
-                   "Willow" )              
+                   "Willow", "total" )              
 
 
-full.spec <- merge(full.spec, dens.pr[, c("x","y","cell", "PC1bins", "PC1")], by = c("x","y", "cell"))
+full.spec <- merge(full.spec, dens.pr[, c("x","y","cell", "PC1bins", "PC1", "PLSdensity")], by = c("x","y", "cell"))
 # make maps for all these compositions
 for(i in 1:length(compositions)){
   
-  map.comp <- ggplot(full.spec, aes(x,y, fill=full.spec[,compositions[i]]))+geom_raster()+
+  map.comp <- ggplot(full.spec[full.spec$PLSdensity > 99, ], aes(x,y, fill=full.spec[full.spec$PLSdensity > 99,compositions[i]]))+geom_raster()+
     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
     labs(x="easting", y="northing") +
     scale_fill_gradientn(colours = rev(terrain.colors(7)), limits = c(0,300), name =paste(compositions[i]," Biomass"), na.value = 'darkgrey')+
@@ -131,8 +132,8 @@ for(i in 1:length(compositions)){
 # make hexbin plots with all these compositions
 for(i in 1:length(compositions)){
   
-  hex.comp <- ggplot(full.spec, aes(PC1, full.spec[,compositions[i]]))+geom_hex() + 
-    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  hex.comp <- ggplot(full.spec[full.spec$PLSdensity > 99,], aes(PC1, full.spec[full.spec$PLSdensity > 99,compositions[i]]))+geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+ylim(0,1000)+
     
     xlab('Environmental PC1') +ylab(paste("%", compositions[i]," Biomass"))
   
@@ -146,7 +147,7 @@ for(i in 1:length(compositions)){
 for(i in 1:length(compositions)){
   
   
-  comphist<- ggplot(full.spec, aes(full.spec[,compositions[i]]))+geom_histogram(position = 'identity', alpha = 0.7, bins = 100)+xlim(0,300)+xlab(compositions[i]) # 
+  comphist<- ggplot(full.spec[full.spec$PLSdensity > 99,], aes(full.spec[full.spec$PLSdensity > 99,compositions[i]]))+geom_histogram(position = 'identity', alpha = 0.7, bins = 50)+xlim(0,300)+xlab(compositions[i]) # 
   
   comphist
   
@@ -164,9 +165,10 @@ for(i in 1:length(compositions)){
   
   
   
-  comp.envt.hist <- ggplot(full.spec, aes(full.spec[,compositions[i]]))+geom_histogram(position = 'identity', alpha = 0.7)+xlim(-1,500)+facet_wrap(~PC1_bins_f2, nrow = 3, scales = "free_y")+xlab(paste("% ",compositions[i], " composition"))
+  comp.envt.hist <- ggplot(full.spec[full.spec$PLSdensity > 99,], aes(full.spec[full.spec$PLSdensity > 99,compositions[i]]))+geom_histogram(position = 'identity', alpha = 0.7)+xlim(-1,500)+facet_wrap(~PC1_bins_f2, nrow = 3, scales = "free_y")+xlab(paste("% ",compositions[i], " composition"))
   
   comp.envt.hist
   
   ggsave(filename=paste0("outputs/Biomass/envt_hist/", compositions[i], "-hist.png"))
 }
+

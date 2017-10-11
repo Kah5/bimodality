@@ -132,18 +132,19 @@ comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree", "No
 comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total density that each species takes up
 comps <- comps[,1:38]
 
+comp2 <- comps
 # remove prairie cells:
 comps <- data.frame( comps[ complete.cases(comps),] )
 # write as a csv so we don't have to keep doing this:
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
-
+set.seed(11)
 # use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each
-classes.3 <- pam(comps[,4:ncol(comps)], k = 3, diss = FALSE, keep.diss = TRUE)
-classes.4 <- pam(comps[,4:ncol(comps)], k = 4, diss = FALSE)
+#classes.3 <- pam(comps[,4:ncol(comps)], k = 3, diss = FALSE, keep.diss = TRUE)
+#classes.4 <- pam(comps[,4:ncol(comps)], k = 4, diss = FALSE)
 classes.5 <- pam(comps[,4:ncol(comps)], k = 5, diss = FALSE,  keep.diss = TRUE)
 classes.6 <- pam(comps[,4:ncol(comps)], k = 6, diss = FALSE, keep.diss = TRUE)
-classes.7 <- pam(comps[,4:ncol(comps)], k = 7, diss = FALSE, keep.diss = TRUE)
-classes.8 <- pam(comps[,4:ncol(comps)], k = 8, diss = FALSE)
+#classes.7 <- pam(comps[,4:ncol(comps)], k = 7, diss = FALSE, keep.diss = TRUE)
+#classes.8 <- pam(comps[,4:ncol(comps)], k = 8, diss = FALSE)
 
 diss.6 <- as.matrix(classes.6$diss)
 diss.6
@@ -151,6 +152,11 @@ diss.6
 brays <- vegdist(comps[,4:ncol(comps)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
         na.rm = FALSE) 
 brays2<- as.matrix(brays)
+
+comp2 <- comp2[complete.cases(comp2),]
+brays <- vegdist(comp2[,4:ncol(comp2)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+                 na.rm = FALSE) 
+brays2 <- as.matrix(brays)
 
 # Use Avg. Silhouette width to evaluate the clusters:  
 # SIlhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
@@ -160,7 +166,8 @@ summary(classes.5) # Avg. Silhouette width = 0.2610493
 summary(classes.4) # Avg. Silhouette width = 0.2006347
 summary(classes.3) # Avg. Silhouette width = 0.2393605
 # these sihouette widths are low, but this is likely due to the large amount of data and noise in composition
-
+#plot(classes.5)
+#plot(classes.6)
 
 # both 5 and 6 classes have the highest average silhouetted widths:
 
@@ -168,7 +175,7 @@ summary(classes.3) # Avg. Silhouette width = 0.2393605
 mediods <- comps$cell [classes.5$id.med]
 index <- rownames(comps[comps$cell %in% mediods,])
 #diss.5 <- as.matrix(classes.5$diss)
-diss.5.dissimilarity <- brays2[,index]
+diss.5.dissimilarity <- diss.6[,index]
 df5 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
@@ -211,28 +218,39 @@ brays2 <- as.matrix(brays)
 diss.6.dissimilarity <- brays2[,index]
 
 #mediods
-#[1] 35637 29369 20805 19885  7144 19029
+#[1] 
 
 df6 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 write.csv(df6, "outputs/species_comp_clusters_6_class_mediods.csv")
 
 old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,
-                    labels=c('Elm/Maple/Hickory/Oak/Beech', # 1,
-                             'Pine/Tamarack/Poplar',
-                              # 2
-                             'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', # 3
-                             
-                             "Poplar/Oak", # 4,
-                             
-                             'Hemlock/Beech/Cedar/Birch/Maple',##5,
-                             'Oak'#6
-                             
-                             
+                    labels=c('Elm/Maple/Hickory/Oak/Beech', #mediod 1
+                             "Oak", # medoid 2
+                             'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
+                             "Poplar/Oak", # mediod 4
+                             'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', # mediod5
+                             'Pine/Tamarack/Poplar'# mediod 6
+                      ))
+
+classes.6$silinfo$clus.avg.widths
+
+# note the the clus.avg.widths is not in the same order as df6,had to manually assign
+ranked_class <- factor(old_classes$clustering,
+                    labels=c("Low.0.10", #mediod 1
+                             "High.0.71", # mediod 2
+                             "Mod.0.19", # mediod 3
+                             "High.0.40", #mediod 4
+                             "Mod.0.16", # mediod 5
+                             "High.0.42" #mediod 6
+               
                     ))
+
+
 
 clust_plot6 <- data.frame(comps, 
                           speciescluster = rem_class,
+                          rank = ranked_class,
                           clustNum = as.numeric(rem_class),
                           diss1 = diss.6.dissimilarity[,1],
                           diss2 = diss.6.dissimilarity[,2],
@@ -243,7 +261,7 @@ clust_plot6 <- data.frame(comps,
 
 
 # merge the clusters with denisty estimates:
-dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum", 'diss1','diss2','diss3','diss4','diss5','diss6')], by = c("x","y","cell"),keep = all)
+dens <- merge(dens.pr, clust_plot6[,c('x', "y", "cell", "speciescluster", "clustNum",'rank', 'diss1','diss2','diss3','diss4','diss5','diss6')], by = c("x","y","cell"),keep = all)
 
 write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
 
@@ -262,15 +280,14 @@ ggplot(clust_plot6, aes(x = x, y=y, fill=diss3))+geom_raster()+
    geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
                                                                                                               axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
-colnames(clust_plot6)[41:46] <- c('Elm.Maple.Hickory.Oak.Beech.diss', # 1,
-                                  'Pine.Tamarack.Poplar.diss',
-                                  # 2
-                                  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss', # 3
+colnames(clust_plot6)[42:47] <- c('Elm.Maple.Hickory.Oak.Beech.diss', #mediod 1
+                                  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss', # mediod5
+                                  'Pine.Tamarack.Poplar.diss', # mediod 6
                                   
-                                  "Poplar.Oak.diss", # 4,
+                                  "Poplar.Oak.diss", # mediod 4
                                   
-                                  'Hemlock.Beech.Cedar.Birch.Maple.diss',##5,
-                                  'Oak.diss') #6)                                                                                             
+                                  'Hemlock.Beech.Cedar.Birch.Maple.diss', # mediod 3
+                                  "Oak.diss" )# medoid 2) #6)                                                                                             
 
 
 ggplot(clust_plot6, aes(x = x, y=y, fill=Oak.diss))+geom_raster()+

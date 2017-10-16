@@ -290,7 +290,7 @@ colnames(clust_plot6)[42:47] <- c('Elm.Maple.Hickory.Oak.Beech.diss', #mediod 1
                                   "Oak.diss" )# medoid 2) #6)                                                                                             
 
 
-ggplot(clust_plot6, aes(x = x, y=y, fill=Oak.diss))+geom_raster()+
+ggplot(clust_plot6, aes(x = x, y=y, fill=rank))+geom_raster()+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
                                                                                                            axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = c(0.205, 0.32),legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
@@ -446,19 +446,19 @@ brays.f2 <- as.matrix(brays.f)
 
 diss.f5.dissimilarity <- brays.f2[,index]
 
-df5 <- fcomps[fcomps$idvar %in% mediods,] # look at the rows that have the mediods
+df5 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
 
 old_classes <- classes.5
 #[1] 1292 2201 4618 4978 4604# idvars of the mediods
-#rem_class5 <- factor(old_classes$clustering,
-#                    labels=c('Oak/OtherHardwood/Elm', # 1,
-#                            'Maple/Ash/Birch', # 2
-#                            'Poplar/Spruce/Maple',#3
-#                           "Pine/Poplar", # 4,
-#                          'Cedar.juniper/Tamarack' 
+rem_class5 <- factor(old_classes$clustering,
+                    labels=c('Oak/OtherHardwood/Elm', # 1,
+                            'Maple/Ash/Birch', # 2
+                            'Poplar/Spruce/Maple',#3
+                           "Pine/Poplar", # 4,
+                          'Cedar.juniper/Tamarack' 
 
 
-#  ))
+  ))
 
 rem_class5 <- factor(old_classes$clustering,
                      labels=c('Ash/Beech/Elm/Hickory/Oak', # 1,
@@ -479,10 +479,11 @@ clust_plot5 <- data.frame(fcomps,
                           diss4 = diss.f5.dissimilarity[,4],
                           diss5 = diss.f5.dissimilarity[,5])
 
-ggplot(clust_plot5, aes(x = x, y=y, fill=diss2))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
 
-
-
+classes.6$silinfo$clus.avg.widths
+# they are all equally dissimilar
+#0.40663776 -0.04516793  0.51842603  0.47118307  0.46843040  0.33582488
 
 # 6 classes
 mediods <- fcomps$cell [classes.6$id.med]
@@ -501,7 +502,7 @@ write.csv(df6, "outputs/fia_species_comp_clusters_6_class_mediods.csv")
 
 old_classes <- classes.6
 rem_class <- factor(old_classes$clustering,
-                    labels=c('Oak', # 1,
+                    labels=c('Oak/Maple', # 1,
                              'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
                              'Maple',#3
                              #'Oak/Poplar/Basswood/Maple',
@@ -536,7 +537,7 @@ fia.clust
 dev.off()
 
 # reassign names
-colnames(clust_plot6f)[44:49] <- c('OakComp', # 1,
+colnames(clust_plot6f)[44:49] <- c('Oak/Maple', # 1,
                                    'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
                                    'MapleComp',#3
                                    "Poplar/Spruce/Maple/Fir", # 4,
@@ -544,7 +545,7 @@ colnames(clust_plot6f)[44:49] <- c('OakComp', # 1,
                                    'Cedar.juniper/Poplar/Maple')
 # save the fia clusters to a csv:
 #map out the dissimilarities in space
-clust6f.m <- melt(clust_plot6f[,c("x", "y", "cell", 'speciescluster',"clustNum",'OakComp', # 1,
+clust6f.m <- melt(clust_plot6f[,c("x", "y", "cell", 'speciescluster',"clustNum",'Oak/Maple', # 1,
                                   'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2
                                   'MapleComp',#3
                                   "Poplar/Spruce/Maple/Fir", # 4,
@@ -555,8 +556,8 @@ clust6f.m <- melt(clust_plot6f[,c("x", "y", "cell", 'speciescluster',"clustNum",
 
 # create relabeller
 composition_names <- list(
-  'OakComp'="Oak",
-  'Oak/Hickory/Otherhardwood/Maple/Birch/Ash'="Oak/Hickory/Other hardwood/ \n Maple/Birch/Ash",
+  'Oak/Maple'="Oak/Maple",
+  'Oak/Hickory/Otherhardwood/Maple/Birch/Ash'="Oak/Hickory/ \n Other hardwood/ \n Maple/Birch/Ash",
   'MapleComp'="Maple",
   'Poplar/Spruce/Maple/Fir'="Poplar/Spruce/ \n Maple/Fir",
   'Pine/Poplar' = 'Pine/Poplar',

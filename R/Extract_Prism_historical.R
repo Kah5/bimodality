@@ -10,7 +10,7 @@ library(reshape2)
 version <- "1.7-5" # pls version
 
 # set the working dir (where the prism data folder is)
-#workingdir <- "/Users/kah/Documents/bimodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 # for crc:
 workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
 
@@ -191,38 +191,46 @@ test <- y
 # this does not work in pulling out the data from one grid cell
 y$CellID <- seq(1:nrow(y))
 
+my.list <- list()
 # this for loop calculates thornthwaite PET for each month in each grid cell
 #for(i in 1:length(y$y)){
+source("/afs/crc.nd.edu/user/k/kheilman/bimodality/R/Thornthwaite_PET.R")
 for(i in 1:length(y$y)){
-   ynew <- t(y[i,3:122])
-   lat <- y[i,]$y
-   long <- y[i,]$x
-   cellID <- y[i,]$CellID
-   # get month an year from row.names
-   year <-  data.frame(year =substring(row.names(ynew), first = 26, last = 29))
-   month <- data.frame(month = substring(row.names(ynew), first = 30, last = 31))
-   ynew2 <- data.frame(Tave = ynew[,1], 
-                       year <- year, 
-                       month <- month)
-   
-   # use the thorthwaite equation to attach the PET data to the 
-  # ynew2$PET_tho <- as.numeric(thornthwaite(ynew2$Tave, lat))
-   ynew2$lat <- lat
-   ynew2$long <- long
-   ynew2$CellID <- cellID
-   
-   # if PET.df already exists, then add to the df, if not, then create "PET.df"
-   if(exists  ("PET.df")){
-   PET.df <- rbind(PET.df, ynew2)
-   }else{
-     PET.df <- ynew2
-   }
+ 
+       ynew <- t(y[i,3:135])
+       lat <- y[i,]$y
+       long <- y[i,]$x
+       cellID <- y[i,]$CellID
+       # get month an year from row.names
+       year <-  data.frame(year =substring(row.names(ynew), first = 26, last = 29))
+       month <- data.frame(month = substring(row.names(ynew), first = 30, last = 31))
+       ynew2 <- data.frame(Tave = ynew[,1], 
+                           year <- year, 
+                           month <- month)
+       
+       # use the thorthwaite equation to attach the PET data to the 
+       
+      ynew2$PET_tho <- as.numeric(thornthwaite_PET(ynew2$Tave, lat))
+       ynew2$lat <- lat
+       ynew2$long <- long
+       ynew2$CellID <- cellID
+  
+       my.list[[i]] <- ynew2
 }
+   # if PET.df already exists, then add to the df, if not, then create "PET.df"
+#   if(exists  ("PET.df")){
+   PET.df <- do.call(rbind, my.list)
+     
+ #  PET.df <- rbind(PET.df, ynew2)
+  # }else{
+   #  PET.df <- ynew2
+   #}
+#}
 
 # rename the object:
 full.PET <- PET.df
 #remove PET.df
-rm(PET.df)
+#rm(PET.df)
 
 
 #PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
@@ -231,3 +239,22 @@ rm(PET.df)
 #ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
 # get the precipitation data in the same format:
 saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
+
+# read in rds from crc to do thornthwaite (cant get SPEI package on crc):
+#library(SPEI)
+#full.PET <- readRDS(paste0(workingdir, "full.PET.rds"))
+#full.PET$Tave <- full.PET$Tave/100 # need to convert to celcius
+#test.PET <- full.PET[1:48,]
+#full.PET$PET_tho <- as.numeric(thornthwaite(Tave= full.PET$Tave, lat = full.PET$lat))
+
+
+#test.PET <- thornthwaite(Tave = test$Tave, lat = test$lat)
+#full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
+#full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'Tave', na.rm = TRUE)
+
+#full$Mean <- rowMeans(full[,4:14], na.rm=TRUE)
+
+#colnames(full) <- c('lat','long',"Var",'Jan', 'Feb', 'Mar', "Apr", "May", 
+ #                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
+
+#full2 <- full

@@ -906,14 +906,19 @@ df.2.6 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", 
 # calculate the % that should be bimodal in the modern landscape, if pls vegetation stayed
 a <- nrow(df.mod[df.mod$bimodal == "Bimodal",])/nrow(df.mod)
 # 0.1570574
+# with CEC: 0.3977
 b <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
 #  0.1755613
+# with CEC: 0.379811
 c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
 # 0.204107
+# with CEC: 0.396691
 d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
 #0.2019632
+# with CEC: 0.40
 e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 #0.176464
+# with CEC: 0.3699
 
 
 ggplot(df.new, aes(x = MAP1910, y = PLSdensity, color = classification))+geom_point()+ 
@@ -923,19 +928,19 @@ ggplot(df.new, aes(x = MAP1910, y = PLSdensity, color = classification))+geom_po
 #dens.pr<- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 write.csv(df.new, "outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv")
 # plot out climate space that is bimodal
-png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space.png")
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_TEMP_bimodal_space_wCEC.png")
 ggplot(df.new, aes(x = MAP1910, y = pasttmean))+ geom_point()+ 
   stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
   theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
 dev.off()
 
-png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png")
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space_wCEC.png")
 ggplot(df.new, aes(x = MAP1910, y = deltaT))+ geom_point()+ 
   stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
   theme_bw()+ ylab ("Mean Temperature (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")
 dev.off()
 
-png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space.png")
+png(height = 4, width = 6, units = "in", res = 300, filename = "outputs/v1.6-5/MAP_deltaTEMP_bimodal_space_wCEC.png")
 ggplot(df.new, aes(x = MAP1910, y = deltaT))+ geom_point()+ 
   stat_density2d(data = df.new, aes(colour = bimodal),fill = "transparent",geom="polygon") +
   theme_bw()+ ylab ("Tempearature Seasonality (degC), 1895-1925") + xlab("Mean Annual Precipitation (mm/yr), 1895-1925")

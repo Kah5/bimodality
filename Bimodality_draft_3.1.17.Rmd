@@ -54,6 +54,34 @@ png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_map.png")
 pls.map
 dev.off()
 
+ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = Aug_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+ scale_fill_gradientn(colours = heat.colors(6), limits = c(-70,60), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/ppet_August_map.png")
+ppet.map
+dev.off()
+
+ppetbins.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = Aug_ppetbins))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+ #scale_fill_gradientn(colours = heat.colors(6), limits = c(-70,60), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/ppet_BINS_August_map.png")
+ppetbins.map
+dev.off()
+
 # read in the composition data for PLS and FIA (PC1 and PC2):
 full.comps<- read.csv("outputs/cluster/fullcomps_dataset.csv")
 
@@ -204,12 +232,12 @@ dens.rm <- data.frame(dens.rm)
 source("R/newggbiplot.R")
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
-                                "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
+                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC")]) #PC all but ksat and diff
 
 pretty.scale <- scale.dens[,c('MAP1910',   
                               "pastdeltaP", "pasttmean",
-                              "deltaT", "sandpct", "awc")]
-colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc")
+                              "deltaT", "sandpct", "awc", "CEC")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "CEC")
 
 pretty.pca <- princomp(pretty.scale,
                      na.rm=TRUE) 
@@ -236,7 +264,7 @@ g$layers <- c(geom_point(data = dens.rm, aes(x = PC1, y = PC2, color = PLSdensit
 g <- g + scale_color_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 10) 
 
 #write to png
-png(width = 8, height = 4,unit="in", res=300, paste0("outputs/paper_figs/pca_biplot.png"))
+png(width = 8, height = 4,unit="in", res=300, paste0("outputs/paper_figs/pca_biplot_w_CEC.png"))
 g 
 dev.off()
 
@@ -338,23 +366,84 @@ dev.off()
 # --------------plot out density vs. envt, pc2 vs envt, and individual species compositions vs. the envt---------------------------------------------------
 
 # hexbin plot for PLS density:
-new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
+new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "pc1", "pc2")], by = c("x", "y", "cell"))
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/dens_PC1_hex.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/dens_PC1_hex_wCEC.png")
 
-pls.dens.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
+  pls.dens.pc1.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+    xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
+  pls.dens.hex
+dev.off()
+
+
+
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/dens_PC2_hex_wCEC.png")
+
+pls.dens.pc2.hex<- ggplot(new.dens, aes( PC2, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
-pls.dens.hex
+  xlab('Environmental PC2') +ylab(" PLS Tree Density /n (stems/ha)")
+pls.dens.pc2.hex
+dev.off()
+
+# produce histograms by the environmental bin for density:
+ PCbins <- c( "4 - 5", "3 - 4","2 - 3", "1 - 2", "0 - 1", "-1 - 0", "-2 - -1", "-3 - -2", "-4 - -3","-5 - -4")
+
+  png(width = 12, height = 10, units = "in", res= 200, paste0("outputs/paper_figs/Density_envtPC1-hists.png"))
+  
+  par(mfrow=c(4,3))
+  for(j in 1:length(PCbins)){
+  hist(new.dens[new.dens$PC1bins %in% PCbins[j], "PLSdensity"], main = PCbins[j], xlab="PLS tree density", breaks = 25)
+  }
+dev.off()
+
+# produce histograms by P-PET for density
+# produce histograms by the environmental bin for density:
+ pptbins <- c( "47 - 60", "34 - 47","21 - 34", "8 - 21", "-5 - 8", "-18 - -5", "-31 - -18", "-44 - -31", "-57 - -44","-70 - -57")
+
+  png(width = 12, height = 10, units = "in", res= 200, paste0("outputs/paper_figs/Density_PPET-hists.png"))
+  
+  par(mfrow=c(4,3))
+  for(j in 1:length(pptbins)){
+  hist(dens.pr[dens.pr$Aug_ppetbins %in% pptbins[j], "PLSdensity"], main = pptbins[j], xlab="PLS tree density", breaks = 25)
+  }
+dev.off()
+
+png("outputs/paper_figs/PC1_vs_PPET.png")
+pc1_v_PPET <- ggplot(dens.pr, aes(PC1, Aug_ppet))+geom_point()+theme_bw()+ylab("August Precipitation - Potential Evapotranspiration")+xlab("Environmental PC1")
+pc1_v_PPET
+dev.off()
+
+png("outputs/paper_figs/PC2_vs_PPET.png")
+pc2_v_PPET <- ggplot(dens.pr, aes(PC2, Aug_ppet))+geom_point()+theme_bw()+ylab("August Precipitation - Potential Evapotranspiration")+xlab("Environmental PC2")
+pc2_v_PPET
 dev.off()
 
 # hexbin plot for pls composition:
-png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/comppc2_PC1_hex.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/comppc2_PC1_hex_wCEC.png")
 
 pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, pc2)) +geom_hex() + 
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Species Composition PC2")
 pls.comp.hex
+dev.off()
+
+png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/comppc2_PC2_hex_wCEC.png")
+
+pls.comp.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC2, pc2)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Species Composition PC2")
+pls.comp.hex
+dev.off()
+# plotting histograms of species pc1 across PC1 of envt
+PCbins <- c( "4 - 5", "3 - 4","2 - 3", "1 - 2", "0 - 1", "-1 - 0", "-2 - -1", "-3 - -2", "-4 - -3","-5 - -4")
+
+  png(width = 12, height = 10, units = "in", res= 200, paste0("outputs/paper_figs/Comppc1_envtPC1-hists.png"))
+  
+  par(mfrow=c(4,3))
+  for(j in 1:length(PCbins)){
+  hist(new.dens[new.dens$PC1bins %in% PCbins[j], "pc1"], main = PCbins[j], xlab="Species Composition pc1", breaks = 25)
+  }
 dev.off()
 
 # hexbin for pls oak comp:
@@ -364,8 +453,15 @@ pls.oak.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Oak)) 
   xlab('Environmental PC1') +ylab("Oak Composition")
 
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/oak_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/oak_PC1_hexbin_wCEC.png")
 pls.oak.hex
+dev.off()
+
+png(height = 6, width = 6, units ="in",res=200,"outputs/oak_PC2_hexbin_wCEC.png")
+pls.oak2.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC2, Oak)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+  xlab('Environmental PC1') +ylab("Oak Composition")
+pls.oak2.hex
 dev.off()
 
 # hexbin for pls maple composition
@@ -373,7 +469,7 @@ pls.maple.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Mapl
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Maple composition")
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/maple_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/maple_PC1_hexbin_wCEC.png")
 pls.maple.hex
 dev.off()
 
@@ -382,7 +478,7 @@ pls.hemlock.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, He
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Hemlock Composition")
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/hemlock_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/hemlock_PC1_hexbin_wCEC.png")
 pls.hemlock.hex
 dev.off()
 
@@ -391,7 +487,7 @@ pls.beech.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Beec
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Beech Composition")
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/beech_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/beech_PC1_hexbin_wCEC.png")
 pls.beech.hex
 dev.off()
 
@@ -400,7 +496,7 @@ pls.pine.hex <- ggplot(full.comps[full.comps$period %in% "PLS",], aes(PC1, Pine)
   theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
   xlab('Environmental PC1') +ylab("Pine Composition")
 
-png(height = 6, width = 6, units ="in",res=200,"outputs/pine_PC1_hexbin.png")
+png(height = 6, width = 6, units ="in",res=200,"outputs/pine_PC1_hexbin_wCEC.png")
 pls.pine.hex
 dev.off()
 
@@ -495,7 +591,7 @@ for(i in 1:length(compositions)){
     
   hex.comp
   
-  ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex.png"))
+  ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex_wCEC.png"))
 }
 
 # make hexbin plots for all these compostions
@@ -507,7 +603,7 @@ for(i in 1:length(compositions)){
 
 hex.comp
 
-ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex.png"))
+ggsave(filename=paste0("outputs/Composition/hexbin_plots/", compositions[i], "-hex_wCEC.png"))
 }
 
 # make histograms for all these compositions
@@ -518,7 +614,7 @@ for(i in 1:length(compositions)){
   
   comphist
   
-  ggsave(filename=paste0("outputs/Composition/full_hist/", compositions[i], "-hist.png"))
+  ggsave(filename=paste0("outputs/Composition/full_hist/", compositions[i], "-hist_wCEC.png"))
 }
 
 # Fix ordering of the PC1_bins factors
@@ -621,20 +717,9 @@ for(i in 1:length(comptypes)){
     
   hex.comp
   
-  ggsave(filename=paste0("outputs/Composition/hexbin_plots/", comptypes[i], "-hex.png"))
+  ggsave(filename=paste0("outputs/Composition/hexbin_plots/", comptypes[i], "-hex_wCEC.png"))
 }
 
-# make hexbin plots for all these compostions
-for(i in 1:length(comptypes)){
- 
- hex.comp <- ggplot(clust6.pls, aes(PC1, clust6.pls[,comptypes[i]]))+geom_hex() + 
-  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+xlab('Environmental PC1') +ylab(paste( comptypes[i]," DisSimilarity"))+facet_wrap(~period)
-
-
-hex.comp
-
-ggsave(filename=paste0("outputs/Composition/hexbin_plots/", comptypes[i], "-hex.png"))
-}
 
 # make histograms for all these compositions
 for(i in 1:length(comptypes)){
@@ -644,7 +729,7 @@ for(i in 1:length(comptypes)){
   
   comphist
   
-  ggsave(filename=paste0("outputs/Composition/full_hist/", comptypes[i], "-hist.png"))
+  ggsave(filename=paste0("outputs/Composition/full_hist/", comptypes[i], "-hist_wCEC.png"))
 }
 
 # Fix ordering of the PC1_bins factors
@@ -680,8 +765,9 @@ for(i in 1:length(comptypes)){
   par(mfrow=c(4,3))
   for(j in 1:length(PCbins)){
   hist(clust6.pls[clust6.pls$PC1_bins_f %in% PCbins[j] & clust6.pls$period %in% "PLS", comptypes[i]], main = PCbins[j], xlab=paste0( comptypes[i], "Dissimilarity"), col= 'grey', breaks = bins, ylim = c(0,400))
-   hist(clust6.pls[clust6.pls$PC1_bins_f %in% PCbins[j] & clust6.pls$period %in% "PLS" & clust6.pls$speciescluster %in% compnames[i], comptypes[i]], main = PCbins[j], xlab=paste0( comptypes[i], "Dissimilarity"), col= "red", breaks = bins,, ylim = c(0,400), add = TRUE)
-   legend("topleft", c("Within class", "Out of Class"), fill=c("red", "grey"))
+   hist(clust6.pls[clust6.pls$PC1_bins_f %in% PCbins[j] & clust6.pls$period %in% "PLS" & clust6.pls$speciescluster %in% compnames[2], comptypes[i]], main = PCbins[j], xlab=paste0( comptypes[i], "Dissimilarity"), col= "orange", breaks = bins, ylim = c(0,400), add = TRUE)
+   hist(clust6.pls[clust6.pls$PC1_bins_f %in% PCbins[j] & clust6.pls$period %in% "PLS" & clust6.pls$speciescluster %in% compnames[i], comptypes[i]], main = PCbins[j], xlab=paste0( comptypes[i], "Dissimilarity"), col= "red", breaks = bins, ylim = c(0,400), add = TRUE)
+   legend("topleft", c("Within class", "Within Oak class","Out of Class"), fill=c("red","orange", "grey"))
   }
 
 dev.off()   
@@ -818,7 +904,7 @@ H <- arrangeGrob(pls.oaks.hists, top = textGrob("H", x = unit(0.1, "npc"),
 
 
 # take all these figures and mash into one big mega figure
-png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2oak.png")
+png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs/fig2oak_wCEC.png")
 grid.arrange(A,B,C,D,E,Fp,G,H, ncol = 2, nrow=4) 
 dev.off()
 
@@ -1056,8 +1142,16 @@ dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 fig1C <- map.bimodal.5c( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)
 
-png("outputs/PLS_5c_bimodality_denisity_map.png")
+png("outputs/PLS_5c_bimodality_denisity_map_wCEC.png")
 fig1C
+dev.off()
+
+# bimodality using P-PET bins:
+ppet.map <- map.bimodal.5c( data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity" )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.4,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)
+
+png("outputs/PLS_5c_bimodality_denisity_map_Aug_PPET.png")
+ppet.map
 dev.off()
 
 fia.dens <- read.csv("outputs/FIA_pls_density_with_bins.csv")
@@ -1074,12 +1168,12 @@ b <- bimodal.df( data = dens.pr, binby = 'PC1bins', density = "PLSdensity" , bin
 ggplot(b, aes(x, y, fill = bimodal))+geom_raster()
 ggplot(a, aes(x, y, fill = bimodal))+geom_raster()
 
-nrow(b[b$bimodal == "Bimodal",])*8*8 # modern projected bimodal 
-nrow(a[a$bimodal == "Bimodal",])*8*8 # historic bimodal
+nrow(b[b$bimodal == "Bimodal",])*8*8 # modern projected bimodal = 220736
+nrow(a[a$bimodal == "Bimodal",])*8*8 # historic bimodal = 210944
 
-difference <- (nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8)
+difference <- (nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8) #= -9792
 
-pctdifference <- (((nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8))/(nrow(a[a$bimodal == "Bimodal",])*8*8))*100
+pctdifference <- (((nrow(a[a$bimodal == "Bimodal",])*8*8)  - (nrow(b[b$bimodal == "Bimodal",])*8*8))/(nrow(a[a$bimodal == "Bimodal",])*8*8))*100 # -4.64199
 # Write out to a png to control size
  
 #plot out the region that should be bimodal under modern climate
@@ -1099,25 +1193,6 @@ dev.off()
 png(width = 7, height = 9, units = "in", res= 300,"outputs/paper_figs/Figure_1.png")
 grid.arrange(arrangeGrob(fig1A, fig1D, fig1B, fig1E, fig1C, fig1F, heights=c(1/2, 1/2, 3/4), widths=c(1.1,1.1), ncol=2))
 dev.off()
-
-
-# using plotly to make density plots of the data:
-library(plotly)
-test <- dens.pr[,c("PC1","PLSdensity")]
-test <- test[complete.cases(test),]
-kd <- MASS::kde2d( test$PC1,test$PLSdensity, n = 25)
-p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()%>%
-  layout(
-    title = "Layout options in a 3d scatter plot",
-    scene = list(
-      xaxis = list(title = "PC1 environment"),
-      yaxis = list(title = "Tree Density"),
-      zaxis = list(title = "frequency")
-    ))
-
-
-p
-
 
 
 
@@ -1199,7 +1274,7 @@ c
 dev.off()
 
 
-png(width = 12, height=4, units="in", res=300, "outputs/paper_figs/PLS_supplemental_rcp_map.png")
+png(width = 12, height=4, units="in", res=300, "outputs/paper_figs/PLS_supplemental_rcp_map_wCEC.png")
 grid.arrange(b, c, a, ncol = 3)
 dev.off()
 
@@ -1246,7 +1321,7 @@ dev.off()
 
 # making figure S3: map of modern climate classified using pls-veg-climate relaitonships
 
-pls.mod.clim<- bimodal.pls.mod(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1fiabins' )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+pls.mod.clim <- bimodal.pls.mod(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", binby2 ='PC1fiabins' )+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("")
 
 png(width = 4, height=4, units="in", res=300, "outputs/paper_figs/Fig_S3_plsvegclim_with_mod_clim.png")

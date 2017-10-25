@@ -163,18 +163,22 @@ nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 dens.pr <- nodups
 
 #now add the mean temperature to the dataframe
-dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'modtmean')], by = c('x', 'y') )
+dens.pr <- merge(dens.pr, mod.tmean[,c('x', 'y', 'Mean')], by = c('x', 'y') )
 dens.pr <- merge(dens.pr, past.tmean[,c('x', 'y', 'Mean', 'deltaT')], by = c('x', 'y') )
 colnames(dens.pr)[9:11] <- c('modtmean','pasttmean', 'deltaT')
 dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', 'y') )
 
+# read in the P-PET data (generated from Extract_Prism_Historical.R)
+
+P.PET <- read.csv("outputs/P.PET_prism_1895_1905.csv")
+dens.pr <- merge(dens.pr, P.PET[,c("x", "y", "Jul_ppet", "Aug_ppet")], by = c("x", "y"))
 
 nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 
 dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
 
-ggplot(dens.pr, aes(x, y, fill=MAP1910))+geom_raster()
+ggplot(dens.pr, aes(x, y, fill=Aug_ppet))+geom_raster()
 
 write.csv(nodups, paste0("data/midwest_pls_full_density_pr_alb",version,".csv"))
 
@@ -183,6 +187,7 @@ plot(dens.pr$MAP1910,dens.pr$PLSdensity, xlab = 'Past MAP', ylab = 'PLS density'
 plot(dens.pr$pastdeltaP, dens.pr$PLSdensity, xlab = "Past P seasonality", ylab = "PLS density")
 plot(dens.pr$pasttmean, dens.pr$PLSdensity, xlab = 'Past Tmean', ylab = "PLSdensity")
 plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Precip")
+plot(dens.pr$Aug_ppet, dens.pr$Jul_ppet, xlab = 'Past Tmean', ylab = "Past Precip")
 
 
 
@@ -191,28 +196,27 @@ plot(dens.pr$pasttmean, dens.pr$MAP1910, xlab = 'Past Tmean', ylab = "Past Preci
 sand8km <- raster("data/8km_UMW_sand1.tif")
 
 plot(sand8km)
-
-
-
 # need to project sand to great lakes albers coordinate system
 sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
 
 #awc-availible water content
-awc8km <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif")
+awc8km <- raster("data/8km_UMW_awc1.tif")
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
 
 # issues with ksat raster--missing all of IL
-
-
+# read in the 
+CEC <- raster("data/8km_UMW_CEC.tif")
+CEC8km.alb <- projectRaster(CEC, crs ='+init=epsg:3175')
 #write albers rasters to files:
 writeRaster(awc8km.alb, "data/8km_UMW_awcalb.tif", overwrite = TRUE)
 writeRaster(sand8km.alb, "data/8km_UMW_sandalb.tif", overwrite = TRUE)
 writeRaster(ksat8km.alb, "data/8km_UMW_ksatalb.tif", overwrite = TRUE)
-
+writeRaster(CEC8km.alb, "data/8km_UMW_cecalb.tif", overwrite = TRUE)
 #extract soils data using PLS points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
 dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
+dens.pr$CEC <- extract(CEC8km.alb, dens.pr[,c('x','y')])
 
 # --------------------------Plotting density vs. environmental data---------------
 
@@ -239,17 +243,33 @@ awcpls <- ggplot(dens.pr, aes(awc, PLSdensity)) + geom_point() + theme_classic()
   theme_bw()+theme(text = element_text(size = 20))
 ksatpls <- ggplot(dens.pr, aes(ksat, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
+CECpls <- ggplot(dens.pr, aes(CEC, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
 
-png(paste0('outputs/v',version,'/full/PLS_full_sand.png'))
+
+# plot CEC vs. other soil characteristics:
+
+ggplot(dens.pr, aes(CEC, sandpct)) + geom_point() + theme_classic() + 
+  theme_bw()+theme(text = element_text(size = 20))
+ggplot(dens.pr, aes(CEC, ksat)) + geom_point() + theme_classic()+ 
+  theme_bw()+theme(text = element_text(size = 20))
+
+ggplot(dens.pr, aes(CEC, awc)) + geom_point() + theme_classic()+ 
+  theme_bw()+theme(text = element_text(size = 20))
+
+png(paste0('outputs/full/PLS_full_sand.png'))
 sandpls
 dev.off()
-png(paste0('outputs/v',version,'/full/PLS_full_awc.png'))
+png(paste0('outputs/full/PLS_full_awc.png'))
 awcpls
 dev.off()
-png(paste0('outputs/v',version,'/full/PLS_full_ksat.png'))
+png(paste0('outputs/full/PLS_full_ksat.png'))
 ksatpls
 dev.off()
 
+  png(paste0('outputs/full/PLS_full_CEC.png'))
+CECpls
+dev.off()
 
 #------------------- assign density classificaitons of savanna, forests, etc----------------
 
@@ -268,7 +288,7 @@ dens.pr$ecotype <- ecotype
 
 ggplot(data = dens.pr, aes(x = x, y = y, color = ecotype)) + geom_point()
 
-write.csv(dens.pr, paste0("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb",version,".csv"))
+write.csv(dens.pr, paste0("data/midwest_pls_full_density_pr_alb",version,".csv"))
 
 # we could also do kmeans clustering, but this results in some overlap between clusters
 fit.km <- kmeans(dens.pr$PLSdensity, 4, nstart=25)
@@ -283,14 +303,14 @@ dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
-                                "moddeltaT", "deltaT", "sandpct", "awc")]) #PC all but ksat and diff
+                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC")]) #PC all but ksat and diff
 
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE 
 dens.pca <- princomp(scale.dens[,c('MAP1910',   
                                    "pastdeltaP", "pasttmean",
-                                    "deltaT", "sandpct", "awc")],
+                                    "deltaT", "sandpct", "awc", "CEC")],
                      na.rm=TRUE) 
 
 plot(dens.pca)
@@ -304,7 +324,7 @@ dens.rm$PC2 <- scores[,2]
 dens.rm <- data.frame(dens.rm)
 PC <- dens.pca
 #plot scores by tree density in trees per hectare
-png(paste0("outputs/v", version,"/full/pca_no_loadings.png"))
+png(paste0("/outputs/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
@@ -322,8 +342,8 @@ source("R/newggbiplot.R")
 
 pretty.scale <- scale.dens[,c('MAP1910',   
                               "pastdeltaP", "pasttmean",
-                              "deltaT", "sandpct", "awc")]
-colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc")
+                              "deltaT", "sandpct", "awc", "CEC")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "cec")
 
 pretty.pca <- princomp(pretty.scale,
                      na.rm=TRUE) 
@@ -365,17 +385,17 @@ dens.pr <- test1
 # predict PCA scores for modern landscape
 res <-princomp(scale.dens[,c('MAP1910',   
                             "pastdeltaP", "pasttmean",
-                            "deltaT", "sandpct", "awc")])
+                            "deltaT", "sandpct", "awc", "CEC")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 # scale modern environmental data
 cc <- scale(dens.pr[,c("MAP2011", "moderndeltaP", 
                          "modtmean", "moddeltaT", 
-                         "sandpct", "awc")])
+                         "sandpct", "awc", "CEC")])
   # rename so that it is the same column names as PLS--for prediction purposes
 colnames(cc) <- c('MAP1910',   
                     "pastdeltaP", "pasttmean",
-                    "deltaT", "sandpct", "awc")
+                    "deltaT", "sandpct", "awc", "CEC")
   
 newscores <- predict(res, newdata=cc) # predict new scores based on the PLS pca 
 
@@ -454,7 +474,7 @@ dev.off()
 
 res<-princomp(scale.dens[,c('MAP1910',   
                             "pastdeltaP", "pasttmean",
-                            "deltaT", "sandpct", "awc")])
+                            "deltaT", "sandpct", "awc", "CEC")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 predict.PCA <- function(rcp){
@@ -462,10 +482,10 @@ cc <- scale(dens.pr[,c(paste0("pr.",rcp),
                        paste0("pr.",rcp,"SI"), 
                          paste0("tn.",rcp),
                            paste0("tn.",rcp, "cv"),
-                                               "sandpct","awc")])
+                                               "sandpct","awc", "CEC")])
 colnames(cc) <- c('MAP1910',   
                   "pastdeltaP", "pasttmean",
-                  "deltaT", "sandpct", "awc")
+                  "deltaT", "sandpct", "awc", "CEC")
 
 newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
 
@@ -515,7 +535,8 @@ dens.pr$PC1_cc60bins <- cut(dens.pr$PC1_cc60,  breaks = seq(-5,5.5, by = 1), lab
 dens.pr$PC2_cc60bins <- cut(dens.pr$PC2_cc60, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc85bins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-
+dens.pr$Jul_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-30,160, by = 19), labels = label.breaks(-30, 141, 19))
+dens.pr$Aug_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-60,100, by = 20), labels = label.breaks(-60, 80, 20))
 
 test<- dens.pr[!is.na(dens.pr),]
 
@@ -525,10 +546,10 @@ write.csv(dens.pr, "data/PLS_full_dens_pr_with_bins.csv")
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','plsprbins75', 
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  
-                                  'sandpct', 'awc', 'ksat', 'sandbins', 'ksatbins', 
+                                  'sandpct', 'awc', 'ksat', "CEC",'sandbins', 'ksatbins', 
                                  'pastdeltaP','deltaT',  'pastdeltPbins', 'pasttmeanbins',
                                  'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
-                                 "PC1fiabins", "PC2fiabins","PC1_cc26bins",'PC2_cc26bins','ecotype')) 
+                                 "PC1fiabins", "PC2fiabins","PC1_cc26bins",'PC2_cc26bins',"Jul_ppetbins","Aug_ppetbins",'ecotype')) 
 
 #load map data for future maps
 all_states <- map_data("state")
@@ -561,7 +582,7 @@ ggplot(dens.pr, aes(pasttmean, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,15) 
 dev.off()
 
 #for PC1
-png(paste0('outputs/v',version,'/full/PLS_PC1_hexbin.png'))
+png(width = 6, height = 4, units = "in", res = 200,paste0('outputs/v',version,'/full/PLS_PC1_hexbin.png'))
 ggplot(dens.pr, aes(PC1, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,9) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Principal component 1') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
@@ -572,17 +593,17 @@ ggplot(dens.pr, aes(PC2, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,5) + them
   xlab(' Principal component 2') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
-#rbpalette <- c('red', "blue")
-#ggplot(melted, aes(value, fill = variable)) +geom_density(alpha = 0.3)  +xlim(0, 400)+ facet_grid(plsprbins~., scales = 'free_y')+scale_fill_brewer(palette = "Set1")
+ggplot(dens.pr, aes(CEC, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Cation Exchange Capacity') +ylab(" Past Tree Density (stems/ha)") 
 
 
 #----------------plot out denisty distriburions binned by envt----------------------#
 
 # need to make sure the melting worked above
-png(paste0('outputs/v',version,'/full/precipitation_full_by_bins.png'))
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
-dev.off()
+#png(paste0('outputs/v',version,'/full/precipitation_full_by_bins.png'))
+#ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~plsprbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#dev.off()
 
 #plot by sandiness
 png(paste0('outputs/v',version,'/full/sand_full_by_bins.png'))

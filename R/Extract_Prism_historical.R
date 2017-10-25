@@ -27,7 +27,7 @@ spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,
 #proj4string(spec.table) <- '+init=epsg:3175' 
 #spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
-#spec.table.11<- data.frame(spec.table.ll)
+#spec.table.11<- as.data.frame(spec.table.ll)
 spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
 
 #designate the years we want to extract/ average over
@@ -39,13 +39,13 @@ filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
 
 # use substring to index filenames that match the years designated:
 
-filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
+filenames <- filenames [substring(filenames, first = 24, last = 27) %in% years]
 
 s <- stack(filenames) #make all into a raster
 t <- crop(s, extent(spec.table.ll)) 
-#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
-y <- data.frame(rasterToPoints(t)) #covert to dataframe
-years <- rep(1895:1924, each = 12)
+s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+y <- data.frame(rasterToPoints(s)) #covert to dataframe
+years <- rep(1895:1904, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
 
@@ -59,6 +59,7 @@ melted.mo$mos <- substring(melted.mo$variable, first = 28, last = 29)
 
 #calculate means for months
 full<- dcast(melted.mo, x + y ~ mos, mean , value.var='value', na.rm = TRUE)
+full<- data.frame(full)
 full$total <- rowSums(full[,3:14])
 colnames(full) <- c('x','y','Jan', 'Feb', 'Mar', "Apr", "May", 
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'total')
@@ -195,19 +196,19 @@ my.list <- list()
 # this for loop calculates thornthwaite PET for each month in each grid cell
 #for(i in 1:length(y$y)){
 source("/afs/crc.nd.edu/user/k/kheilman/bimodality/R/Thornthwaite_PET.R")
-for(i in 1:length(y$y)){
+system.time(for(i in 1:1000){
  
        ynew <- t(y[i,3:135])
        lat <- y[i,]$y
        long <- y[i,]$x
        cellID <- y[i,]$CellID
        # get month an year from row.names
-       year <-  data.frame(year =substring(row.names(ynew), first = 26, last = 29))
+       year <-  data.frame(year = substring(row.names(ynew), first = 26, last = 29))
        month <- data.frame(month = substring(row.names(ynew), first = 30, last = 31))
        ynew2 <- data.frame(Tave = ynew[,1], 
                            year <- year, 
                            month <- month)
-       
+       ynew2 <- ynew2[ynew2$month %in% c("06", "07", "08"),]
        # use the thorthwaite equation to attach the PET data to the 
        
       ynew2$PET_tho <- as.numeric(thornthwaite_PET(ynew2$Tave, lat))
@@ -216,45 +217,118 @@ for(i in 1:length(y$y)){
        ynew2$CellID <- cellID
   
        my.list[[i]] <- ynew2
-}
+       cat("/")
+})
    # if PET.df already exists, then add to the df, if not, then create "PET.df"
 #   if(exists  ("PET.df")){
    PET.df <- do.call(rbind, my.list)
      
- #  PET.df <- rbind(PET.df, ynew2)
-  # }else{
-   #  PET.df <- ynew2
-   #}
-#}
-
+ 
 # rename the object:
 full.PET <- PET.df
 #remove PET.df
 #rm(PET.df)
 
 
-#PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
-#colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
-                     #    "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
+colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "may",
+                         "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 #ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
 # get the precipitation data in the same format:
 saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
+saveRDS(PET.means, paste0(workingdir, "PET.means.rds"))
 
-# read in rds from crc to do thornthwaite (cant get SPEI package on crc):
-#library(SPEI)
-#full.PET <- readRDS(paste0(workingdir, "full.PET.rds"))
-#full.PET$Tave <- full.PET$Tave/100 # need to convert to celcius
-#test.PET <- full.PET[1:48,]
-#full.PET$PET_tho <- as.numeric(thornthwaite(Tave= full.PET$Tave, lat = full.PET$lat))
+#full.PET <- readRDS("data/full.PET.rds")
+full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
+full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
+
+full$Mean <- rowMeans(full[,4:15], na.rm=TRUE)
+
+colnames(full) <- c('lat','long',"Var",'Jan', 'Feb', 'Mar', "Apr", "May", 
+                  'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
+
+full2 <- full
+
+#ggplot(full2, aes(long, lat, fill = Aug))+geom_raster()
+# for monthly dataset
+# convert to rasterstack
+coordinates(full) <- ~long + lat
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+plot(avgs) #plots averages
+#proj4string(avgs) <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' 
+#avgs.alb <- projectRaster(avgs, crs='+init=epsg:3175')
+
+# spec.table is a spatial points df, convert to regular df:
+#spec.table <- as.data.frame(spec.table)
+avgs.df <- data.frame(extract(avgs, spec.table.ll[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, paste0(workingdir, "PET_pls_extracted.csv"))
 
 
-#test.PET <- thornthwaite(Tave = test$Tave, lat = test$lat)
-#full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
-#full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'Tave', na.rm = TRUE)
 
-#full$Mean <- rowMeans(full[,4:14], na.rm=TRUE)
 
-#colnames(full) <- c('lat','long',"Var",'Jan', 'Feb', 'Mar', "Apr", "May", 
- #                   'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
 
-#full2 <- full
+######################################################################
+# Extracting P- E
+#
+avgs.df <- read.csv("/Users/kah/Documents/bimodality/data/PET_pls_extracted.csv")
+full.pet<- readRDS("/Users/kah/Documents/bimodality/data/full.PET.rds")
+
+full.pet <- full.pet[,c( "month","PET_tho", "lat","long")]
+full <- dcast(full.pet, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
+colnames(full) <- c("lat", "long", "06","07", "08")
+full$JJAMean <- rowMeans(full[,3:length(full)], na.rm=TRUE)
+
+coordinates(full) <- ~long + lat
+gridded(full) <- TRUE
+avgs <- stack(full) 
+
+plot(avgs) #plots averag
+
+proj4string(avgs) <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' 
+avgs.alb <- projectRaster(avgs, crs='+init=epsg:3175')
+
+# spec.table is a spatial points df, convert to regular df:
+spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
+coordinates(spec.table) <- ~x + y
+
+# project the grid to lat long
+proj4string(spec.table) <- '+init=epsg:3175'
+spec.table <- as.data.frame(spec.table)
+
+avgs.df <- data.frame(extract(avgs.alb, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1905_pls_extracted.csv"))
+
+
+setwd ("/Users/kah/Documents/bimodality")
+PETjja <- read.csv("data/PETJJA_1895_1905_pls_extracted.csv")
+Precip <- read.csv("outputs/pr_monthly_Prism_1895_1905.csv")
+
+PrJJA <- Precip[,c("x", "y","Jun_.", "Jul_.", "Aug_.")]
+colnames(PrJJA) <- c("x", "y", "Jun_pr", "Jul_pr", "Aug_pr")
+
+colnames(PETjja) <- c("Jun_pet", "Jul_pet", "Aug_pet", "JJAMean_pet",'id',"x","y")
+
+P.PET<- merge(PrJJA, PETjja, by = c("x", "y"))
+P.PET <- P.PET[,1:9]
+
+# now lets calculaate P - PET for Jun - Aug
+P.PET$Jun_ppet <- P.PET$Jun_pr - P.PET$Jun_pet
+P.PET$Jul_ppet <- P.PET$Jul_pr - P.PET$Jul_pet
+P.PET$Aug_ppet <- P.PET$Aug_pr - P.PET$Aug_pet
+P.PET$JA_ppet <- rowSums(P.PET[,5:6], na.rm=TRUE) - rowSums(P.PET[,8:9], na.rm=TRUE)
+
+ggplot(P.PET, aes(x,y, fill = Jun_ppet))+geom_raster()
+ggplot(P.PET, aes(x,y, fill = Jul_ppet))+geom_raster()
+ggplot(P.PET, aes(x,y, fill = Aug_ppet))+geom_raster()
+ggplot(P.PET, aes(x,y, fill = JA_ppet))+geom_raster()
+
+
+write.csv(P.PET, "outputs/P.PET_prism_1895_1905.csv")

@@ -5,7 +5,6 @@ version <- "1.7-5"
 setwd( "/Users/kah/Documents/bimodality")
 library(data.table)
 library(reshape2)
-library(dtplyr)
 library(ggplot2)
 library(hexbin)
 library(grid)
@@ -535,8 +534,8 @@ dens.pr$PC1_cc60bins <- cut(dens.pr$PC1_cc60,  breaks = seq(-5,5.5, by = 1), lab
 dens.pr$PC2_cc60bins <- cut(dens.pr$PC2_cc60, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc85bins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$Jul_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-30,160, by = 19), labels = label.breaks(-30, 141, 19))
-dens.pr$Aug_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-60,100, by = 20), labels = label.breaks(-60, 80, 20))
+dens.pr$Jul_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-10,90, by = 10), labels = label.breaks(-10, 80, 10))
+dens.pr$Aug_ppetbins <- cut(dens.pr$Aug_ppet, breaks = seq(-70,60, by = 13), labels = label.breaks(-70, 47, 13))
 
 test<- dens.pr[!is.na(dens.pr),]
 
@@ -596,6 +595,11 @@ dev.off()
 ggplot(dens.pr, aes(CEC, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Cation Exchange Capacity') +ylab(" Past Tree Density (stems/ha)") 
 
+ggplot(dens.pr, aes(Aug_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' August P - PET') +ylab(" Past Tree Density (stems/ha)") 
+
+ggplot(dens.pr, aes(Jul_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' July P - PET') +ylab(" Past Tree Density (stems/ha)") 
 
 #----------------plot out denisty distriburions binned by envt----------------------#
 
@@ -681,6 +685,8 @@ calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'Jul_ppetbins', density = "PLSdensity")
+calc.BC(data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity")
 dev.off()
 
 png(height = 400, width = 400, paste0('outputs/v',version,'/full/PLS_PC1_PC2_BC_bins.png'))
@@ -782,17 +788,17 @@ map.bimodal.dens <- function(data, binby, density){
 #map out bimodalities--note the region varies by bin size
 pdf(paste0('outputs/v',version,'/full/bimodal_maps.pdf'))
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
-#map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "FIAdensity")
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
-#map.bimodal(data = dens.pr, binby = 'fiaprbins100', density = "FIAdensity")
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
-#map.bimodal(data = dens.pr, binby = 'fiaprbins75', density = "FIAdensity")
+
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
-#map.bimodal(data = dens.pr, binby = 'fiaprbins25', density = "FIAdensity")
-#map.bimodal(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
+
 map.bimodal.dens(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'Jul_ppetbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity")
+
 dev.off()
 
 png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map.png'))

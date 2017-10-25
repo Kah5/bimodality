@@ -12,7 +12,7 @@ version <- "1.7-5" # pls version
 # set the working dir (where the prism data folder is)
 workingdir <- "/Users/kah/Documents/bimodality/data/"
 # for crc:
-workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
+#workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
 
 ##########################################################################
 # extracting PRISM  precip data from the 1895-1980 historic prism dataset#
@@ -31,8 +31,8 @@ spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,
 spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
 
 #designate the years we want to extract/ average over
-years <- 1895:1925
-yrs <- "1895-1925"
+years <- 1895:1905
+yrs <- "1895-1905"
 
 # this chunk of code reads in the filenames within the PRISM data folder
 filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
@@ -309,15 +309,19 @@ write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1905_pls_extracted.csv"))
 
 setwd ("/Users/kah/Documents/bimodality")
 PETjja <- read.csv("data/PETJJA_1895_1905_pls_extracted.csv")
-Precip <- read.csv("outputs/pr_monthly_Prism_1895_1905.csv")
+Precip <- read.csv(paste0("data/outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
-PrJJA <- Precip[,c("x", "y","Jun_.", "Jul_.", "Aug_.")]
+PrJJA <- Precip[,c("x", "y","Jun", "Jul", "Aug")]
 colnames(PrJJA) <- c("x", "y", "Jun_pr", "Jul_pr", "Aug_pr")
 
 colnames(PETjja) <- c("Jun_pet", "Jul_pet", "Aug_pet", "JJAMean_pet",'id',"x","y")
 
+ggplot(PrJJA, aes(x,y, fill = Jun_pr))+geom_raster()
+ggplot(PETjja, aes(x,y, fill = Jun_pet))+geom_raster()
+
 P.PET<- merge(PrJJA, PETjja, by = c("x", "y"))
 P.PET <- P.PET[,1:9]
+
 
 # now lets calculaate P - PET for Jun - Aug
 P.PET$Jun_ppet <- P.PET$Jun_pr - P.PET$Jun_pet

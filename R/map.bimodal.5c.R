@@ -3,6 +3,7 @@
 map.bimodal.5c <- function(data, binby, density){
  
   data <- data[!is.na(data[,c(density)]),] # gets rid of 4 NA values
+  bins <- as.character(unique(data[,binby]))
   coeffs <- matrix(NA, length(bins), 4)
   for (i in 1:length(bins)){
     coeffs[i,1] <- bimodality_coefficient(na.omit(data[data[,binby] %in% bins[i], c(density)])) # calculation bimoality coefficient

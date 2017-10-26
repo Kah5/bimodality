@@ -73,7 +73,7 @@ system.time(for(i in 1:length(y$y)){
   ynew2 <- data.frame(Tave = ynew[,1], 
                       year <- year, 
                       month <- month)
-  ynew2 <- ynew2[ynew2$month %in% c("04","05","06", "07", "08", "09", "10"),]
+  ynew2 <- ynew2[ynew2$month %in% c("01","03","04","05","06", "07", "08", "09", "10", "11", "12"),]
   # use the thorthwaite equation to attach the PET data to the 
   
   ynew2$PET_tho <- as.numeric(thornthwaite_PET(ynew2$Tave, lat))

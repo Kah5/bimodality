@@ -73,7 +73,7 @@ system.time(for(i in 1:length(y$y)){
   ynew2 <- data.frame(Tave = ynew[,1], 
                       year <- year, 
                       month <- month)
-  ynew2 <- ynew2[ynew2$month %in% c("06", "07", "08"),]
+  ynew2 <- ynew2[ynew2$month %in% c("04","05","06", "07", "08", "09", "10"),]
   # use the thorthwaite equation to attach the PET data to the 
   
   ynew2$PET_tho <- as.numeric(thornthwaite_PET(ynew2$Tave, lat))
@@ -97,7 +97,7 @@ full.PET <- PET.df
 
 PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
 colnames(PET.means) <- c("lat", "long",
-                         "jun", "jul", "aug")
+                         "apr","may","jun", "jul", "aug", "sep", "oct")
 #ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
 # get the precipitation data in the same format:
 saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
@@ -109,8 +109,7 @@ full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm =
 
 full$Mean <- rowMeans(full[,4:length(full)], na.rm=TRUE)
 
-#colnames(full) <- c('lat','long', 
- #                   'Jun', "Jul", "Aug")
+
 
 full2 <- full
 

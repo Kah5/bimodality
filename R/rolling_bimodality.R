@@ -85,11 +85,22 @@ rollBC_map = function(x, y, xout, width, df) { # x and y are the environment val
    df2$bimodal <- ifelse(df2$bc >= 0.55 & df2$pval < 0.05, "Bimodal", "Stable")
    bim2 <- ifelse(y == ordered$Density, "Density", "species pc2")
   
-   bim <-ggplot(df2, aes(x = x, y = y, fill = bimodal ))+geom_raster()+coord_equal()+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+   # read in state boundaries for plotting:
+   all_states <- map_data("state")
+   states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+   coordinates(states)<-~long+lat
+   class(states)
+   proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+   mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+   mapdata <- data.frame(mapdata)
+   
+   bim <-ggplot(df2, aes(x = x, y = y, fill = bimodal ))+geom_raster()+coord_equal()+
+     geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                     axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                     axis.title.x=element_blank(),
                                                                                                     axis.title.y=element_blank())+ggtitle(paste0("bimodality ", bim2, " width =", width))
-   samp <- ggplot(df2, aes(x = x, y = y, fill = n ))+geom_raster()+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+   
+   samp <- ggplot(df2, aes(x = x, y = y, fill = n ))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                         axis.title.x=element_blank(),
                                                                                         axis.title.y=element_blank())+ggtitle(paste0("N samples ", bim2, " width =", width))
@@ -103,18 +114,18 @@ c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.
 d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered)
 
 # density: 
-e <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered)
-f <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered)
-g <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df = ordered)
-h <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df = ordered)
+e <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 1, df = ordered)
+f <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.5, df = ordered)
+g <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df = ordered)
+h <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df = ordered)
 
 
 
-png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_species_pc2_pls.png")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_species_pc2_pls_pcanew.png")
 grid.arrange(a,b,c,d, nrow=4, ncol = 1)
 dev.off()
 
-png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_density_pls.png")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_density_pls_pcanew.png")
 grid.arrange(e,f,g,h, nrow=4, ncol = 1)
 dev.off()
 

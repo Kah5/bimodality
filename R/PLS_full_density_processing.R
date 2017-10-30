@@ -112,7 +112,9 @@ pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
 
-png(paste0("/outputs/v",version,"/PLS_full_tree_density_map.png"))
+workingdir <- "/Users/kah/Documents/bimodality"
+
+png(paste0(workingdir,"/outputs/v",version,"/PLS_full_tree_density_map.png"))
 pls.map
 dev.off()
 
@@ -169,15 +171,15 @@ dens.pr <- merge(dens.pr, mod.tmean.mo[,c('x', 'y', 'moddeltaT')], by = c('x', '
 
 # read in the P-PET data (generated from Extract_Prism_Historical.R)
 
-P.PET <- read.csv("outputs/P.PET_prism_1895_1905.csv")
-dens.pr <- merge(dens.pr, P.PET[,c("x", "y", "Jul_ppet", "Aug_ppet")], by = c("x", "y"))
+P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
+dens.pr <- merge(dens.pr, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
 
 nodups <- dens.pr[!duplicated(dens.pr$cell),] #
 
 dens.pr <- nodups
 hist(nodups$PLSdensity, breaks =50)
 
-ggplot(dens.pr, aes(x, y, fill=Aug_ppet))+geom_raster()
+ggplot(dens.pr, aes(x, y, fill=GS_ppet))+geom_raster()
 
 write.csv(nodups, paste0("data/midwest_pls_full_density_pr_alb",version,".csv"))
 
@@ -203,19 +205,28 @@ awc8km <- raster("data/8km_UMW_awc1.tif")
 awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
 
 # issues with ksat raster--missing all of IL
-# read in the 
+# read in the CEC raster
 CEC <- raster("data/8km_UMW_CEC.tif")
 CEC8km.alb <- projectRaster(CEC, crs ='+init=epsg:3175')
+
+# read in CaCO3
+caco3 <- raster("data/8_km_caco3.tif")
+CaCO38km.alb <- projectRaster(caco3, crs ='+init=epsg:3175')
+
+plot(CaCO38km.alb)
 #write albers rasters to files:
 writeRaster(awc8km.alb, "data/8km_UMW_awcalb.tif", overwrite = TRUE)
 writeRaster(sand8km.alb, "data/8km_UMW_sandalb.tif", overwrite = TRUE)
 writeRaster(ksat8km.alb, "data/8km_UMW_ksatalb.tif", overwrite = TRUE)
 writeRaster(CEC8km.alb, "data/8km_UMW_cecalb.tif", overwrite = TRUE)
+writeRaster(CaCO38km.alb, "data/8km_UMW_CaCO3alb.tif", overwrite = TRUE)
+
 #extract soils data using PLS points
 dens.pr$sandpct <- extract(sand8km.alb, dens.pr[,c('x', 'y')], method = 'bilinear')
 dens.pr$awc <- extract(awc8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$ksat <- extract(ksat8km.alb, dens.pr[,c('x', 'y')])
 dens.pr$CEC <- extract(CEC8km.alb, dens.pr[,c('x','y')])
+dens.pr$CaCO3 <- extract(CaCO38km.alb, dens.pr[,c('x','y')])
 
 # --------------------------Plotting density vs. environmental data---------------
 
@@ -242,7 +253,9 @@ awcpls <- ggplot(dens.pr, aes(awc, PLSdensity)) + geom_point() + theme_classic()
   theme_bw()+theme(text = element_text(size = 20))
 ksatpls <- ggplot(dens.pr, aes(ksat, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
-CECpls <- ggplot(dens.pr, aes(CEC, PLSdensity)) + geom_point() + theme_classic()+ xlab('ksat 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+CECpls <- ggplot(dens.pr, aes(CEC, PLSdensity)) + geom_point() + theme_classic()+ xlab('CEC 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
+  theme_bw()+theme(text = element_text(size = 20))
+caco3pls <- ggplot(dens.pr, aes(CaCO3, PLSdensity)) + geom_point() + theme_classic()+ xlab('CaCO3 1-30cm') + ylab('Modern Tree Density \n (Trees/hectare)') + 
   theme_bw()+theme(text = element_text(size = 20))
 
 
@@ -256,20 +269,23 @@ ggplot(dens.pr, aes(CEC, ksat)) + geom_point() + theme_classic()+
 ggplot(dens.pr, aes(CEC, awc)) + geom_point() + theme_classic()+ 
   theme_bw()+theme(text = element_text(size = 20))
 
-png(paste0('outputs/full/PLS_full_sand.png'))
+png(paste0('outputs/v',version,'/PLS_full_sand.png'))
 sandpls
 dev.off()
-png(paste0('outputs/full/PLS_full_awc.png'))
+png(paste0('outputs/v',version,'/PLS_full_awc.png'))
 awcpls
 dev.off()
-png(paste0('outputs/full/PLS_full_ksat.png'))
+png(paste0('outputs/v',version,'/PLS_full_ksat.png'))
 ksatpls
 dev.off()
 
-  png(paste0('outputs/full/PLS_full_CEC.png'))
+png(paste0('outputs/v',version,'/PLS_full_CEC.png'))
 CECpls
 dev.off()
 
+png(paste0('outputs/v',version,'/PLS_full_CaCO3.png'))
+caco3pls
+dev.off()
 #------------------- assign density classificaitons of savanna, forests, etc----------------
 
 
@@ -302,14 +318,14 @@ dens.rm <- na.exclude(dens.pr)
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
-                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC")]) #PC all but ksat and diff
+                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3")]) #PC all but ksat and diff
 
 dens.dens <- dens.rm[, c('PLSdensity')] # pls density
 
 # apply PCA - scale. = TRUE 
 dens.pca <- princomp(scale.dens[,c('MAP1910',   
                                    "pastdeltaP", "pasttmean",
-                                    "deltaT", "sandpct", "awc", "CEC")],
+                                    "deltaT", "sandpct", "awc", "CEC", "CaCO3")],
                      na.rm=TRUE) 
 
 plot(dens.pca)
@@ -323,7 +339,7 @@ dens.rm$PC2 <- scores[,2]
 dens.rm <- data.frame(dens.rm)
 PC <- dens.pca
 #plot scores by tree density in trees per hectare
-png(paste0("/outputs/pca_no_loadings.png"))
+png(paste0("outputs/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
@@ -341,8 +357,8 @@ source("R/newggbiplot.R")
 
 pretty.scale <- scale.dens[,c('MAP1910',   
                               "pastdeltaP", "pasttmean",
-                              "deltaT", "sandpct", "awc", "CEC")]
-colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "cec")
+                              "deltaT", "sandpct", "awc", "CEC", "CaCO3")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "cec", "CaCO3")
 
 pretty.pca <- princomp(pretty.scale,
                      na.rm=TRUE) 
@@ -384,17 +400,17 @@ dens.pr <- test1
 # predict PCA scores for modern landscape
 res <-princomp(scale.dens[,c('MAP1910',   
                             "pastdeltaP", "pasttmean",
-                            "deltaT", "sandpct", "awc", "CEC")])
+                            "deltaT", "sandpct", "awc", "CEC", "CaCO3")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 # scale modern environmental data
 cc <- scale(dens.pr[,c("MAP2011", "moderndeltaP", 
                          "modtmean", "moddeltaT", 
-                         "sandpct", "awc", "CEC")])
+                         "sandpct", "awc", "CEC", "CaCO3")])
   # rename so that it is the same column names as PLS--for prediction purposes
 colnames(cc) <- c('MAP1910',   
                     "pastdeltaP", "pasttmean",
-                    "deltaT", "sandpct", "awc", "CEC")
+                    "deltaT", "sandpct", "awc", "CEC", "CaCO3")
   
 newscores <- predict(res, newdata=cc) # predict new scores based on the PLS pca 
 
@@ -473,7 +489,7 @@ dev.off()
 
 res<-princomp(scale.dens[,c('MAP1910',   
                             "pastdeltaP", "pasttmean",
-                            "deltaT", "sandpct", "awc", "CEC")])
+                            "deltaT", "sandpct", "awc", "CEC", "CaCO3")])
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 predict.PCA <- function(rcp){
@@ -481,10 +497,10 @@ cc <- scale(dens.pr[,c(paste0("pr.",rcp),
                        paste0("pr.",rcp,"SI"), 
                          paste0("tn.",rcp),
                            paste0("tn.",rcp, "cv"),
-                                               "sandpct","awc", "CEC")])
+                                               "sandpct","awc", "CEC", "CaCO3")])
 colnames(cc) <- c('MAP1910',   
                   "pastdeltaP", "pasttmean",
-                  "deltaT", "sandpct", "awc", "CEC")
+                  "deltaT", "sandpct", "awc", "CEC", "CaCO3")
 
 newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
 
@@ -534,8 +550,8 @@ dens.pr$PC1_cc60bins <- cut(dens.pr$PC1_cc60,  breaks = seq(-5,5.5, by = 1), lab
 dens.pr$PC2_cc60bins <- cut(dens.pr$PC2_cc60, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
 dens.pr$PC1_cc85bins <- cut(dens.pr$PC1_cc85, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 dens.pr$PC2_cc85bins <- cut(dens.pr$PC2_cc85, breaks = seq(-3,4, by = 0.5), labels = label.breaks(-3,3.5, 0.5))
-dens.pr$Jul_ppetbins <- cut(dens.pr$Jul_ppet, breaks = seq(-10,90, by = 10), labels = label.breaks(-10, 80, 10))
-dens.pr$Aug_ppetbins <- cut(dens.pr$Aug_ppet, breaks = seq(-70,60, by = 13), labels = label.breaks(-70, 47, 13))
+dens.pr$GS_ppetbins <- cut(dens.pr$GS_ppet, breaks = seq(-145,430, by = 57.5), labels = label.breaks(-145,372.5, 57.5))
+#dens.pr$Aug_ppetbins <- cut(dens.pr$Aug_ppet, breaks = seq(-70,60, by = 13), labels = label.breaks(-70, 47, 13))
 
 test<- dens.pr[!is.na(dens.pr),]
 
@@ -545,10 +561,10 @@ write.csv(dens.pr, "data/PLS_full_dens_pr_with_bins.csv")
 melted <- melt(test, id.vars = c("x", 'y', 'cell', 'plsprbins',  'plsprbins50','plsprbins75', 
                                  'plsprbins100','plsprbins150', 'plsprbins25', 
                                  'MAP1910',  
-                                  'sandpct', 'awc', 'ksat', "CEC",'sandbins', 'ksatbins', 
+                                  'sandpct', 'awc', 'ksat', "CEC","CaCO3",'sandbins', 'ksatbins', 'GS_ppet',
                                  'pastdeltaP','deltaT',  'pastdeltPbins', 'pasttmeanbins',
                                  'pasttmean', "PC1", "PC2",'PC1bins', 'PC2bins', 
-                                 "PC1fiabins", "PC2fiabins","PC1_cc26bins",'PC2_cc26bins',"Jul_ppetbins","Aug_ppetbins",'ecotype')) 
+                                 "PC1fiabins", "PC2fiabins","PC1_cc26bins",'PC2_cc26bins',"GS_ppetbins",'ecotype')) 
 
 #load map data for future maps
 all_states <- map_data("state")
@@ -568,26 +584,26 @@ mapdata <- data.frame(mapdata)
 library(lattice)
 
 # for precipitation
-png(paste0('outputs/v',version,'/full/PLS_precipitation_hexbin.png'))
+png(paste0('outputs/v',version,'/PLS_precipitation_hexbin.png'))
 ggplot(dens.pr, aes(MAP1910, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(400,1400) + 
   theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab(' Mean Annual Precipitation (mm) \n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)")
+  xlab(' Mean Annual Precipitation (mm) \n PRISM 1895-1925') +ylab(" Past Tree Density (stems/ha)")
 dev.off()
 
 #for tmean
-png(paste0('outputs/v',version,'/full/PLS_tmean_hexbin.png'))
+png(paste0('outputs/v',version,'/PLS_tmean_hexbin.png'))
 ggplot(dens.pr, aes(pasttmean, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(0,15) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
-  xlab(' Mean Annual Temperature (degC)\n PRISM 1900-1910') +ylab(" Past Tree Density (stems/ha)") 
+  xlab(' Mean Annual Temperature (degC)\n PRISM 1895-1925') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
 #for PC1
-png(width = 6, height = 4, units = "in", res = 200,paste0('outputs/v',version,'/full/PLS_PC1_hexbin.png'))
+png(width = 6, height = 4, units = "in", res = 200,paste0('outputs/v',version,'/PLS_PC1_hexbin.png'))
 ggplot(dens.pr, aes(PC1, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,9) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Principal component 1') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
 #for PC2
-png(paste0('outputs/v',version,'/full/PLS_PC2_hexbin.png'))
+png(paste0('outputs/v',version,'/PLS_PC2_hexbin.png'))
 ggplot(dens.pr, aes(PC2, PLSdensity)) +geom_hex()+ylim(0,600)+ xlim(-5,5) + theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Principal component 2') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
@@ -595,11 +611,18 @@ dev.off()
 ggplot(dens.pr, aes(CEC, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Cation Exchange Capacity') +ylab(" Past Tree Density (stems/ha)") 
 
-ggplot(dens.pr, aes(Aug_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
-  xlab(' August P - PET') +ylab(" Past Tree Density (stems/ha)") 
+png(paste0('outputs/v',version,'/PLS_GS_PPET_hexbin.png'))
+ggplot(dens.pr, aes(GS_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Growing Season P - PET') +ylab(" Past Tree Density (stems/ha)") 
+dev.off()
 
-ggplot(dens.pr, aes(Jul_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
-  xlab(' July P - PET') +ylab(" Past Tree Density (stems/ha)") 
+png(paste0('outputs/v',version,'/PLS_CaCO3_hexbin.png'))
+ggplot(dens.pr, aes(CaCO3, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+  xlab(' Growing Season P - PET') +ylab(" Past Tree Density (stems/ha)") 
+dev.off()
+
+#ggplot(dens.pr, aes(Jul_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
+ # xlab(' July P - PET') +ylab(" Past Tree Density (stems/ha)") 
 
 #----------------plot out denisty distriburions binned by envt----------------------#
 
@@ -610,13 +633,13 @@ ggplot(dens.pr, aes(Jul_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(bas
 #dev.off()
 
 #plot by sandiness
-png(paste0('outputs/v',version,'/full/sand_full_by_bins.png'))
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
-dev.off()
+#png(paste0('outputs/v',version,'/sand_full_by_bins.png'))
+#ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~sandbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#dev.off()
 
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~pasttmeanbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~pasttmeanbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
 
 
 #plot out climate space:
@@ -626,22 +649,22 @@ ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, colour = PLSdensity))+geom_point
 dev.off()
 
 #plot by ksat
-png(paste0('outputs/v',version,'/full/ksat_full_by_bins.png'))
-ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
-dev.off()
+#png(paste0('outputs/v',version,'/full/ksat_full_by_bins.png'))
+#ggplot(melted, aes(value, colour = variable)) +geom_density(size = 2, alpha = 0.1)  +xlim(0, 400)+ facet_wrap(~ksatbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#dev.off()
 
 #plot by past deltaPbins 
-png(paste0('outputs/v',version,'/full/pastDeltaP_full_by_bins.png'))
-ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~pastdeltPbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
-dev.off()
+#png(paste0('outputs/v',version,'/full/pastDeltaP_full_by_bins.png'))
+#ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~pastdeltPbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#dev.off()
 
 #plot by mod deltaPbins
-png(paste0('outputs/v',version,'/full/moddeltaP_full_by_bins.png'))
-ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~moddeltPbins, scales = 'free_y')+
-  scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
-dev.off()
+#png(paste0('outputs/v',version,'/full/moddeltaP_full_by_bins.png'))
+#ggplot(melted, aes(value, colour = variable))+ geom_density(size = 2, alpha = 0.1) +xlim(0, 400)+ facet_wrap(~moddeltPbins, scales = 'free_y')+
+ # scale_color_manual(values = c( "#D55E00", "#0072B2")) + theme_bw()+theme(strip.background = element_rect(fill="black"), strip.text.x = element_text(size = 12, colour = "white")) + xlab('tree density')
+#dev.off()
 
 
 

@@ -274,15 +274,15 @@ write.csv(avgs.df, paste0(workingdir, "PET_pls_extracted.csv"))
 
 
 ######################################################################
-# Extracting P- E
+# Extracting P- E from the Extract_PET_crc.R output
 #
 setwd ("/Users/kah/Documents/bimodality")
 
 #full.PET <- readRDS('data/full.PET.rds')
-full.PET <- readRDS("data/PET_maroct/full.PET.rds")
+full.PET <- readRDS("data/PET_full/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
-colnames(full) <- c("lat", "long", "Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct")
+colnames(full) <- c("lat", "long", "Jan", 'Mar',"Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 coordinates(full) <- ~long + lat
@@ -308,28 +308,29 @@ avgs.df <- data.frame(extract(avgs.alb, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1925_pls_extracted_apr_oct.csv"))
-ggplot(avgs.df, aes(x,y, fill = May))+geom_raster()
+write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1925_pls_extracted_mar_nov.csv"))
+#ggplot(avgs.df, aes(x,y, fill = Aug))+geom_raster()
 
 
 
 #PETjja <- read.csv("data/PETJJA_1895_1925_pls_extracted.csv")
 Precip <- read.csv(paste0("data/outputs/pr_monthly_Prism_1895-1925_full.csv"))
 PETjja <- avgs.df
-PrJJA <- Precip[,c("x", "y","Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct")]
-colnames(PrJJA) <- c("x", "y", "Apr_pr", "May_pr","Jun_pr", "Jul_pr", "Aug_pr", "Sep_pr", "Oct_pr")
+PrJJA <- Precip[,c("x", "y","Mar","Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov")]
+colnames(PrJJA) <- c("x", "y", "Mar_pr","Apr_pr", "May_pr","Jun_pr", "Jul_pr", "Aug_pr", "Sep_pr", "Oct_pr", "Nov_pr")
 
-colnames(PETjja) <- c("Apr_pet", "May_pet","Jun_pet", "Jul_pet", "Aug_pet", "Sep_pet", "Oct_pet","x","y")
+colnames(PETjja) <- c("Jan_pet", "Mar_pet","Apr_pet", "May_pet","Jun_pet", "Jul_pet", "Aug_pet", "Sep_pet", "Oct_pet", "Nov_pet","Dec_pet","x","y")
+PETjja <- PETjja[,!names(PETjja) %in% c("Jan_pet", "Dec_pet")] # remove january
 
-ggplot(PrJJA, aes(x,y, fill = Jun_pr))+geom_raster()
-ggplot(PETjja, aes(x,y, fill = Jun_pet))+geom_raster()
+#ggplot(PrJJA, aes(x,y, fill = Jun_pr))+geom_raster()
+#ggplot(PETjja, aes(x,y, fill = Jun_pet))+geom_raster()
 
 P.PET <- merge(PrJJA, PETjja, by = c("x", "y"))
 
 
 
 # now lets calculaate P - PET for Jun - Aug
-#P.PET$Mar_ppet <- P.PET$Jun_pr - P.PET$Jun_pet
+P.PET$Mar_ppet <- P.PET$Mar_pr - P.PET$Mar_pet
 P.PET$Apr_ppet <- P.PET$Apr_pr - P.PET$Apr_pet
 P.PET$May_ppet <- P.PET$May_pr - P.PET$May_pet
 P.PET$Jun_ppet <- P.PET$Jun_pr - P.PET$Jun_pet
@@ -337,8 +338,9 @@ P.PET$Jul_ppet <- P.PET$Jul_pr - P.PET$Jul_pet
 P.PET$Aug_ppet <- P.PET$Aug_pr - P.PET$Aug_pet
 P.PET$Sep_ppet <- P.PET$Sep_pr - P.PET$Sep_pet
 P.PET$Oct_ppet <- P.PET$Oct_pr - P.PET$Oct_pet
+P.PET$Nov_ppet <- P.PET$Nov_pr - P.PET$Nov_pet
 
-P.PET$GS_ppet <- rowSums(P.PET[,3:9], na.rm=TRUE) - rowSums(P.PET[,10:16], na.rm=TRUE)
+P.PET$GS_ppet <- rowSums(P.PET[,3:11], na.rm=TRUE) - rowSums(P.PET[,12:20], na.rm=TRUE)
 
 ggplot(P.PET, aes(x,y, fill = Jun_ppet))+geom_raster()
 ggplot(P.PET, aes(x,y, fill = Jul_ppet))+geom_raster()
@@ -346,4 +348,4 @@ ggplot(P.PET, aes(x,y, fill = Aug_ppet))+geom_raster()
 ggplot(P.PET, aes(x,y, fill = GS_ppet))+geom_raster()
 
 
-write.csv(P.PET, "outputs/P.PET_prism_1895_1925_Apr_Oct.csv")
+write.csv(P.PET, "outputs/P.PET_prism_1895_1925_Mar_Nov.csv")

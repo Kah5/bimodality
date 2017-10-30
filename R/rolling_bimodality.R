@@ -6,16 +6,22 @@ library(diptest)
 library(grid)
 library(gridExtra)
 library(cowplot)
+
 # Objective: calculate bimodality on a rolling bin basis and narrow in on the environmental space where data is signifcantly bimodal
 
 full <- read.csv("outputs/cluster/full_comp_dens_df.csv")
 
+dens.pr <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
+new.pcs <- dens.pr[,c("x","y", "cell", "PC1", "PC2", "GS_ppet", "PLSdensity")]
+
 pls.full <- full[full$period %in% "PLS",]
+
+pls.full <- merge(pls.full[,1:47], new.pcs )
 
 #rolling BC Function (this only works if the data are ordered by the environment)
 
 
-rollBC_r = function(x, y, xout, width, df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
+rollBC_r <-  function(x, y, xout, width, df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
   
   out <- data.frame(xout = xout,
                     bc = NA,
@@ -41,10 +47,10 @@ rollBC_r = function(x, y, xout, width, df) { # x and y are the environment val a
 ordered <- pls.full[order(pls.full$PC1),]
 ordered$rownum <- 1:length(ordered$PC1)
 
-a<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered)
-b<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered)
-c<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df= ordered)
-d<- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df= ordered)
+a <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 1, df = ordered)
+b <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.5, df = ordered)
+c <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df= ordered)
+d <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df= ordered)
 
 #ordered <- pls.full[order(pls.full$PC1),]
 #ordered$rownum <- 1:length(ordered$PC1)
@@ -54,7 +60,7 @@ f <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5,
 g <-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered)
 h <-rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered)
 
-png(height = 12, width = 7, units = "in", res = 200, "outputs/cluster/nsamples_rolling_bimodality.png")
+png(height = 12, width = 7, units = "in", res = 200, "outputs/cluster/nsamples_rolling_bimodality_pca_new.png")
 grid.arrange(a,e,b,f,c,g,d,h, ncol = 2, nrow=4)
 dev.off()
 

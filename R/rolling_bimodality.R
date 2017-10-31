@@ -12,7 +12,7 @@ library(cowplot)
 full <- read.csv("outputs/cluster/full_comp_dens_df.csv")
 
 dens.pr <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
-new.pcs <- dens.pr[,c("x","y", "cell", "PC1", "PC2", "GS_ppet", "PLSdensity")]
+new.pcs <- dens.pr[,c("x","y", "cell", "PC1", "PC2", "MAP1910", "MAP2011", "moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT", "sandpct", "awc", "ksat", "CEC","GS_ppet", "PLSdensity")]
 
 pls.full <- full[full$period %in% "PLS",]
 
@@ -83,8 +83,8 @@ rollBC_map = function(x, y, xout, width, df, bim.df) { # x and y are the environ
     }
     
      df2 <- merge(df, out, by.x = "PC1", by.y = "xout")
-     df2[df2$bc == "NaN", ]$bc <- 0
-     df2$bimodal <- ifelse(df2$bc >= 0.55 & df2$pval < 0.05, "Bimodal", "Stable")
+     #df2[df2$bc == "NaN", ]$bc <- 0
+     df2$bimodal <- ifelse(df2$bc >= 0.55 & df2$pval < 0.05, "Bimodal", "Unimodal")
      bim2 <- ifelse(y == ordered$Density, "Density", "species pc2")
      # write df2 to a csv file to work with later
      write.csv(df2, paste0("outputs/cluster/bimodal_widths/", bim.df, "_width_", width, ".csv"), row.names = FALSE)
@@ -197,35 +197,86 @@ plot(df.rast2, xlim = c(-60000, 1000000))
 plot(extent(x = c(-55000, 190000, y = c(1480000, 1280000))),col = "black", add = TRUE)
 
 # extent for Wisconsin Big Woods:
-plot(extent(x = c(350000, 600000), y = c( 700000, 900000)),col = "black", add = TRUE)
+plot(extent(x = c(350000, 640000), y = c( 710000, 930000)),col = "black", add = TRUE)
 
 # extent for Hemlock/Minnesota:
 plot(extent(x = c(170000,450000), y = c(950000, 1150000)),col = "black", add = TRUE)
 
-# crop to make a raster of ech of  these extents out:
-aspen.park <- as.data.frame(crop(df.rast, extent(x = c(-55000, 190000, y = c( 1280000, 1480000)))), xy= TRUE)
-big.woods <- as.data.frame(crop(df.rast, extent(x = c(350000, 600000), y = c( 700000, 900000))), xy = TRUE)
-mn.wi.border <- as.data.frame(crop(df.rast, extent(x = c(170000,450000), y = c(950000, 1150000))), xy = TRUE)
+# extent for Minnesota big woods/prairie:
+plot(extent(x = c(95000,300000), y = c(850000, 1100000)),col = "black", add = TRUE)
 
+# crop to make a raster of ech of  these extents out:
+aspen.park <- as.data.frame(crop(df.rast, extent(x = c(-55000, 190000), y = c( 1280000, 1480000))), xy= TRUE)
+big.woods <- as.data.frame(crop(df.rast, extent(x = c(350000, 640000), y = c( 710000, 930000))), xy = TRUE)
+mn.wi.border <- as.data.frame(crop(df.rast, extent(x = c(170000,450000), y = c(950000, 1150000))), xy = TRUE)
+big.woods.mn <- as.data.frame(crop(df.rast, extent(x = c(95000,300000), y = c(850000, 1100000))), xy = TRUE)
 # save these grid cell indices:
 write.csv(aspen.park, "outputs/aspen_park_boundary.csv", row.names = FALSE)
 write.csv(big.woods, "outputs/big_woods_boundary.csv", row.names = FALSE)
 write.csv(mn.wi.border, "outputs/mn_wi_box_boundary.csv", row.names = FALSE)
+write.csv(big.woods.mn, "outputs/mn_big_woods.csv", row.names = FALSE)
 
 # plot out histograms and maps of the case studies:
 
-ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = bimodal))+geom_raster()
+# aspen parklands
+ap1 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Aspen Parklands Bimodal Regions")
+ap2 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Aspen Parklands PLS density")
+ap3 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Aspen Parklands Oak Composition")
+ap4 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = Poplar))+geom_raster()+ggtitle("Aspen Parklands Poplar Composition")
+ap5 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Aspen Parklands PC1")
 
-ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(PLSdensity))+geom_histogram()+facet_wrap(~bimodal)
 
-ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(x,y, fill = bimodal))+geom_raster()
 
-ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(PLSdensity))+geom_histogram()
 
-ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(x,y, fill = bimodal))+geom_raster()
+ap6 <-ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(Poplar))+geom_histogram()+ggtitle("Aspen Parklands % Poplar Histogram")
+ap8 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("Aspen Parklands PLS density Histogram")
+ap7 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(Oak))+geom_histogram()+ggtitle("Aspen Parklands % Oak Histogram")
 
-ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(PLSdensity))+geom_histogram()
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/aspen_parkland_rolling_bimodal_maps.png")
+grid.arrange(ap1,ap2,ap3,ap4,ap5, ap6, ap7, ap8, nrow=4, ncol = 2)
+dev.off()
 
+# big woods--Wisconsin
+b1<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Big Woods Bimodal Regions")
+b2<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Big Woods PLS Density")
+b3<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Big Woods Oak Composition")
+b4<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Big Woods Environmental PC1")
+
+b7<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("PLS PLS tree density histogram")
+b5<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(Oak))+geom_histogram()+ggtitle("PLS %Oak histogram")
+
+b6<- ggplot(df.b[df.b$cell %in% big.woods$cell,], aes(Elm))+geom_histogram()+ggtitle("PLS %Elm histogram")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/big_woods_rolling_bimodal_maps.png")
+grid.arrange(b1,b2,b3,b4,b5, b6, b7, nrow=4, ncol = 2)
+dev.off()
+
+# big woods--Minnesota
+bw1<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Big Woods, MN Bimodal Regions")
+bw2<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Big Woods, MN PLS Density")
+bw3<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Big Woods, MN Oak Composition")
+bw4<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Big Woods, MN Environmental PC1")
+
+bw7<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("PLS PLS tree density histogram")
+bw5<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(Oak))+geom_histogram()+ggtitle("PLS %Oak histogram")
+
+bw6<- ggplot(df.b[df.b$cell %in% big.woods.mn$cell,], aes(Elm))+geom_histogram()+ggtitle("PLS %Elm histogram")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/big_woods_minnesota_rolling_bimodal_maps.png")
+grid.arrange(bw1,bw2,bw3,bw4,bw5, bw6, bw7, nrow=4, ncol = 2)
+dev.off()
+
+# mn.wi.border
+m1<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("MN/WI border Bimodal Regions")
+m2<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("MN/WI border PLS density")
+m3<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("MN/WI border Oak Composition")
+m4<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("MN/WI border Environmental PC1")
+
+m7<-ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("PLS density histogram")
+m5<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(Oak))+geom_histogram()+ggtitle("PLS % Oak histogram")
+m6<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(Hemlock))+geom_histogram()+ggtitle("PLS % Hemlock histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/mn_wi_border_rolling_bimodal_maps.png")
+grid.arrange(m1,m2,m3,m4,m5, m6, m7, nrow=4, ncol = 2)
+dev.off()
 
 # test code for identifying ranges:
 

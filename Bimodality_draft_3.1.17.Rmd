@@ -55,10 +55,10 @@ pls.map
 dev.off()
 
 ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=dens.pr, aes(x=x, y=y, fill = Aug_ppet))+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
- scale_fill_gradientn(colours = heat.colors(6), limits = c(-70,60), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+ scale_fill_gradientn(colours = heat.colors(6), limits = c(-150,427), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),
@@ -232,12 +232,12 @@ dens.rm <- data.frame(dens.rm)
 source("R/newggbiplot.R")
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
-                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC")]) #PC all but ksat and diff
+                                "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3")]) #PC all but ksat and diff
 
 pretty.scale <- scale.dens[,c('MAP1910',   
                               "pastdeltaP", "pasttmean",
-                              "deltaT", "sandpct", "awc", "CEC")]
-colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "CEC")
+                              "deltaT", "sandpct", "awc", "CEC", "CaCO3")]
+colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "CEC", "CaCO3")
 
 pretty.pca <- princomp(pretty.scale,
                      na.rm=TRUE) 
@@ -366,14 +366,14 @@ dev.off()
 # --------------plot out density vs. envt, pc2 vs envt, and individual species compositions vs. the envt---------------------------------------------------
 
 # hexbin plot for PLS density:
-new.dens <- merge(dens, full.comps[full.comps$period %in% "PLS", c("x", "y", "cell", "pc1", "pc2")], by = c("x", "y", "cell"))
+new.dens <- merge(dens, full.comps[full.comps$period %in% "Past", c("x", "y", "cell", "pc1", "pc2")], by = c("x", "y", "cell"))
 
 png(height = 6, width = 6, units ="in",res=200,"outputs/paper_figs/dens_PC1_hex_wCEC.png")
 
-  pls.dens.pc1.hex<- ggplot(new.dens, aes( PC1, PLSdensity)) +geom_hex() + 
+  pls.dens.pc1.hex <- ggplot(data = new.dens, aes(PC1, PLSdensity)) +geom_hex() + 
     theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-    xlab('Environmental PC1') +ylab(" PLS Tree Density /n (stems/ha)")
-  pls.dens.hex
+    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")
+  pls.dens.pc1.hex
 dev.off()
 
 
@@ -445,6 +445,10 @@ PCbins <- c( "4 - 5", "3 - 4","2 - 3", "1 - 2", "0 - 1", "-1 - 0", "-2 - -1", "-
   hist(new.dens[new.dens$PC1bins %in% PCbins[j], "pc1"], main = PCbins[j], xlab="Species Composition pc1", breaks = 25)
   }
 dev.off()
+
+
+
+
 
 # hexbin for pls oak comp:
 
@@ -1534,7 +1538,7 @@ suppressMessages(library(MASS))
 #hist(dens.pr$PLSdensity, breaks = 50)
 #dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 
-dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+dens.pr <- read.csv("outputs/cluster/bimodal_widths/Dens_Bimodal_width_0.25.csv") 
 
 
 
@@ -1557,8 +1561,8 @@ test <- dens.pr[!msk,]
 #ggplot(dens.pr, aes(x = MAP1910, y = pasttmean, color = PLSdensity))+geom_point()
 
 # basic climate plots of data with only "stable forests/savannas"
-PLS.gam1 <-gam(PLSdensity ~ MAP1910, data = train)
-PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
+PLS.gam1 <- gam(PLSdensity ~ MAP1910, data = train)
+PLS.gam1L <- gam(PLSdensity ~  MAP1910, data = train)
 
 pr <- predict(PLS.gam1L, test)
 #summary(pr)
@@ -2045,25 +2049,25 @@ This method has the benefit of predicting the probability of forest (or the prob
 
 # Modeling p(forest):
 ```{r echo = FALSE, warning = FALSE}
-dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") 
-dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+dens.pr <- read.csv("outputs/cluster/bimodal_widths/Dens_Bimodal_width_0.25.csv") 
+#dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 
 
-fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+#fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
 
-future <- fiadens[,c('x','y','FIAdensity', 'MAP2011', 'moderndeltaP', "modtmean", 'moddeltaT', 'sandpct','awc','ksat', 'fiaecotype')]
+#future <- fiadens[,c('x','y','FIAdensity', 'MAP2011', 'moderndeltaP', "modtmean", 'moddeltaT', 'sandpct','awc','ksat', 'fiaecotype')]
 
 # rename future variables to match pls
-colnames(future) <- c('x','y','PLSdensity', 'MAP1910', 'pastdeltaP', 'pasttmean', 'deltaT', "sandpct", "awc", "ksat",'fiaecotype')
+#colnames(future) <- c('x','y','PLSdensity', 'MAP1910', 'pastdeltaP', 'pasttmean', 'deltaT', "sandpct", "awc", "ksat",'fiaecotype')
 
 # dummyvariables for logistic regression:
 dens.pr$ecocode <- 0
 dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
 dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
 
-future$ecocode <- 0
-future[future$fiaecotype %in% 'Forest', ]$ecocode <- 1
-future<- future[!future$fiaecotype %in% 'prairie',]
+#future$ecocode <- 0
+#future[future$fiaecotype %in% 'Forest', ]$ecocode <- 1
+#future<- future[!future$fiaecotype %in% 'prairie',]
 
 
 #split trainfing and testing
@@ -2143,14 +2147,17 @@ PLS.lgr13L <- gam(ecocode ~ MAP1910  + pasttmean + pastdeltaP, family = 'binomia
 PLS.lgr14 <- gam(ecocode ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP)+s(sandpct)+s(awc), family = 'binomial',data = train)
 PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family = 'binomial',data = train)
 
-AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L)
+PLS.lgr15 <- gam(ecocode ~ s(PC1), family = 'binomial',data = train)
+PLS.lgr15L <- gam(ecocode ~ PC1, family = 'binomial',data = train)
+
+AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L, PLS.lgr15, PLS.lgr15L)
 
 
 
 
-AIC2.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+AIC2.df$modeltype <- c(rep('smooth', 15), rep('linear', 15))
 
-AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula )
+AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula , PLS.lgr15$formula, PLS.lgr15L$formula)
 
 AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
 library(knitr)
@@ -2180,7 +2187,7 @@ pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.c
 
 full <- dens.pr
 #full <- test
-logsample <- predict(PLS.lgr14, full, type="response")
+logsample <- predict(PLS.lgr15, full, type="response")
 full$ypred <- as.numeric(logsample)
 #summary(logsample)
 #hist(test$ypred)
@@ -2189,7 +2196,7 @@ full$ypred <- as.numeric(logsample)
 #ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
 
 ggplot(full, aes(ypred, PLSdensity))+geom_point()
-
+ggplot(full, aes(ypred, ecotype))+geom_point()
 #ggplot(test, aes (ypred, MAP1910))+geom_point()
 
 
@@ -2227,10 +2234,10 @@ p.forest
 pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full, aes(x=x, y=y, fill = ecotype))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/v1.6-5/full/logistic_pred_prob_testdata.png')
+png(width = 8, height = 4, units = 'in', res = 300, filename = '/outputs/paper_figs/logistic_pred_prob_testdata.png')
 grid.arrange(pls, p.forest, nrow = 1, ncol=2)
 dev.off()
 
@@ -2239,6 +2246,248 @@ grid.arrange(pls, p.forest, nrow = 1, ncol=2)
 dev.off()
 
 ggplot(full, aes(x = PC1, y = ypred))+geom_point()
+
+
+aspen.park<- read.csv("outputs/aspen_park_boundary.csv")
+big.woods <- read.csv("outputs/big_woods_boundary.csv")
+mn.wi.border <- read.csv("outputs/mn_wi_box_boundary.csv")
+big.woods.mn<- read.csv("outputs/mn_big_woods.csv")
+
+ap <- ggplot()+
+  geom_raster(data=full[full$cell %in% aspen.park$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Aspen parklands")
+
+
+p.ap <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% aspen.park$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("p(forest) aspen parklands")
+
+mn <- ggplot()+
+  geom_raster(data=full[full$cell %in% mn.wi.border$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Mn-wi border")
+
+
+p.mn <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% mn.wi.border$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("p(forest) mn-wi border")
+
+bw <- ggplot()+
+  geom_raster(data=full[full$cell %in% big.woods$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Big Woods, WI")
+
+
+p.bw <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% big.woods$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("P(forest) Big Woods, WI")
+
+bwmn <- ggplot()+
+  geom_raster(data=full[full$cell %in% big.woods.mn$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Big Woods, MN")
+
+
+p.bwmn <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% big.woods.mn$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("P(forest) Big Woods, MN")
+
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/predicted_class_case_studies.png")
+grid.arrange(ap,p.ap,mn,p.mn,bw,p.bw,bwmn,p.bwmn, nrow=4, ncol = 2)
+dev.off()
+
+
+
+# ------------------------can we predict Oak comopsoiton?
+
+PLS.oak <- gam(Oak ~ s(PC1), family = 'binomial',data = train)
+PLS.oakL <- gam(Oak ~ PC1, family = 'binomial',data = train)
+
+logsampleo <- predict(PLS.oak, full, type="response")
+full$ypredo <- as.numeric(logsampleo)
+#summary(logsample)
+hist(full$ypredo)
+
+ggplot(full, aes(ypredo, Oak))+geom_point()
+ggplot(full, aes(ypred, ecotype))+geom_point()
+#ggplot(test, aes (ypred, MAP1910))+geom_point()
+
+
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+full$ypredodiscrete <- cut(full$ypredo, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+full$ypredodiscrete <- as.character(full$ypredodiscrete)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+fullnona <- full[!is.na(full$ypredodiscrete),]
+# plot the discrete probability of forest 
+p.oak <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fullnona, aes(x=x, y=y, fill = ypredodiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Oak)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+p.oak
+
+# plot PLS forests:
+
+full$Oakdiscrete <- cut(full$Oak, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2), include.lowest = TRUE)
+
+
+pls.oak <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full, aes(x=x, y=y, fill = Oakdiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ labs(fill = "% Oak")+ggtitle("")
+
+pls.oak
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/logistic_pred_prob_Oak.png')
+grid.arrange(pls.oak, p.oak, nrow = 1, ncol=2)
+dev.off()
+
+
+
+
+aspen.park<- read.csv("outputs/aspen_park_boundary.csv")
+big.woods <- read.csv("outputs/big_woods_boundary.csv")
+mn.wi.border <- read.csv("outputs/mn_wi_box_boundary.csv")
+big.woods.mn<- read.csv("outputs/mn_big_woods.csv")
+
+ap <- ggplot()+
+  geom_raster(data=full[full$cell %in% aspen.park$cell,], aes(x=x, y=y, fill = Oakdiscrete))+scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) + coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("% Oak Aspen parklands")
+
+
+p.ap <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% aspen.park$cell,], aes(x=x, y=y, fill = ypredodiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Oak)")+ggtitle("p(Oak) aspen parklands")
+
+mn <- ggplot()+
+  geom_raster(data=full[full$cell %in% mn.wi.border$cell,], aes(x=x, y=y, fill = Oakdiscrete))+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("% Oak Mn-wi border")
+
+
+p.mn <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% mn.wi.border$cell,], aes(x=x, y=y, fill = ypredodiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Oak)")+ggtitle("p(Oak) mn-wi border")
+
+bw <- ggplot()+
+  geom_raster(data=full[full$cell %in% big.woods$cell,], aes(x=x, y=y, fill = Oakdiscrete))+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("% Oak Composition Big Woods")
+
+
+p.bw <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% big.woods$cell,], aes(x=x, y=y, fill = ypredodiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Oak)")+ggtitle("P(Oak) Big Woods")
+
+bwmn <- ggplot()+
+  geom_raster(data=full[full$cell %in% big.woods.mn$cell,], aes(x=x, y=y, fill = Oakdiscrete))+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("% Oak Composition Big Woods, MN")
+
+
+p.bwmn <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% big.woods.mn$cell,], aes(x=x, y=y, fill = ypredodiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Oak)")+ggtitle("P(Oak) Big Woods, MN")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/predicted_OAK_class_case_studies.png")
+grid.arrange(ap,p.ap,mn,p.mn,bw,p.bw,bwmn,p.bwmn, nrow=4, ncol = 2)
+dev.off()
+
+# ----------------------------------can we predict Hemlock?
+PLS.hem <- gam(Hemlock ~ s(PC1), family = 'binomial',data = train)
+PLS.hemL <- gam(Hemlock ~ PC1, family = 'binomial',data = train)
+
+logsampleh <- predict(PLS.hem, full, type="response")
+full$ypredh <- as.numeric(logsampleh)
+#summary(logsample)
+hist(full$ypredo)
+
+ggplot(full, aes(ypredh, Hemlock))+geom_point()
+#ggplot(full, aes(ypred, ecotype))+geom_point()
+#ggplot(test, aes (ypred, MAP1910))+geom_point()
+
+
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+full$ypredhdiscrete <- cut(full$ypredh, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+full$ypredhdiscrete <- as.character(full$ypredhdiscrete)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+fullnona <- full[!is.na(full$ypredhdiscrete),]
+# plot the discrete probability of forest 
+p.hem <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fullnona, aes(x=x, y=y, fill = ypredhdiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (Hemlock)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+p.hem
+
+# plot PLS forests:
+
+full$Hemdiscrete <- cut(full$Hemlock, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+pls.hem <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=full, aes(x=x, y=y, fill = Hemdiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ labs(fill = "% Oak")+ggtitle("")
+
+pls.hem
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/logistic_pred_prob_Hemlock.png')
+grid.arrange(pls.hem, p.hem, nrow = 1, ncol=2)
+dev.off()
+
+
+ggplot(full, aes(x = PC1, y = ypred))+geom_point()
+
+
+
 
 # use the pls model to model the modern landscape:
 fia <- future

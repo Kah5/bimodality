@@ -712,7 +712,7 @@ calc.BC(data = dens.pr, binby = 'Jul_ppetbins', density = "PLSdensity")
 calc.BC(data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity")
 dev.off()
 
-png(height = 400, width = 400, paste0('outputs/v',version,'/full/PLS_PC1_PC2_BC_bins.png'))
+png(height = 400, width = 400, paste0('outputs/v',version,'/PLS_PC1_PC2_BC_bins.png'))
 pushViewport(viewport(layout = grid.layout(2, 1)))
 print(calc.BC(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('BC for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(calc.BC(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")+ ggtitle('BC for PC2  PLS'),   vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
@@ -723,8 +723,8 @@ dev.off()
 #calc.BC(data = dens.pr, binby = 'fiaprbins', density = "PLSdensity")
 
 calc.BC(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
-calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
-calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
+#calc.BC(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
+#calc.BC(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
 #dev.off()
 
 
@@ -809,7 +809,7 @@ map.bimodal.dens <- function(data, binby, density){
 
 
 #map out bimodalities--note the region varies by bin size
-pdf(paste0('outputs/v',version,'/full/bimodal_maps.pdf'))
+pdf(paste0('outputs/v',version,'/bimodal_maps.pdf'))
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins100', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
@@ -819,18 +819,18 @@ map.bimodal.dens(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'sandbins', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'ksatbins', density = "PLSdensity")
 map.bimodal.dens(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")
-map.bimodal.dens(data = dens.pr, binby = 'Jul_ppetbins', density = "PLSdensity")
-map.bimodal.dens(data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity")
+map.bimodal.dens(data = dens.pr, binby = 'GS_ppetbins', density = "PLSdensity")
+#map.bimodal.dens(data = dens.pr, binby = 'Aug_ppetbins', density = "PLSdensity")
 
 dev.off()
 
-png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map.png'))
+png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC1_PC2_map.png'))
 pushViewport(viewport(layout = grid.layout(1, 2)))
 print(map.bimodal(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle('Bimodal Regions for PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal(data = dens.pr, binby = 'PC2bins', density = "PLSdensity") + ggtitle('Bimodal Regions for PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 
-png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_Precip_25_50_75_map.png'))
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_Precip_25_50_75_map.png'))
 pushViewport(viewport(layout = grid.layout(1, 3)))
 print(map.bimodal(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")+ ggtitle('Bimodal Regions for Precip25 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity") + ggtitle('Bimodal Regions for  Precip50 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
@@ -838,7 +838,7 @@ print(map.bimodal(data = dens.pr, binby = 'plsprbins75', density = "PLSdensity")
 dev.off()
 
 
-png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_tmean_delta_p_map.png'))
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_tmean_delta_p_map.png'))
 pushViewport(viewport(layout = grid.layout(1, 3)))
 print(map.bimodal(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")+ ggtitle('Bimodal Regions for deltaP PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('Bimodal Regions for  tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
@@ -852,21 +852,29 @@ dev.off()
 source("R/map.bimodal.5c.R")
 
 
-png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_map_5col.png'))
+png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC1_map_5col.png'))
 map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
 dev.off()
 
-png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1fiaclimate_map_5col.png'))
+png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC1_map_5col.png'))
+map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")
+dev.off()
+
+png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC2_map_5col.png'))
+map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "PLSdensity")
+dev.off()
+
+png(height = 6, width =5 , units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC1fiaclimate_map_5col.png'))
 map.bimodal.5c(data = dens.pr, binby = 'PC1fiabins', density = "PLSdensity")
 dev.off()
 
-png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_PC1_PC2_map_5col.png'))
+png(height = 6, width = 10, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_PC1_PC2_map_5col.png'))
 pushViewport(viewport(layout = grid.layout(1, 2)))
 print(map.bimodal.5c(data = dens.pr, binby = 'PC1bins', density = "PLSdensity")+ ggtitle(' PC1 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal.5c(data = dens.pr, binby = 'PC2bins', density = "PLSdensity") + ggtitle('PC2 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
 dev.off()
 
-png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_Precip_25_50_75_map_5col.png'))
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_Precip_25_50_75_map_5col.png'))
 pushViewport(viewport(layout = grid.layout(1, 3)))
 print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins25', density = "PLSdensity")+ ggtitle(' Precip25 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins50', density = "PLSdensity") + ggtitle('Precip50 PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
@@ -874,7 +882,7 @@ print(map.bimodal.5c(data = dens.pr, binby = 'plsprbins75', density = "PLSdensit
 dev.off()
 
 
-png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/full/PLS_tmean_delta_p_map_5col.png'))
+png(height = 6, width = 15, units= 'in',  res= 300, paste0('outputs/v',version,'/PLS_tmean_delta_p_map_5col.png'))
 pushViewport(viewport(layout = grid.layout(1, 3)))
 print(map.bimodal.5c(data = dens.pr, binby = 'pastdeltPbins', density = "PLSdensity")+ ggtitle('deltaP PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map.bimodal.5c(data = dens.pr, binby = 'pasttmeanbins', density = "PLSdensity") + ggtitle('tmean PLS'),   vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
@@ -930,18 +938,23 @@ df.2.6 <- bimodal.df(data = dens.pr, binby = 'PC1bins', density = "PLSdensity", 
 a <- nrow(df.mod[df.mod$bimodal == "Bimodal",])/nrow(df.mod)
 # 0.1570574
 # with CEC: 0.3977
+# with Caco3: 0.3621167
 b <- nrow(df.new[df.new$bimodal == "Bimodal",])/nrow(df.new)
 #  0.1755613
 # with CEC: 0.379811
+# with Caco3: 0.3839594
 c <- nrow(df.8.5[df.8.5$bimodal == "Bimodal",])/nrow(df.8.5)
 # 0.204107
 # with CEC: 0.396691
+# with Caco3: 0.4117376
 d <- nrow(df.4.5[df.4.5$bimodal == "Bimodal",])/nrow(df.4.5)
 #0.2019632
 # with CEC: 0.40
+# with Caco3: 0.4070317
 e <- nrow(df.2.6[df.2.6$bimodal == "Bimodal",])/nrow(df.2.6)
 #0.176464
 # with CEC: 0.3699
+# with Caco3: 0.3680692
 
 
 ggplot(df.new, aes(x = MAP1910, y = PLSdensity, color = classification))+geom_point()+ 

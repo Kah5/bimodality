@@ -2049,7 +2049,7 @@ This method has the benefit of predicting the probability of forest (or the prob
 
 # Modeling p(forest):
 ```{r echo = FALSE, warning = FALSE}
-dens.pr <- read.csv("outputs/cluster/bimodal_widths/Dens_Bimodal_width_0.25.csv") 
+dens.pr <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv") 
 #dens.pr <- read.csv("outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
 
 
@@ -2237,11 +2237,11 @@ pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),
   labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-png(width = 8, height = 4, units = 'in', res = 300, filename = '/outputs/paper_figs/logistic_pred_prob_testdata.png')
+png(width = 8, height = 4, units = 'in', res = 300, filename = '/outputs/paper_figs/logistic_pred_prob_testdata_pls.png')
 grid.arrange(pls, p.forest, nrow = 1, ncol=2)
 dev.off()
 
-png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/logistic_pred_prob_testdata.png')
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/logistic_pred_prob_testdata_pls.png')
 grid.arrange(pls, p.forest, nrow = 1, ncol=2)
 dev.off()
 
@@ -2252,6 +2252,8 @@ aspen.park<- read.csv("outputs/aspen_park_boundary.csv")
 big.woods <- read.csv("outputs/big_woods_boundary.csv")
 mn.wi.border <- read.csv("outputs/mn_wi_box_boundary.csv")
 big.woods.mn<- read.csv("outputs/mn_big_woods.csv")
+p.f.border <- read.csv("outputs/pf_border.csv")
+hemlock.mtn <- read.csv("outputs/hemlock_region.csv")
 
 ap <- ggplot()+
   geom_raster(data=full[full$cell %in% aspen.park$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
@@ -2298,8 +2300,31 @@ p.bwmn <- ggplot()+
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("P(forest) Big Woods, MN")
 
 
+hem <- ggplot()+
+  geom_raster(data=full[full$cell %in% hemlock.mtn$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Hemlock Mtn")
+
+
+p.hem <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% hemlock.mtn$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("p(forest) hemlock mtn")
+
+pf <- ggplot()+
+  geom_raster(data=full[full$cell %in% p.f.border$cell,], aes(x=x, y=y, fill = ecotype))+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ggtitle("Actual Class Prairie-Forest boundary")
+
+
+p.pf <- ggplot()+
+  geom_raster(data=fullnona[fullnona$cell %in% p.f.border$cell,], aes(x=x, y=y, fill = ypreddiscrete))+
+   scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = "right",legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("p(forest) Prairie-Forest boundary")
+
+
 png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/predicted_class_case_studies.png")
-grid.arrange(ap,p.ap,mn,p.mn,bw,p.bw,bwmn,p.bwmn, nrow=4, ncol = 2)
+grid.arrange(ap,p.ap,mn,p.mn,bw,p.bw,bwmn,p.bwmn,hem, p.hem,pf,p.pf, nrow=6, ncol = 2)
 dev.off()
 
 

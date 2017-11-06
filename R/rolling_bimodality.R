@@ -15,8 +15,13 @@ dens.pr <- read.csv("outputs/v1.6-5/full/dens_pr_dataframe_full.csv")
 new.pcs <- dens.pr[,c("x","y", "cell", "PC1", "PC2", "MAP1910", "MAP2011", "moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT", "sandpct", "awc", "ksat", "CEC","GS_ppet", "PLSdensity")]
 
 pls.full <- full[full$period %in% "PLS",]
+fia.full <- full[full$period %in% "FIA",]
+fia.full2 <- fia.full[,1:48]
+fia.full2$Density <- fia.full$Density
 
 pls.full <- merge(pls.full[,1:47], new.pcs )
+fia.full <- merge(fia.full2, new.pcs , by = c("x","y", "cell"))
+
 
 #rolling BC Function (this only works if the data are ordered by the environment)
 
@@ -44,18 +49,18 @@ rollBC_r <-  function(x, y, xout, width, df) { # x and y are the environment val
 }
 
 
-
+# -------------------for the PLS time period:
 ordered <- pls.full[order(pls.full$PC1),]
 ordered$rownum <- 1:length(ordered$PC1)
 
+# density
 a <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 1, df = ordered)
 b <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.5, df = ordered)
 c <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df= ordered)
 d <- rollBC_r(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df= ordered)
 
-#ordered <- pls.full[order(pls.full$PC1),]
-#ordered$rownum <- 1:length(ordered$PC1)
 
+# species pc2
 e <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered)
 f <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered)
 g <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered)
@@ -65,7 +70,28 @@ png(height = 12, width = 7, units = "in", res = 200, "outputs/cluster/nsamples_r
 grid.arrange(a,e,b,f,c,g,d,h, ncol = 2, nrow=4)
 dev.off()
 
+# ---------------------for the FIA time period---------------:
+ordered <- fia.full[order(fia.full$PC1),]
+ordered$rownum <- 1:length(ordered$PC1)
 
+# fia density
+a <- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered)
+b <- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered)
+c <- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df= ordered)
+d <- rollBC_r(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df= ordered)
+
+# species pc2
+e <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered)
+f <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered)
+g <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered)
+h <- rollBC_r(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered)
+
+png(height = 12, width = 7, units = "in", res = 200, "outputs/cluster/nsamples_rolling_bimodality_FIA_pca_new.png")
+grid.arrange(a,e,b,f,c,g,d,h, ncol = 2, nrow=4)
+dev.off()
+
+
+# -------------------where do these bimodalities occur in space?
 # make a function that maps out the bimodal area and saves the bimodal files as a csv:
 
 rollBC_map = function(x, y, xout, width, df, bim.df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
@@ -116,6 +142,11 @@ rollBC_map = function(x, y, xout, width, df, bim.df) { # x and y are the environ
       
       }
 
+#-------------------for PLS time period:
+ordered <- pls.full[order(pls.full$PC1),]
+ordered$rownum <- 1:length(ordered$PC1)
+
+# species pc2
 a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Comp_Bimodal")
 b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Comp_Bimodal")
 c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Comp_Bimodal")
@@ -127,12 +158,13 @@ f <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, wid
 g <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Dens_Bimodal")
 h <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Dens_Bimodal")
 
-
+# Oak composition
 i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Oak_Bimodal")
 j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Oak_Bimodal")
 k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Oak_Bimodal")
 l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Oak_Bimodal")
 
+# hemlock composition
 m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Hemlock_Bimodal")
 n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Hemlock_Bimodal")
 o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Hemlock_Bimodal")
@@ -155,6 +187,54 @@ dev.off()
 png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_maps_Hemlock_pls_pcanew.png")
 grid.arrange(m,n,o,p, nrow=4, ncol = 1)
 dev.off()
+
+# -------------------------------for FIA time period-----------
+ordered <- fia.full[order(fia.full$PC1),]
+ordered$rownum <- 1:length(ordered$PC1)
+
+# species pc2
+a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Comp_Bimodal")
+b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Comp_Bimodal")
+c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Comp_Bimodal")
+d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Comp_Bimodal")
+
+# density: 
+e <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Dens_Bimodal")
+f <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Dens_Bimodal")
+g <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Dens_Bimodal")
+h <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Dens_Bimodal")
+
+# Oak composition
+i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Oak_Bimodal")
+j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Oak_Bimodal")
+k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Oak_Bimodal")
+l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Oak_Bimodal")
+
+# hemlock composition
+m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Hemlock_Bimodal")
+n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Hemlock_Bimodal")
+o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Hemlock_Bimodal")
+p <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Hemlock_Bimodal")
+
+
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_FIA_maps_species_pc2_pls_pcanew.png")
+grid.arrange(a,b,c,d, nrow=4, ncol = 1)
+dev.off()
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_FIA_maps_density_pls_pcanew.png")
+grid.arrange(e,f,g,h, nrow=4, ncol = 1)
+dev.off()
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_FIA_maps_Oak_pls_pcanew.png")
+grid.arrange(i,j,k,l, nrow=4, ncol = 1)
+dev.off()
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/rolling_bimodal_FIA_maps_Hemlock_pls_pcanew.png")
+grid.arrange(m,n,o,p, nrow=4, ncol = 1)
+dev.off()
+
+
 
 
 # now lets determine the PC bins for bimodality:
@@ -179,7 +259,10 @@ range(df.b[df.b$bimodal %in% "Bimodal" & df.b$PC1 > -0.5 & df.b$PC1 < 0.5,]$PC1)
 range(df.b[df.b$bimodal %in% "Bimodal" & df.b$PC1 > 0.5 & df.b$PC1 < 1.6,]$PC1)
 range(df.b[df.b$bimodal %in% "Bimodal" & df.b$PC1 > 1.6 & df.b$PC1 < 3.5,]$PC1)
 
-# lets look at several case studies:
+
+
+
+# ----------------------------------CASE STUDIES--------------------------------:
 ggplot(df.b, aes(x,y, fill = bimodal))+geom_raster()+geom_polygon()
 
 df.rast <- df.b[,c("x", "y", "cell")]

@@ -465,10 +465,10 @@ dev.off()
 
 
 # Prairie-forest boundary--Minnesota
-pf1 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Prairie-forest boundary, MN Bimodal Regions")
-pf2 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Prairie-forest boundary, MN FIA Density")
-pf3 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Prairie-forest boundary, MN Oak Composition")
-pf4 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Prairie-forest boundary, MN Environmental PC1")
+pf1 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("P-F boundary Bimodal Regions")
+pf2 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("P-F boundary FIA Density")
+pf3 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("P-F boundary Oak Composition")
+pf4 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("P-F boundary Environmental PC1")
 
 pf7 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA tree density histogram")
 pf5 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA %Oak histogram")

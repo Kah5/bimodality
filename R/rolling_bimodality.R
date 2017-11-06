@@ -94,7 +94,7 @@ dev.off()
 # -------------------where do these bimodalities occur in space?
 # make a function that maps out the bimodal area and saves the bimodal files as a csv:
 
-rollBC_map = function(x, y, xout, width, df, bim.df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
+rollBC_map = function(x, y, xout, width, df, period, bim.df) { # x and y are the environment val and the density/comp that we want to determin bimodality with
   
     out <- data.frame(xout = xout,
                       bc = NA,
@@ -113,7 +113,7 @@ rollBC_map = function(x, y, xout, width, df, bim.df) { # x and y are the environ
      df2$bimodal <- ifelse(df2$bc >= 0.55 & df2$pval < 0.05, "Bimodal", "Unimodal")
      bim2 <- ifelse(y == ordered$Density, "Density", "species pc2")
      # write df2 to a csv file to work with later
-     write.csv(df2, paste0("outputs/cluster/bimodal_widths/", bim.df, "_width_", width, ".csv"), row.names = FALSE)
+     write.csv(df2, paste0("outputs/cluster/bimodal_widths/", period, "_",bim.df, "_width_", width, ".csv"), row.names = FALSE)
      
     
      
@@ -147,28 +147,28 @@ ordered <- pls.full[order(pls.full$PC1),]
 ordered$rownum <- 1:length(ordered$PC1)
 
 # species pc2
-a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Comp_Bimodal")
-b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Comp_Bimodal")
-c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Comp_Bimodal")
-d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Comp_Bimodal")
+a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, period = "PLS",bim.df = "Comp_Bimodal")
+b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, period = "PLS",bim.df = "Comp_Bimodal")
+c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered,period = "PLS", bim.df = "Comp_Bimodal")
+d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered,period = "PLS", bim.df = "Comp_Bimodal")
 
 # density: 
-e <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Dens_Bimodal")
-f <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Dens_Bimodal")
-g <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Dens_Bimodal")
-h <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Dens_Bimodal")
+e <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 1, df = ordered,period = "PLS", bim.df = "Dens_Bimodal")
+f <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.5, df = ordered, period = "PLS",bim.df = "Dens_Bimodal")
+g <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.25, df = ordered,period = "PLS", bim.df = "Dens_Bimodal")
+h <- rollBC_map(x = ordered$PC1, y = ordered$PLSdensity, xout = ordered$PC1, width = 0.15, df = ordered, period = "PLS",bim.df = "Dens_Bimodal")
 
 # Oak composition
-i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Oak_Bimodal")
-j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Oak_Bimodal")
-k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Oak_Bimodal")
-l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Oak_Bimodal")
+i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered, period = "PLS",bim.df = "Oak_Bimodal")
+j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, period = "PLS",bim.df = "Oak_Bimodal")
+k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered,period = "PLS", bim.df = "Oak_Bimodal")
+l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, period = "PLS",bim.df = "Oak_Bimodal")
 
 # hemlock composition
-m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Hemlock_Bimodal")
-n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Hemlock_Bimodal")
-o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Hemlock_Bimodal")
-p <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Hemlock_Bimodal")
+m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, period = "PLS",bim.df = "Hemlock_Bimodal")
+n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, period = "PLS",bim.df = "Hemlock_Bimodal")
+o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered,period = "PLS", bim.df = "Hemlock_Bimodal")
+p <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.15, df = ordered, period = "PLS",bim.df = "Hemlock_Bimodal")
 
 
 
@@ -193,28 +193,28 @@ ordered <- fia.full[order(fia.full$PC1),]
 ordered$rownum <- 1:length(ordered$PC1)
 
 # species pc2
-a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Comp_Bimodal")
-b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Comp_Bimodal")
-c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Comp_Bimodal")
-d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Comp_Bimodal")
+a <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 1, df = ordered, period = "FIA", bim.df = "Comp_Bimodal")
+b <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.5, df = ordered, period = "FIA",bim.df = "Comp_Bimodal")
+c <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.25, df = ordered,period = "FIA", bim.df = "Comp_Bimodal")
+d <- rollBC_map(x = ordered$PC1, y = ordered$pc2, xout = ordered$PC1, width = 0.15, df = ordered, period = "FIA",bim.df = "Comp_Bimodal")
 
 # density: 
-e <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Dens_Bimodal")
-f <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Dens_Bimodal")
-g <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Dens_Bimodal")
-h <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Dens_Bimodal")
+e <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 1, df = ordered,period = "FIA", bim.df = "Dens_Bimodal")
+f <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.5, df = ordered, period = "FIA",bim.df = "Dens_Bimodal")
+g <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.25, df = ordered, period = "FIA",bim.df = "Dens_Bimodal")
+h <- rollBC_map(x = ordered$PC1, y = ordered$Density, xout = ordered$PC1, width = 0.15, df = ordered, period = "FIA",bim.df = "Dens_Bimodal")
 
 # Oak composition
-i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Oak_Bimodal")
-j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Oak_Bimodal")
-k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Oak_Bimodal")
-l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Oak_Bimodal")
+i <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 1, df = ordered,period = "FIA", bim.df = "Oak_Bimodal")
+j <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.5, df = ordered, period = "FIA",bim.df = "Oak_Bimodal")
+k <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.25, df = ordered, period = "FIA",bim.df = "Oak_Bimodal")
+l <- rollBC_map(x = ordered$PC1, y = ordered$Oak, xout = ordered$PC1, width = 0.15, df = ordered, period = "FIA",bim.df = "Oak_Bimodal")
 
 # hemlock composition
-m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, bim.df = "Hemlock_Bimodal")
-n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, bim.df = "Hemlock_Bimodal")
-o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered, bim.df = "Hemlock_Bimodal")
-p <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.15, df = ordered, bim.df = "Hemlock_Bimodal")
+m <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 1, df = ordered, period = "FIA",bim.df = "Hemlock_Bimodal")
+n <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.5, df = ordered, period = "FIA",bim.df = "Hemlock_Bimodal")
+o <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.25, df = ordered, period = "FIA",bim.df = "Hemlock_Bimodal")
+p <- rollBC_map(x = ordered$PC1, y = ordered$Hemlock, xout = ordered$PC1, width = 0.15, df = ordered, period = "FIA",bim.df = "Hemlock_Bimodal")
 
 
 
@@ -239,7 +239,7 @@ dev.off()
 
 # now lets determine the PC bins for bimodality:
 
-df.b <- read.csv("outputs/cluster/bimodal_widths/Dens_Bimodal_width_0.25.csv")
+df.b <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
 ggplot(df.b[df.b$n >= 50,], aes(x, y, fill = bimodal))+geom_raster()
 ggplot(df.b[ df.b$PC1 > 0.5 & df.b$PC1 < 1,], aes(PLSdensity, fill = bimodal))+geom_histogram(position = "identity", alpha = 0.5)
 
@@ -311,7 +311,7 @@ write.csv(big.woods.mn, "outputs/mn_big_woods.csv", row.names = FALSE)
 write.csv(p.f.border, "outputs/pf_border.csv", row.names = FALSE)
 write.csv(hemlock.mtn, "outputs/hemlock_region.csv", row.names = FALSE)
 
-# plot out histograms and maps of the case studies:
+# plot out histograms and maps of the case studies for the PLS time period:
 
 # aspen parklands
 ap1 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Aspen Parklands Bimodal Regions")
@@ -319,9 +319,6 @@ ap2 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = PLSdensity)
 ap3 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Aspen Parklands Oak Composition")
 ap4 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = Poplar))+geom_raster()+ggtitle("Aspen Parklands Poplar Composition")
 ap5 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Aspen Parklands PC1")
-
-
-
 
 ap6 <-ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(Poplar))+geom_histogram()+ggtitle("Aspen Parklands % Poplar Histogram")
 ap8 <- ggplot(df.b[df.b$cell %in% aspen.park$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("Aspen Parklands PLS density Histogram")
@@ -404,6 +401,103 @@ h6 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(Hemlock))+geom_histogra
 png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/Hemlock_Region_boundary_rolling_bimodal_maps.png")
 grid.arrange(h1, h2, h3, h4,h8, h5, h6, h7, nrow=4, ncol = 2)
 dev.off()
+
+
+# ---------------------------Plot out case studies for the FIA time period
+df.f <- read.csv("outputs/cluster/bimodal_widths/FIA_Dens_Bimodal_width_0.25.csv")
+
+# aspen parklands
+ap1 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Aspen Parklands Bimodal Regions")
+ap2 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Aspen Parklands FIA density")
+ap3 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Aspen Parklands Oak Composition")
+ap4 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(x,y, fill = Poplar))+geom_raster()+ggtitle("Aspen Parklands Poplar Composition")
+ap5 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Aspen Parklands PC1")
+
+ap6 <-ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(Poplar))+geom_histogram()+ggtitle("Aspen Parklands % Poplar Histogram")
+ap8 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("Aspen Parklands FIA density Histogram")
+ap7 <- ggplot(df.f[df.f$cell %in% aspen.park$cell,], aes(Oak))+geom_histogram()+ggtitle("Aspen Parklands % Oak Histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/aspen_parkland_rolling_bimodal_maps_FIA.png")
+grid.arrange(ap1,ap2,ap3,ap4,ap5, ap6, ap7, ap8, nrow=4, ncol = 2)
+dev.off()
+
+# big woods--Wisconsin
+b1<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Big Woods Bimodal Regions")
+b2<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Big Woods FIA Density")
+b3<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Big Woods Oak Composition")
+b4<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Big Woods Environmental PC1")
+
+b7<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA tree density histogram")
+b5<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA %Oak histogram")
+
+b6<- ggplot(df.f[df.f$cell %in% big.woods$cell,], aes(Elm))+geom_histogram()+ggtitle("FIA %Elm histogram")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/big_woods_rolling_bimodal_maps_FIA.png")
+grid.arrange(b1,b2,b3,b4,b5, b6, b7, nrow=4, ncol = 2)
+dev.off()
+
+# big woods--Minnesota
+bw1<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Big Woods, MN Bimodal Regions")
+bw2<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Big Woods, MN FIA Density")
+bw3<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Big Woods, MN Oak Composition")
+bw4<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Big Woods, MN Environmental PC1")
+
+bw7<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA tree density histogram")
+bw5<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA %Oak histogram")
+
+bw6<- ggplot(df.f[df.f$cell %in% big.woods.mn$cell,], aes(Elm))+geom_histogram()+ggtitle("FIA %Elm histogram")
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/big_woods_minnesota_rolling_bimodal_maps_FIA.png")
+grid.arrange(bw1,bw2,bw3,bw4,bw5, bw6, bw7, nrow=4, ncol = 2)
+dev.off()
+
+# mn.wi.border
+m1<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("MN/WI border Bimodal Regions")
+m2<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("MN/WI border FIA density")
+m3<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("MN/WI border Oak Composition")
+m4<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("MN/WI border Environmental PC1")
+
+m7<-ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA density histogram")
+m5<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA % Oak histogram")
+m6<- ggplot(df.f[df.f$cell %in% mn.wi.border$cell,], aes(Hemlock))+geom_histogram()+ggtitle("FIA % Hemlock histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/mn_wi_border_rolling_bimodal_maps_FIA.png")
+grid.arrange(m1,m2,m3,m4,m5, m6, m7, nrow=4, ncol = 2)
+dev.off()
+
+
+# Prairie-forest boundary--Minnesota
+pf1 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Prairie-forest boundary, MN Bimodal Regions")
+pf2 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Prairie-forest boundary, MN FIA Density")
+pf3 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Prairie-forest boundary, MN Oak Composition")
+pf4 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Prairie-forest boundary, MN Environmental PC1")
+
+pf7 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA tree density histogram")
+pf5 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA %Oak histogram")
+
+pf6 <- ggplot(df.f[df.f$cell %in% p.f.border$cell,], aes(Elm))+geom_histogram()+ggtitle("FIA %Elm histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/prairie_forest_boundary_rolling_bimodal_maps_FIA.png")
+grid.arrange(pf1,pf2,pf3,pf4,pf5, pf6, pf7, nrow=4, ncol = 2)
+dev.off()
+
+# Hemlocak region--Wisconsin/Upper Mi
+h1 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Hemlock Region, Bimodal Regions")
+h2 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Hemlock Region, FIA Density")
+h3 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Hemlock Region, Oak Composition")
+h8 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(x,y, fill = Hemlock))+geom_raster()+ggtitle("Hemlock Region, Hemlock Composition")
+h4 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Hemlock Region, Environmental PC1")
+
+h7 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("FIA tree density histogram")
+h5 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(Oak))+geom_histogram()+ggtitle("FIA %Oak histogram")
+
+h6 <- ggplot(df.f[df.f$cell %in% hemlock.mtn$cell,], aes(Hemlock))+geom_histogram()+ggtitle("FIA %Hemlock histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/Hemlock_Region_boundary_rolling_bimodal_maps_FIA.png")
+grid.arrange(h1, h2, h3, h4,h8, h5, h6, h7, nrow=4, ncol = 2)
+dev.off()
+
+
+
+
 
 # test code for identifying ranges:
 

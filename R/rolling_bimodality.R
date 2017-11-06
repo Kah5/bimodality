@@ -199,22 +199,34 @@ plot(extent(x = c(-55000, 190000, y = c(1480000, 1280000))),col = "black", add =
 # extent for Wisconsin Big Woods:
 plot(extent(x = c(350000, 640000), y = c( 710000, 930000)),col = "black", add = TRUE)
 
-# extent for Hemlock/Minnesota:
+# extent for Wisconsin/Minnesota border:
 plot(extent(x = c(170000,450000), y = c(950000, 1150000)),col = "black", add = TRUE)
+
+# extent for Hemlock region:
+plot(extent(x = c(400000, 750000), y = c(950000, 1150000)),col = "black", add = TRUE)
+
 
 # extent for Minnesota big woods/prairie:
 plot(extent(x = c(95000,300000), y = c(850000, 1100000)),col = "black", add = TRUE)
+
+# extent for Minnesota P-Forest boudary:
+plot(extent(x = c(-10000,180000), y = c( 1050000, 1280000)),col = "black", add = TRUE)
 
 # crop to make a raster of ech of  these extents out:
 aspen.park <- as.data.frame(crop(df.rast, extent(x = c(-55000, 190000), y = c( 1280000, 1480000))), xy= TRUE)
 big.woods <- as.data.frame(crop(df.rast, extent(x = c(350000, 640000), y = c( 710000, 930000))), xy = TRUE)
 mn.wi.border <- as.data.frame(crop(df.rast, extent(x = c(170000,450000), y = c(950000, 1150000))), xy = TRUE)
 big.woods.mn <- as.data.frame(crop(df.rast, extent(x = c(95000,300000), y = c(850000, 1100000))), xy = TRUE)
+p.f.border <- as.data.frame(crop(df.rast, extent(x = c(-10000,180000), y = c( 1050000, 1280000))), xy = TRUE)
+hemlock.mtn <- as.data.frame(crop(df.rast, extent(x = c(400000, 750000), y = c(950000, 1150000))), xy = TRUE)
+
 # save these grid cell indices:
 write.csv(aspen.park, "outputs/aspen_park_boundary.csv", row.names = FALSE)
 write.csv(big.woods, "outputs/big_woods_boundary.csv", row.names = FALSE)
 write.csv(mn.wi.border, "outputs/mn_wi_box_boundary.csv", row.names = FALSE)
 write.csv(big.woods.mn, "outputs/mn_big_woods.csv", row.names = FALSE)
+write.csv(p.f.border, "outputs/pf_border.csv", row.names = FALSE)
+write.csv(hemlock.mtn, "outputs/hemlock_region.csv", row.names = FALSE)
 
 # plot out histograms and maps of the case studies:
 
@@ -276,6 +288,38 @@ m6<- ggplot(df.b[df.b$cell %in% mn.wi.border$cell,], aes(Hemlock))+geom_histogra
 
 png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/mn_wi_border_rolling_bimodal_maps.png")
 grid.arrange(m1,m2,m3,m4,m5, m6, m7, nrow=4, ncol = 2)
+dev.off()
+
+
+# Prairie-forest boundary--Minnesota
+pf1 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Prairie-forest boundary, MN Bimodal Regions")
+pf2 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Prairie-forest boundary, MN PLS Density")
+pf3 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Prairie-forest boundary, MN Oak Composition")
+pf4 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Prairie-forest boundary, MN Environmental PC1")
+
+pf7 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("PLS PLS tree density histogram")
+pf5 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(Oak))+geom_histogram()+ggtitle("PLS %Oak histogram")
+
+pf6 <- ggplot(df.b[df.b$cell %in% p.f.border$cell,], aes(Elm))+geom_histogram()+ggtitle("PLS %Elm histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/prairie_forest_boundary_rolling_bimodal_maps.png")
+grid.arrange(pf1,pf2,pf3,pf4,pf5, pf6, pf7, nrow=4, ncol = 2)
+dev.off()
+
+# Hemlocak region--Wisconsin/Upper Mi
+h1 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(x,y, fill = bimodal))+geom_raster()+ggtitle("Hemlock Region, Bimodal Regions")
+h2 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(x,y, fill = PLSdensity))+geom_raster()+ggtitle("Hemlock Region, PLS Density")
+h3 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(x,y, fill = Oak))+geom_raster()+ggtitle("Hemlock Region, Oak Composition")
+h8 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(x,y, fill = Hemlock))+geom_raster()+ggtitle("Hemlock Region, Hemlock Composition")
+h4 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(x,y, fill = PC1))+geom_raster()+ggtitle("Hemlock Region, Environmental PC1")
+
+h7 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(PLSdensity))+geom_histogram()+ggtitle("PLS PLS tree density histogram")
+h5 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(Oak))+geom_histogram()+ggtitle("PLS %Oak histogram")
+
+h6 <- ggplot(df.b[df.b$cell %in% hemlock.mtn$cell,], aes(Hemlock))+geom_histogram()+ggtitle("PLS %Hemlock histogram")
+
+png(width = 8, height = 11, units = "in", res = 300, "outputs/cluster/Hemlock_Region_boundary_rolling_bimodal_maps.png")
+grid.arrange(h1, h2, h3, h4,h8, h5, h6, h7, nrow=4, ncol = 2)
 dev.off()
 
 # test code for identifying ranges:

@@ -20,7 +20,9 @@ library(maps)
 library(sp)
 library(plyr)
 
+# figure 1 A: Map of pls bimodality
 
+# need to set up state outlines:
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states)<-~long+lat
@@ -57,6 +59,143 @@ dev.off()
 
 
 
+
+
+# B: Species clusters:
+# read in the species classifications from" Species_clustering.R"
+clust_plot6<- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+
+pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+pls.clust 
+
+# merge clust_plot6 and dens.pr
+
+dens.clust<- merge(dens.pr, clust_plot6[,c("x","y", "cell", "speciescluster")], by = c("x", "y", "cell"))
+
+png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
+ggplot(dens.clust, aes(PC1,PLSdensity, color = speciescluster))+geom_point()
+dev.off()
+
+# C: Density vs PC1 as a hexbin plot
+pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)
+pls.dens.pc1.hex
+
+# D: Histogram colored by species cluster:
+# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+clust.hist<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist
+
+# E: map of bimodal regions:
+# read in data from the rolling bimodality:
+pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
+
+bimodal.map <- ggplot(pls.roll.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                      axis.title.x=element_blank(),
+                                                                                                      axis.title.y=element_blank())
+   
+bimodal.map 
+
+plot5 <-grid.arrange(pls.map, arrangeGrob(pls.clust, pls.dens.pc1.hex, clust.hist, ncol=1), 
+                    ncol=2, widths=c(1,1.2))
+
+
+grid.arrange(pls.map, arrangeGrob(pls.map,pls.clust,pls.dens.pc1.hex, heights=c(3/4, 1/4, 1/4), ncol=1),
+              ncol=2)
+
+# write out new figure 1 to a png
+png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig1_nov.png")
+grid.arrange(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, bimodal.map, ncol = 2)
+dev.off()
+
+
+```
+
+# lets make figure 2 with FIA only plots
+
+
+
+
+```{r}
+fia.bim <- read.csv("outputs/cluster/bimodal_widths/FIA_Dens_Bimodal_width_0.25.csv")
+
+# A: map of density
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.bim, aes(x=x, y=y, fill = Density))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)
+
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_map.png")
+fia.map
+dev.off()
+
+# B: Map of species clusters
+
+# from species_clustering.R:
+species.clust <- read.csv("outputs/cluster/density_fia_with_clusters.csv")
+
+fia.clust <- ggplot(species.clust, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00',
+                               '#ffff33'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+fia.clust 
+
+# merge clust_plot6 and dens.pr
+
+fia.dens.clust<- merge(fia.bim, species.clust[,c("x","y", "cell", "speciescluster")], by = c("x", "y", "cell"))
+
+png("outputs/cluster/density_vs_envt_pc1_by_species_cluster_fia.png")
+ggplot(fia.dens.clust, aes(PC1,Density, color = speciescluster))+geom_point()
+dev.off()
+
+# C: Density vs PC1 as a hexbin plot
+fia.dens.pc1.hex <- ggplot(data = fia.dens.clust, aes(PC1, Density)) +geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)
+fia.dens.pc1.hex
+
+# D: Histogram colored by species cluster:
+# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+f.clust.hist <- ggplot(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+f.clust.hist
+
+# E: map of bimodal regions:
+# read in data from the rolling bimodality:
+
+fbimodal.map <- ggplot(fia.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),axis.title.y=element_blank())
+   
+fbimodal.map 
+
+
+# write out new figure 1 to a png
+png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig2_nov.png")
+grid.arrange(fia.map, fia.clust, fia.dens.pc1.hex, f.clust.hist, fbimodal.map, ncol = 2)
+dev.off()
+
+```
+
+
+# more supplemental figures
+```{r}
+
 ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -83,58 +222,6 @@ ppetbins.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
 
 png("/Users/kah/Documents/bimodality/outputs/paper_figs/ppet_BINS_GS_map.png")
 ppetbins.map
-dev.off()
-
-# read in the species classifications from" Species_clustering.R"
-clust_plot6<- read.csv('outputs/cluster/density_pls_with_clusters.csv')
-
-pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
-  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                                              axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
-pls.clust 
-
-# merge clust_plot6 and dens.pr
-
-dens.clust<- merge(dens.pr, clust_plot6[,c("x","y", "cell", "speciescluster")], by = c("x", "y", "cell"))
-
-png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
-ggplot(dens.clust, aes(PC1,PLSdensity, color = speciescluster))+geom_point()
-dev.off()
-
-pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
-    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)
-pls.dens.pc1.hex
-
-
-# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-clust.hist<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
-clust.hist
-
-# read in data from the rolling bimodality:
-pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
-
-bimodal.map <- ggplot(pls.roll.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
-       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                      axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                                      axis.title.x=element_blank(),
-                                                                                                      axis.title.y=element_blank())
-   
-bimodal.map 
-
-plot5<-grid.arrange(pls.map, arrangeGrob(pls.clust, pls.dens.pc1.hex, clust.hist, ncol=1), 
-                    ncol=2, widths=c(1,1.2))
-
-p = rectGrob()
-grid.arrange(pls.map, arrangeGrob(pls.map,pls.clust,pls.dens.pc1.hex, heights=c(3/4, 1/4, 1/4), ncol=1),
-              ncol=2)
-
-# write out to a png
-png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig1_nov.png")
-grid.arrange(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, bimodal.map, ncol = 2)
 dev.off()
 
 # read in the composition data for PLS and FIA (PC1 and PC2):
@@ -220,6 +307,7 @@ pls.Pine.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
                         axis.title.y=element_blank())
 pls.Pine.map
 dev.off()
+
 # --------------------What is the relationship between tree density and Oak % composition?------------------------------------------------------------------
 comp.dens<- merge(full.comps[full.comps$period %in% "PLS",], dens.pr[,c("x","y", "cell", "PLSdensity")], by = c("x", "y", "cell"))
 
@@ -1314,7 +1402,7 @@ ggplot(kept.table, aes(x = classification, y = freq))+geom_bar(stat='identity')+
 
 
 
-### Figure 2: 2 maps of rcp 8.5 
+### Figure 3: 2 maps of rcp 8.5 
 Projected stability of the Midwestern vegetation in 2070-2099 based on RCP8.5 CMIP5 climate projections from model CCESM4 and historic vegetation-environment relationships (A), and modern vegetation-environment relationships (B). Bimodal places in the future are those with climates matching the bimodal climate space (based on PC1) in the past and modern landscape respectively. No-analog climates were determined with respect to the climate space of the past in (A), and with respect to modern climate in (B).
 ```{r, echo=FALSE,warning = FALSE}
 

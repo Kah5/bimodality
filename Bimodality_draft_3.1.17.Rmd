@@ -54,6 +54,9 @@ png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_map.png")
 pls.map
 dev.off()
 
+
+
+
 ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -69,7 +72,7 @@ ppet.map
 dev.off()
 
 ppetbins.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=dens.pr, aes(x=x, y=y, fill = Aug_ppetbins))+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppetbins))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
  #scale_fill_gradientn(colours = heat.colors(6), limits = c(-70,60), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
@@ -78,12 +81,65 @@ ppetbins.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
                         axis.title.x=element_blank(),
                         axis.title.y=element_blank())
 
-png("/Users/kah/Documents/bimodality/outputs/paper_figs/ppet_BINS_August_map.png")
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/ppet_BINS_GS_map.png")
 ppetbins.map
+dev.off()
+
+# read in the species classifications from" Species_clustering.R"
+clust_plot6<- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+
+pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+pls.clust 
+
+# merge clust_plot6 and dens.pr
+
+dens.clust<- merge(dens.pr, clust_plot6[,c("x","y", "cell", "speciescluster")], by = c("x", "y", "cell"))
+
+png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
+ggplot(dens.clust, aes(PC1,PLSdensity, color = speciescluster))+geom_point()
+dev.off()
+
+pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)
+pls.dens.pc1.hex
+
+
+# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+clust.hist<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist
+
+# read in data from the rolling bimodality:
+pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
+
+bimodal.map <- ggplot(pls.roll.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                      axis.title.x=element_blank(),
+                                                                                                      axis.title.y=element_blank())
+   
+bimodal.map 
+
+plot5<-grid.arrange(pls.map, arrangeGrob(pls.clust, pls.dens.pc1.hex, clust.hist, ncol=1), 
+                    ncol=2, widths=c(1,1.2))
+
+p = rectGrob()
+grid.arrange(pls.map, arrangeGrob(pls.map,pls.clust,pls.dens.pc1.hex, heights=c(3/4, 1/4, 1/4), ncol=1),
+              ncol=2)
+
+# write out to a png
+png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig1_nov.png")
+grid.arrange(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, bimodal.map, ncol = 2)
 dev.off()
 
 # read in the composition data for PLS and FIA (PC1 and PC2):
 full.comps<- read.csv("outputs/cluster/fullcomps_dataset.csv")
+
 
 pls.comp.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=full.comps[full.comps$period %in% "PLS",], aes(x=x, y=y, fill = pc2))+
@@ -694,6 +750,8 @@ compnamess <- c("Elm/Maple/Hickory/Oak/Beech",
                                 "Poplar/Oak",
                                 "Tamarack/Spruce/Birch/Pine/Spruce/Poplar",
                                 "Pine/Tamarack/Poplar")
+
+
 # make maps for all these compositions
 for(i in 1:length(comptypes)){
  

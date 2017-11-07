@@ -1686,10 +1686,10 @@ suppressMessages(library(MASS))
 
 dens.pr <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv") 
 
+pls.new <- dens.pr
 
-
-pls.new <- dens.pr[dens.pr$bimodal == "Unimodal",] # remove all bimodal places for now
-pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
+#pls.new <- dens.pr[dens.pr$bimodal == "Unimodal",] # remove all bimodal places for now
+#pls.bimodal <- dens.pr[dens.pr$bimodal == "Bimodal",]
 
 pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places
 dens.pr <- pls.new
@@ -2297,55 +2297,45 @@ PLS.lgr14L <- gam(ecocode ~ MAP1910  + pasttmean + deltaT + pastdeltaP, family =
 PLS.lgr15 <- gam(ecocode ~ s(PC1), family = 'binomial',data = train)
 PLS.lgr15L <- gam(ecocode ~ PC1, family = 'binomial',data = train)
 
-AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L, PLS.lgr15, PLS.lgr15L)
+#AIC2.df<- AIC(PLS.lgr1, PLS.lgr2, PLS.lgr3, PLS.lgr4, PLS.lgr5, PLS.lgr6, PLS.lgr7, PLS.lgr8, PLS.lgr9,PLS.lgr10,PLS.lgr11,PLS.lgr12,PLS.lgr13,PLS.lgr14 , PLS.lgr1L, PLS.lgr2L, PLS.lgr3L, PLS.lgr4L, PLS.lgr5L, PLS.lgr6L, PLS.lgr7L, PLS.lgr8L, PLS.lgr9L, PLS.lgr10L,PLS.lgr11L,PLS.lgr12L,PLS.lgr13L,PLS.lgr14L, PLS.lgr15, PLS.lgr15L)
 
 
 
 
-AIC2.df$modeltype <- c(rep('smooth', 15), rep('linear', 15))
+#AIC2.df$modeltype <- c(rep('smooth', 15), rep('linear', 15))
 
-AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula , PLS.lgr15$formula, PLS.lgr15L$formula)
+#AIC2.df$formula <- c(PLS.lgr1$formula, PLS.lgr2$formula, PLS.lgr3$formula, PLS.lgr4$formula, PLS.lgr5$formula, PLS.lgr6$formula, PLS.lgr7$formula, PLS.lgr8$formula, PLS.lgr9$formula,PLS.lgr10$formula,PLS.lgr11$formula,PLS.lgr12$formula,PLS.lgr13$formula,PLS.lgr14$formula , PLS.lgr1L$formula, PLS.lgr2L$formula, PLS.lgr3L$formula, PLS.lgr4L$formula, PLS.lgr5L$formula, PLS.lgr6L$formula, PLS.lgr7L$formula, PLS.lgr8L$formula, PLS.lgr9L$formula, PLS.lgr10L$formula,PLS.lgr11L$formula,PLS.lgr12L$formula,PLS.lgr13L$formula, PLS.lgr14L$formula , PLS.lgr15$formula, PLS.lgr15L$formula)
 
-AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
-library(knitr)
-library(pander)
-AIC2.df$model <- rownames(AIC2.df)
+#AIC2.df<- AIC2.df[order(AIC2.df$AIC),]
+#library(knitr)
+#library(pander)
+#AIC2.df$model <- rownames(AIC2.df)
 
 #calculate prediction error:
-msqe.code<- function(model, testdata){
-ypred <- predict(model, newdata = testdata, type="response")
-testdata$ypred <- ypred
+#msqe.code<- function(model, testdata){
+#ypred <- predict(model, newdata = testdata, type="response")
+#testdata$ypred <- ypred
 
-predicted<- testdata
+#predicted<- testdata
   
-predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
-mean(predicted$sqerr, na.rm = TRUE)
-}
+#predicted$sqerr <- (predicted$ecocode - predicted$ypred)^2
+#mean(predicted$sqerr, na.rm = TRUE)
+#}
 
-AIC2.df$MSPE <- 1
+#AIC2.df$MSPE <- 1
 
 #add prediction error ot AIC dataframe
 
-for (i in 1: length(AIC2.df$model)){
-AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
-}
-pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+#for (i in 1: length(AIC2.df$model)){
+#AIC2.df[i,'MSPE'] <- msqe.code(get(AIC2.df[i,"model"]), test)
+#}
+#pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
 
 
 full <- dens.pr
 #full <- test
 logsample <- predict(PLS.lgr15, full, type="response")
 full$ypred <- as.numeric(logsample)
-#summary(logsample)
-#hist(test$ypred)
-
-#ggplot(full, aes(x, y, color = ypred)) + geom_point()
-#ggplot(test, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
-
-ggplot(full, aes(ypred, PLSdensity))+geom_point()
-ggplot(full, aes(ypred, ecotype))+geom_point()
-#ggplot(test, aes (ypred, MAP1910))+geom_point()
-
 
 
 # create discrete probability cuts
@@ -2361,7 +2351,7 @@ full$ypreddiscrete <- cut(full$ypred, breaks = seq(0,1, by = 0.2), labels = labe
 
 
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
 full$ypreddiscrete <- as.character(full$ypreddiscrete)
 #ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
 
@@ -2685,55 +2675,6 @@ ggplot(full, aes(x = PC1, y = ypred))+geom_point()
 
 
 
-# --------------------------use the pls model to model the modern landscape:
-#fia <- future
-logsample <- predict(PLS.lgr14, fia, type="response")
-fia$ypred <- as.numeric(logsample)
-summary(logsample)
-hist(fia$ypred)
-
-ggplot(fia, aes(x, y, color = ypred)) + geom_point()
-ggplot(fia, aes(x, y, color = ecocode)) + geom_point()+coord_equal()
-
-ggplot(fia, aes(ypred, PLSdensity))+geom_point()
-
-#ggplot(test, aes (ypred, MAP1910))+geom_point()
-
-
-
-# create discrete probability cuts
-label.breaks <- function(beg, end, splitby){
-  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
-  labels.test <- paste (labels.test$first, '-' , labels.test$second)
-  labels.test
-}
-
-
-fia$ypreddiscrete <- cut(fia$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
-
-
-
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-
-fia$ypreddiscrete <- as.character(fia$ypreddiscrete)
-
-# plot predictions for modern forests based on pls-climate relationships: 
-# it actually predicts a contraction of the forests!
-f.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=fia, aes(x=x, y=y, fill = ypreddiscrete))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
-  coord_equal()+theme_bw()+ theme()
-
-
-mod <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=fia, aes(x=x, y=y, fill = fiaecotype))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="FIA classification")+ scale_fill_manual(values= c("#006837", "#c2e699"))+ coord_equal()+theme_bw()
-
-png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/v1.6-5/full/logistic_pred_prob_FIA_from_PLS_model.png')
-grid.arrange(mod, f.forest, nrow = 1, ncol=2)
-dev.off()
 
 ```
 
@@ -3149,4 +3090,99 @@ grid.arrange(ap,p.ap,mn,p.mn,bw,p.bw,bwmn,p.bwmn, hem, p.hem,pf, p.pf ,nrow=6, n
 dev.off()
 
 
+# predict future baseod on fia model:
+
+
+
+```
+# Predict the future landscape based on PLS relationsip with the environment and the FIA relationship with the environment:
+```{r}
+# --------------------------use the pls model to model the future landscape:
+rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
+
+in.range <- range(dens.pr$PC1)
+
+rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85")]
+colnames(rcp85) <- c("x", "y", "cell",  "PC1")
+
+logsample <- predict(PLS.lgr15, rcp85, type="response")
+rcp85$ypred <- as.numeric(logsample)
+summary(logsample)
+hist(rcp85$ypred)
+
+
+#rcp85$ypred <- ifelse(rcp85$PC1 < in.range[1] | rcp85$PC1 > in.range[2],  "NA",rcp85$ypred )
+#rcp85$ypred <- as.numeric(rcp85$ypred)
+
+ggplot(rcp85, aes(x, y, color = ypred)) + geom_point()
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+# save for later:
+p.futureforest
+
+
+# --------------------predict for FIA data:
+rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
+
+in.range <- range(dens.pr$PC1)
+
+rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85")]
+colnames(rcp85) <- c("x", "y", "cell",  "PC1")
+
+logsamplef <- predict(FIA.lgr15, rcp85, type="response")
+rcp85$ypredf <- as.numeric(logsamplef)
+summary(logsamplef)
+hist(rcp85$ypredf)
+
+
+#rcp85$ypredf <- ifelse(rcp85$PC1 < in.range[1] | rcp85$PC1 > in.range[2],  "NA",rcp85$ypred )
+#rcp85$ypredf <- as.numeric(as.factor(rcp85$ypred))
+
+ggplot(rcp85, aes(x, y, color = ypredf)) + geom_point()
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+rcp85$ypreddiscretef <- cut(rcp85$ypredf, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+p.futureforestfia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscretef))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+# save for later:
+p.futureforestfia
+png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/fig3_future_climate_pred_forest.png")
+grid.arrange(p.futureforest, p.futureforestfia, ncol = 2)
+dev.off()
 ```

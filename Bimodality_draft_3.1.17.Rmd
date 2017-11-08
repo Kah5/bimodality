@@ -89,8 +89,11 @@ pls.dens.pc1.hex
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-clust.hist<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
 clust.hist
+
+#clust.dens<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+#clust.dens
 
 # E: map of bimodal regions:
 # read in data from the rolling bimodality:
@@ -173,8 +176,13 @@ fia.dens.pc1.hex
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-f.clust.hist <- ggplot(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..),linetype="dashed" , color = "darkgrey", size = 1.5)+geom_density(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, 30 *..count..) , color = "black", size = 1.5)+geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
 f.clust.hist
+
+
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist
+
 
 # E: map of bimodal regions:
 # read in data from the rolling bimodality:
@@ -3159,8 +3167,10 @@ hist(rcp85$ypredf)
 #rcp85$ypredf <- as.numeric(as.factor(rcp85$ypred))
 
 ggplot(rcp85, aes(x, y, color = ypredf)) + geom_point()
+#rcp85$ypred1 <- rcp85$ypredf - 
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
 
 # create discrete probability cuts
 label.breaks <- function(beg, end, splitby){

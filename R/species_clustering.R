@@ -479,7 +479,7 @@ clust_plot5 <- data.frame(fcomps,
                           diss4 = diss.f5.dissimilarity[,4],
                           diss5 = diss.f5.dissimilarity[,5])
 
-ggplot(clust_plot5, aes(x = x, y=y, fill=cluster))+geom_raster()
+ggplot(clust_plot5, aes(x = x, y=y, fill=speciescluster))+geom_raster()
 
 classes.6$silinfo$clus.avg.widths
 # they are all equally dissimilar
@@ -536,6 +536,7 @@ fia.clust
 
 dev.off()
 
+write.csv(clust_plot6f, "outputs/cluster/density_fia_with_clusters.csv", row.names = FALSE)
 # reassign names
 colnames(clust_plot6f)[44:49] <- c('Oak/Maple', # 1,
                                    'Oak/Hickory/Otherhardwood/Maple/Birch/Ash', # 2

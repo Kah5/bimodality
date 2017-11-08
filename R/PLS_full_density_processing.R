@@ -515,6 +515,7 @@ dens.pr <- predict.PCA("60")
 dens.pr <- predict.PCA("85")
 
 
+write.csv(dens.pr, "outputs/PLS_density_with_Future_PCA.csv",row.names = FALSE)
 
 #------------------------------Create bins for bimodality analysis------------------------
 

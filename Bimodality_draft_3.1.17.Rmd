@@ -2006,11 +2006,11 @@ testdata
 }
 
 # for the PLS:
-predicteddf <- get.preds(PLS.gam16, test)
+predicteddf <- get.preds(PLS.gam15, test)
 #summary(predicted$ypred)
 
 # for the PLS bimodal only places
-predictedbm <- get.preds(PLS.gam16, pls.bimodal)
+predictedbm <- get.preds(PLS.gam15, pls.bimodal)
 
 #summary(predictedbm$ypred)
 
@@ -2041,9 +2041,9 @@ summary(predictedf$ypred)
 
 # Define function to plot predicted vs. observed:
 pvsobs <- function(preds, obs, colorby, model ){
-# plot predicted vs. observed for PLS
-ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + #ylim (-10, 600)+xlim(-10,600) +
-  ggtitle(paste('Predicted vs. Observed', model)) + ylab('Predicted tree density') + xlab('Observed tree density')
+    # plot predicted vs. observed for PLS
+    ggplot(preds, aes(preds[,obs], ypred, color = preds[,colorby])) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + #ylim (-10, 600)+xlim(-10,600) +
+      ggtitle(paste('Predicted vs. Observed', model)) + ylab('Predicted tree density') + xlab('Observed tree density')
 }
 
 # plot predicted vs. observed for PLS model 15
@@ -3110,8 +3110,8 @@ rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
 
 in.range <- range(dens.pr$PC1)
 
-rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85")]
-colnames(rcp85) <- c("x", "y", "cell",  "PC1")
+rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85", "rcp85NA")]
+colnames(rcp85) <- c("x", "y", "cell",  "PC1", "rcp85NA")
 
 logsample <- predict(PLS.lgr15, rcp85, type="response")
 rcp85$ypred <- as.numeric(logsample)
@@ -3133,13 +3133,14 @@ label.breaks <- function(beg, end, splitby){
 
 
 rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscrete))
+rcp85$ypreddiscrete_os <- test
 
-
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
 
 p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete))+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
@@ -3154,8 +3155,8 @@ rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
 
 in.range <- range(dens.pr$PC1)
 
-rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85")]
-colnames(rcp85) <- c("x", "y", "cell",  "PC1")
+rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85", "rcp85NA")]
+colnames(rcp85) <- c("x", "y", "cell",  "PC1", "rcp85NA")
 
 logsamplef <- predict(FIA.lgr15, rcp85, type="response")
 rcp85$ypredf <- as.numeric(logsamplef)
@@ -3167,9 +3168,9 @@ hist(rcp85$ypredf)
 #rcp85$ypredf <- as.numeric(as.factor(rcp85$ypred))
 
 ggplot(rcp85, aes(x, y, color = ypredf)) + geom_point()
-#rcp85$ypred1 <- rcp85$ypredf - 
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+ 
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
 
 
 # create discrete probability cuts
@@ -3179,12 +3180,15 @@ label.breaks <- function(beg, end, splitby){
   labels.test
 }
 
+#rcp85$ypredfdiscrete <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", rcp85$ypredf)
 
 rcp85$ypreddiscretef <- cut(rcp85$ypredf, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
+test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscretef))
+rcp85$ypreddiscrete_os <- test
 
 p.futureforestfia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscretef))+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),

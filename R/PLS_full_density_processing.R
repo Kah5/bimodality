@@ -455,7 +455,7 @@ b <- ggplot(dens.pr, aes(x,y, color = rcp45NA))+geom_point()+geom_polygon(data =
 c <- ggplot(dens.pr, aes(x,y, color = rcp60NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 6.0")
-d <- ggplot(dens.pr, aes(x,y, color = rcp85NA))+geom_point()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+d <- ggplot(dens.pr, aes(x,y, fill = rcp85NA))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
   coord_equal()+theme_bw() + ggtitle("RCP 8.5")
 

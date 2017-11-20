@@ -28,7 +28,7 @@ library(lubridate)
 extract.rcps<- function(climate, rcp){
   
       setwd(paste0('/Users/kah/Documents/bimodality/data/cc',rcp,climate,'70/'))
-      spec.table<- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_density_pr_alb1.6-5.csv')
+      spec.table<- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_full_density_pr_alb1.7-5.csv')
       coordinates(spec.table) <- ~x +y
       proj4string(spec.table) <- '+init=epsg:3175'
       spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))

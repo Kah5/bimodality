@@ -1,13 +1,15 @@
 find.noanalog<- function(dens.pr,rcp){
+  
   dens.pr[,c(paste0("rcp",rcp,"NA"))] <- "Within Range"
   dens.pr[,c(paste0('rcp',rcp,"NAclim"))] <- "Within Range" # column labeling the reason climate is out of range
   #dens.pr[,c(paste0('rcp',rcp,"NAclimhigh"))] <- "Within Range" # column labeling the reason climate is out of range
   
-  # rcp 4.5
-  prange <- range(dens.pr$MAP1910)
-  trange <- range(dens.pr$pasttmean)
-  pcvrange <- range(dens.pr$pastdeltaP)
-  tcvrange <- range(dens.pr$deltaT)
+  # ranges for historic climate
+  prange <- range(data.frame(dens.pr$MAP1910, dens.pr$MAP2011))
+  trange <- range(dens.pr$pasttmean, dens.pr$modtmean)
+  
+  pcvrange <- range(dens.pr$pastdeltaP, dens.pr$moderndeltaP)
+  tcvrange <- range(dens.pr$deltaT, dens.pr$moddeltaT)
   
   # identify climate space outside of the modern/pls range
   precip.out <- dens.pr[dens.pr[,c(paste0("pr.",rcp))] < prange[1] | dens.pr[,c(paste0("pr.",rcp))] > prange[2], ]

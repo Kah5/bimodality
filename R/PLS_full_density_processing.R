@@ -424,7 +424,7 @@ write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 
 #--------------------------- Read in CMIP 4 projections----------------------
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R
-ccesm <- read.csv("outputs/CCSM4pr_t_2070_full.csv")
+ccesm <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")
 
 dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
 
@@ -493,20 +493,20 @@ res<-princomp(scale.dens[,c('MAP1910',
 
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 predict.PCA <- function(rcp){
-cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
-                       paste0("pr.",rcp,"SI"), 
-                         paste0("tn.",rcp),
-                           paste0("tn.",rcp, "cv"),
-                                               "sandpct","awc", "CEC", "CaCO3")])
-colnames(cc) <- c('MAP1910',   
-                  "pastdeltaP", "pasttmean",
-                  "deltaT", "sandpct", "awc", "CEC", "CaCO3")
-
-newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
-
-dens.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
-dens.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
-dens.pr
+    cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
+                           paste0("pr.",rcp,"SI"), 
+                             paste0("tn.",rcp),
+                               paste0("tn.",rcp, "cv"),
+                                                   "sandpct","awc", "CEC", "CaCO3")])
+    colnames(cc) <- c('MAP1910',   
+                      "pastdeltaP", "pasttmean",
+                      "deltaT", "sandpct", "awc", "CEC", "CaCO3")
+    
+    newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
+    
+    dens.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
+    dens.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
+    dens.pr
 }
 
 dens.pr <- predict.PCA("26")

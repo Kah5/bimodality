@@ -89,7 +89,7 @@ pls.dens.pc1.hex
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
 clust.hist
 
 #clust.dens<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
@@ -100,7 +100,7 @@ clust.hist
 pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
 
 bimodal.map <- ggplot(pls.roll.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
-       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                       axis.title.x=element_blank(),
                                                                                                       axis.title.y=element_blank())
@@ -176,11 +176,11 @@ fia.dens.pc1.hex
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..),linetype="dashed" , color = "darkgrey", size = 1.5)+geom_density(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, 30 *..count..) , color = "black", size = 1.5)+geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..),linetype="dashed" , color = "darkgrey", size = 1.5)+geom_density(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, 30 *..count..) , color = "black", size = 1.5)+geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlim(0,600)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
 f.clust.hist
 
 
-clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
 clust.hist
 
 
@@ -188,7 +188,7 @@ clust.hist
 # read in data from the rolling bimodality:
 
 fbimodal.map <- ggplot(fia.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
-       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),axis.title.y=element_blank())
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),axis.title.y=element_blank())
    
 fbimodal.map 
 

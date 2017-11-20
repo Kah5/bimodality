@@ -394,6 +394,10 @@ test1 <- merge(dens.pr,unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x','
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.pr <- test1
 
+png(width = 6, height = 6, units = "in", res = 300, "outputs/paper_figs/PPET_PC1_linear_relationship.png")
+ggplot(dens.pr, aes(PC1, GS_ppet))+geom_point(size = 0.1) + stat_smooth(method = 'lm') + theme_bw(base_size = 20)+ylab("Growing Season P-PET (mm)")+xlab("Principal Component 1")
+dev.off()
+
 ##################################################################
 # PCA on FIA dataset
 ##################################################################

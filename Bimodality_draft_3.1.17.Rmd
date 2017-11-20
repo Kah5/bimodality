@@ -3103,6 +3103,52 @@ dev.off()
 
 
 ```
+
+# Predict the modern lanscape baste on PLS relationship with the enviornment:
+```{r}
+# --------------------------use the pls model to modern landscape:
+
+logsamplemod <- predict(PLS.lgr15, fiadens, type="response")
+fiadens$ypredpast <- as.numeric(logsamplemod)
+summary(logsamplemod)
+hist(fiadens$ypredpast)
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+fiadens$ypred_pastdiscrete <- cut(fiadens$ypredpast, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+#test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscrete))
+#rcp85$ypreddiscrete_os <- test
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
+
+
+p.mod_past_rel <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fiadens, aes(x=x, y=y, fill = ypred_pastdiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+fia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fiadens, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+
+png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/figS4_modern_climate_pred_forest.png")
+grid.arrange(p.mod_past_rel, fia, ncol = 2)
+dev.off()
+
+```
+
 # Predict the future landscape based on PLS relationsip with the environment and the FIA relationship with the environment:
 ```{r}
 # --------------------------use the pls model to model the future landscape:
@@ -3196,6 +3242,7 @@ panel.grid.major = element_blank(),panel.border = element_rect(colour = "black",
 
 # save for later:
 p.futureforestfia
+
 png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/fig3_future_climate_pred_forest.png")
 grid.arrange(p.futureforest, p.futureforestfia, ncol = 2)
 dev.off()

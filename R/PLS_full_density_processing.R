@@ -621,6 +621,7 @@ ggplot(dens.pr, aes(GS_ppet, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base
   xlab(' Growing Season P - PET') +ylab(" Past Tree Density (stems/ha)") 
 dev.off()
 
+
 png(paste0('outputs/v',version,'/PLS_CaCO3_hexbin.png'))
 ggplot(dens.pr, aes(CaCO3, PLSdensity)) +geom_hex()+ylim(0,600)+ theme_bw(base_size = 20)+scale_fill_distiller(palette = "Spectral", limits=c(0,90))+
   xlab(' Growing Season P - PET') +ylab(" Past Tree Density (stems/ha)") 

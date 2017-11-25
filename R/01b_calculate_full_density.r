@@ -95,9 +95,10 @@ ggplot(stem.density, aes(x, y, color=density))+geom_point(size =0.5)
 
 
 
-species[species==""]<- "No tree"
+
 #fix the captalized "No tree" problem
 species[species == 'No Tree'] <- 'No tree'
+species[species==""]<- "No tree"
 
 #change all No tree densities to 0
 stem.density$density[species[,1] == 'No tree'| species[,2]=='No tree'] <- 0
@@ -178,7 +179,7 @@ form <- function(x) {
   b0 <- biom.table[eqn,2]
   b1 <- biom.table[eqn,3]
   
-  biomass <- exp(b0 + b1 * log(x$diams * 2.54))
+  biomass <- exp(b0 + b1 * log(x$diams))
   biomass
   
 }
@@ -251,14 +252,31 @@ unique.len <- function(x){length(unique(x))}
 biomass.trees  <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm=TRUE, value.var = 'count')
 
 #biomass.trees represnts the number of trees in each category
+
 biomass.points <- dcast(spec.table, x + y + cell ~ spec, unique.len, value.var = 'point')
 #biomass.points represents the number of unique points
+# This is to get the points with trees:
+spec.adj <- spec.table
+spec.adj$tree <- spec.table$spec %in% "No tree"
+
+treed.points <- dcast(spec.adj, x + y + cell ~ tree, unique.len, value.var = 'point')
+treed.points <- treed.points[order(treed.points$cell),]
+colnames(treed.points) <- c('x', 'y', 'cell', 'tree', 'no tree')
+
+# Now get the total number of plots per cell:
+plots_per_cell <- dcast(spec.table, x + y + cell ~ ., unique.len, value.var = 'point')
+plots_per_cell <- plots_per_cell[order(plots_per_cell$cell),]
+
+points_per_cell_df <- data.frame(plots_per_cell,
+                                 treed = treed.points$tree,
+                                 untreed = treed.points$`no tree`)
+
+colnames(points_per_cell_df)[4:5] <- c("total_pls_points", "total_treed_points")
 
 
-
-
+# points by cell is the # of points 
 points.by.cell <- rowSums(biomass.points[, 4:ncol(biomass.points)], na.rm=TRUE)
-trees.by.cell  <- rowSums(count.table[,!colnames(count.table) %in% c('x', 'y', 'cell', 'No tree','Wet', 'Water')], na.rm=TRUE)
+trees.by.cell  <- rowSums(biomass.trees[,!colnames(biomass.trees) %in% c('x', 'y', 'cell', 'No tree','Wet', 'Water')], na.rm=TRUE)
 
 #calculate the sum of total density, basal area, biomass & diameter by cell and species
 density.table <- dcast(spec.table, x + y  + cell ~ spec, sum, na.rm=TRUE, value.var = 'density')
@@ -291,13 +309,14 @@ density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
 X11(width =12)
-ggplot(data = density.table, aes(x = x, y = y, fill = Maple)) + geom_raster()+coord_equal()+
+ggplot(data = biomass.table, aes(x = x, y = y, fill = Beech)) + geom_raster()+coord_equal()+
   scale_fill_gradient(low = "yellow", high= "red")
 
 
 
-biomass.table$plss_pts <- points.by.cell
-
+biomass.table <- merge(biomass.table, points_per_cell_df[,c("x", "y", "cell", "total_pls_points", "total_treed_points")], by = c("x", "y", "cell"))
+#biomass.table$plss_pts <- points_per_cell_df$total_pls_points
+#biomass.table$plss_trees <- points_per_cell_df$total_treed_points
 
 #  We want rasterized versions of these tables with sums:
 rast.fun <- function(x){
@@ -417,19 +436,19 @@ biomass.points.ind <- merge(cells.xy.ind, biomass.points, all=TRUE)
 count.trees.ind <- merge(cells.xy.ind, count.table, all=TRUE)
 
 
-add.v <- function(x, name){
+add.v <- function(x, name, row.names){
   
   #  Quick file name formatter:
   
     p.ext <- '_alb'
   
-  write.csv(x, paste0('data/outputs/', name,  '_v',1, '.csv'))
+  write.csv(x, paste0('data/outputs/', name,  '_v',version, '.csv'), row.names = row.names)
 }
 
-add.v(count.table, 'plss_trees', row.names=FALSE)
+add.v(count.table, 'plss_counts', row.names=FALSE)
 add.v(biomass.points, 'plss_points', row.names=FALSE)
-add.v(count.table, "plss_composition.csv", row.names=FALSE)
-add.v(count.table, "plss_inil_composition.csv", row.names=FALSE)
+add.v(count.table, "plss_composition", row.names=FALSE)
+add.v(count.table, "plss_inil_composition", row.names=FALSE)
 biomass.table$plsspts_cell <- points.by.cell
 
 add.v(density.table, 'plss_density', row.names=FALSE)

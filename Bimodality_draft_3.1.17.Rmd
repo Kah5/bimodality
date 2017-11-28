@@ -19,12 +19,13 @@ library(ggplot2)
 library(maps)
 library(sp)
 library(plyr)
+library(maps)
 
 # figure 1 A: Map of pls bimodality
 
 # need to set up state outlines:
 all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+states <- subset(all_states, region %in% c(  'minnesota', 'wisconsin', 'michigan', "illinois",  'indiana') )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
@@ -63,7 +64,7 @@ dev.off()
 
 # B: Species clusters:
 # read in the species classifications from" Species_clustering.R"
-clust_plot6<- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
 
 pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
@@ -117,6 +118,120 @@ grid.arrange(pls.map, arrangeGrob(pls.map,pls.clust,pls.dens.pc1.hex, heights=c(
 # write out new figure 1 to a png
 png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig1_nov.png")
 grid.arrange(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, bimodal.map, ncol = 2)
+dev.off()
+
+#---------- new species cluster analysis: Do clusters correspond to pc axes?:
+species.clust <- read.csv("outputs/cluster/density_fia_with_clusters.csv")
+species.clust <- species.clust[,c("x", "y", "cell", "speciescluster", "clustNum")]
+#species.clust$period <- "Modern"
+
+clust_plotpls <- clust_plot6[,c("x", "y", "cell", "speciescluster", "clustNum", "PC1")]
+#clust_plotpls$period <- "Past"
+
+bim.clust<- merge(species.clust, clust_plotpls, by =c("x", "y", "cell") )
+
+colnames(bim.clust) <- c("x", "y", "cell", "fia_clust", "fia_num", "pls_clust", "pls_num", "PC1")
+
+
+
+comp.pcs <- read.csv( "outputs/cluster/fullcomps_dataset.csv")
+pls.pcs <- comp.pcs[comp.pcs$period %in% "Past", c("x", "y", "cell", "pc1", "pc2")]
+colnames(pls.pcs) <- c("x", "y","cell", "pls_pc1", "pls_pc2")
+fia.pcs <- comp.pcs[comp.pcs$period %in% "Modern", c("x", "y", "cell", "pc1", "pc2")]
+colnames(fia.pcs) <- c("x", "y","cell", "fia_pc1", "fia_pc2")
+
+pcs <- merge(fia.pcs, pls.pcs, by = c("x", "y", "cell"))
+
+pc.clust<- merge(pcs, bim.clust, by = c("x", "y", "cell"))
+
+
+
+ggplot(pc.clust, aes(fia_pc1, fia_pc2))+geom_point(size = 0.2)+geom_point(data = pc.clust, aes(pls_pc1, pls_pc2, color = pls_clust), size = 0.2)+xlim(-7, 5)+ylim(-9,2)
+
+# Messy arrow figures: pls oak category
+ggplot(pc.clust[pc.clust$pls_clust %in% c("Oak" ),], aes(fia_pc1, fia_pc2))+geom_point(size = 0.2)+geom_point(data = pc.clust[pc.clust$pls_clust %in% "Oak",], aes(pls_pc1, pls_pc2, color = pls_clust), size = 0.2)+xlim(-7, 5)+ylim(-9,2)+geom_segment(aes(x = pls_pc1, y = pls_pc2, xend = fia_pc1, yend = fia_pc2), data =pc.clust[pc.clust$pls_clust %in% "Oak",], arrow = arrow(length = unit(0.5, "cm")), size = 0.05)+theme_bw()
+
+pc.clust2 <- pc.clust
+
+# plot mean arrows of all the species compositions PC values:
+bimodal.region.shifts.full <- ggplot(pc.clust2, aes(fia_pc1, fia_pc2))+geom_point(size = 0.2, color = "darkgrey")+geom_point(data = pc.clust2, aes(pls_pc1, pls_pc2, color = pls_clust), size = 0.2)+scale_color_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c("Oak" ),], arrow = arrow(length = unit(0.5, "cm")), size =1)+
+  
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Hemlock/Beech/Cedar/Birch/Maple' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+   geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Poplar/Oak' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Elm/Maple/Hickory/Oak/Beech' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Pine/Tamarack/Poplar' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+theme_bw()+ylab("Species Composition PC2")+xlab("Species Composition PC1")+theme(legend.position = "bottom", legend.title = element_blank())
+
+png(width = 6, height = 5, units = "in", res = 300, "outputs/paper_figs/composition_shift_plot_full.png")
+bimodal.region.shifts.full
+dev.off()
+
+
+# lets look at only the places where density is bimodal:
+
+pc.clust2 <- pc.clust[pc.clust$PC1 > -2.5 & pc.clust$PC1 < 1, ]
+
+# plot mean arrows of all the species compositions PC values:
+bimodal.region.shifts <- ggplot(pc.clust2, aes(fia_pc1, fia_pc2))+geom_point(size = 0.2, color = "darkgrey")+geom_point(data = pc.clust2, aes(pls_pc1, pls_pc2, color = pls_clust), size = 0.2)+scale_color_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% "Oak", ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c("Oak" ),], arrow = arrow(length = unit(0.5, "cm")), size =1)+
+  
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Hemlock/Beech/Cedar/Birch/Maple', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Hemlock/Beech/Cedar/Birch/Maple' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+   geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Poplar/Oak', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Poplar/Oak' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Elm/Maple/Hickory/Oak/Beech', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Elm/Maple/Hickory/Oak/Beech' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Tamarack/Spruce/Birch/Pine/Spruce/Poplar' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$pls_clust %in% 'Pine/Tamarack/Poplar', ]$fia_pc2)), data =pc.clust2[pc.clust2$pls_clust %in% c( 'Pine/Tamarack/Poplar' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+theme_bw()+ylab("Species Composition PC2")+xlab("Species Composition PC1")+theme(legend.position = "bottom", legend.title = element_blank())
+
+png(width = 6, height = 5, units = "in", res = 300, "outputs/paper_figs/composition_shift_plot_bimodal_region.png")
+bimodal.region.shifts
 dev.off()
 
 

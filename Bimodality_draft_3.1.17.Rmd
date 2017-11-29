@@ -90,7 +90,7 @@ pls.dens.pc1.hex
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, 22 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
 clust.hist
 
 #clust.dens<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
@@ -234,7 +234,20 @@ png(width = 6, height = 5, units = "in", res = 300, "outputs/paper_figs/composit
 bimodal.region.shifts
 dev.off()
 
+# make histograms of the species Principal components:
+pc1.clust.hist <- ggplot()+ geom_density(data = pc.clust2[pc.clust2$PC1 > -2.5 & pc.clust2$PC1 < 1, ], aes(pls_pc1, 0.32*..count..))+ geom_histogram(data = pc.clust2[pc.clust2$PC1 > -2.5 & pc.clust2$PC1 < 1, ], aes(pls_pc1, fill = pls_clust, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+xlab("Species PC1")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
+pc1.clust.hist
 
+png(height = 5, width = 5, units = "in", res = 200, "outputs/paper_figs/species_pc1_hist_by_cluster.png")
+pc1.clust.hist
+dev.off()
+
+pc2.clust.hist <- ggplot()+ geom_density(data = pc.clust2[pc.clust2$PC1 > -2.5 & pc.clust2$PC1 < 1, ], aes(pls_pc2, 0.2*..count..))+ geom_histogram(data = pc.clust2[pc.clust2$PC1 > -2.5 & pc.clust2$PC1 < 1, ], aes(pls_pc2, fill = pls_clust, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("Species PC2")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
+pc2.clust.hist
+
+png(height = 5, width = 5, units = "in", res = 200, "outputs/paper_figs/species_pc2_hist_by_cluster.png")
+pc2.clust.hist
+dev.off()
 ```
 
 # lets make figure 2 with FIA only plots

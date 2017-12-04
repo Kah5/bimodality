@@ -120,6 +120,88 @@ png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/fig1_n
 grid.arrange(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, bimodal.map, ncol = 2)
 dev.off()
 
+# --------------------remake all of figure 1 with only grid cells showin in FIA dataset---------------
+fia.bim <- read.csv("outputs/cluster/bimodal_widths/FIA_Dens_Bimodal_width_0.25.csv")
+nonag <- fia.bim$cell
+
+dens.nonag <- dens.pr[dens.pr$cell %in% nonag, ]
+
+
+pls.nonag.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.nonag, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+
+png("/Users/kah/Documents/bimodality/outputs/paper_figs/PLS_density_non_ag_map.png")
+pls.nonag.map
+dev.off()
+
+
+
+
+
+
+# B: Species clusters:
+# read in the species classifications from" Species_clustering.R"
+clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+
+clust_plot_nonag <- clust_plot6[clust_plot6$cell %in% nonag, ]
+pls.nonag.clust <- ggplot(clust_plot_nonag, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+pls.nonag.clust 
+
+# merge clust_plot6 and dens.pr
+
+dens.clust.nonag<- merge(dens.nonag, clust_plot6[,c("x","y", "cell", "speciescluster")], by = c("x", "y", "cell"))
+
+#png("outputs/cluster/density_vs_envt_pc1_by_species_cluster_non_ag.png")
+#ggplot(dens.clust, aes(PC1,PLSdensity, color = speciescluster))+geom_point()
+#dev.off()
+
+# C: Density vs PC1 as a hexbin plot
+pls.dens_nonag.pc1.hex <- ggplot(data = dens.clust.nonag, aes(PC1, PLSdensity)) +geom_hex() + 
+    theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
+    xlab('Environmental PC1') + ylab(" PLS Tree Density /n (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ annotate("text", x= 4, y=600,label= "C", size = 5)+ggtitle("")
+pls.dens_nonag.pc1.hex
+
+# D: Histogram colored by species cluster:
+# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+clust.nonag.hist <- ggplot()+ geom_density(data = dens.clust.nonag[dens.clust.nonag$PC1 > -2.5 & dens.clust.nonag$PC1 < 1, ], aes(PLSdensity, 22 *..count..))+ geom_histogram(data = dens.clust.nonag[dens.clust.nonag$PC1 > -2.5 & dens.clust.nonag$PC1 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 25))+xlim(0,600)+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")+ annotate("text", x=600, y=15,label= "D", size = 5)+ggtitle("")
+clust.nonag.hist
+
+#clust.dens<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
+#clust.dens
+
+# E: map of bimodal regions:
+# read in data from the rolling bimodality:
+pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
+
+pls.roll.bim.nonag <- pls.roll.bim[pls.roll.bim$cell %in% nonag, ]
+bimodal.nonag.map <- ggplot(pls.roll.bim.nonag, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+
+       geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                      axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                      axis.title.x=element_blank(),
+                                                                                                      axis.title.y=element_blank())+ annotate("text", x=-90000, y=1486000,label= "E", size = 5)+ggtitle("")
+   
+bimodal.nonag.map 
+
+
+
+# write out new figure 1 to a png
+png(height = 14, width = 10, units = 'in', res = 300, "outputs/paper_figs/Suppmental_fig1_Nov_no_agricultural_changes.png")
+grid.arrange(pls.nonag.map, pls.nonag.clust, pls.dens_nonag.pc1.hex, clust.nonag.hist, bimodal.nonag.map, ncol = 2)
+dev.off()
+
 #---------- new species cluster analysis: Do clusters correspond to pc axes?:
 species.clust <- read.csv("outputs/cluster/density_fia_with_clusters.csv")
 species.clust <- species.clust[,c("x", "y", "cell", "speciescluster", "clustNum")]
@@ -339,7 +421,7 @@ ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =
   geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
- scale_fill_gradientn(colours = heat.colors(6), limits = c(-150,427), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+ scale_fill_gradientn(colours = heat.colors(6), limits = c(-150,427), name ="P-PET", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                         axis.text.y=element_blank(),axis.ticks=element_blank(),
                         axis.title.x=element_blank(),

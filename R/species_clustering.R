@@ -151,7 +151,7 @@ diss.6
 
 brays <- vegdist(comps[,4:ncol(comps)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
         na.rm = FALSE) 
-brays2<- as.matrix(brays)
+brays2 <- as.matrix(brays)
 
 comp2 <- comp2[complete.cases(comp2),]
 brays <- vegdist(comp2[,4:ncol(comp2)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,

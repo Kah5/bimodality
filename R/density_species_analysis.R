@@ -1,6 +1,6 @@
 # This script is looking into the composition and density in bimodal areas 
 
-version <- "1.6-5"
+version <- "1.7-5"
 setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
 library(data.table)
 library(reshape2)
@@ -125,10 +125,10 @@ r2bpalette <- c('#ca0020',
 
 #X11(width = 18, height = 12)
 # map out species desities
-ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                axis.title.x=element_blank(),
-                                                                                axis.title.y=element_blank())+facet_wrap(~variable, ncol = 10, scales = 'free')+scale_fill_gradientn(colours = rev(rainbow(3)))
+#ggplot(spec.melt, aes(x=x, y=y, fill=value))+geom_raster()+coord_equal()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+ #                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
+  #                                                                              axis.title.x=element_blank(),
+   #                                                                             axis.title.y=element_blank())+facet_wrap(~variable, ncol = 10, scales = 'free')+scale_fill_gradientn(colours = rev(rainbow(3)))
 
 
 full.spec[is.na(full.spec)]<- 0

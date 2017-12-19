@@ -12,7 +12,8 @@ newdf$PC1bins <- pls.full$PC1bins
 brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
 
 # start with the first grid cell, then find a random grid cell in the same envt:
-for (i in 1:length(pls.full$cell)){ 
+length(pls.full$cell)
+for (i in 1:2){ 
   
   gridcell <- pls.full[i,]
   grid1 <- pls.full[i,]$cell
@@ -43,5 +44,5 @@ for (i in 1:length(pls.full$cell)){
   
 }
 
-write.csv(brays, "brays_full.csv")
-write.csv(newdf, "newdf.csv")
+write.csv(brays, "test_brays_full.csv")
+write.csv(newdf, "test_newdf.csv")

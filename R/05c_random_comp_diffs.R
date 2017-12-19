@@ -28,7 +28,7 @@ for (i in 1:length(pls.full$cell)){
   
   bin <- pls.full[pls.full$cell %in% grid1,]$PC1bins
   # find a random grid cell within the same envt
-  subset<- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
+  subset <- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
   randcell <- subset[sample(x = nrow(subset) , size = 1, replace = TRUE),]
   
   diffs <- randcell

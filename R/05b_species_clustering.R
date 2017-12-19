@@ -326,11 +326,15 @@ dis.maps <- ggplot(clust6.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(
 dis.maps
 dev.off()
 
+
+
 # lets look at the histograms of these overall
 png(width = 10, height = 6, units = "in", res=300, 'outputs/Composition/six_cluster_dissimilarity_hists.png')
 dis.hist <- ggplot(clust6.m, aes(value))+geom_histogram(bw = 35)+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
 dis.hist
 dev.off()
+
+
 
 # write as csv for future 
 write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
@@ -409,7 +413,109 @@ fcomps<- fcomps %>%
 fcomps<- fcomps %>%
   dplyr::select(x, everything())
 
+fcomps <- fcomps %>%
+  dplyr::select( -Other.softwood, everything())
 
+require(dplyr)
+comps<- comps %>%
+  dplyr::select(period, everything())
+
+comps<- comps %>%
+  dplyr::select(cell, everything())
+
+comps<- comps %>%
+  dplyr::select(y, everything())
+
+comps<- comps %>%
+  dplyr::select(x, everything())
+
+
+
+#---------------------- get dissimilarity of fcomp cells from the mediod of the PLS cells:
+indexpls <- rownames(comps[comps$cell %in% mediods,])
+
+fia_with_pls_meds<- rbind(comps[comps$cell %in% mediods,], fcomps)
+indexpls <- row.names(fia_with_pls_meds[fia_with_pls_meds$period %in% "PLS",])
+
+#index <- fcomps[fcomps$cell %in% mediods,]$idvar
+brays.f <- vegdist(fia_with_pls_meds[,5:40], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+                   na.rm = TRUE) 
+brays.f2 <- as.matrix(brays.f)
+
+diss.f6.dissim_fia <- brays.f2[,indexpls]
+
+
+fia_pls_diss <- data.frame(fia_with_pls_meds[7:5841,], 
+           diss1 = diss.f6.dissim_fia[7:5841,1],
+           diss2 = diss.f6.dissim_fia[7:5841,2],
+           diss3 = diss.f6.dissim_fia[7:5841,3],
+           diss4 = diss.f6.dissim_fia[7:5841,4],
+           diss5 = diss.f6.dissim_fia[7:5841,5],
+           diss6 = diss.f6.dissim_fia[7:5841,6])
+
+
+
+
+colnames(fia_pls_diss)[41:46] <- c('Elm.Maple.Hickory.Oak.Beech.diss', #mediod 1
+                                  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss', # mediod5
+                                  'Pine.Tamarack.Poplar.diss', # mediod 6
+                                  
+                                  "Poplar.Oak.diss", # mediod 4
+                                  
+                                  'Hemlock.Beech.Cedar.Birch.Maple.diss', # mediod 3
+                                  "Oak.diss" )# medoid 2) #6)                                                                                             
+
+#map out the dissimilarities in space
+clust6fia.m <- melt(fia_pls_diss[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.diss",
+                                "Oak.diss",
+                                "Hemlock.Beech.Cedar.Birch.Maple.diss",
+                                "Poplar.Oak.diss",
+                                "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
+                                "Pine.Tamarack.Poplar.diss")], id.vars = c('x',"y","cell"))
+
+
+
+# create relabeller
+composition_names <- list(
+  'Elm.Maple.Hickory.Oak.Beech.diss'="Elm/Maple/Hickory/ \n Oak/Beech",
+  'Oak.diss'="Oak",
+  'Hemlock.Beech.Cedar.Birch.Maple.diss'="Hemlock/Beech/Cedar/ \n Birch/Maple",
+  'Poplar.Oak.diss'="Poplar/Oak",
+  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss' = 'Tamarack/Spruce/Birch/ \n Pine/Spruce/Poplar',
+  'Pine.Tamarack.Poplar.diss' = 'Pine/Tamarack/Poplar'
+)
+
+composition_labeller <- function(variable,value){
+  return(composition_names[value])
+}
+
+png(width = 10, height = 6, units="in",res=300,"outputs/Composition/six_cluster_dissimilarity_maps_fia_from_pls.png")
+dis.maps <- ggplot(clust6fia.m, aes(x,y, fill = value))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "YlGnBu"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                                                                                                                                                                axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
+                                                                                                                                                                                                                                                                axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.background = element_rect(fill=alpha('transparent', 0)))+
+  xlab("easting") + ylab("northing") +coord_equal()+ggtitle("")+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.maps
+dev.off()
+
+# lets look at the histograms of these overall
+png(width = 10, height = 6, units = "in", res=300, 'outputs/Composition/six_cluster_dissimilarity_hists_fia_from_pls.png')
+dis.hist <- ggplot(clust6fia.m, aes(value))+geom_histogram(bw = 35)+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.hist
+dev.off()
+
+geom_density(data = dens.clust, aes(PLSdensity, 22*..count..), color = "white", linetype = "dashed")
+
+
+png(width = 10, height = 6, units = "in", res=300, 'outputs/Composition/six_cluster_dissimilarity_hists_fia_pls.png')
+
+dis.hist.pls.fia<- ggplot(clust6fia.m, aes(value, fill = variable))+geom_histogram(  alpha = 0.5)+geom_density(data = clust6fia.m, aes(value, 0.03*..count.., color = variable), fill = NA)+
+  geom_density(data = clust6.m, aes(value, 0.05*..count.., color = variable), fill = NA, linetype = "dashed")+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.hist.pls.fia
+dev.off()
+
+
+# need to merge clust6fia.m with the dissimilarities from the pls era and plot them together:
+#------------------------------------Fcomps fia classification----------------------------
 #fcomps classifcation only
 
 classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3, diss = FALSE,  keep.diss = TRUE)

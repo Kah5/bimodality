@@ -3474,23 +3474,31 @@ p.futureforest
 
 
 # --------------------predict for FIA data:
+map.future <- function(rcp, baseline){
 rcp85 <- read.csv("outputs/Future_PCA.csv")
 
 in.range <- range(dens.pr$PC1)
 
-rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85", "rcp85NA")]
-colnames(rcp85) <- c("x", "y", "cell",  "PC1", "rcp85NA")
 
-logsamplef <- predict(FIA.lgr15, rcp85, type="response")
-rcp85$ypredf <- as.numeric(logsamplef)
+rcp85 <- rcp85[,c("x", "y", "cell",  paste0("PC1_cc",rcp), paste0("rcp",rcp,"NA"))]
+colnames(rcp85) <- c("x", "y", "cell",  "PC1", paste0("rcp",rcp,"NA"))
+
+if(baseline == "FIA"){
+logsample <- predict(FIA.lgr15, rcp85, type="response")
+rcp85$ypredf <- as.numeric(logsample)
 summary(logsamplef)
 hist(rcp85$ypredf)
-
+}else{
+logsample <- predict(PLS.lgr15, rcp85, type="response")
+rcp85$ypred <- as.numeric(logsample)
+summary(logsample)
+hist(rcp85$ypred)
+}
 
 #rcp85$ypredf <- ifelse(rcp85$PC1 < in.range[1] | rcp85$PC1 > in.range[2],  "NA",rcp85$ypred )
 #rcp85$ypredf <- as.numeric(as.factor(rcp85$ypred))
 
-ggplot(rcp85, aes(x, y, color = ypredf)) + geom_point()
+ggplot(rcp85, aes(x, y, color = ypred)) + geom_point()
  
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
 names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
@@ -3505,22 +3513,41 @@ label.breaks <- function(beg, end, splitby){
 
 #rcp85$ypredfdiscrete <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", rcp85$ypredf)
 
-rcp85$ypreddiscretef <- cut(rcp85$ypredf, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscretef))
-rcp85$ypreddiscretef_os <- test
+test <- ifelse(rcp85[,c(paste0("rcp",rcp,"NA"))] %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscrete))
+rcp85$ypreddiscrete_os <- test
 
-p.futureforestfia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscretef_os))+
+p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 
 # save for later:
-p.futureforestfia
+p.futureforest
+}
+
+p.futureforestpls26 <- map.future(rcp = 26, baseline = "PLS")
+#p.futureforestpls45 <- map.future(rcp = 45, baseline = "PLS")
+p.futureforestpls60 <- map.future(rcp = 60, baseline = "PLS")
+p.futureforestpls85 <- map.future(rcp = 85, baseline = "PLS")
+
+p.futureforestfia26 <- map.future(rcp = 26, baseline = "FIA")
+#p.futureforestfia45 <- map.future(rcp = 45, baseline = "FIA")
+p.futureforestfia60 <- map.future(rcp = 60, baseline = "FIA")
+p.futureforestfia85 <- map.future(rcp = 85, baseline = "FIA")
 
 png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/fig3_future_climate_pred_forest.png")
-grid.arrange(p.futureforest, p.futureforestfia, ncol = 2)
+grid.arrange(p.futureforestpls85, p.futureforestfia85, ncol = 2)
+dev.off()
+
+png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/supp_future_climate_pred_forest_rcp26.png")
+grid.arrange(p.futureforestpls26, p.futureforestfia26, ncol = 2)
+dev.off()
+
+png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/supp_future_climate_pred_forest_rcp60.png")
+grid.arrange(p.futureforestpls60, p.futureforestfia60, ncol = 2)
 dev.off()
 ```

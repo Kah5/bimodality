@@ -30,7 +30,7 @@ df <- fullcomps
 system.time(NMDS <- metaMDS(as.matrix(df[,5:39]), trymax = 50))
 
 NMDS 
-saveRDS(NMDS, "outputs/cluster/NMDS_bimodal_only_test.rds")
+saveRDS(NMDS, "data/NMDS_bimodal_only_test.rds")
 
 png('data/stressplot_rand.png')
 stressplot(NMDS)

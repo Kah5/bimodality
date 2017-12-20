@@ -82,6 +82,8 @@ png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
 ggplot(dens.clust, aes(PC1,PLSdensity, color = speciescluster))+geom_point()
 dev.off()
 
+
+
 # C: Density vs PC1 as a hexbin plot
 pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
     theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
@@ -92,6 +94,31 @@ pls.dens.pc1.hex
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, 22 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")+ annotate("text", x=600, y=15,label= "D", size = 5)+ggtitle("")
 clust.hist
+
+dens.clust$ecocode <- ifelse(dens.clust$PLSdensity >= 100, "Forest", ifelse(dens.clust$PLSdensity >= 1, "Savanna", "Prairie" ))
+
+ecotype.hist <- ggplot()+ geom_density(data = dens.clust, aes(PLSdensity, 22*..count..), color = "white", linetype = "dashed")+ geom_histogram(data = dens.clust, aes(PLSdensity, fill = ecocode, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c(
+                      '#addd8e',
+                      '#31a354'),limits = c( "Savanna", "Forest"), name ="Biome")+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")+ggtitle("")+ theme_black(base_size = 20)
+
+png(height = 6, width = 7, units = "in",res = 300, "outputs/black_white_density_hist_ecotype_pls.png")
+ecotype.hist 
+dev.off()
+
+ecotype.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), colour = "darkgrey", fill = NA)+
+  geom_raster(data=dens.clust, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_manual(values = c(
+                      '#addd8e',
+                      '#31a354'), limits = c( "Savanna", "Forest"), name ="Biome")+
+  coord_equal()+theme_bw(base_size = 10)+theme_black()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(), panel.border = element_blank()) + geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), colour = "darkgrey", fill = NA)
+
+png("outputs/black_white_ecotype_map_pls.png")
+ecotype.map
+dev.off()
 
 #clust.dens<- ggplot(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster))+geom_histogram()+ scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme(legend.position = "none")
 #clust.dens
@@ -388,6 +415,34 @@ fia.dens.pc1.hex
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..),linetype="dashed" , color = "darkgrey", size = 1.5)+geom_density(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, 30 *..count..) , color = "black", size = 1.5)+geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1 > -2.5 & fia.dens.clust$PC2 < 1, ], aes(Density, fill = speciescluster))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'))+coord_flip()+xlim(0,600)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")+annotate("text", x=600, y=20,label= "D", size = 5)
 f.clust.hist
+
+
+
+fia.dens.clust$ecocode <- ifelse(fia.dens.clust$Density >= 75, "Forest", ifelse(fia.dens.clust$Density >= 1, "Savanna", "Prairie" ))
+
+f.ecotype.hist <- ggplot()+ geom_density(data = fia.dens.clust, aes(Density, 25*..count..), color = "white", linetype = 'dashed')+ geom_histogram(data = fia.dens.clust, aes(Density, fill = ecocode, binwidth = 30))+xlim(0,600)+scale_fill_manual(values = c(
+                      '#addd8e',
+                      '#31a354'),limits = c( "Savanna", "Forest"), name ="Biome")+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")+ggtitle("")+ theme_black(base_size = 20)
+
+png(height = 6, width = 7, units = "in",res = 300, "outputs/black_white_density_hist_ecotype_fia.png")
+f.ecotype.hist 
+dev.off()
+
+# ecotype map fia:
+f.ecotype.map<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), colour = "darkgrey", fill = NA)+
+  geom_raster(data=fia.bim, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_manual(values = c(
+                      '#addd8e',
+                      '#31a354'), limits = c( "Savanna", "Forest"), name ="Biome")+
+  coord_equal()+theme_bw(base_size = 10)+theme_black()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(), panel.border = element_blank()) + geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), colour = "darkgrey", fill = NA)
+
+png("outputs/black_white_ecotype_map_fia.png")
+f.ecotype.map
+dev.off()
 
 # add in the pca shift plots here:
 shifted.pca <- bimodal.region.shifts +annotate("text", x=-4.2, y=2,label= "E", size = 5)+theme(legend.direction = "vertical", legend.key.size = unit(0.5, "line") ) + guides(colour = guide_legend(override.aes = list(size=3)))
@@ -3372,10 +3427,12 @@ dev.off()
 # Predict the future landscape based on PLS relationsip with the environment and the FIA relationship with the environment:
 ```{r}
 # --------------------------use the pls model to model the future landscape:
-rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
-
+#rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
+#rcp85 <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")
+rcp85 <- read.csv("/Users/kah/Documents/bimodality/outputs/Future_PCA.csv")
 in.range <- range(dens.pr$PC1)
 
+# rcp85PC values are missing 
 rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85", "rcp85NA")]
 colnames(rcp85) <- c("x", "y", "cell",  "PC1", "rcp85NA")
 
@@ -3410,14 +3467,14 @@ p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lon
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 
 # save for later:
 p.futureforest
 
 
 # --------------------predict for FIA data:
-rcp85 <- read.csv("outputs/PLS_density_with_Future_PCA.csv")
+rcp85 <- read.csv("outputs/Future_PCA.csv")
 
 in.range <- range(dens.pr$PC1)
 
@@ -3451,14 +3508,14 @@ label.breaks <- function(beg, end, splitby){
 rcp85$ypreddiscretef <- cut(rcp85$ypredf, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
 test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscretef))
-rcp85$ypreddiscrete_os <- test
+rcp85$ypreddiscretef_os <- test
 
 p.futureforestfia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
+  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscretef_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 
 # save for later:
 p.futureforestfia

@@ -430,7 +430,7 @@ write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R
 ccesm <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")
 
-dens.pr <- merge(dens.pr, ccesm, by = c("x", "y"))
+future.pr <- merge(dens.pr, ccesm, by = c("x", "y"), all.y = TRUE)
 
 
 # for each rcp, we need to determine the places outside of the range of PLS climate:
@@ -439,10 +439,16 @@ source("R/find_noanalog_cmip.R")
 
 
 # find noanalog climates, label high or low
-NArcp26 <- find.noanalog(dens.pr=dens.pr, rcp = "26")
-NArcp45 <- find.noanalog(dens.pr=dens.pr, rcp = "45")
-NArcp85 <- find.noanalog(dens.pr=dens.pr, rcp = "85")
-NArcp60 <- find.noanalog(dens.pr = dens.pr, rcp = "60")
+NArcp26 <- find.noanalog(clim=future.pr, rcp = "26")
+NArcp45 <- find.noanalog(clim=future.pr, rcp = "45")
+NArcp85 <- find.noanalog(clim=future.pr, rcp = "85")
+NArcp60 <- find.noanalog(clim = future.pr, rcp = "60")
+
+future.pr <- merge(future.pr, NArcp85, by = c("x", "y", "cell"))
+future.pr <- merge(future.pr, NArcp60, by = c("x", "y", "cell"))
+future.pr <- merge(future.pr, NArcp45, by = c("x", "y", "cell"))
+future.pr <- merge(future.pr, NArcp26, by = c("x", "y", "cell"))
+
 
 dens.pr <- merge(dens.pr, NArcp85, by = c("x", "y", "cell"))
 dens.pr <- merge(dens.pr, NArcp60, by = c("x", "y", "cell"))
@@ -495,9 +501,38 @@ res<-princomp(scale.dens[,c('MAP1910',
                             "pastdeltaP", "pasttmean",
                             "deltaT", "sandpct", "awc", "CEC", "CaCO3")])
 
+# need to merge sand pct, awc, CEC, and CaCO3 with the future climate data product:
+sand8km <- raster("data/8km_UMW_sand1.tif")
+
+plot(sand8km)
+# need to project sand to great lakes albers coordinate system
+sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
+
+#awc-availible water content
+awc8km <- raster("data/8km_UMW_awc1.tif")
+awc8km.alb <- projectRaster(awc8km, crs ='+init=epsg:3175')
+
+# issues with ksat raster--missing all of IL
+# read in the CEC raster
+CEC <- raster("data/8km_UMW_CEC.tif")
+CEC8km.alb <- projectRaster(CEC, crs ='+init=epsg:3175')
+
+# read in CaCO3
+caco3 <- raster("data/8_km_caco3.tif")
+CaCO38km.alb <- projectRaster(caco3, crs ='+init=epsg:3175')
+
+plot(CaCO38km.alb)
+
+#extract soils data using PLS points
+future.pr$sandpct <- extract(sand8km.alb, future.pr[,c('x', 'y')], method = 'bilinear')
+future.pr$awc <- extract(awc8km.alb, future.pr[,c('x', 'y')])
+future.pr$ksat <- extract(ksat8km.alb, future.pr[,c('x', 'y')])
+future.pr$CEC <- extract(CEC8km.alb, future.pr[,c('x','y')])
+future.pr$CaCO3 <- extract(CaCO38km.alb, future.pr[,c('x','y')])
+
 #created a function to predict the PC scores for the different RCP's using the PCA from PLS
 predict.PCA <- function(rcp){
-    cc <- scale(dens.pr[,c(paste0("pr.",rcp), 
+    cc <- scale(future.pr[,c(paste0("pr.",rcp), 
                            paste0("pr.",rcp,"SI"), 
                              paste0("tn.",rcp),
                                paste0("tn.",rcp, "cv"),
@@ -508,18 +543,18 @@ predict.PCA <- function(rcp){
     
     newscores <- predict(res,newdata=cc) # predict new scores based on the prevous 
     
-    dens.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
-    dens.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
-    dens.pr
+    future.pr[,paste0('PC1_cc',rcp)] <- newscores[,1]
+    future.pr[,paste0('PC2_cc',rcp)]  <- newscores[,2]
+    future.pr
 }
 
-dens.pr <- predict.PCA("26")
-dens.pr <- predict.PCA("45")
-dens.pr <- predict.PCA("60")
-dens.pr <- predict.PCA("85")
+future.pr <- predict.PCA("26")
+future.pr <- predict.PCA("45")
+future.pr <- predict.PCA("60")
+future.pr <- predict.PCA("85")
 
 
-write.csv(dens.pr, "outputs/PLS_density_with_Future_PCA.csv",row.names = FALSE)
+write.csv(future.pr, "outputs/Future_PCA.csv",row.names = FALSE)
 
 #------------------------------Create bins for bimodality analysis------------------------
 

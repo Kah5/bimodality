@@ -173,11 +173,11 @@ full.rcps<- function(climate, rcp){
    if(climate == "pr"){
     avgs.df$total <- extract(avgs$total, full.spec.table[,c("x","y")])
     avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
-    colnames(avgs.df) <- c('x', "y", paste0(climate,"_", rcp), paste0(climate,'-',rcp,'SI')) 
+    colnames(avgs.df) <- c('x', "y", paste0(climate,".", rcp), paste0(climate,'.',rcp,'SI')) 
   }else{
     avgs.df$mean <- extract(avgs$mean, full.spec.table[,c("x","y")])
     avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
-    colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'cv')) 
+    colnames(avgs.df) <- c('x', "y", paste0(climate,".", rcp), paste0(climate,'.',rcp,'cv')) 
     
   }
   avgs.df

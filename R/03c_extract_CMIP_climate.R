@@ -28,7 +28,7 @@ library(lubridate)
 extract.rcps<- function(climate, rcp){
   
       setwd(paste0('/Users/kah/Documents/bimodality/data/cc',rcp,climate,'70/'))
-      spec.table<- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_full_density_pr_alb1.7-5.csv')
+      spec.table <- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_full_density_pr_alb1.7-5.csv')
       coordinates(spec.table) <- ~x +y
       proj4string(spec.table) <- '+init=epsg:3175'
       spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
@@ -155,14 +155,28 @@ full.rcps<- function(climate, rcp){
   #plot(avgs) #plots averages
   
   spec.table <- data.frame(spec.table)
-  avgs.df<- data.frame(x = spec.table$x, y =spec.table$y)
-  if(climate == "pr"){
-    avgs.df$total <- extract(avgs$total, spec.table[,c("x","y")])
-    avgs.df$SI <- extract(avgs$SI, spec.table[,c("x","y")])
-    colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'SI')) 
+  
+ 
+  rast.fun <- function(x) {
+    
+    to_grid <- data.frame(cell = x$cell, 
+                          total = rowSums(x[,5:6], na.rm = TRUE))
+    
+    empty <- rep(NA, ncell(base.rast))
+    empty[to_grid$cell] <- to_grid$total
+    setValues(base.rast, empty)
+    
+  }
+  
+  full.spec.table     <- as.data.frame(rast.fun(spec.table[2:4,]), xy = TRUE)
+  avgs.df<- data.frame(x = full.spec.table$x, y =full.spec.table$y)
+   if(climate == "pr"){
+    avgs.df$total <- extract(avgs$total, full.spec.table[,c("x","y")])
+    avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
+    colnames(avgs.df) <- c('x', "y", paste0(climate,"_", rcp), paste0(climate,'-',rcp,'SI')) 
   }else{
-    avgs.df$mean <- extract(avgs$mean, spec.table[,c("x","y")])
-    avgs.df$SI <- extract(avgs$SI, spec.table[,c("x","y")])
+    avgs.df$mean <- extract(avgs$mean, full.spec.table[,c("x","y")])
+    avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
     colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'cv')) 
     
   }
@@ -170,14 +184,14 @@ full.rcps<- function(climate, rcp){
 }
 
 # run this function for the different rcp scenarios (some of these may take along time):
-pr.rcp26 <- extract.rcps("pr", "26")
-pr.rcp45 <- extract.rcps("pr", "45")
-pr.rcp60 <- extract.rcps("pr", "60")
-pr.rcp85 <- extract.rcps("pr", "85")
-t.rcp26 <- extract.rcps("tn", "26")
-t.rcp45 <- extract.rcps("tn", "45")
-t.rcp60 <- extract.rcps("tn", "60")
-t.rcp85 <- extract.rcps("tn", "85")
+pr.rcp26 <- full.rcps("pr", "26")
+pr.rcp45 <- full.rcps("pr", "45")
+pr.rcp60 <- full.rcps("pr", "60")
+pr.rcp85 <- full.rcps("pr", "85")
+t.rcp26 <- full.rcps("tn", "26")
+t.rcp45 <- full.rcps("tn", "45")
+t.rcp60 <- full.rcps("tn", "60")
+t.rcp85 <- full.rcps("tn", "85")
 
 
 avgs.df <- data.frame(x = pr.rcp26$x,

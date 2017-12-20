@@ -267,7 +267,7 @@ write.csv(dens, "outputs/cluster/density_pls_with_clusters.csv")
 
 # map out the clusters in space:
 png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/six_cluster_map_pls.png")
-pls.clust <- ggplot(clust_plot6, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+pls.clust <- ggplot(dens, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#f0027f', '#7fc97f','#fdc086'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -290,6 +290,16 @@ colnames(clust_plot6)[42:47] <- c('Elm.Maple.Hickory.Oak.Beech.diss', #mediod 1
                                   "Oak.diss" )# medoid 2) #6)                                                                                             
 
 
+colnames(dens)[85:90] <- c('Elm.Maple.Hickory.Oak.Beech.diss', #mediod 1
+                                  'Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss', # mediod5
+                                  'Pine.Tamarack.Poplar.diss', # mediod 6
+                                  
+                                  "Poplar.Oak.diss", # mediod 4
+                                  
+                                  'Hemlock.Beech.Cedar.Birch.Maple.diss', # mediod 3
+                                  "Oak.diss" )# medoid 2) #6)                                                                                             
+
+
 ggplot(clust_plot6, aes(x = x, y=y, fill=rank))+geom_raster()+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 6, name = "Greys"))+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),axis.title.x=element_blank(),
@@ -302,7 +312,12 @@ clust6.m <- melt(clust_plot6[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.d
                                 "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
                                 "Pine.Tamarack.Poplar.diss")], id.vars = c('x',"y","cell"))
 
-
+dens.m <- melt(dens[,c("x", "y", "cell", "Elm.Maple.Hickory.Oak.Beech.diss",
+                                "Oak.diss",
+                                "Hemlock.Beech.Cedar.Birch.Maple.diss",
+                                "Poplar.Oak.diss",
+                                "Tamarack.Spruce.Birch.Pine.Spruce.Poplar.diss",
+                                "Pine.Tamarack.Poplar.diss", "PC1")], id.vars = c('x',"y","cell", "PC1"))
 
 # create relabeller
 composition_names <- list(
@@ -334,7 +349,8 @@ dis.hist <- ggplot(clust6.m, aes(value))+geom_histogram(bw = 35)+theme_bw()+face
 dis.hist
 dev.off()
 
-
+dis.hist.pc1 <- ggplot(dens.m[dens.m$PC1 >= - 2.5 & dens.m$PC1 < 1.25,], aes(value))+geom_histogram(bw = 35)+theme_bw()+facet_wrap(~variable, ncol = 3, labeller = composition_labeller)
+dis.hist.pc1
 
 # write as csv for future 
 write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
@@ -513,6 +529,9 @@ dis.hist.pls.fia<- ggplot(clust6fia.m, aes(value, fill = variable))+geom_histogr
 dis.hist.pls.fia
 dev.off()
 
+#ggplot(fia_pls_diss, aes(Oak.diss, Hemlock.Beech.Cedar.Birch.Maple.diss))+geom_point()
+
+#ggplot(clust_plot6, aes(Oak.diss, Hemlock.Beech.Cedar.Birch.Maple.diss))+geom_point()
 
 # need to merge clust6fia.m with the dissimilarities from the pls era and plot them together:
 #------------------------------------Fcomps fia classification----------------------------

@@ -1,7 +1,7 @@
 
 
 full <- read.csv("full_comp_dens_df.csv")
-
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
 pls.full <- full[full$period %in% "PLS",]
 
 newdf <- pls.full[,2:43]
@@ -9,7 +9,7 @@ newdf$randcell <- NA
 newdf$bimodal <- NA
 newdf$PC1 <- pls.full$PC1
 newdf$PC1bins <- pls.full$PC1bins
-brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
+brays <- matrix(nrow = length(pls.full$cell), ncol = 1000)
 
 # start with the first grid cell, then find a random grid cell in the same envt:
 for (i in 1:length(pls.full$cell)){ 
@@ -20,7 +20,7 @@ for (i in 1:length(pls.full$cell)){
   bin <- pls.full[pls.full$cell %in% grid1,]$PC1bins
   # find a random grid cell within the same envt
   subset<- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
-  randcell <- subset[sample(x = nrow(subset) , size = 50, replace = TRUE),]
+  randcell <- subset[sample(x = nrow(subset) , size = 1000, replace = TRUE),]
   
   diffs <- randcell
   difmean <- randcell[1,]
@@ -43,5 +43,5 @@ for (i in 1:length(pls.full$cell)){
   
 }
 
-write.csv(brays, "brays_full.csv")
-write.csv(newdf, "newdf.csv")
+write.csv(brays, "brays_full_1000.csv")
+write.csv(newdf, "newdf_1000.csv")

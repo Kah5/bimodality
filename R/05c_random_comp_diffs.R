@@ -14,22 +14,24 @@ pls.full <- full[full$period %in% "PLS",]
 
 # want to calculate the difference in spec. composiitions between each grid cell, and a random grid cell within the same envt bin:
 # dataframe output desired: 
-new <- pls.full[,2:43]
+new <- pls.full[,2:44]
 new$randcell <- NA
 new$bimodal <- NA
 new$PC1 <- pls.full$PC1
 new$PC1bins <- pls.full$PC1bins
+new$braydists <- NA
+new <- new[new$PC1 >= -2.5 & new$PC1 <= 1.0,]
 
 # start with the first grid cell, then find a random grid cell in the same envt:
-for (i in 1:length(pls.full$cell)){ 
+for (i in 1:length(new$cell)){ 
   
-  gridcell <- pls.full[i,]
-  grid1 <- pls.full[i,]$cell
+  gridcell <- new[i,]
+  grid1 <- new[i,]$cell
   
   bin <- pls.full[pls.full$cell %in% grid1,]$PC1bins
   # find a random grid cell within the same envt
-  subset <- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
-  randcell <- subset[sample(x = nrow(subset) , size = 1, replace = TRUE),]
+  #subset <- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
+  randcell <- new[sample(x = nrow(new) , size = 1, replace = TRUE),]
   
   diffs <- randcell
   brays <- data.frame(brays <- nrow(randcell))
@@ -39,33 +41,48 @@ for (i in 1:length(pls.full$cell)){
   diffs[,7:43] <- randcell[,7:43] - gridcell[,7:43]
   brays <- rowSums(data.frame(lapply((randcell[,7:43] - gridcell[,7:43]), abs)), na.rm=TRUE)/rowSums(data.frame(randcell[,7:43] + gridcell[,7:43]), na.rm=TRUE)
   # calculate the absolute difference of all the diffs
+  diffs[,45] <- brays
+  colnames(diffs)[45] <- "braydist"
   
   # find the mean difference
-  new[i, 6:42] <- data.frame( lapply(diffs[7:43], abs) )
+  new[i, 7:43] <- data.frame( lapply(diffs[7:43], abs) )
+  new[i,48] <- data.frame(diffs$braydist)
   new[i,]$randcell <- randcell$cell
-  new[i,]$bimodal <- as.factor(gridcell$biboth)
+  
+  #new[i,]$bimodal <- as.factor(gridcell$biboth)
   
 }
 
+hist(new$braydists, 25)
 
+clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+clust_brays <- merge(new, clust_plot6, by = c("x", "y", "cell"))
+
+png(width = 10, height = 6, units = "in", res = 300,"outputs/Composition/rand_sample_bray_curtis_histograms_bimodal_climate.png")
+ggplot(clust_brays, aes(braydists, fill = speciescluster))+geom_histogram(position = "identity", alpha = 0.5)+facet_wrap(~speciescluster)+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))
+dev.off()
+
+#-------------------------------------------------------------------------------------------
 # below code does the same but it takes 50 random samples (with replacement)
 # x, y, grid cell 1, grid cell 2, bimodality, spec compostion differences 1-29
-newdf <- pls.full[,2:43]
+newdf <- pls.full[,2:44]
 newdf$randcell <- NA
 newdf$bimodal <- NA
 newdf$PC1 <- pls.full$PC1
 newdf$PC1bins <- pls.full$PC1bins
-brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
+newdf <- newdf[newdf$PC1 >= -2.5 & newdf$PC1 <= 1.0,]
+brays <- matrix(nrow = length(newdf$cell), ncol = 50)
 
 # start with the first grid cell, then find a random grid cell in the same envt:
- for (i in length(pls.full$cell)){ 
+ for (i in 1:length(newdf$cell)){ 
    
-    gridcell <- pls.full[i,]
-    grid1 <- pls.full[i,]$cell
+    gridcell <- newdf[i,]
+    grid1 <- newdf[i,]$cell
   
-    bin <- pls.full[pls.full$cell %in% grid1,]$PC1bins
+    bin <- newdf[newdf$cell %in% grid1,]$PC1bins
     # find a random grid cell within the same envt
-    subset<- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
+    subset<- newdf[ ! newdf$cell %in% grid1, ]
     randcell <- subset[sample(x = nrow(subset) , size = 50, replace = TRUE),]
     
     diffs <- randcell
@@ -84,11 +101,11 @@ brays <- matrix(nrow = length(pls.full$cell), ncol = 50)
     # find the mean difference
     newdf[i, 6:42] <- data.frame( lapply(difmean[7:43], abs) )
     #newdf[i,]$randcell <- randcell$cell
-    newdf[i,]$bimodal <- as.factor(gridcell$biboth)
-    cat(i)
+    #newdf[i,]$bimodal <- as.factor(gridcell$biboth)
+    cat(".")
  }
 
-#write.csv(newdf, "outputs/random_comp_differences.csv")
+
 
 newdf <- read.csv("outputs/newdf.csv")
 brays <- read.csv("outputs/brays_full.csv")

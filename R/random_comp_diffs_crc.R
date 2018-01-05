@@ -18,9 +18,14 @@ for (i in 1:2){
   gridcell <- pls.full[i,]
   grid1 <- pls.full[i,]$cell
   
-  bin <- pls.full[pls.full$cell %in% grid1,]$PC1bins
+
   # find a random grid cell within the same envt
-  subset<- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
+  bin <- range(pls.full[pls.full$cell %in% grid1,]$PC1 - 0.15, pls.full[pls.full$cell %in% grid1,]$PC1 + 0.15) 
+  
+  # find a random grid cell within the same envt
+  subset<- pls.full[pls.full$PC1 >= bin[1] & pls.full$PC1 <= bin[2] & !pls.full$cell %in% grid1, ]
+  
+  #subset<- pls.full[pls.full$PC1bins %in% bin & ! pls.full$cell %in% grid1, ]
   randcell <- subset[sample(x = nrow(subset) , size = 50, replace = TRUE),]
   
   diffs <- randcell

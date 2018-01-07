@@ -173,9 +173,11 @@ dev.off()
 # -----------------------map out Indiana and Illinois with the CI intervals:
 dens.ci.df$uncertainty <- dens.ci.df$ci.high - dens.ci.df$ci.low
 dens.ci.df.m <- melt(dens.ci.df[,c("x", "y", "cell", "PLSdensity", "ci.low", "ci.high")], id.vars = c("x", "y", "cell"))
+dens.ci.df.m$ecoclass <- ifelse(dens.ci.df.m$value >= 47, "Forest", ifelse(dens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
 
 alldens$uncertainty <- alldens$ci.high.fia - alldens$ci.low.fia
 fdens.ci.df.m <- melt(alldens[,c("x", "y", "cell", "FIAdensity", "ci.low.fia", "ci.high.fia")], id.vars = c("x", "y", "cell"))
+fdens.ci.df.m$ecoclass <- ifelse(fdens.ci.df.m$value >= 47, "Forest", ifelse(fdens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
 
 
 # need to set up state outlines:
@@ -206,6 +208,20 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 pls.dens.ci.maps
 dev.off()
 
+pls.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = ecoclass))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c("#ffffcc",  "#78c679",  "#006837"), limits=c("Prairie", "Savanna", "Forest"), name ="Ecocode", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_class_ci_inil_pls.png")
+pls.class.ci.maps
+dev.off()
+
 fia.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=fdens.ci.df.m, aes(x=x, y=y, fill = value))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -217,4 +233,19 @@ fia.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
                                                 axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_ci_inil_fia.png")
 fia.dens.ci.maps
+dev.off()
+
+
+fia.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fdens.ci.df.m, aes(x=x, y=y, fill = ecoclass))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c("#ffffcc",  "#78c679",  "#006837"), limits=c("Prairie", "Savanna", "Forest"), name ="Ecocode", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_class_ci_inil_fia.png")
+fia.class.ci.maps
 dev.off()

@@ -3436,6 +3436,7 @@ in.range <- range(dens.pr$PC1)
 rcp85 <- rcp85[,c("x", "y", "cell",  "PC1_cc85", "rcp85NA")]
 colnames(rcp85) <- c("x", "y", "cell",  "PC1", "rcp85NA")
 
+# make the predictions from PLS.lgr15 model above:
 logsample <- predict(PLS.lgr15, rcp85, type="response")
 rcp85$ypred <- as.numeric(logsample)
 summary(logsample)
@@ -3456,17 +3457,18 @@ label.breaks <- function(beg, end, splitby){
 
 
 rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
-test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscrete))
+test <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", ifelse(is.na(rcp85$ypreddiscrete),"NA",as.character(rcp85$ypreddiscrete)))
 rcp85$ypreddiscrete_os <- test
 
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
-names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey", "white")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample", "NA")
 
 p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
-  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.1525),legend.background = element_rect(fill=alpha('transparent', 0)),
 panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 
 # save for later:
@@ -3498,10 +3500,10 @@ hist(rcp85$ypred)
 #rcp85$ypredf <- ifelse(rcp85$PC1 < in.range[1] | rcp85$PC1 > in.range[2],  "NA",rcp85$ypred )
 #rcp85$ypredf <- as.numeric(as.factor(rcp85$ypred))
 
-ggplot(rcp85, aes(x, y, color = ypred)) + geom_point()
+#ggplot(rcp85, aes(x, y, color = ypred)) + geom_point()
  
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey")
-names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample")
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837", "darkgrey", "white")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1", "out-of-sample", "NA")
 
 
 # create discrete probability cuts
@@ -3515,7 +3517,7 @@ label.breaks <- function(beg, end, splitby){
 
 rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-test <- ifelse(rcp85[,c(paste0("rcp",rcp,"NA"))] %in% "out-of-sample", "out-of-sample", as.character(rcp85$ypreddiscrete))
+test <- ifelse(rcp85[,c(paste0("rcp",rcp, "NA"))] %in% "out-of-sample", "out-of-sample", ifelse(is.na(rcp85$ypreddiscrete),"NA",as.character(rcp85$ypreddiscrete)))
 rcp85$ypreddiscrete_os <- test
 
 p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+

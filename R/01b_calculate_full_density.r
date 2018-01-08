@@ -25,8 +25,8 @@ correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRU
 
 # add the lower MI data below the INIL data: 
 
-#final.data <- rbind(final.data, final.data.mi)
-#correction.factor <- rbind(correction.factor, correction.factor.mi)
+final.data <- rbind(final.data, final.data.mi)
+correction.factor <- rbind(correction.factor, correction.factor.mi)
 
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]
@@ -122,7 +122,7 @@ coordinates(stem.density)<- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 
 # write to an arcGIS compatible shapefile
-writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.6-5.shp", layer = "stem_density_alb_v1.6-5", driver = "ESRI Shapefile", overwrite=TRUE)
+writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.7-5.shp", layer = "stem_density_alb_v1.7-5", driver = "ESRI Shapefile", overwrite=TRUE)
 
 
 #------------------------Formatting for biomass estimation-------------------------

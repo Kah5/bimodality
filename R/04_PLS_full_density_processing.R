@@ -338,6 +338,7 @@ dens.rm$PC1 <- scores[,1]
 dens.rm$PC2 <- scores[,2]
 dens.rm <- data.frame(dens.rm)
 PC <- dens.pca
+
 #plot scores by tree density in trees per hectare
 png(paste0("outputs/pca_no_loadings.png"))
 ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
@@ -430,6 +431,7 @@ write.csv(dens.pr, "data/dens_pr_FULL_PLS_FIA_with_cov.csv")
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R
 ccesm <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")
 
+# create dataframe with density and all of the future climate valuesfor the whole region (not just those with PLS data)
 future.pr <- merge(dens.pr, ccesm, by = c("x", "y"), all.y = TRUE)
 
 

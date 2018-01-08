@@ -76,8 +76,8 @@ newdf <- fia.full[,2:44]
 
 newdf$randcell <- NA
 newdf$bimodal <- NA
-newdf$PC1 <- pls.full$PC1
-newdf$PC1bins <- pls.full$PC1bins
+newdf$PC1 <- fia.full$PC1
+newdf$PC1bins <- fia.full$PC1bins
 newdf <- newdf[newdf$PC1 >= -2.5 & newdf$PC1 <= 1.0,]
 brays <- matrix(nrow = length(newdf$cell), ncol = 50)
 

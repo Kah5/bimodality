@@ -132,16 +132,16 @@ write.csv(brays , "data/outputs/brays_bimodal_fia.csv")
 
 
 clust_plot6 <- read.csv('data/density_pls_with_clusters.csv')
-clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+#clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
 
 brays.2 <- merge(brays, clust_plot6[,c("x", "y", "cell", "speciescluster")])
 brays.m <- reshape2::melt(brays.2, id.vars = c("cell", "x", "y","X", "speciescluster"))
 
-png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_pls.png")
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_fia.png")
 ggplot(brays.m, aes(value, fill = speciescluster)) +geom_histogram()+
   scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+facet_wrap(~speciescluster)
 dev.off()
 
-png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_pls.png")
+png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_fia.png")
 ggplot(brays.m, aes(value)) +geom_histogram()
 dev.off()

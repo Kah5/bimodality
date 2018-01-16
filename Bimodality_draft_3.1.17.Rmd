@@ -3482,19 +3482,19 @@ rcp85 <- read.csv("outputs/Future_PCA.csv")
 in.range <- range(dens.pr$PC1)
 
 
-rcp85 <- rcp85[,c("x", "y", "cell",  paste0("PC1_cc",rcp), paste0("rcp",rcp,"NA"))]
-colnames(rcp85) <- c("x", "y", "cell",  "PC1", paste0("rcp",rcp,"NA"))
+rcp.df <- rcp85[,c("x", "y", "cell",  paste0("PC1_cc",rcp), paste0("rcp",rcp,"NA"))]
+colnames(rcp.df) <- c("x", "y", "cell",  "PC1", paste0("rcp",rcp,"NA"))
 
 if(baseline == "FIA"){
-logsample <- predict(FIA.lgr15, rcp85, type="response")
-rcp85$ypredf <- as.numeric(logsample)
+logsample <- predict(FIA.lgr15, rcp.df, type="response")
+rcp.df$ypredf <- as.numeric(logsample)
 summary(logsamplef)
-hist(rcp85$ypredf)
+hist(rcp.df$ypredf)
 }else{
-logsample <- predict(PLS.lgr15, rcp85, type="response")
-rcp85$ypred <- as.numeric(logsample)
+logsample <- predict(PLS.lgr15, rcp.df, type="response")
+rcp.df$ypred <- as.numeric(logsample)
 summary(logsample)
-hist(rcp85$ypred)
+hist(rcp.df$ypred)
 }
 
 #rcp85$ypredf <- ifelse(rcp85$PC1 < in.range[1] | rcp85$PC1 > in.range[2],  "NA",rcp85$ypred )
@@ -3515,30 +3515,30 @@ label.breaks <- function(beg, end, splitby){
 
 #rcp85$ypredfdiscrete <- ifelse(rcp85$rcp85NA %in% "out-of-sample", "out-of-sample", rcp85$ypredf)
 
-rcp85$ypreddiscrete <- cut(rcp85$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+rcp.df$ypreddiscrete <- cut(rcp.df$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-test <- ifelse(rcp85[,c(paste0("rcp",rcp, "NA"))] %in% "out-of-sample", "out-of-sample", ifelse(is.na(rcp85$ypreddiscrete),"NA",as.character(rcp85$ypreddiscrete)))
-rcp85$ypreddiscrete_os <- test
+test <- ifelse(rcp.df[,c(paste0("rcp",rcp, "NA"))] %in% "out-of-sample", "out-of-sample", ifelse(is.na(rcp.df$ypreddiscrete),"NA",as.character(rcp.df$ypreddiscrete)))
+rcp.df$ypreddiscrete_os <- test
 
 p.futureforest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=rcp85, aes(x=x, y=y, fill = ypreddiscrete_os))+
+  geom_raster(data=rcp.df, aes(x=x, y=y, fill = ypreddiscrete_os))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette) +
-  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")+xlim(-100000, 1100000)
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.225),legend.background = element_rect(fill=alpha('transparent', 0)),
+panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")
 
 # save for later:
 p.futureforest
 }
 
-p.futureforestpls26 <- map.future(rcp = 26, baseline = "PLS")
-#p.futureforestpls45 <- map.future(rcp = 45, baseline = "PLS")
-p.futureforestpls60 <- map.future(rcp = 60, baseline = "PLS")
+p.futureforestpls26 <- map.future(rcp = 26, baseline = "PLS") + annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")+xlim(-100000, 1100000)
+p.futureforestpls45 <- map.future(rcp = 45, baseline = "PLS")+ annotate("text", x=-90000, y=1486000,label= "C", size = 5)+ggtitle("")+xlim(-100000, 1100000)
+p.futureforestpls60 <- map.future(rcp = 60, baseline = "PLS")+ annotate("text", x=-90000, y=1486000,label= "E", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 p.futureforestpls85 <- map.future(rcp = 85, baseline = "PLS")
 
-p.futureforestfia26 <- map.future(rcp = 26, baseline = "FIA")
-#p.futureforestfia45 <- map.future(rcp = 45, baseline = "FIA")
-p.futureforestfia60 <- map.future(rcp = 60, baseline = "FIA")
+p.futureforestfia26 <- map.future(rcp = 26, baseline = "FIA")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")+xlim(-100000, 1100000)
+p.futureforestfia45 <- map.future(rcp = 45, baseline = "FIA")+ annotate("text", x=-90000, y=1486000,label= "D", size = 5)+ggtitle("")+xlim(-100000, 1100000)
+p.futureforestfia60 <- map.future(rcp = 60, baseline = "FIA")+ annotate("text", x=-90000, y=1486000,label= "F", size = 5)+ggtitle("")+xlim(-100000, 1100000)
 p.futureforestfia85 <- map.future(rcp = 85, baseline = "FIA")
 
 png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/fig3_future_climate_pred_forest.png")
@@ -3551,5 +3551,10 @@ dev.off()
 
 png(width = 8, height = 6, units = "in", res = 300, "outputs/paper_figs/supp_future_climate_pred_forest_rcp60.png")
 grid.arrange(p.futureforestpls60, p.futureforestfia60, ncol = 2)
+dev.off()
+
+
+png(width = 8, height = 12, units = "in", res = 300, "outputs/paper_figs/supp_future_climate_pred_forest_rcp60_rcp26.png")
+grid.arrange(p.futureforestpls26, p.futureforestfia26,p.futureforestpls45, p.futureforestfia45, p.futureforestpls60, p.futureforestfia60, ncol = 2)
 dev.off()
 ```

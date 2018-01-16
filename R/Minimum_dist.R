@@ -151,5 +151,76 @@ for (i in 1:length(newdf[complete.cases(newdf[,7:43]),7:43]$Alder))
 }
 
 ggplot(newdf, aes(x = x, y=y, fill = minbray))+geom_raster()
-ggplot(newdf, aes(minbray))+geom_histogram()
+ggplot(newdf, aes(difbray))+geom_histogram()
 
+#--------------------- do the same thing for FIA data:
+
+
+fia.full <- full[full$period %in% "FIA",]
+
+newdff <- fia.full[,2:44]
+newdff <- newdff[complete.cases(newdff[,7:43]), ] # only take non-na values for veg. composition
+newdff$randcell <- NA
+newdff$bimodal <- NA
+newdff$PC1 <- fia.full$PC1
+newdff$PC1bins <- fia.full$PC1bins
+newdff$minbray <- NA
+newdff$maxbray <- NA
+newdff$difbray <- NA
+#newdf <- newdf[newdf$PC1 >= -2 & newdf$PC1 <= 1.0,]
+brays <- matrix(nrow = length(newdff$cell), ncol = 1)
+
+test.dist <- vegdist(newdff[complete.cases(newdff[,7:43]),7:43], method = "bray")
+dist.matrix.f <- as.matrix(test.dist)
+row.names(dist.matrix.f) <- newdff$cell
+
+# start with the first grid cell, then find a random grid cell in the same envt:
+for (i in 1:length(newdff[complete.cases(newdff[,7:43]),7:43]$Alder))
+  #for (i in 1:100)
+{ 
+  
+  gridcell <- newdff[i,]
+  grid1 <- newdff[i,]$cell
+  
+  bin <- range(newdff[newdff$cell %in% grid1,]$PC1 - 0.15, newdff[newdff$cell %in% grid1,]$PC1 + 0.15) 
+  
+  # find a random grid cell within the same envt
+  subset <- newdff[newdff$PC1 >= bin[1] & newdff$PC1 <= bin[2] & !newdff$cell %in% grid1, ]
+  #randcell <- subset[sample(x = nrow(subset) , size = 1, replace = TRUE),]
+  cells <- as.character(na.omit(subset$cell))
+  
+  min_b <- min(dist.matrix[row.names(dist.matrix) %in% cells, i])
+  max_b <- max(dist.matrix[row.names(dist.matrix) %in% cells,i])
+  # find the min difference
+  newdff[i,]$minbray <- min_b
+  newdff[i,]$maxbray <- max_b
+  newdff[i,]$difbray <- max_b - min_b
+  #newdf[i,]$min <- randcell$cell
+  
+  
+}
+
+ggplot(newdff, aes(x = x, y=y, fill = minbray))+geom_raster()
+ggplot(newdff, aes(difbray))+geom_histogram()
+ggplot(newdff, aes(minbray))+geom_histogram()
+
+
+newdff$period <- "FIA"
+newdf$period <- "PLS"
+
+full.min.brays <- rbind(newdff[,c("x", "y", "cell", "period", "minbray", "difbray","PC1bins", "PC1")], newdf[,c("x", "y", "cell", "period", "minbray", "difbray", "PC1bins", "PC1")])
+
+ggplot(full.min.brays[full.min.brays$minbray <= 0.2,], aes(x = x, y=y, fill = minbray))+geom_raster()+coord_equal()+facet_wrap(~period)
+
+# plot histograms of minimum bray curtis distances:
+png(height = 6, width = 6,units = "in",res=300,"data/outputs/min_bray_curtis_dist_in_group_fia_pls_hist.png")
+ggplot()+geom_histogram(data = full.min.brays, aes(minbray, fill = period, alpha = 0.5),position = "identity")
+dev.off()
+
+ggplot()+geom_histogram(data = full.min.brays, aes(minbray, fill = period, alpha = 0.5),position = "identity")+facet_wrap(~PC1bins)
+
+ggplot()+geom_histogram(data = full.min.brays, aes(difbray, fill = period, alpha = 0.5),position = "identity")+facet_wrap(~PC1bins)
+
+
+ggplot(data = full.min.brays, aes(PC1, minbray)) +geom_hex() + 
+  theme_bw(base_size = 10)+scale_fill_distiller(palette = "Spectral", limits = c(1,300))+facet_wrap(~period)

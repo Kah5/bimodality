@@ -26,6 +26,7 @@ brays <- matrix(nrow = length(newdf[complete.cases(newdf[,7:44]),7:43]$cell), nc
 test.dist <- vegdist(newdf[complete.cases(newdf[,7:43]),7:43], method = "bray")
 dist.matrix <- as.matrix(test.dist)
 row.names(dist.matrix) <- newdf[complete.cases(newdf[,7:43]),]$cell
+saveRDS(dist.matrix , "outputs/pls_bray_curtis_dist_matrix.rds")
 
 # start with the first grid cell, then find a random grid cell in the same envt:
 for (i in 1:length(newdf$cell)){ 

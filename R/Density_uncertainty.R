@@ -209,11 +209,11 @@ dev.off()
 
 
 # -----------------------map out Indiana and Illinois with the CI intervals:
-dens.ci.df$uncertainty <- dens.ci.df$ci.high - dens.ci.df$ci.low
+dens.ci.df$uncertainty <- (dens.ci.df$ci.high - dens.ci.df$ci.low)/2
 dens.ci.df.m <- melt(dens.ci.df[,c("x", "y", "cell", "PLSdensity", "ci.low", "ci.high")], id.vars = c("x", "y", "cell"))
 dens.ci.df.m$ecoclass <- ifelse(dens.ci.df.m$value >= 47, "Forest", ifelse(dens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
 
-alldens$uncertainty <- alldens$ci.high.fia - alldens$ci.low.fia
+alldens$uncertainty <- (alldens$ci.high.fia - alldens$ci.low.fia)/2
 fdens.ci.df.m <- melt(alldens[,c("x", "y", "cell", "FIAdensity", "ci.low.fia", "ci.high.fia")], id.vars = c("x", "y", "cell"))
 fdens.ci.df.m$ecoclass <- ifelse(fdens.ci.df.m$value >= 47, "Forest", ifelse(fdens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
 

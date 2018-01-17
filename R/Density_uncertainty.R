@@ -22,7 +22,12 @@ library(rgdal)
 
 # read in pont level data
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
+pls.umw <- readRDS(paste0("data/outputs/UMW_pointwise.ests_v1.7-5UMDW.RDS"))
+colnames(pls.umw) <- c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")
 
+pls.inil<- rbind(pls.inil[,c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")], pls.umw[!is.na(pls.umw$density),c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")])
+
+pls.inil <- pls.inil[!is.na(pls.inil$density),] # remove all NA values for density
 
 # Option 1: finding mean and sd of each grid cell
 pls.mean <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
@@ -30,7 +35,7 @@ pls.sd <- dcast(pls.inil, x + y + cell ~., sd, na.rm = TRUE, value.var = 'densit
 
 colnames(pls.mean) <- c('x', 'y', 'cell','PLSdensity')
 colnames(pls.sd) <- c('x', 'y', 'cell','density_sd')
-hist(pls.mean$PLSdensity, xlim = c(0, 600),breaks = 100)
+hist(pls.mean$PLSdensity, xlim = c(0, 600),breaks = 1000)
 
 pls <- merge(pls.mean, pls.sd, by = c("x", "y", "cell"))
 
@@ -46,8 +51,8 @@ pls$sd_bins <- cut(pls$density_sd, breaks = seq(-1,400, by = 20), labels = label
 
 ggplot(pls, aes(x,y, fill = sd_bins))+geom_raster()
 
-png("outputs/IN_IL_dens_histogram_by_sd.png")
-ggplot(pls, aes(PLSdensity, fill = sd_bins))+geom_histogram(position = "stack")+theme_bw()
+png("outputs/full_MW_dens_histogram_by_sd.png")
+ggplot(pls, aes(PLSdensity, fill = sd_bins))+geom_histogram(position = "stack")+theme_bw()+xlim(0,400)+ylim(0,2000)
 dev.off()
 
 # Option 2: Bootstrapping mean and 95% CI of the data in each grid cell:
@@ -74,13 +79,14 @@ mean.dens - sd.dens
 
 pls.inil2 <- pls.inil[1:100,c("x", "y", "cell", "density")]
 
+# create a function that does the bootstrapped CI intervals
 boot.calcs <- function(x){
         func.mean <- function(d, indices){
           d2 <- d[indices]
           return(mean(d2, na.rm=TRUE))
         }
      
-         bootcorr <- boot(x, stat = func.mean, R=500)
+         bootcorr <- boot(x, stat = func.mean, R=1000)
      
       
       # compare to regular means
@@ -109,6 +115,37 @@ dens.ci.mean <- lapply( dens.by.cells, FUN = boot.calcs)
 dens.ci.mean.df <- do.call(rbind, dens.ci.mean)
 dens.ci.mean.df$cell<- row.names(dens.ci.mean.df)
 dens.ci.df <- merge(dens.ci.mean.df, pls.mean[,c("x", "y", "cell", "PLSdensity")], by = "cell")
+
+
+
+# how does the above method compare to getting estimates "by hand" --i.e. not using default CI and bootstrap function:
+
+# following Brett Larget's example: http://www.stat.wisc.edu/~larget/stat302/chap3.pdf
+# A quick bootstrap function for a confidence interval for the mean
+# x is a single quantitative sample
+# B is the desired number of bootstrap samples to take # binwidth is passed on to geom_histogram()
+
+boot.mean = function(x,binwidth=NULL) {
+  B = 1000
+  n = length(x)
+  boot.samples = matrix( sample(x,size=n*B,replace=TRUE), B, n)
+  boot.statistics = apply(boot.samples,1,mean)
+  se = sd(boot.statistics)
+  require(ggplot2)
+  if ( is.null(binwidth) )
+    binwidth = diff(range(boot.statistics))/30
+  p = ggplot(data.frame(x=boot.statistics),aes(x=x)) +
+    geom_histogram(aes(y=..density..),binwidth=binwidth) + geom_density(color="red")
+  plot(p)
+  interval = mean(x) + c(-1,1)*2*se
+  print( interval )
+  return( list(boot.statistics = boot.statistics, interval=interval, se=se, plot=p) )
+}
+
+
+boot.mean(dens.by.cells[[1]]) #, B = 500)
+boot.calcs(dens.by.cells[[1]])
+
 
 #-------------------- density uncertainty from the FIA data:
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
@@ -143,29 +180,30 @@ summary(alldens)
 
 alldens.m <- melt(alldens[,c("x", "y", "cell","ci.low", "ci.high", "PLSdensity", "ci.low.fia", "ci.high.fia", "FIAdensity")], id.vars = c('x', "y", "cell"))
 
-
-# plot histograms of density and histograms of the low and high confidence intervals:
-png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/PLSdensity_hist_inil_with_ci.png")
-ggplot()+geom_histogram(data = alldens.m[alldens.m$variable %in% c("PLSdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
-  geom_density(data =alldens.m[alldens.m$variable %in% c("PLSdensity", "ci.low", "ci.high"),] ,aes(value, color = variable, 20 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
-  scale_linetype_manual(values=c("dashed", "dotted", "solid"))+theme_bw(base_size = 20)
-dev.off()
-
-png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/PLS_inil_histograms.png")
-ggplot(dens.with.ci[dens.with.ci$variable %in% c("PLSdensity", "ci.low", "ci.high"),], aes(value, color = variable))+geom_histogram(position = "identity",alpha = 0.5)+theme_bw()+xlim(0,600)+facet_wrap(~variable)
-dev.off()
-
 dens.with.ci <- alldens.m[complete.cases(alldens.m),]
 
+# plot histograms of density and histograms of the low and high confidence intervals:
+png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/PLSdensity_hist_MW_with_ci.png")
+ggplot()+geom_histogram(data = alldens.m[alldens.m$variable %in% c("PLSdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
+  geom_density(data =alldens.m[alldens.m$variable %in% c("PLSdensity", "ci.low", "ci.high"),] ,aes(value, color = variable, 20 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
+  scale_linetype_manual(values=c("dashed", "dotted", "solid"))+theme_bw(base_size = 20)+xlim(0,500)
+dev.off()
+
+png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/PLS_MW_histograms.png")
+ggplot(dens.with.ci[dens.with.ci$variable %in% c("PLSdensity", "ci.low", "ci.high"),], aes(value, color = variable))+geom_histogram(position = "identity",alpha = 0.5)+theme_bw()+xlim(0,400)+facet_wrap(~variable)
+dev.off()
+
+
+
 # plotting the fia data makes less sense because we can only get ci from grid cells with more than 1 fia plot--which are sparse in in & IL
-png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/FIAdensity_hist_inil_with_ci.png")
+png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/FIAdensity_hist_MW_with_ci.png")
 ggplot() + geom_histogram(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
   geom_density(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 25 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
   scale_linetype_manual(values=c("dashed", "dotted", "solid")) + theme_bw(base_size = 20)
 dev.off()
 
 
-png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/FIA_inil_histograms.png")
+png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/FIA_MW_histograms.png")
 ggplot(dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),], aes(value, color = variable))+geom_histogram(position = "identity",alpha = 0.5)+theme_bw()+xlim(0,600)+facet_wrap(~variable)
 dev.off()
 
@@ -182,7 +220,7 @@ fdens.ci.df.m$ecoclass <- ifelse(fdens.ci.df.m$value >= 47, "Forest", ifelse(fde
 
 # need to set up state outlines:
 all_states <- map_data("state")
-states <- subset(all_states, region %in% c(   "illinois",  'indiana') )
+states <- subset(all_states, region %in% c( "wisconsin","minnesota" ,"michigan", "illinois",  'indiana') )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
@@ -195,7 +233,7 @@ sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 
 
-pls.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+pls.dens.ci.maps< - ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = value))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
@@ -204,7 +242,7 @@ pls.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
                                                 axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
-png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_ci_inil_pls.png")
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_ci_MW_pls.png")
 pls.dens.ci.maps
 dev.off()
 
@@ -218,7 +256,7 @@ pls.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
                                                 axis.title.x=element_blank(),
                                                 axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
-png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_class_ci_inil_pls.png")
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_class_ci_MW_pls.png")
 pls.class.ci.maps
 dev.off()
 
@@ -231,7 +269,7 @@ fia.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
                                                 axis.title.y=element_blank())+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
-png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_ci_inil_fia.png")
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_ci_MW_fia.png")
 fia.dens.ci.maps
 dev.off()
 

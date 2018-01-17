@@ -198,7 +198,7 @@ dev.off()
 # plotting the fia data makes less sense because we can only get ci from grid cells with more than 1 fia plot--which are sparse in in & IL
 png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/FIAdensity_hist_MW_with_ci.png")
 ggplot() + geom_histogram(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
-  geom_density(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 25 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
+  geom_density(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 55 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
   scale_linetype_manual(values=c("dashed", "dotted", "solid")) + theme_bw(base_size = 20)
 dev.off()
 
@@ -231,9 +231,9 @@ mapdata <- data.frame(mapdata)
 # fia and pls plots
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbpal_unc <- c('white', '#fecc5c', '#fd8d3c','#f03b20', '#bd0026')
 
-
-pls.dens.ci.maps< - ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+pls.dens.ci.maps <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = value))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
@@ -246,6 +246,19 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 pls.dens.ci.maps
 dev.off()
 
+# uncertainty maps:
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_uncertainty_MW_pls.png")
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = uncertainty))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,250), name ="Uncertainty", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())#+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+dev.off()
+
+# make a map of the assigned class based on using low and high CI values as density
 pls.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = ecoclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -286,4 +299,49 @@ fia.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_class_ci_inil_fia.png")
 fia.class.ci.maps
+dev.off()
+
+f.density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=alldens, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree Density", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())
+
+f.uncertainty.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=alldens, aes(x=x, y=y, fill = uncertainty))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,400), name =" Uncertainty", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())
+
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_uncertainty_MW_fia.png")
+grid.arrange(f.density.map, f.uncertainty.map, ncol = 2)
+dev.off()
+
+# Density & Uncertainty map for PLS era
+density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree Density", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())
+
+uncertainty.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = uncertainty))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,200), name =" Uncertainty", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())
+
+png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_uncertainty_MW_pls.png")
+grid.arrange(density.map, uncertainty.map, ncol = 2)
 dev.off()

@@ -74,6 +74,8 @@ for (i in 1:length(newdf$cell)){
 
 brays <- data.frame(brays)
 brays$cell <- newdf$cell
+brays$PC1 <- newdf$PC1
+brays$PC1bins <- newdf$PC1bins
 brays$x <- newdf$x
 brays$y <- newdf$y
 
@@ -141,28 +143,65 @@ for (i in 1:length(newdff$cell)){
 }
 
 brays.f <- data.frame(brays.f)
-brays.f$cell <- newdff$cell
+brays.f$cell <- newdff$cel
+brays.f$PC1 <- newdff$PC1
+brays.f$PC1bins <- newdff$PC1bins
 brays.f$x <- newdff$x
 brays.f$y <- newdff$y
 
 write.csv(newdff, "data/outputs/newdf_fia.csv")
 write.csv(brays.f , "data/outputs/brays_bimodal_fia.csv")
 
-#newdf <- read.csv("outputs/newdf.csv")
-#brays <- read.csv("outputs/brays_bimodal.csv")
 
-
-clust_plot6 <- read.csv('data/density_pls_with_clusters.csv')
-#clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
+clust_plot6 <- read.csv('outputs/cluster/density_pls_with_clusters.csv')
 
 brays.2 <- merge(brays, clust_plot6[,c("x", "y", "cell", "speciescluster")])
-brays.m <- reshape2::melt(brays.2, id.vars = c("cell", "x", "y","X", "speciescluster"))
+brays.m <- reshape2::melt(brays.2, id.vars = c("cell", "x", "y", "speciescluster", "PC1", "PC1bins"))
 
-png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_fia.png")
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_pls.png")
 ggplot(brays.m, aes(value, fill = speciescluster)) +geom_histogram()+
   scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+facet_wrap(~speciescluster)
 dev.off()
 
-png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_fia.png")
+png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_pls.png")
 ggplot(brays.m, aes(value)) +geom_histogram()
+dev.off()
+
+# plot bray curtis distances for FIA
+braysf.2 <- merge(brays.f, clust_plot6[,c("x", "y", "cell", "speciescluster")])
+braysf.m <- reshape2::melt(braysf.2, id.vars = c("cell", "x", "y", "speciescluster", "PC1", "PC1bins"))
+
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_fia.png")
+ggplot(braysf.m, aes(value, fill = speciescluster)) +geom_histogram()+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+facet_wrap(~speciescluster)
+dev.off()
+
+png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_fia.png")
+ggplot(braysf.m, aes(value)) +geom_histogram()
+dev.off()
+
+# merge together to plot together
+brays.m$period <- "PLS"
+braysf.m$period <- "FIA"
+full.brays <- rbind(braysf.m, brays.m)
+
+# plot histograms of both pls and fia:
+png(height = 6, width = 6,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_fia_pls.png")
+ggplot() +geom_histogram(data = full.brays, aes(value, fill = period), alpha = 0.5 , position = "identity")+theme_bw()
+dev.off()
+
+# reorder the PC1 bins so they are in order
+full.brays$PC1bins_f <- factor(full.brays$PC1bins, levels = c('-5 - -4', '-4 - -3', '-3 - -2','-2 - -1', '-1 - 0',  '0 - 1',  '1 - 2','2 - 3',   '3 - 4',   '4 - 5',   '5 - 6' ))
+
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_PC1bins_fia_pls.png")
+ggplot() +geom_histogram(data = full.brays, aes(value, fill = period), alpha = 0.5 , position = "identity")+facet_wrap(~PC1bins_f)+theme_bw()
+dev.off()
+
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hists_spec_fia_pls.png")
+ggplot() +geom_histogram(data = full.brays, aes(value, fill = period), alpha = 0.5 , position = "identity")+facet_wrap(~speciescluster)+theme_bw()
+dev.off()
+
+# hexbin plots of the bray curtis distances
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hexbin_spec_fia_pls.png")
+ggplot(data = full.brays, aes(x = PC1, y = value))+geom_hex() + scale_fill_distiller(palette = "Spectral", limits = c(1,3000))+facet_wrap(~period)+theme_bw()
 dev.off()

@@ -205,3 +205,23 @@ dev.off()
 png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_hexbin_spec_fia_pls.png")
 ggplot(data = full.brays, aes(x = PC1, y = value))+geom_hex() + scale_fill_distiller(palette = "Spectral", limits = c(1,3000))+facet_wrap(~period)+theme_bw()
 dev.off()
+
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_stacked_clust_hist_spec_fia_pls.png")
+ggplot() +geom_histogram(data = full.brays, aes(value, fill = speciescluster) , position = "stack")+
+  scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+facet_wrap(~period)+theme_bw()
+dev.off()
+
+png(height = 6, width = 12,units = "in",res=300,"data/outputs/bray_curtis_dist_rand_50_stacked_PC1bins_hist_spec_fia_pls.png")
+ggplot() +geom_histogram(data = full.brays, aes(value, fill = PC1bins_f) , position = "stack")+
+  scale_fill_manual(values = c('#543005',
+    '#8c510a',
+    '#bf812d',
+    '#dfc27d',
+    '#f6e8c3',
+    '#f5f5f5',
+    '#c7eae5',
+    '#80cdc1',
+    '#35978f',
+    '#01665e',
+    '#003c30'))+facet_wrap(~period)+theme_bw()
+dev.off()

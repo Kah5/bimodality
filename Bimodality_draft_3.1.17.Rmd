@@ -365,6 +365,7 @@ dev.off()
 
 
 ```{r}
+# read in FIA data with bimodality assigned within each environmental space using PC1 +/- 0.25 units
 fia.bim <- read.csv("outputs/cluster/bimodal_widths/FIA_Dens_Bimodal_width_0.25.csv")
 
 # A: map of density

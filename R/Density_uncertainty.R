@@ -23,21 +23,28 @@ library(rgdal)
 # read in pont level data
 pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
 pls.umw <- readRDS(paste0("data/outputs/UMW_pointwise.ests_v1.7-5UMDW.RDS"))
-colnames(pls.umw) <- c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")
 
-pls.inil<- rbind(pls.inil[,c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")], pls.umw[!is.na(pls.umw$density),c("x", "y", "cell",  "spec", "count", "point", "density", "basal", "diams")])
+# combine upper and lower MW:
+pls.full <- rbind(pls.inil[,c("x", "y", "Pointx","Pointy", "cell",  "spec", "count", "point", "density", "basal", "diams")], pls.umw[!is.na(pls.umw$density),c("x", "y","Pointx","Pointy", "cell",  "spec", "count", "point", "density", "basal", "diams")])
 
-pls.inil <- pls.inil[!is.na(pls.inil$density),] # remove all NA values for density
+# get the mean value for each species at each PLS point:
+pls.spec <- dcast(pls.full, Pointx + Pointy + x + y + cell ~ spec, mean, na.rm = TRUE, value.var = 'density')
+
+# get estimate of total tree density at each point:
+pls.spec$density <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y","Pointx", "Pointy", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
+pls <- pls.spec
+
+pls <- pls[!is.na(pls$density),] # remove all NA values for density
 
 # Option 1: finding mean and sd of each grid cell
-pls.mean <- dcast(pls.inil, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
-pls.sd <- dcast(pls.inil, x + y + cell ~., sd, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
+pls.mean <- dcast(pls, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
+pls.sd <- dcast(pls, x + y + cell ~., sd, na.rm = TRUE, value.var = 'density') # we want to sum the densities of all the species in each cells, then divide by the # of pls points within the cell, so take the avg 
 
 colnames(pls.mean) <- c('x', 'y', 'cell','PLSdensity')
 colnames(pls.sd) <- c('x', 'y', 'cell','density_sd')
 hist(pls.mean$PLSdensity, xlim = c(0, 600),breaks = 1000)
 
-pls <- merge(pls.mean, pls.sd, by = c("x", "y", "cell"))
+pls.basic <- merge(pls.mean, pls.sd, by = c("x", "y", "cell"))
 
 
 label.breaks <- function(beg, end, splitby){
@@ -47,12 +54,12 @@ label.breaks <- function(beg, end, splitby){
 }
 
 
-pls$sd_bins <- cut(pls$density_sd, breaks = seq(-1,400, by = 20), labels = label.breaks(0,380, 20))
+pls.basic$sd_bins <- cut(pls.basic$density_sd, breaks = seq(-1,600, by = 20), labels = label.breaks(0,580, 20))
 
-ggplot(pls, aes(x,y, fill = sd_bins))+geom_raster()
+ggplot(pls.basic, aes(x,y, fill = sd_bins))+geom_raster()
 
 png("outputs/full_MW_dens_histogram_by_sd.png")
-ggplot(pls, aes(PLSdensity, fill = sd_bins))+geom_histogram(position = "stack")+theme_bw()+xlim(0,400)+ylim(0,2000)
+ggplot(pls.basic, aes(PLSdensity, fill = sd_bins))+geom_histogram(position = "stack")+theme_bw()+xlim(0,600)+ylim(0,2000)
 dev.off()
 
 # Option 2: Bootstrapping mean and 95% CI of the data in each grid cell:
@@ -63,11 +70,11 @@ func.mean <- function(d, i){
   return(mean(d2$density, na.rm=TRUE))
 }
 
-bootcorr <- boot(pls.inil[pls.inil$cell %in% 40599,], func.mean, R=500)
+bootcorr <- boot(pls[pls$cell %in% 40599,], func.mean, R=500)
 bootcorr
 
 # compare to regular mean:
-mean.dens <- mean(pls.inil[pls.inil$cell %in% 40599,]$density, na.rm = TRUE)
+mean.dens <- mean(pls[pls$cell %in% 40599,]$density, na.rm = TRUE)
 
 boot.ci(bootcorr, type = "bca")
 
@@ -107,7 +114,7 @@ boot.calcs <- function(x){
 
 
 # create a list of densities by each cell:
-dens.by.cells <- split(pls.inil$density, pls.inil$cell)
+dens.by.cells <- split(pls$density, pls$cell)
 
 # apply the "boot.calcs" function over all cells:
 dens.ci.mean <- lapply( dens.by.cells, FUN = boot.calcs)
@@ -145,22 +152,22 @@ boot.mean = function(x,binwidth=NULL) {
 
 boot.mean(dens.by.cells[[1]]) #, B = 500)
 boot.calcs(dens.by.cells[[1]])
+# comparing both of these methods yeilds very similar CI estimates
 
-
-#-------------------- density uncertainty from the FIA data:
-FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
-speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv')
+#-------------------- get the density uncertainty from the FIA data:
+FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv') # read in FIA data
+speciesconversion <- read.csv('data/FIA_conversion-SGD_remove_dups.csv') # conversion table for converting FIA nomeclature to Paleon taxa
 
 FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
 
-# how we would normally calculate density
-FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
-FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:25], na.rm = TRUE) # sum the total density in each plot
+# how we would normally calculate density:
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell + plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:25], na.rm = TRUE) # sum the total density in each plot--This is what we will use to get bootstrapped average total density +ci
 fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn', 'Var.5')) # melt the dataframe
 fia.by.plot <- dcast(fia.melt, x + y +cell+ plt_cn ~ variable, sum, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 melted.fia <- melt(fia.by.plot[,c('x', "y", "cell", "plt_cn", "FIAdensity")], id.vars = c('x', "y", "cell", "plt_cn"))
 
-fia.by.cell <- ddply(melted.fia,~ cell,summarise,mean=mean(value),sd=sd(value), x = mean(x), y = mean(y))
+fia.by.cell <- ddply(melted.fia,~ cell,summarise,mean=mean(value),total = sum(value),sd=sd(value), x = mean(x), y = mean(y))
 
 # create a list of densities by cell for the FIA
 fdens.by.cells <- split(FIA.by.paleon$FIAdensity,  FIA.by.paleon$cell)
@@ -182,11 +189,11 @@ alldens.m <- melt(alldens[,c("x", "y", "cell","ci.low", "ci.high", "PLSdensity",
 
 dens.with.ci <- alldens.m[complete.cases(alldens.m),]
 
-# plot histograms of density and histograms of the low and high confidence intervals:
+# -----------------plot histograms of density and histograms of the low and high confidence intervals:------------
 png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/PLSdensity_hist_MW_with_ci.png")
 ggplot()+geom_histogram(data = alldens.m[alldens.m$variable %in% c("PLSdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
   geom_density(data =alldens.m[alldens.m$variable %in% c("PLSdensity", "ci.low", "ci.high"),] ,aes(value, color = variable, 20 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
-  scale_linetype_manual(values=c("dashed", "dotted", "solid"))+theme_bw(base_size = 20)+xlim(0,500)
+  scale_linetype_manual(values=c("dashed", "dotted", "solid"))+theme_bw(base_size = 20)+xlim(0,600)
 dev.off()
 
 png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/PLS_MW_histograms.png")
@@ -197,18 +204,33 @@ dev.off()
 
 # plotting the fia data makes less sense because we can only get ci from grid cells with more than 1 fia plot--which are sparse in in & IL
 png(height = 6, width = 7, units = "in", res = 300, "outputs/density_unc/FIAdensity_hist_MW_with_ci.png")
-ggplot() + geom_histogram(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity"),], aes(value, fill = variable,position = "identity", binwidth = 18))+
-  geom_density(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 55 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("grey", "grey", "red"))+
+ggplot() + geom_histogram(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity"),], aes(value, fill = variable, position = "identity", binwidth = 18))+
+  geom_density(data = dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 25 *..count.., linetype = variable), size = 1.2)+xlim(0,600)+scale_color_manual(values = c("grey", "grey", "red"))+
   scale_linetype_manual(values=c("dashed", "dotted", "solid")) + theme_bw(base_size = 20)
 dev.off()
 
 
+  
+# histogram of FIA + 95% ci
 png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/FIA_MW_histograms.png")
 ggplot(dens.with.ci[dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),], aes(value, color = variable))+geom_histogram(position = "identity",alpha = 0.5)+theme_bw()+xlim(0,600)+facet_wrap(~variable)
 dev.off()
 
 
-# -----------------------map out Indiana and Illinois with the CI intervals:
+# make a histogram with both FIA and PLS density + 95% CI (this looks really messy)
+clean.dens.with.ci <- dens.with.ci[dens.with.ci$value <= 600, ]
+
+density.hists <- ggplot() + geom_histogram(data = clean.dens.with.ci[clean.dens.with.ci$variable %in% c("FIAdensity", "PLSdensity"),], aes(value, fill = variable, alpha = 0.5 ), position = "identity", binwidth = 25)+
+  geom_density(data = clean.dens.with.ci[clean.dens.with.ci$variable %in% c("FIAdensity", "ci.low.fia", "ci.high.fia"),] ,aes(value, color = variable, 30 *..count.., linetype = variable), size = 1.2)+xlim(0,600)#scale_color_manual(values = c("light.blue", "light.blue", "blue"))+xlim(0,600)+
+
+png(height = 4, width = 7, units = "in", res = 300, "outputs/density_unc/FIA_PLS_MW_histograms.png")
+
+density.hists + geom_density(data = clean.dens.with.ci[clean.dens.with.ci$variable %in% c("PLSdensity", "ci.low", "ci.high"),] ,aes(value, color = variable, 30 *..count.., linetype = variable), size = 1.2)+scale_color_manual(values = c("salmon", "dodgerblue", "salmon","dodgerblue", "blue", "red"))+xlim(0,600)+
+  scale_linetype_manual(values=c("dashed", "dashed", "dotted","dotted", "solid", "solid"))+ theme_bw(base_size = 20)
+dev.off()
+
+
+# -----------------------mapping out density estimates, CI intervals, and classification:---------------------
 dens.ci.df$uncertainty <- (dens.ci.df$ci.high - dens.ci.df$ci.low)/2
 dens.ci.df.m <- melt(dens.ci.df[,c("x", "y", "cell", "PLSdensity", "ci.low", "ci.high")], id.vars = c("x", "y", "cell"))
 dens.ci.df.m$ecoclass <- ifelse(dens.ci.df.m$value >= 47, "Forest", ifelse(dens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
@@ -217,7 +239,7 @@ alldens$uncertainty <- (alldens$ci.high.fia - alldens$ci.low.fia)/2
 fdens.ci.df.m <- melt(alldens[,c("x", "y", "cell", "FIAdensity", "ci.low.fia", "ci.high.fia")], id.vars = c("x", "y", "cell"))
 fdens.ci.df.m$ecoclass <- ifelse(fdens.ci.df.m$value >= 47, "Forest", ifelse(fdens.ci.df.m$value >= 1, "Savanna", "Prairie" ))
 
-
+# map out the density and CI estimates for PLS
 # need to set up state outlines:
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c( "wisconsin","minnesota" ,"michigan", "illinois",  'indiana') )
@@ -228,16 +250,37 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata <- data.frame(mapdata)
 
 
-# fia and pls plots
+
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 cbpal_unc <- c('white', '#fecc5c', '#fd8d3c','#f03b20', '#bd0026')
+
+dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
+ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                axis.title.x=element_blank(),
+                                                axis.title.y=element_blank())
+
+ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+   geom_raster(data=dens.ci.df.m[dens.ci.df.m$variable %in% "PLSdensity",], aes(x=x, y=y, fill = value))+
+   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+   labs(x="easting", y="northing")+ #+ 
+   scale_fill_gradientn(colours = cbpalette, limits = c(0,650), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                 axis.title.x=element_blank(),
+                                                 axis.title.y=element_blank())
 
 pls.dens.ci.maps <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = value))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,650), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -246,19 +289,9 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 pls.dens.ci.maps
 dev.off()
 
-# uncertainty maps:
-png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_uncertainty_MW_pls.png")
-ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = uncertainty))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,250), name ="Uncertainty", na.value = 'darkgrey') +
-  coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                axis.title.x=element_blank(),
-                                                axis.title.y=element_blank())#+facet_wrap(~variable)#+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
-dev.off()
 
-# make a map of the assigned class based on using low and high CI values as density
+
+# make a map of the assigned ecoclass based on using low and high CI values as density
 pls.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df.m, aes(x=x, y=y, fill = ecoclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -273,11 +306,12 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_cla
 pls.class.ci.maps
 dev.off()
 
+# Map out density and CI intervals for FIA
 fia.dens.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=fdens.ci.df.m, aes(x=x, y=y, fill = value))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ #+ 
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,650), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -286,7 +320,7 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 fia.dens.ci.maps
 dev.off()
 
-
+# map out ecoclassificaiton based on density and CI intervals for FIA
 fia.class.ci.maps<- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=fdens.ci.df.m, aes(x=x, y=y, fill = ecoclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -301,10 +335,11 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_cla
 fia.class.ci.maps
 dev.off()
 
+# map out density and uncertainty for the FIA era:
 f.density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=alldens, aes(x=x, y=y, fill = FIAdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree Density", na.value = 'darkgrey') +
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,650), name ="Tree Density", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -313,7 +348,7 @@ f.density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long
 f.uncertainty.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=alldens, aes(x=x, y=y, fill = uncertainty))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,400), name =" Uncertainty", na.value = 'darkgrey') +
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,500), name =" Uncertainty", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -323,11 +358,11 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 grid.arrange(f.density.map, f.uncertainty.map, ncol = 2)
 dev.off()
 
-# Density & Uncertainty map for PLS era
+# Map out the Density & Uncertainty for PLS era
 density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = PLSdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree Density", na.value = 'darkgrey') +
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpalette, limits = c(0,650), name ="Tree Density", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -336,7 +371,7 @@ density.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, 
 uncertainty.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens.ci.df, aes(x=x, y=y, fill = uncertainty))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,200), name =" Uncertainty", na.value = 'darkgrey') +
+  labs(x="easting", y="northing")+scale_fill_gradientn(colours = cbpal_unc, limits = c(0,250), name =" Uncertainty", na.value = 'darkgrey') +
   coord_equal()+theme_bw(base_size = 10)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                 axis.title.x=element_blank(),
@@ -345,3 +380,6 @@ uncertainty.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
 png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_density_uncertainty_MW_pls.png")
 grid.arrange(density.map, uncertainty.map, ncol = 2)
 dev.off()
+
+
+

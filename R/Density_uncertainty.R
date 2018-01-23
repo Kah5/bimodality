@@ -382,4 +382,64 @@ grid.arrange(density.map, uncertainty.map, ncol = 2)
 dev.off()
 
 
+# option # 3: sample 1 value from grid cell distribution, do this for all grid cells-> is it bimodal? Do this several times
+
+library(boot)
+
+# this function samples 100 pls points from each grid cell & takes the mean of those samples
+samp.dens <- function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)}
+sample100 <- function(df){
+    test <- lapply(df, function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)})
+    test2<- do.call("rbind", test)
+    test2
+}
+
+
+#next we do the sample100 function 100 times, so we generate 100 histograms:
+point.dens.mat <- matrix(dens.by.cells, nrow = length(dens.by.cells),ncol = 100 ) # make 251 by 20 matrix
+
+cell.dens.mat <- apply(X = point.dens.mat, FUN = sample100, MARGIN = 2)
+
+
+hist(cell.dens.mat[,3],  breaks = 100)$breaks
+hist(cell.dens.mat[,3],  breaks = 100)$count
+
+breaks <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$breaks[2:101]}, MARGIN = 2)
+counts <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$count}, MARGIN = 2)
+counts.df <- do.call("rbind", counts)
+counts.df <- t(counts.df)
+count.sd <- apply(counts.df, FUN = sd, MARGIN=1)
+#count.sd <- apply(counts.df, FUN = quantile(x,.99), MARGIN = )
+count.mean <- apply(counts.df, FUN = mean, MARGIN = 1)
+plot( breaks[1:100,1], count.mean[1:100])
+
+count.sds <- data.frame(counts = count.mean[1:100], breaks = breaks[1:100,1], sd = count.sd[1:100], min.sd = count.mean[1:100] - count.sd[1:100], max.sd = count.mean[1:100] + count.sd[1:100])
+
+# plot histogram bar plot with +/- SD
+ggplot(count.sds, aes(breaks, counts))+geom_bar(stat = "identity")+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+
+df.dens.samples <- as.data.frame(cell.dens.mat)
+df.dens.samp.m <- melt(df.dens.samples)
+ggplot(df.dens.samp.m, aes(x = value, color = variable))+geom_histogram()
+
+
+
+
+  
+  
+  # compare to regular means
+  
+  bootci <- boot.ci(bootcorr, type = "perc")
+  
+  if(is.null(bootci$percent[4])){
+    out <- data.frame(mean = bootcorr$t0, 
+                      ci.low = NA, 
+                      ci.high = NA)
+  }else{
+    out <- data.frame(mean =  bootcorr$t0,
+                      ci.low = bootci$percent[4], 
+                      ci.high = bootci$percent[5])
+  }
+  out
+}
 

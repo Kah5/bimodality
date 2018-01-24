@@ -435,10 +435,13 @@ point.dens.mat <- matrix(dens.by.cells, nrow = length(dens.by.cells),ncol = 100 
 
 cell.dens.mat <- apply(X = point.dens.mat, FUN = sample100, MARGIN = 2)
 
-cell.dens.mat[cell.dens.mat < 0.5 ] <- NA  # get rid of prairie cells
-# if we get the CI on histogram without removing the prairie ecoclass:
-breaks <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$breaks[2:101]}, MARGIN = 2)
-counts <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$count}, MARGIN = 2)
+cell.dens.mat[cell.dens.mat < 1 ] <- NA  # get rid of prairie cells
+cell.dens.mat[cell.dens.mat > 1000 ] <- NA  # get rid of high density cells
+
+#  get the CI on histogram after removing the prairie ecoclass:
+# note, we are generatinge CI on counts for 40 bins here
+breaks <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 40)$breaks[2:101]}, MARGIN = 2)
+counts <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 40)$count}, MARGIN = 2)
 counts.df <- do.call("rbind", counts)
 counts.df <- t(counts.df)
 
@@ -545,9 +548,15 @@ ggplot(fcount.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue
 dev.off()
 
 png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/FIA_counts_unc_barplot_errorbars.png")
-ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_errorbar(aes(ymin=ci.5, ymax=ci.95),width = 1)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+ggplot(fcount.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_errorbar(aes(ymin=ci.5, ymax=ci.95),width = 1)+xlim(0,600)+theme_bw()+xlab("Tree Density")
 dev.off()
 
 png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/FIA_counts_unc_lineplot.png")
-ggplot(count.sds, aes(breaks, counts) )+geom_line(color = "blue", width = 1)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),alpha = 0.5)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+ggplot(fcount.sds, aes(breaks, counts) )+geom_line(color = "blue", width = 1)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),alpha = 0.5)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
+
+# ---------------lets plot the PLS and FIA datasets together:
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_FIA_counts_unc_barplot_40bins.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue", alpha = 0.3)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),fill="lightblue", alpha=0.9)+
+  geom_bar(data = fcount.sds, aes(breaks, counts) ,stat = "identity",fill = "red", alpha = 0.3)+geom_ribbon(data = fcount.sds,aes(ymin=ci.5, ymax=ci.95),fill="pink", alpha=0.9)+xlim(0,600)+theme_bw()+xlab("Tree Density")
 dev.off()

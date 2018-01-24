@@ -557,6 +557,7 @@ dev.off()
 
 # ---------------lets plot the PLS and FIA datasets together:
 png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_FIA_counts_unc_barplot_40bins.png")
-ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue", alpha = 0.3)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),fill="lightblue", alpha=0.9)+
+ggplot(count.sds, aes(breaks, counts, fill ="PLS") )+geom_bar(stat = "identity",fill = 'blue', alpha = 0.3)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),fill="lightblue", alpha=0.9)+
   geom_bar(data = fcount.sds, aes(breaks, counts) ,stat = "identity",fill = "red", alpha = 0.3)+geom_ribbon(data = fcount.sds,aes(ymin=ci.5, ymax=ci.95),fill="pink", alpha=0.9)+xlim(0,600)+theme_bw()+xlab("Tree Density")
 dev.off()
+

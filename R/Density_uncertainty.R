@@ -57,6 +57,9 @@ label.breaks <- function(beg, end, splitby){
 pls.basic$sd_bins <- cut(pls.basic$density_sd, breaks = seq(-1,600, by = 20), labels = label.breaks(0,580, 20))
 
 ggplot(pls.basic, aes(x,y, fill = sd_bins))+geom_raster()
+ggplot(pls.basic, aes(x,y, fill = PLSdensity))+geom_raster()
+
+ggplot(pls.basic, aes(x = PLSdensity))+geom_histogram()
 
 png("outputs/full_MW_dens_histogram_by_sd.png")
 ggplot(pls.basic, aes(PLSdensity, fill = sd_bins))+geom_histogram(position = "stack")+theme_bw()+xlim(0,600)+ylim(0,2000)
@@ -381,8 +384,8 @@ png(height = 5, width = 9, units = "in", res = 300, "outputs/density_unc/map_den
 grid.arrange(density.map, uncertainty.map, ncol = 2)
 dev.off()
 
-
-# option # 3: sample 1 value from grid cell distribution, do this for all grid cells-> is it bimodal? Do this several times
+#-------------------------------------------------------------------------------------------------------
+# option # 2part b: sample 1 value from grid cell distribution, do this for all grid cells-> is it bimodal? Do this several times
 
 library(boot)
 
@@ -390,56 +393,161 @@ library(boot)
 samp.dens <- function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)}
 sample100 <- function(df){
     test <- lapply(df, function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)})
-    test2<- do.call("rbind", test)
+    test2 <- do.call("rbind", test)
     test2
 }
 
 
 #next we do the sample100 function 100 times, so we generate 100 histograms:
+fpoint.dens.mat <- matrix(fdens.by.cells, nrow = length(fdens.by.cells), ncol = 100 ) # make 251 by 20 matrix
+
+fcell.dens.mat <- apply(X = fpoint.dens.mat, FUN = sample100, MARGIN = 2)
+
+ggplot(data.frame(fcell.dens.mat), aes(x = fcell.dens.mat[,10]))+geom_histogram()
+
+#hist(cell.dens.mat[,10],  breaks = 100)$breaks
+#hist(cell.dens.mat[,3],  breaks = 100)$count
+
+# if we get the CI on histogram without removing the prairie ecoclass:
+fbreaks <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$breaks[2:101]}, MARGIN = 2)
+fcounts <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$count}, MARGIN = 2)
+fcounts.df <- do.call("rbind", fcounts)
+fcounts.df <- t(fcounts.df)
+
+fcount.sd <- apply(fcounts.df, FUN = sd, MARGIN=1)
+fcount.95 <- apply(fcounts.df, FUN = function(x){quantile(x,.95)}, MARGIN = 1)
+fcount.5 <- apply(fcounts.df, FUN = function(x){quantile(x,.05)}, MARGIN = 1)
+fcount.mean <- apply(fcounts.df, FUN = mean, MARGIN = 1)
+
+#plot( breaks[1:100,1], count.mean[1:100])
+
+count.sds <- data.frame(counts = count.mean[1:100], breaks = breaks[1:100,1], sd = count.sd[1:100], min.sd = count.mean[1:100] - count.sd[1:100], max.sd = count.mean[1:100] + count.sd[1:100], 
+                        ci.95 = count.95[1:100], ci.5 = count.5[1:100])
+
+# plot histogram bar plot with +/- SD
+ggplot(count.sds, aes(breaks, counts))+geom_bar(stat = "identity")+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(count.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+
+
+#---------------------do this for cells with prairie cells removed---------------------
+#next we do the sample100 function 100 times, so we generate 100 histograms:
 point.dens.mat <- matrix(dens.by.cells, nrow = length(dens.by.cells),ncol = 100 ) # make 251 by 20 matrix
 
 cell.dens.mat <- apply(X = point.dens.mat, FUN = sample100, MARGIN = 2)
 
-
-hist(cell.dens.mat[,3],  breaks = 100)$breaks
-hist(cell.dens.mat[,3],  breaks = 100)$count
-
+cell.dens.mat[cell.dens.mat < 0.5 ] <- NA  # get rid of prairie cells
+# if we get the CI on histogram without removing the prairie ecoclass:
 breaks <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$breaks[2:101]}, MARGIN = 2)
 counts <- apply(cell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$count}, MARGIN = 2)
 counts.df <- do.call("rbind", counts)
 counts.df <- t(counts.df)
-count.sd <- apply(counts.df, FUN = sd, MARGIN=1)
-#count.sd <- apply(counts.df, FUN = quantile(x,.99), MARGIN = )
-count.mean <- apply(counts.df, FUN = mean, MARGIN = 1)
-plot( breaks[1:100,1], count.mean[1:100])
 
-count.sds <- data.frame(counts = count.mean[1:100], breaks = breaks[1:100,1], sd = count.sd[1:100], min.sd = count.mean[1:100] - count.sd[1:100], max.sd = count.mean[1:100] + count.sd[1:100])
+count.sd <- apply(counts.df, FUN = sd, na.rm=TRUE, MARGIN=1)
+count.95 <- apply(counts.df, FUN = function(x){quantile(x,.95,na.rm=TRUE)}, MARGIN = 1)
+count.5 <- apply(counts.df, FUN = function(x){quantile(x,.05,na.rm=TRUE)}, MARGIN = 1)
+count.mean <- apply(counts.df, FUN = mean,na.rm=TRUE, MARGIN = 1)
+
+#plot( breaks[1:100,1], count.mean[1:100])
+
+count.sds <- data.frame(counts = count.mean[1:100], breaks = breaks[1:100,1], sd = count.sd[1:100], min.sd = count.mean[1:100] - count.sd[1:100], max.sd = count.mean[1:100] + count.sd[1:100], 
+                        ci.95 = count.95[1:100], ci.5 = count.5[1:100])
 
 # plot histogram bar plot with +/- SD
 ggplot(count.sds, aes(breaks, counts))+geom_bar(stat = "identity")+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(count.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(count.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
 
-df.dens.samples <- as.data.frame(cell.dens.mat)
-df.dens.samp.m <- melt(df.dens.samples)
-ggplot(df.dens.samp.m, aes(x = value, color = variable))+geom_histogram()
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_counts_unc_barplot.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),fill="darkgrey", alpha=0.9)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
 
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_counts_unc_barplot_errorbars.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_errorbar(aes(ymin=ci.5, ymax=ci.95),width = 1)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
 
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_counts_unc_lineplot.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_line(color = "blue", width = 1)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),alpha = 0.5)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
 
+#-------------------------CI estimation for FIA histogram data---------------------------------
 
-  
-  
-  # compare to regular means
-  
-  bootci <- boot.ci(bootcorr, type = "perc")
-  
-  if(is.null(bootci$percent[4])){
-    out <- data.frame(mean = bootcorr$t0, 
-                      ci.low = NA, 
-                      ci.high = NA)
-  }else{
-    out <- data.frame(mean =  bootcorr$t0,
-                      ci.low = bootci$percent[4], 
-                      ci.high = bootci$percent[5])
-  }
-  out
+library(boot)
+
+# this function samples 100 pls points from each grid cell & takes the mean of those samples
+samp.dens <- function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)}
+sample100 <- function(df){
+  test <- lapply(df, function(x){ mean(sample(x,100,replace = TRUE),na.rm=TRUE)})
+  test2 <- do.call("rbind", test)
+  test2
 }
 
+
+#next we do the sample100 function 100 times, so we generate 100 histograms:
+fpoint.dens.mat <- matrix(fdens.by.cells, nrow = length(fdens.by.cells), ncol = 100 ) # make 251 by 20 matrix
+
+fcell.dens.mat <- apply(X = fpoint.dens.mat, FUN = sample100, MARGIN = 2)
+
+ggplot(data.frame(fcell.dens.mat), aes(x = fcell.dens.mat[,10]))+geom_histogram()
+
+
+# if we get the CI on histogram without removing the prairie ecoclass:
+fbreaks <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$breaks[2:101]}, MARGIN = 2)
+fcounts <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 100)$count}, MARGIN = 2)
+fcounts.df <- do.call("rbind", fcounts)
+fcounts.df <- t(fcounts.df)
+
+fcount.sd <- apply(fcounts.df, FUN = sd, MARGIN=1)
+fcount.95 <- apply(fcounts.df, FUN = function(x){quantile(x,.95)}, MARGIN = 1)
+fcount.5 <- apply(fcounts.df, FUN = function(x){quantile(x,.05)}, MARGIN = 1)
+fcount.mean <- apply(fcounts.df, FUN = mean, MARGIN = 1)
+
+#plot( breaks[1:100,1], count.mean[1:100])
+
+fcount.sds <- data.frame(counts = fcount.mean[1:100], breaks = fbreaks[1:100,1], sd = fcount.sd[1:100], min.sd = fcount.mean[1:100] - fcount.sd[1:100], max.sd = fcount.mean[1:100] + fcount.sd[1:100], 
+                        ci.95 = fcount.95[1:100], ci.5 = fcount.5[1:100])
+
+# plot histogram bar plot with +/- SD
+ggplot(fcount.sds, aes(breaks, counts))+geom_bar(stat = "identity")+geom_errorbar(data = fcount.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(fcount.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+
+#---------------------do this for all FIA cells with corresponding PLS cells---------------------
+#next we do the sample100 function 100 times, so we generate 100 histograms:
+inPLS<- names(dens.by.cells)
+UMW.by.cells <- fdens.by.cells[names(fdens.by.cells) %in% inPLS]
+fpoint.dens.mat <- matrix(UMW.by.cells , nrow = length(UMW.by.cells ),ncol = 100 ) # make 251 by 20 matrix
+
+fcell.dens.mat <- apply(X = fpoint.dens.mat, FUN = sample100, MARGIN = 2)
+
+fcell.dens.mat[fcell.dens.mat > 1000 ] <- NA  # get rid of prairie cells
+# if we get the CI on histogram without removing the prairie ecoclass:
+fbreaks <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 40)$breaks[2:101]}, MARGIN = 2)
+fcounts <- apply(fcell.dens.mat,FUN = function(x) {hist(x, xlim = c(0,600), breaks = 40)$count}, MARGIN = 2)
+fcounts.df <- do.call("rbind", fcounts)
+fcounts.df <- t(fcounts.df)
+
+fcount.sd <- apply(fcounts.df, FUN = sd, na.rm=TRUE, MARGIN=1)
+fcount.95 <- apply(fcounts.df, FUN = function(x){quantile(x,.95,na.rm=TRUE)}, MARGIN = 1)
+fcount.5 <- apply(fcounts.df, FUN = function(x){quantile(x,.05,na.rm=TRUE)}, MARGIN = 1)
+fcount.mean <- apply(fcounts.df, FUN = mean,na.rm=TRUE, MARGIN = 1)
+
+#plot( breaks[1:100,1], count.mean[1:100])
+
+fcount.sds <- data.frame(counts = fcount.mean[1:100], breaks = fbreaks[1:100,1], sd = fcount.sd[1:100], min.sd = fcount.mean[1:100] - fcount.sd[1:100], max.sd = fcount.mean[1:100] + fcount.sd[1:100], 
+                        ci.95 = fcount.95[1:100], ci.5 = fcount.5[1:100])
+
+# plot histogram bar plot with +/- SD
+ggplot(fcount.sds, aes(breaks, counts))+geom_bar(stat = "identity")+geom_errorbar(data = fcount.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(fcount.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+ggplot(fcount.sds, aes(breaks, ci.95))+geom_bar(stat = "identity")#+geom_errorbar(data = count.sds, aes(ymin=min.sd, ymax=max.sd),width=1)
+
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/FIA_counts_unc_barplot.png")
+ggplot(fcount.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),fill="darkgrey", alpha=0.9)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
+
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/FIA_counts_unc_barplot_errorbars.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_bar(stat = "identity",fill = "blue")+geom_errorbar(aes(ymin=ci.5, ymax=ci.95),width = 1)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()
+
+png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/FIA_counts_unc_lineplot.png")
+ggplot(count.sds, aes(breaks, counts) )+geom_line(color = "blue", width = 1)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),alpha = 0.5)+xlim(0,600)+theme_bw()+xlab("Tree Density")
+dev.off()

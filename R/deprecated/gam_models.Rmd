@@ -1,0 +1,647 @@
+---
+title: "Exploring models for PLS density"
+author: "Kelly Heilman"
+date: "January 25, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Thinking about model design:
+
+Ideally, we want to model denisty or savanna/forest 
+
+model density ~ f(environmental variables)
+density ~ smooth(MAP) (in previous versions, climate was negative correlated with density??)
+density ~ smooth(temp)
+density ~ smooth(soil/sand)
+density ~ smooth(precip. seasonality)
+density ~ smooth(temp. seasonality)
+density ~ smooth(MAP + temp)
+density ~ smooth(MAP) + smooth(temp) + smooth(soil)
+
+Generalized additive model: allows for non-linearities...
+
+Alternatively, we could us the classification scheme of savanna and forest; this isn't as great, but it would allow us to use a logistic model, and to model the probability of forest, rather than tree density.
+
+### Can we predict the places that are unimodal/stable w.r.t PC1?
+
+Here we model places in the PLS that are non-zero tree density and that were significantly bimodal in the bimodality analysis.
+
+```{r, echo = FALSE}
+library(stargazer)
+library(mgcv)
+library(caTools)
+library(ggplot2)
+
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+#dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/midwest_pls_full_density_pr_alb1.6-5.csv") # full set of PLS data
+#hist(dens.pr$PLSdensity, breaks = 50)
+dens.pr <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/outputs/PLS_full_dens_pr_bins_with_bimodality_for_PC1.csv") 
+
+
+pls.new <- dens.pr[dens.pr$bimodal == "Stable",] # remove all bimodal places for now
+
+pls.new <- pls.new[pls.new$PLSdensity > 0.5, ]# remove all zero places
+dens.pr <- pls.new
+
+ggplot(dens.pr, aes(x = MAP1910, y = PLSdensity))+geom_point()
+#split into test and training datasets:
+Y <- dens.pr$PLSdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+train <- dens.pr[msk,]
+test <- dens.pr[!msk,]
+
+
+
+
+PLS.gam1 <-gam(PLSdensity ~  s(MAP1910), data = train)
+PLS.gam1L <-gam(PLSdensity ~  MAP1910, data = train)
+summary(PLS.gam1) #explains 0.004% deviance
+preds <- predict(PLS.gam1, newdata = test)
+predsL <- predict(PLS.gam1L, newdata = test)
+plot(preds, test$PLSdensity)
+plot(predsL, test$PLSdensity)
+plot(PLS.gam1)
+
+
+PLS.gam2 <- gam(PLSdensity ~ s(pasttmean) , data = train)
+PLS.gam2L <- gam(PLSdensity ~ pasttmean , data = train)
+#summary(PLS.gam2) #explains 15.8% deviance
+#plot(PLS.gam2)
+
+PLS.gam3 <- gam(PLSdensity ~ s(pastdeltaP), data = train)
+PLS.gam3L <- gam(PLSdensity ~ pastdeltaP, data = train)
+#summary(PLS.gam3) #explains 6.07% deviance
+
+PLS.gam4 <- gam(PLSdensity ~ s(deltaT), data = train)
+PLS.gam4L <- gam(PLSdensity ~ deltaT, data = train)
+#summary(PLS.gam4) #explains 6.07% deviance
+
+PLS.gam5 <- gam(PLSdensity ~ s(awc), data = train)
+PLS.gam5L <- gam(PLSdensity ~ awc, data = train)
+#summary(PLS.gam5) #explains 12.5% of deviance
+
+PLS.gam6 <- gam(PLSdensity ~ s(sandpct), data = train)
+PLS.gam6L <- gam(PLSdensity ~ sandpct, data = train)
+#summary(PLS.gam6) #explains 12.5% of deviance
+
+
+
+PLS.gam7 <- gam(PLSdensity ~ s(pasttmean) + s(MAP1910) ,  data = train)
+PLS.gam7L <- gam(PLSdensity ~ pasttmean + MAP1910 ,  data = train)
+#summary(PLS.gam7) #explains 41% deviance
+#summary(PLS.gam7L) # explains 19.6%
+
+PLS.gam8 <- gam(PLSdensity ~ s(awc) +s(sandpct), data = train )
+PLS.gam8L <- gam(PLSdensity ~ awc + sandpct, data = train )
+#summary(PLS.gam8) #explains 28% of deviance
+
+PLS.gam9 <- gam(PLSdensity ~ s(MAP1910) + s(pasttmean) + s(sandpct), data = train)
+PLS.gam9L <- gam(PLSdensity ~ MAP1910 + pasttmean + sandpct, data = train)
+#summary(PLS.gam9) #explains 39% deviance
+#summary(PLS.gam9L)
+#plot(PLS.gam6)
+
+
+PLS.gam10 <- gam(PLSdensity ~ s(MAP1910) +s(pasttmean) + s(awc), data = train)
+PLS.gam10L <- gam(PLSdensity ~ MAP1910 + pasttmean + awc, data = train)
+
+#summary(PLS.gam10) #explains 41.3% of deviance
+#plot(PLS.gam10)
+
+PLS.gam11 <- gam(PLSdensity ~ s(MAP1910)  +s(pasttmean) +s(sandpct) + s(awc), data = train)
+PLS.gam11L <- gam(PLSdensity ~ MAP1910  + pasttmean + sandpct + awc, data = train)
+
+#summary(PLS.gam8) # explains 41% of deviance
+PLS.gam12 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
+PLS.gam12L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
+
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(pastdeltaP), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + pastdeltaP, data = train)
+
+PLS.gam13 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT), data = train)
+PLS.gam13L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT, data = train)
+
+PLS.gam14 <- gam(PLSdensity ~ s(MAP1910)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = train)
+PLS.gam14L <- gam(PLSdensity ~ MAP1910  + pasttmean + deltaT + pastdeltaP, data = train)
+
+AIC.df<- AIC(PLS.gam1, PLS.gam2, PLS.gam3, PLS.gam4, PLS.gam5, PLS.gam6, PLS.gam7, PLS.gam8, PLS.gam9,PLS.gam10,PLS.gam11,PLS.gam12,PLS.gam13,PLS.gam14 , PLS.gam1L, PLS.gam2L, PLS.gam3L, PLS.gam4L, PLS.gam5L, PLS.gam6L, PLS.gam7L, PLS.gam8L, PLS.gam9L, PLS.gam10L,PLS.gam11L,PLS.gam12L,PLS.gam13L,PLS.gam14L)
+
+AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+AIC.df$formula <- c(PLS.gam1$formula, PLS.gam2$formula, PLS.gam3$formula, PLS.gam4$formula, PLS.gam5$formula, PLS.gam6$formula, PLS.gam7$formula, PLS.gam8$formula, PLS.gam9$formula,PLS.gam10$formula,PLS.gam11$formula,PLS.gam12$formula,PLS.gam13$formula,PLS.gam14$formula , PLS.gam1L$formula, PLS.gam2L$formula, PLS.gam3L$formula, PLS.gam4L$formula, PLS.gam5L$formula, PLS.gam6L$formula, PLS.gam7L$formula, PLS.gam8L$formula, PLS.gam9L$formula, PLS.gam10L$formula,PLS.gam11L$formula,PLS.gam12L$formula,PLS.gam13L$formula, PLS.gam14L$formula )
+
+library(knitr)
+library(pander)
+AIC.df$model <- rownames(AIC.df)
+
+
+pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
+
+```
+Do the same for FIA data, but FIA models do not explain very much of the vegetation data:
+
+```{r, echo = FALSE}
+
+suppressMessages(library(mgcv))
+suppressMessages(library(caTools))
+suppressMessages(library(ggplot2))
+
+#dens.pr <- read.csv("data/midwest_pls_density_pr_alb1.6-5.csv") # just with grid cells that have both pls & FIA
+
+fiadens <- read.csv("C:/Users/JMac/Documents/Kelly/biomodality/data/dens_pr_PLS_FIA_with_cov.csv")
+
+# split into test and training datasets:
+
+#split FIA data into test and training datasets
+Y <- fiadens$FIAdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+trainf <- dens.pr[msk,]
+testf <- dens.pr[!msk,]
+
+
+FIA.gam1 <-gam(FIAdensity ~  s(MAP2011), data = trainf)
+FIA.gam1L <-gam(FIAdensity ~  MAP2011, data = trainf)
+
+
+FIA.gam2 <- gam(FIAdensity ~ s(pasttmean) , data = trainf)
+FIA.gam2L <- gam(FIAdensity ~ pasttmean , data = trainf)
+#summary(FIA.gam2) #explains 15.8% deviance
+#plot(FIA.gam2)
+
+FIA.gam3 <- gam(FIAdensity ~ s(pastdeltaP), data = trainf)
+FIA.gam3L <- gam(FIAdensity ~ pastdeltaP, data = trainf)
+#summary(FIA.gam3) #explains 6.07% deviance
+
+FIA.gam4 <- gam(FIAdensity ~ s(deltaT), data = trainf)
+FIA.gam4L <- gam(FIAdensity ~ deltaT, data = trainf)
+#summary(FIA.gam4) #explains 6.07% deviance
+
+FIA.gam5 <- gam(FIAdensity ~ s(awc), data = trainf)
+FIA.gam5L <- gam(FIAdensity ~ awc, data = trainf)
+#summary(FIA.gam5) #explains 12.5% of deviance
+
+FIA.gam6 <- gam(FIAdensity ~ s(sandpct), data = trainf)
+FIA.gam6L <- gam(FIAdensity ~ sandpct, data = trainf)
+#summary(FIA.gam6) #explains 12.5% of deviance
+
+
+
+FIA.gam7 <- gam(FIAdensity ~ s(pasttmean) + s(MAP2011) ,  data = trainf)
+FIA.gam7L <- gam(FIAdensity ~ pasttmean + MAP2011 ,  data = trainf)
+#summary(FIA.gam7) #explains 41% deviance
+#summary(FIA.gam7L) # explains 19.6%
+
+FIA.gam8 <- gam(FIAdensity ~ s(awc) +s(sandpct), data = trainf )
+FIA.gam8L <- gam(FIAdensity ~ awc + sandpct, data = trainf )
+#summary(FIA.gam8) #explains 28% of deviance
+
+FIA.gam9 <- gam(FIAdensity ~ s(MAP2011) + s(pasttmean) + s(sandpct), data = trainf)
+FIA.gam9L <- gam(FIAdensity ~ MAP2011 + pasttmean + sandpct, data = trainf)
+#summary(FIA.gam9) #explains 39% deviance
+#summary(FIA.gam9L)
+#plot(FIA.gam6)
+
+
+FIA.gam10 <- gam(FIAdensity ~ s(MAP2011) +s(pasttmean) + s(awc), data = trainf)
+FIA.gam10L <- gam(FIAdensity ~ MAP2011 + pasttmean + awc, data = trainf)
+
+#summary(FIA.gam10) #explains 41.3% of deviance
+#plot(FIA.gam10)
+
+FIA.gam11 <- gam(FIAdensity ~ s(MAP2011)  +s(pasttmean) +s(sandpct) + s(awc), data = trainf)
+FIA.gam11L <- gam(FIAdensity ~ MAP2011  + pasttmean + sandpct + awc, data = trainf)
+
+#summary(FIA.gam8) # explains 41% of deviance
+FIA.gam12 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(pastdeltaP), data = trainf)
+FIA.gam12L <- gam(FIAdensity ~ MAP2011  + pasttmean + pastdeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(pastdeltaP), data = trainf)
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + pasttmean + pastdeltaP, data = trainf)
+
+FIA.gam13 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(deltaT), data = trainf)
+FIA.gam13L <- gam(FIAdensity ~ MAP2011  + pasttmean + deltaT, data = trainf)
+
+FIA.gam14 <- gam(FIAdensity ~ s(MAP2011)  + s(pasttmean) + s(deltaT) + s(pastdeltaP), data = trainf)
+FIA.gam14L <- gam(FIAdensity ~ MAP2011  + pasttmean + deltaT + pastdeltaP, data = trainf)
+
+AIC.df<- AIC(FIA.gam1, FIA.gam2, FIA.gam3, FIA.gam4, FIA.gam5, FIA.gam6, FIA.gam7, FIA.gam8, FIA.gam9,FIA.gam10,FIA.gam11,FIA.gam12,FIA.gam13,FIA.gam14 , FIA.gam1L, FIA.gam2L, FIA.gam3L, FIA.gam4L, FIA.gam5L, FIA.gam6L, FIA.gam7L, FIA.gam8L, FIA.gam9L, FIA.gam10L,FIA.gam11L,FIA.gam12L,FIA.gam13L,FIA.gam14L)
+
+AIC.df$modeltype <- c(rep('smooth', 14), rep('linear', 14))
+
+AIC.df$formula <- c(FIA.gam1$formula, FIA.gam2$formula, FIA.gam3$formula, FIA.gam4$formula, FIA.gam5$formula, FIA.gam6$formula, FIA.gam7$formula, FIA.gam8$formula, FIA.gam9$formula,FIA.gam10$formula,FIA.gam11$formula,FIA.gam12$formula,FIA.gam13$formula,FIA.gam14$formula , FIA.gam1L$formula, FIA.gam2L$formula, FIA.gam3L$formula, FIA.gam4L$formula, FIA.gam5L$formula, FIA.gam6L$formula, FIA.gam7L$formula, FIA.gam8L$formula, FIA.gam9L$formula, FIA.gam10L$formula,FIA.gam11L$formula,FIA.gam12L$formula,FIA.gam13L$formula, FIA.gam14L$formula )
+
+AIC.df<- AIC.df[order(AIC.df$AIC),]
+library(knitr)
+library(pander)
+AIC.df$model <- rownames(AIC.df)
+
+#calculate prediction error:
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$FIAdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+AIC.df$MSPE <- 1
+
+#add prediction error ot AIC dataframe
+
+for (i in 1: length(AIC.df$model)){
+AIC.df[i,'MSPE'] <- msqe(get(AIC.df[i,"model"]), testf)
+}
+pander(AIC.df[,c("model","modeltype", "formula", "df", "AIC", "MSPE")], split.cells = 30)
+
+```
+
+PLS gam 11 model has the lowest AIC includes precipitation, mean temperature, Temp. seasonality, precipitation seasonality in in has lowest AIC value. How does this model predict the PLS test data?
+
+Well, there are a couple of things to think about:
+1. predictions are occassionally negative
+2. predication range is not as high as the observed range
+3. most models overestimate density at low density regions and underestimate density in high denisty regions
+4. Many of the above AIC's are very similar, so the benefit of adding an additional term may be marginal.
+
+
+
+
+```{r, echo = FALSE}
+library(maps)
+library(sp)
+library(rgeos)
+library(visreg)
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+#map out 
+
+# plot the predicted response fields to these variables
+
+#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pasttmean', scale='response')
+#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pastdeltaP', scale='response')
+#visreg2d(PLS.gam11, xvar='MAP1910', yvar='pastdeltaT', scale='response')
+
+map.pred.density <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
+
+testdata$ypred <- ypred
+
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=testdata, aes(x=x, y=y, fill = ypred))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Predicted tree density") + 
+  scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+#outdata <- testdata
+}
+
+# make a function to extracted predictions from a model
+get.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+
+testdata$ypred <- ypred
+
+testdata
+}
+
+predicted <- get.preds(PLS.gam11, test)
+summary(predicted$ypred)
+
+predicted <- get.preds(PLS.gam14L, test)
+summary(predicted$ypred)
+
+#calcuated the squared error for each prediction
+msqe<- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+testdata$ypred <- ypred
+
+predicted<- testdata
+  
+predicted$sqerr <- (predicted$PLSdensity - predicted$ypred)^2
+mean(predicted$sqerr, na.rm = TRUE)
+}
+
+msqe(PLS.gam14L, test)
+msqe(PLS.gam13L, test)
+msqe(PLS.gam12L, test)
+msqe(PLS.gam11L, test)
+msqe(PLS.gam10L, test)
+
+msqe(PLS.gam14, test)
+msqe(PLS.gam13, test)
+msqe(PLS.gam12, test)
+msqe(PLS.gam11, test)
+msqe(PLS.gam10, test)
+
+
+# plot the predicted tree denisty in the map
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=predicted, aes(x=x, y=y, fill = ypred))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Predicted tree density from Model 11") + 
+  scale_fill_gradientn(colours = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837"), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+
+# plot predicted vs. observed (color by sand content)
+ggplot(predicted, aes(PLSdensity,ypred, color = sandpct)) +geom_point() + theme_bw()+geom_abline(intercept = 0, slope = 1, color = 'red', size = 2) + ylim (-5, 600) + ggtitle('Predicted vs. Observed') + ylab('Predicted tree density') + xlab('Observed tree density')
+
+
+
+# calculate predicted - observed
+predicted$podiff <- predicted$ypred - predicted$PLSdensity
+
+# map out predicted - observed
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=predicted, aes(x=x, y=y, fill = podiff))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Predicted - Obs from Model 11") +  scale_fill_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +
+  coord_equal()+theme_bw()
+
+# plotting predicted - observed in different climate spaces
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = sandpct, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= MAP1910, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = awc, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') 
+
+
+# histograms of soil variables
+hist(predicted$sandpct, breaks = 50)
+
+hist(predicted$awc, breaks = 50)
+
+# break up the dataset by sand % 
+predicted$sandgroup <- '59-88%'
+predicted[predicted$sandpct <59.04,]$sandgroup <- '29-59%'
+predicted[predicted$sandpct < 29.52,]$sandgroup <- '0-29%'
+
+# plot 3 bins of sand:
+ggplot() + geom_histogram(data = predicted, aes(x= sandpct))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+# plot the predicted - obs by bins of sand
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs )", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+# plot the predicted by bins of sand
+ggplot() + geom_point(data = predicted, aes(x= pasttmean, y = MAP1910, color = ypred))+ scale_color_gradientn(colours = rainbow(7), name ="Pred", na.value = 'darkgrey') +facet_grid(~sandgroup)
+
+
+
+# do the same for temperature:
+hist(predicted$pasttmean, breaks = 50)
+
+predictedt <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predictedt$tempgroup <- '9-14'
+predictedt[predictedt$pasttmean < 9,]$tempgroup <- '5-9'
+predictedt[predictedt$pasttmean < 5,]$tempgroup <- '0-5'
+
+# plot 3 bins of sand:
+ggplot() + geom_histogram(data = predictedt, aes(x= pasttmean))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+# plot the predicted - obs by bins of sand
+ggplot() + geom_point(data = predictedt, aes(x= sandpct, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+# plot the predicted - obs by bins of pasttmean
+ggplot() + geom_point(data = predictedt, aes(x= awc, y = MAP1910, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~tempgroup)
+
+
+
+
+# do the same for precipitation:
+hist(predicted$MAP1910, breaks = 50)
+
+predictedp <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predictedp$pgroup <- '900-1200'
+predictedp[predictedp$MAP1910 < 900,]$pgroup <- '700-900'
+predictedp[predictedp$MAP1910 < 700,]$pgroup <- '450-700'
+
+# plot 3 bins of precip:
+ggplot() + geom_histogram(data = predictedp, aes(x= MAP1910))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predictedp, aes(x= sandpct, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predictedp, aes(x= awc, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~pgroup)
+
+
+# do the same for AWC:
+hist(predicted$awc, breaks = 50)
+
+predicteda <- predicted[complete.cases(predicted),]
+
+# break up the dataset by temperatiure 
+predicteda$agroup <- '0.18-0.226'
+predicteda[predicteda$awc < 0.18,]$agroup <- '0.14-0.18'
+predicteda[predicteda$awc < 0.14,]$agroup <- '0-0.14'
+
+# plot 3 bins of precip:
+ggplot() + geom_histogram(data = predicteda, aes(x= awc))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~agroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predicteda, aes(x= sandpct, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs ", na.value = 'darkgrey') +facet_grid(~agroup)
+
+# plot the predicted - obs by bins of precip
+ggplot() + geom_point(data = predicteda, aes(x= MAP1910, y = pasttmean, color = podiff))+ scale_color_gradientn(colours = rainbow(7), name ="Pred - obs", na.value = 'darkgrey') +facet_grid(~agroup)
+
+
+```
+So far, the under and over estimation of the model doesn't appear systematic from these graphs, but it is hard to tell. For example, there seems to be a high amount of overestimateion at low AWC & intermediate precipitation (and 4-7 degC mean annual temperature).
+
+## Predicting Forest vs. Savanna (not density)
+
+The above models are predicting density (continious variable) from continous envrionmental and climate covariates. However, we can also use the savanna/forest density classificaitons as our y variable and  predict the probability a grid cell is forest (ecocode = 1, PLS density > 47 trees/ha) and savannna(ecocode = 0, PLSdensity < 47 trees/ha & >0.5 trees/ha) from continous environmental and climate covariates. 
+
+In this case we model 
+
+This method has the benefit of predicting the probability of forest (or the probability of savanna) given certain environmental conditions. For this analysis, we exclude prairie sites
+
+```{r echo = FALSE}
+#test logistic regressoin
+# dummyvariables for logistic regression:
+dens.pr$ecocode <- 0
+dens.pr[dens.pr$ecotype %in% 'Forest', ]$ecocode <- 1
+dens.pr<- dens.pr[!dens.pr$ecotype %in% 'prairie',]
+#split training and testing
+Y <- dens.pr$PLSdensity
+msk <- sample.split( Y, SplitRatio = 1/2, group = NULL )
+#table(Y,msk)
+
+train <- dens.pr[msk,]
+test <- dens.pr[!msk,]
+
+
+#plot(dens.pr$sandpct, dens.pr$ecotype)
+
+
+# developing binomial gam models
+logmod<- gam(ecocode ~ s(MAP1910) , family = binomial, data = train)
+
+logmodL <- gam(ecocode ~ MAP1910 , family = binomial, data = train)
+#summary(logmod)
+#plot(logmod)
+
+
+
+
+logmod2<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(sandpct), family = binomial, data = train)
+
+logmod2L<- gam(ecocode ~ MAP1910 + pasttmean + sandpct, family = binomial, data = train)
+
+#summary(logmod2)
+#summary(logmod2L)
+#plot(logmod2)
+
+logmod3 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(sandpct), family = binomial, data = train)
+
+logmod3L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ sandpct, family = binomial, data = train)
+
+#summary(logmod3L)
+#summary(logmod3)
+#plot(logmod3)
+
+ypred3 <- predict(logmod3, newdata = test, type="response")
+#plot(test$MAP1910, ypred3, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+logmod4 <- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct), family = binomial, data = train)
+
+logmod4L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ pastdeltaT + sandpct, family = binomial, data = train)
+
+#summary(logmod4)
+#plot(logmod4)
+
+ypred4 <- predict(logmod4, newdata = test, type="response")
+#plot(test$MAP1910, ypred4, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+logmod5<- gam(ecocode ~ s(MAP1910) + s(pasttmean) + s(pastdeltaP)+ s(pastdeltaT) + s(sandpct) + s(awc), family = binomial, data = train)
+
+logmod5L <- gam(ecocode ~ MAP1910 + pasttmean + pastdeltaP+ pastdeltaT + sandpct + awc, family = binomial, data = train)
+
+#summary(logmod5)
+#plot(logmod5)
+
+ypred5 <- predict(logmod5, newdata = test, type="response")
+#plot(test$MAP1910, ypred5, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+#plot predicted probabiliy of forest vs. observed tree density
+#plot(test$PLSdensity, ypred5, pch = 16, xlab = "obs", ylab = "Predicted")
+
+AIC2.df<- AIC(logmod, logmod2, logmod3, logmod4, logmod5, 
+    logmodL, logmod2L, logmod3L, logmod4L, logmod5L)
+
+
+
+AIC2.df$modeltype <- c(rep('smooth', 5), rep('linear', 5))
+AIC2.df$formula <- c(logmod$formula, logmod2$formula, logmod3$formula, logmod4$formula, logmod5$formula, 
+    logmodL$formula, logmod2L$formula, logmod3L$formula, logmod4L$formula, logmod5L$formula)
+
+library(knitr)
+library(pander)
+AIC2.df$model <- rownames(AIC2.df)
+
+
+pander(AIC2.df[,c("model","modeltype", "formula", "df", "AIC")], split.cells = 30)
+```
+Looks like model number 5 has lowest AIC for the logistic/binomial model. 
+Lets map out the probability of forest based on model with the lowest AIC value:
+```{r, echo = FALSE}
+
+library(visreg)
+map.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+plot(testdata$MAP1910, ypred, pch = 16, xlab = "MAP", ylab = "Predicted")
+
+plot(testdata$pasttmean, ypred, pch = 16, xlab = "pasttmean", ylab = "Predicted")
+
+testdata$ypred <- ypred
+ggplot(testdata, aes(x = x, y = y, color = ypred))+geom_point() + theme_bw() +ggtitle ('Probability of forest') 
+#outdata <- testdata
+}
+
+get.preds <- function(model, testdata){
+ypred <- predict(model, newdata = testdata, type="response")
+
+testdata$ypred <- as.vector(ypred)
+
+testdata
+}
+
+map.preds(logmod5, test)
+
+preds.df <- data.frame(get.preds(logmod5, test))
+hist(preds.df$ypred, breaks = 25)
+summary(preds.df$ypred)
+
+# plot the predicted response to these variables
+
+#visreg2d(logmod5, xvar='MAP1910', yvar='pasttmean', scale='response')
+#visreg2d(logmod5, xvar='MAP1910', yvar='pastdeltaP', scale='response')
+#visreg2d(logmod5, xvar='MAP1910', yvar='pastdeltaT', scale='response')
+#visreg2d(logmod5, xvar='MAP1910', yvar='sandpct', scale='response')
+#visreg2d(logmod5, xvar='MAP1910', yvar='awc', scale='response')
+
+
+preds.df$predcode <- "savanna"
+preds.df <- preds.df[complete.cases(preds.df),]
+preds.df[preds.df$ypred < 0.7,]$predcode <- "savanna or forest"
+preds.df[preds.df$ypred > 0.3,]$predcode <- "savanna or forest"
+preds.df[preds.df$ypred >= 0.7,]$predcode <- "forest"
+preds.df[preds.df$ypred <= 0.3,]$predcode <- "savanna"
+
+
+#ggplot(preds.df, aes(x, y, color = predcode)) + geom_point() + theme_bw()
+
+ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=preds.df, aes(x=x, y=y, fill = predcode))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Probability of forest from Model 5") + scale_fill_manual(values = c(
+      #, # light green
+      'red', # dark teal
+      '#8c510a', # red
+      #'#d8b365', # light tan
+      'forestgreen',
+      #'#fee08b', # tan
+      '#01665e',
+      'black'), limits = c('savanna or forest' ,'savanna', 'forest'))+
+    theme_bw()+
+  coord_equal()+theme_bw()
+
+```
+
+The above map shows 'savana or forest' places where the binomial familiy model predicted between 30-70% probability of forest. There are some places where the model predicts deterministic forest and deterministic savanna. 

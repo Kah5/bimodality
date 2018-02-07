@@ -19,17 +19,21 @@ correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
 final.data <- final.data[,1:23]
 
 # read in final data from michigan
-#final.data.mi <- read.csv(paste0("data/lower_mi_final_data.csv"), stringsAsFactors = FALSE)
-# corrections for stem density:
-#correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
+final.data.mi <- read.csv(paste0("data/lower_mi_final_data.csv"), stringsAsFactors = FALSE)
+final.data.mi <- final.data.mi[!names(final.data.mi) %in% c("cornertype", "NA.")]
 
+# corrections for stem density:
+correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
+correction.factor.mi <- correction.factor.mi[!names(correction.factor.mi) %in% c("X.1", "State", "Internal", "Section")]
+colnames(correction.factor.mi) <- c("X","Pair", "kappa", "theta", "zeta", "phi")
 # add the lower MI data below the INIL data: 
 
-#final.data <- rbind(final.data, final.data.mi)
-#correction.factor <- rbind(correction.factor, correction.factor.mi)
+final.data <- rbind(final.data, final.data.mi)
+correction.factor <- rbind(correction.factor, correction.factor.mi)
 
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]
+
 #------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
 # & no diameter veil
@@ -47,7 +51,7 @@ summary(basal.area)
 zero.trees <- is.na(stem.density) 
 
 #plot Histogram of point estimates of stem density
-hist(stem.density, breaks = 100, xlim = c(0,1000))
+hist(stem.density, breaks = 1000, xlim = c(0,1000))
 
 #set stem.density where there are zero trees due to No tree or Wet or Water to 0
 stem.density[zero.trees] <- 0
@@ -58,7 +62,7 @@ summary(basal.area)
 
 # make into a data frame and export as csv
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, paste0('outputs/IN_IL_densestimates_v',version,'.csv'))
+write.csv(stem.density, paste0('outputs/IN_IL_MI_densestimates_v',version,'.csv'))
 
 #----------------------------Density Regridding------------------------------
 
@@ -90,7 +94,7 @@ stem.density <- data.frame(x = final.data$PointX,
 stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-ggplot(stem.density, aes(x, y, color=density))+geom_point(size =0.5)
+ggplot(stem.density[stem.density$density < 600,], aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
 
 

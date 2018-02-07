@@ -40,7 +40,7 @@ library(ggplot2)
 #wisc <- readOGR('data/raw_data/wisc/glo_corn.shp', 'glo_corn')
 #minn <- readOGR('data/raw_data/minn/Minnesota.shp', 'Minnesota')
 #mich <- readOGR('data/southern_MI/southern_MI/so_michigan.shp', 'so_michigan')
-mich <- read.csv("data/southernMI_projected_v0.3.csv", stringsAsFactors = FALSE)
+mich <- read.csv("data/southernmi_projected_v1/southernMI_projected_v1.0.csv", stringsAsFactors = FALSE)
 #  The files are in unique projections, this standardizes the projections to
 #  a long-lat projection:
 
@@ -51,20 +51,20 @@ mich <- read.csv("data/southernMI_projected_v0.3.csv", stringsAsFactors = FALSE)
 
 head(mich) # look at df
 # the dist1 and diam1 columns are switched, so we need to fix this
-dist1 <- mich$diam1
+#dist1 <- mich$diam1
 diam1 <- mich$dist1
 
-mich$dist1 <- dist1
-mich$diam1 <- diam1
+#mich$dist1 <- dist1
+#mich$diam1 <- diam1
 
-ggplot(mich, aes(POINT_X, POINT_Y, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
+ggplot(mich, aes(point_x, point_y, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
 #df <- mich[mich$quad %in% c("Sodus", "BentonHarbor", "SisterLakes"),]
 #write.csv(df, "test_mich_quad.csv", row.names= FALSE)
 #unique(mich[mich$coords.x1 >= pt$long+0.01,]$quad)
 
-not.no.tree <- !(!is.na(mich$TREE) & is.na(mich$SP1))
+not.no.tree <- !(!is.na(mich$L3_tree1) & is.na(mich$species1))
 no.tree     <- is.na(mich$species1)
 #mich <- mich[not.no.tree & !no.tree,]
 
@@ -74,10 +74,10 @@ no.tree     <- is.na(mich$species1)
 #  the twonship name.
 twp <- c(#paste('mn', as.character(minn$TWP)), 
          #paste('wi', as.character(wisc$TOWNSHIP)), 
-         paste('mi', as.character(mich$Township)))
+         paste('mi', as.character(mich$town)))
 rng <- c(#as.character(minn$RNG), 
          #paste(as.character(wisc$RANGE),as.character(wisc$RANGDIR), sep=''), 
-         as.character(mich$Range))
+         as.character(mich$range))
 
 #  The merged dataset is called nwmw, Minnesota comes first, then Wisconsin.
 #nwmw <- rbind(minn[,c(8, 10:25)], wisc[,c(5, 13:28)], mich[,c(36, 13:28)])
@@ -99,8 +99,8 @@ nwmw [ nwmw == '999'] <- NA
 #  a number of points, although we hope to at some point in the future:
 #  No stem density removals, none of the plots look like they have 'weird' points.
 #  Basal area removals:
-nwmw[which(as.numeric(nwmw$diam1) >100),] <- rep(NA, ncol(nwmw))  #  removes 19 trees with reported diameters over 250cm.
-nwmw[which(as.numeric(nwmw$diam2) >100),] <- rep(NA, ncol(nwmw))  #  removes an additional 14 trees.
+#nwmw[which(as.numeric(nwmw$diam1) >100),] <- rep(NA, ncol(nwmw))  #  removes 19 trees with reported diameters over 250cm.
+#nwmw[which(as.numeric(nwmw$diam2) >100),] <- rep(NA, ncol(nwmw))  #  removes an additional 14 trees.
 nwmw[(is.na(nwmw$species1) & nwmw$diam1>0) | (is.na(nwmw$species2) & nwmw$diam2>0),] <- rep(NA, ncol(nwmw))  #  removes four records with no identified trees, but identified diameters
 
 diams <-  cbind(as.numeric(nwmw$diam1), 
@@ -114,11 +114,12 @@ dists <-  cbind(as.numeric(nwmw$dist1),
                 as.numeric(nwmw$dist4))
 
 # mi azimuths are from 0 to 60
-azimuths <- cbind(as.numeric(nwmw$az1), 
-                  as.numeric(nwmw$az2),
-                  as.numeric(nwmw$az3),
-                  as.numeric(nwmw$az4))
+azimuths <- cbind(as.numeric(nwmw$az1_360), 
+                  as.numeric(nwmw$az2_360),
+                  as.numeric(nwmw$az3_360),
+                  as.numeric(nwmw$az4_360))
 
+colnames(azimuths) <- c("az1", "az2","az3", "az3")
 # make a dataframe with the values from Q1, Q2, Q3, Q4:
 qvals <- cbind(as.numeric(nwmw$Q1), 
                as.numeric(nwmw$Q2),
@@ -126,8 +127,8 @@ qvals <- cbind(as.numeric(nwmw$Q1),
                as.numeric(nwmw$Q4))
 
 #  michigan data already has raw azimuths, but they range from 0-100, so we need to convert these:
-source('R/get_angle_MI.R')
-azimuths <- get_angle_MI(azimuths, qvals)
+#source('R/get_angle_MI.R')
+#azimuths <- get_angle_MI(azimuths, qvals)
 #####  Cleaning Trees:  
 #      Changing tree codes to lumped names:
 spec.codes <- read.csv('WitnessTrees-1.0/WitnessTrees-1.0/data/input/relation_tables/fullpaleon_conversion_v0.3-3.csv', stringsAsFactor = FALSE)
@@ -287,22 +288,24 @@ corner <- mich$sec_corner
 
 #  These are the columns for the final dataset.
 
-final.data <- data.frame(nwmw$POINT_X,
-                         nwmw$POINT_Y,
-                        nwmw$twp,
+final.data <- data.frame(nwmw$point_x,
+                         nwmw$point_y,
+                        nwmw$twnrng,
                         state,
                         ranked.data[,1:8],
                         species,
                         ranked.data[,13:16],
                         corner,
+                        nwmw$cornertype,
                         year ,
+                        nwmw$twnrng,
                         stringsAsFactors = FALSE)
 
 colnames(final.data) <- c('PointX','PointY', 'Township',"state",
                           paste('diam',    1:4, sep =''),
                           paste('dist',    1:4, sep = ''), 
                           paste('species', 1:4, sep = ''),
-                          paste('az',      1:4, sep = ''), 'corner','surveyyear')
+                          paste('az',      1:4, sep = ''), 'corner',"cornertype",'surveyyear')
 
 
 summary(final.data)
@@ -312,8 +315,10 @@ final.data <- final.data[!is.na(final.data$PointX),]
 final.data <- final.data[final.data$corner %in% c("Extsec", "Intsec"),]
 # now kill missing cells:
 #final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
-#final.data <- final.data[ !final.data$species2 %in% c('Water', 'Missing'), w]
 
+# there are a few strange points with erroneous X or Y values. Get rid of them here:
+final.data <- final.data[ !final.data$PointX < 1000, ]
+final.data <- final.data[ !final.data$PointY < 1000, ]
 
 
 #write data to a csv:
@@ -322,22 +327,48 @@ write.csv(final.data, "data/lower_mi_final_data.csv")
 
 X11(width=12)
 ggplot(final.data[final.data$species1 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species1))+geom_point()
-ggplot(final.data, aes(PointX, PointY, color = az1))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
+ggplot(final.data, aes(PointX, PointY, color = year))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 hist(final.data$diam1)
 hist(final.data$diam2)
 hist(final.data$dist1)
 hist(final.data$dist2)
 
-Pair <- paste0(as.character(final.data$corner), "MI")
+#Pair <- ifelse(final.data$Township %like% "N",paste0(as.character(final.data$corner), "MI-E"), paste0(as.character(final.data$corner), "MI-W"))
 
 # --------------------generate correction factors------------------------------:
 # read in the correction factors provided by Charlie Cogbill:
-corr.factor <- read.csv('data//charlie_corrections.csv')
-test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
+corr.vals <- read.csv('data/cogbill_corrections.csv')
 
-colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
-require(plyr)
-corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
 
-write.csv(corrections, 'data/MI_correction_factors.csv')
+correction <- data.frame(kappa = rep(NA, length(used.data)),
+                         theta = rep(NA, length(used.data)),
+                         zeta  = rep(NA, length(used.data)),
+                         phi   = rep(NA, length(used.data)))
+
+species2table <- data.frame(species1 = final.data$species1,
+                            species2 = final.data$species2,
+                            species3 = final.data$species3,
+                            species4 = final.data$species4)
+plot.trees <- rowSums(!(species2table == 'Water' | species2table == 'NonTree'), na.rm = TRUE)
+
+point.no <- as.character(final.data$corner)
+
+#  So there are a set of classes here, we can match them all up:
+
+internal <- ifelse(!point.no %in% "Extsec", 'internal', 'external')
+trees    <- ifelse(plot.trees == 2, 'P', '2NQ')
+section  <- ifelse(final.data$cornertype %in% "section", 'section', 'quartersection')
+state <- final.data$state
+
+corr.year     <- as.character(final.data$year)
+corr.year[state == 'MI' & final.data$Township %like% "W"] <- 'W'
+corr.year[state == 'MI' & final.data$Township %like% "E"] <- 'E'
+
+match.vec <- apply(corr.vals[,1:4], 1, paste, collapse = '')
+to.match <- apply(data.frame(state, corr.year, internal, section, stringsAsFactors = FALSE), 1, paste, collapse = '')
+
+correction <- corr.vals[match(to.match, match.vec),]
+
+
+write.csv(correction, 'data/MI_correction_factors.csv')
 

@@ -28,11 +28,19 @@ correction.factor.mi <- correction.factor.mi[!names(correction.factor.mi) %in% c
 colnames(correction.factor.mi) <- c("X","Pair", "kappa", "theta", "zeta", "phi")
 # add the lower MI data below the INIL data: 
 
+
+
 final.data <- rbind(final.data, final.data.mi)
 correction.factor <- rbind(correction.factor, correction.factor.mi)
 
+final.data$az1[final.data$az1 <= 0 ] <- NA
+final.data$az2[final.data$az2 <= 0] <- NA
+final.data$az3[final.data$az3 <= 0] <- NA
+final.data$az4[final.data$az4 <= 0] <- NA
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]
+
+ggplot(final.data, aes(PointX, PointY, color = diam2))+geom_point(size = 0.2)
 
 #------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
@@ -177,13 +185,13 @@ biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv',
 # this function calculates biomass of an individual tree using taxa-specific allometric equations
 form <- function(x) {
   
-  eqn <- match(x$spec, biom.table[,1])
+  eqn <- match(x[c('spec')], biom.table[,1])
   eqn[is.na(eqn)] <- 1  #  Sets it up for non-tree.
   
   b0 <- biom.table[eqn,2]
   b1 <- biom.table[eqn,3]
   
-  biomass <- exp(b0 + b1 * log(x$diams))
+  biomass <- exp(b0 + b1 * log(as.numeric(x[c('diams')])))
   biomass
   
 }
@@ -192,14 +200,15 @@ form <- function(x) {
 #  a stand level value, through the stem density estimate  The values are
 #  in kg.
 
-biomass <- rep(NA, nrow(spec.table))
+#biomass <- rep(NA, nrow(spec.table))
+biomass <- apply(spec.table, 1, form)
 
-for (i in 1:nrow(spec.table)) {
+#for (i in 1:nrow(spec.table)) {
   # It's just really slow, so I do it this way to see what's happening.
-  biomass[i] <- form(spec.table[i,])
-  cat(i,'\n')
-  flush.console()
-}
+ # biomass[i] <- form(spec.table[i,])
+  #cat(i,'\n')
+  #flush.console()
+#}
 
 # convert to Mg./hectare
 spec.table$biom <- biomass * spec.table$density / 1000
@@ -348,7 +357,7 @@ writeRaster(biomass, "data/biomass.grd", overwrite=TRUE)
 writeRaster(dens, "data/dens.grd", overwrite=TRUE)
 
 
-
+plot(dens)
 
 #pdf("biomass.density.99percentile.rasters.pdf")
 plot(biomass,xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean total biomass (Mg/ha)", xlab ="Easting", ylab = "Northing") 

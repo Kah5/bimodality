@@ -561,3 +561,8 @@ ggplot(count.sds, aes(breaks, counts, fill ="PLS") )+geom_bar(stat = "identity",
   geom_bar(data = fcount.sds, aes(breaks, counts) ,stat = "identity",fill = "red", alpha = 0.3)+geom_ribbon(data = fcount.sds,aes(ymin=ci.5, ymax=ci.95),fill="pink", alpha=0.9)+xlim(0,600)+theme_bw()+xlab("Tree Density")
 dev.off()
 
+
+
+#-----------------Incorporating density uncertainty into evaluation of bimodality overall:--------------------
+full <- read.csv("outputs/cluster/full_comp_dens_df.csv")
+

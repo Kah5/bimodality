@@ -149,7 +149,7 @@ fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.v
 
 # get the grid cells from FIA where we have PLS records
 pls.cells <- full.spec[,c('x','y','cell')]
-fia.inpls<- merge(pls.cells, fia.by.cell, by = c('x','y','cell'))
+fia.inpls <- merge(pls.cells, fia.by.cell, by = c('x','y','cell'))
 ggplot(fia.inpls, aes(x=x,y=y, fill=Oak))+geom_raster()
 
 

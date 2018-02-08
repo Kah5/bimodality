@@ -57,7 +57,7 @@ diam1 <- mich$dist1
 #mich$dist1 <- dist1
 #mich$diam1 <- diam1
 
-ggplot(mich, aes(point_x, point_y, color = diam1))+geom_point(size = 0.1)+theme(legend.position = "none")
+ggplot(mich[mich$L3_tree1 %in% "No tree",], aes(point_x, point_y))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
 #df <- mich[mich$quad %in% c("Sodus", "BentonHarbor", "SisterLakes"),]
@@ -120,6 +120,7 @@ azimuths <- cbind(as.numeric(nwmw$az1_360),
                   as.numeric(nwmw$az4_360))
 
 colnames(azimuths) <- c("az1", "az2","az3", "az3")
+
 # make a dataframe with the values from Q1, Q2, Q3, Q4:
 qvals <- cbind(as.numeric(nwmw$Q1), 
                as.numeric(nwmw$Q2),
@@ -129,21 +130,27 @@ qvals <- cbind(as.numeric(nwmw$Q1),
 #  michigan data already has raw azimuths, but they range from 0-100, so we need to convert these:
 #source('R/get_angle_MI.R')
 #azimuths <- get_angle_MI(azimuths, qvals)
+#azimuths <- angl
 #####  Cleaning Trees:  
 #      Changing tree codes to lumped names:
-spec.codes <- read.csv('WitnessTrees-1.0/WitnessTrees-1.0/data/input/relation_tables/fullpaleon_conversion_v0.3-3.csv', stringsAsFactor = FALSE)
-spec.codes <- subset(spec.codes, Domain %in% 'Upper Midwest')
+#spec.codes <- read.csv('WitnessTrees-1.0/WitnessTrees-1.0/data/input/relation_tables/fullpaleon_conversion_v0.3-3.csv', stringsAsFactor = FALSE)
+#spec.codes <- subset(spec.codes, Domain %in% 'Upper Midwest')
 
-lumped <- data.frame(abbr = as.character(spec.codes$Level.1),
-                     lump = as.character(spec.codes$Level.3a))
+#lumped <- data.frame(abbr = as.character(spec.codes$Level.1),
+ #                    lump = as.character(spec.codes$Level.3a))
 
-species.old <- data.frame(as.character(nwmw$species1), 
-                          as.character(nwmw$species2), 
-                          as.character(nwmw$species3), 
-                          as.character(nwmw$species4), stringsAsFactors = FALSE)
+#species.old <- data.frame(as.character(nwmw$species1), 
+ #                         as.character(nwmw$species2), 
+  #                        as.character(nwmw$species3), 
+   #                       as.character(nwmw$species4), stringsAsFactors = FALSE)
 
-species <- t(apply(species.old, 1, 
-                   function(x) lumped[match(tolower(x), tolower(lumped[,1])), 2]))
+#species <- t(apply(species.old, 1, 
+ #                  function(x) lumped[match(tolower(x), tolower(lumped[,1])), 2]))
+
+species <- cbind(as.character(nwmw$L3_tree1), 
+                 as.character(nwmw$L3_tree2), 
+                 as.character(nwmw$L3_tree3), 
+                 as.character(nwmw$L3_tree4))
 
 #  We need to indicate water and remove it.  There are 43495 cells with 'water'
 #  indicated, and another 784 cells with 'missing' data.
@@ -158,8 +165,8 @@ species[species %in% ''] <- 'No tree'
 species[is.na(species)] <- 'No tree'
 
 #  Here there needs to be a check, comparing species.old against species.
-test.table <- table(unlist(species.old), unlist(species), useNA='always')
-write.csv(test.table, 'data/outputs/mi_clean.bind.test.csv')
+#test.table <- table(unlist(species.old), unlist(species), useNA='always')
+#write.csv(test.table, 'data/outputs/mi_clean.bind.test.csv')
 
 ######
 #  Some annoying things that need to be done:
@@ -174,9 +181,9 @@ treed.center <- (dists[,1] == 0 & !is.na(azimuths[,1]) & diams[,1] > 0)
 treed.center[is.na(treed.center)] <- FALSE
 
 azimuths[treed.center,1] <- 0
-
+# check this:
 #  Another special case, two trees of distance 1.  What's up with that?!
-dists[rowSums(dists == 1, na.rm=T) > 1, ] <- rep(NA, 4)
+dists[rowSums(dists == 1, na.rm=T) > 1, ] <- NA#,rep(NA, 4)
 
 #  When the object is NA, or the species is not a tree (NonTree or Water), set
 #  the distance to NA.
@@ -233,7 +240,11 @@ for(i in 1:nrow(ranked.data)){
   if(i%%6500 == 0)cat('.')
 }
 
-#ranked.data <- t(apply(usable.data, 1, rank.fun)) # need to drop 'id'
+ranked.data <- t(apply(usable.data, 1, rank.fun)) # need to drop 'id'
+colnames(ranked.data) <- c(paste('diam', 1:4, sep =''),
+                           paste('dist', 1:4, sep = ''), 
+                           paste('species', 1:4, sep = ''),
+                           paste('az', 1:4, sep = ''))
 
 species <- data.frame(species1 = sp.levels[as.numeric(ranked.data[, 9])],
                       species2 = sp.levels[as.numeric(ranked.data[,10])],
@@ -327,11 +338,13 @@ write.csv(final.data, "data/lower_mi_final_data.csv")
 
 X11(width=12)
 ggplot(final.data[final.data$species1 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species1))+geom_point()
-ggplot(final.data, aes(PointX, PointY, color = year))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
+ggplot(final.data, aes(PointX, PointY, color = diam1))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 hist(final.data$diam1)
 hist(final.data$diam2)
 hist(final.data$dist1)
 hist(final.data$dist2)
+
+ggplot(final.data, aes(PointX, PointY, color = dist2))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 
 #Pair <- ifelse(final.data$Township %like% "N",paste0(as.character(final.data$corner), "MI-E"), paste0(as.character(final.data$corner), "MI-W"))
 

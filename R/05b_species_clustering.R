@@ -10,96 +10,8 @@ library(sp)
 library(raster)
 library(rgdal)
 
-#--------------------------------load data-----------------------------------
-# read in pont level density data
-pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
-pls.inil <- pls.inil[!is.na(pls.inil$spec),]
-
-
-# find mean denisty for all species in a grid cell
-pls.spec <- dcast(pls.inil, x + y + cell ~spec, mean, na.rm = TRUE, value.var = 'density')
-pls.spec$total <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
-hist(pls.spec$total, breaks = 50)
-pls.new <- pls.spec[,c('x', 'y', 'cell', 'total')]
-colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
-
-# read in Uppermidwest data at paleon grid scale
-umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
-#umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
-umdw$total <- rowSums(umdw[,5:32], na.rm= TRUE)
-umdw.new <- umdw[,c('x', 'y', 'cell', 'total')]
-
-
-colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
-umdw.n <- umdw.new[,c('x', 'y', 'PLSdensity')]
-coordinates(umdw.n) <- ~x+y
-gridded(umdw.n) <- TRUE
-umdw.rast <- raster(umdw.n)
-plot(umdw.rast)
-proj4string(umdw.rast) <- '+init=epsg:3175'
-
-writeRaster(umdw.rast, "data/upper_midwest.ascii", overwrite = TRUE)
-
-
-
-# -----------rename species and join upper and lower midwest spec. tables----------------
-
-#this is to join the species tables
-colnames(pls.spec) <- c("x" ,  "y" , "cell" ,"Alder","Ash",
-                        "Bald cypress","Basswood","Beech","Birch", "Black.gum" ,         
-                        "Black gum.sweet gum", "Buckeye" , "Cedar.juniper" ,"Cherry" ,"Chestnut" ,          
-                        "Dogwood","Elm" ,"Fir", "Hackberry", "Hemlock","Hickory", "Ironwood",    
-                        "Locust" ,"Maple" ,"Mulberry" ,"No.tree","Oak",                
-                        "Other.hardwood","Pine","Poplar", "Poplar.tulip poplar","Spruce", "Sweet gum" ,         
-                        "Sycamore" ,"Tamarack" ,"Tulip.poplar" ,"Unknown.tree","Walnut" ,            
-                        "Water","Wet" ,"Willow","total" )
-umdw.names <- colnames(umdw)
-pls.names <- colnames(pls.spec)
-
-
-#create name vectors for species columns missing in the upper and lower midewst
-to.add.umdw <- pls.names[!pls.names %in% umdw.names]
-to.add.pls <- umdw.names[!umdw.names %in% pls.names]
-
-#add these species columns to the respective dataframes, but with 0 for data values
-pls.spec[,to.add.pls] <- 0
-umdw[,to.add.umdw] <-0 
-
-
-
-#reorder the columns so the pls.spec and umdw dataframes match
-pls.spec<- pls.spec[ , order(names(pls.spec))]
-umdw <- umdw[,order(names(umdw))]
-
-full.spec <- rbind(pls.spec, umdw)
-
-#move around the columns
-require(dplyr)
-full.spec<- full.spec %>%
-  dplyr::select(cell, everything())
-
-full.spec<- full.spec %>%
-  dplyr::select(y, everything())
-
-full.spec<- full.spec %>%
-  dplyr::select(x, everything())
-
-#full.spec<- full.spec %>%
- # dplyr:: select(X, everything())
-
-full.spec<- full.spec %>%
-  dplyr:: select(-total, everything())
-
-#now add totals to the 'total columns
-full.spec$total <- rowSums(full.spec[,4:41], na.rm = TRUE)
-summary(full.spec$total)
-hist(full.spec$total, breaks = 1000, xlim = c(0,600))
-
-colnames(full.spec)[42] <- 'PLSdensity'
-
-# create a density.full data.frame
-full.spec[is.na(full.spec)] <- 0
-density.full <- full.spec
+# load PLS data from 04_combine_umw_pls_fia.R
+density.full <- full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
 
 
 
@@ -110,16 +22,7 @@ density.full <- full.spec
 library(cluster)
 #library(fpc)
 
-comps <- density.full[!names(density.full) %in% c("Water", "Wet", "No Tree", "No.tree")]
-#comps <- comps[!is.na(comps),]
-comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total density that each species takes up
-comps <- comps[,1:38]
 
-comp2 <- comps
-# remove prairie cells:
-comps <- data.frame( comps[ complete.cases(comps),] )
-# write as a csv so we don't have to keep doing this:
-write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv")
 set.seed(11)
 
 # use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each

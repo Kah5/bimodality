@@ -341,8 +341,6 @@ fcomps <- fcomps[,1:35]
 fcomps <- data.frame(fcomps[complete.cases(fcomps),])
 fcomps <- fcomps[! names(fcomps) %in% "plt_cn"]
 
-# write as a csv so we don't have to keep doing this:
-write.csv(fcomps, "data/outputs/FIA_pct_density_composition.csv")
 
 library(cluster)
 library(fpc)
@@ -376,6 +374,22 @@ fcomps[,notinfia] <-0
 comps <- comps[ ,order(names(comps))]
 fcomps <- fcomps[ ,order(names(fcomps))]
 
+
+# reorganize fcomps:
+
+fcomps <- fcomps %>%
+  dplyr::select(cell, everything())
+
+fcomps <- fcomps %>%
+  dplyr::select(y, everything())
+
+fcomps <- fcomps %>%
+  dplyr::select(x, everything())
+
+# write as a csv so we don't have to keep doing this:
+write.csv(fcomps, "data/outputs/FIA_pct_density_composition.csv", row.names = FALSE)
+
+
 # add and fia vs. pls flag:
 comps$period <- "Past"
 fcomps$period<- "Modern"
@@ -398,7 +412,7 @@ fullcomps <- fullcomps %>%
 
 fullcomps <- fullcomps[complete.cases(fullcomps),]
 
-write.csv(fullcomps, "outputs/cluster/fullcomps.csv")
+write.csv(fullcomps, "outputs/cluster/fullcomps.csv", row.names = FALSE)
 
 
 #-----------------------PCA of full dataset (PLS and FIA)----------------------

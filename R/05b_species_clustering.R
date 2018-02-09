@@ -11,7 +11,7 @@ library(raster)
 library(rgdal)
 
 # load PLS data from 04_combine_umw_pls_fia.R
-density.full <- full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
+density.full <- comps <- full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
 
 
 
@@ -20,7 +20,7 @@ density.full <- full.spec <- read.csv('data/outputs/plss_pct_density_composition
 # we want to cluster the data based on % species composition: based on tree density, not the counts
 # using clusters similar to simons mediod clustering scheme: 
 library(cluster)
-#library(fpc)
+
 
 
 set.seed(11)
@@ -39,11 +39,11 @@ diss.6 <- as.matrix(classes.6$diss)
 # Use Avg. Silhouette width to evaluate the clusters:  
 
 # SIlhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
-summary(classes.9)# Avg. Silhouette width = 0.2938937
-summary(classes.8) # Avg. Silhouette width = 0.2438937
-summary(classes.7) # Avg. Silhouette width = 0.2278414
-summary(classes.6) # Avg. Silhouette width = 0.2403203 # lower than 9 classes, but the minimum width is 0.2 for all classes
-summary(classes.5) # Avg. Silhouette width = 0.2121012
+summary(classes.9) # Avg. Silhouette width = 0.2798578
+summary(classes.8) # Avg. Silhouette width = 0.2885791
+summary(classes.7) # Avg. Silhouette width =  0.2842867
+summary(classes.6) # Avg. Silhouette width = 0.2643707# lower than 9 classes, but the minimum width is 0.2 for all classes
+summary(classes.5) # Avg. Silhouette width = 0.2335565
 summary(classes.4) # Avg. Silhouette width = 0.1824538
 summary(classes.3) # Avg. Silhouette width = 0.2234054
 
@@ -56,14 +56,17 @@ summary(classes.3) # Avg. Silhouette width = 0.2234054
 # Now lets look at the clustering of 6 classes
 mediods <- comps$cell [classes.6$id.med]
 index <- rownames(comps[comps$cell %in% mediods,])
+
+# get bry curtis dissimilarity to assess disimilarity within and between clusters:
 brays <- vegdist(comps[,4:ncol(comps)], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
                  na.rm = FALSE) 
 brays2 <- as.matrix(brays)
 
+# get cluster dissimilarity from each of the medoids
 diss.6.dissimilarity <- brays2[,index]
 
 
-
+# get mediods to make the cluster definitions
 df6 <- comps[comps$cell %in% mediods,] # look at the rows that have the mediods
 write.csv(df6, "outputs/species_comp_clusters_6_class_mediods.csv")
 
@@ -193,102 +196,100 @@ dev.off()
 write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
 
 
+# -----------test out what the other n clusters look like:
+# k = 7 mediods: 
+# get mediods to make the cluster definitions
+mediods7 <- comps$cell [classes.7$id.med]
+index <- rownames(comps[comps$cell %in% mediods7,])
+
+df7 <- comps[comps$cell %in% mediods7,] # look at the rows that have the mediods
+
+old_classes <- classes.7
+
+# mediod classes:
+
+rem_class <- factor(old_classes$clustering,
+                    labels=c("Elm/Maple/Hickory/Oak/Beech",
+                             "Beech/Maple/Hemlock",
+                             'Oak', #and ASH
+                             'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
+                             'Poplar', # mediod 4
+                             'Pine/Tamarack/Poplar',# mediod 5
+                             'Tamarack/Spruce/Birch/Pine/Poplar' # mediod6 # not as much birch
+                             
+                    ))
+
+classes.7$silinfo$clus.avg.widths
+clust_plot7 <- data.frame(comps, speciescluster = rem_class)
+                       
+png("outputs/Composition/seven_cluster_map_pls.png")
+ggplot(clust_plot7, aes(x, y, fill = speciescluster))+geom_raster()+coord_equal()+theme_bw()
+dev.off()
+
+png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls.png")
+pls.clust7 <- ggplot(clust_plot7, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#beaed4', '#bf5b17','#386cb0','#ffff99','#fdc086', '#f0027f','#7fc97f'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle(" ")
+pls.clust7 
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot7, "outputs/seven_clust_pls_dissimilarity.csv", row.names = FALSE)
+
+
+# k = 8 mediods (highest average silhouette width)
+# get mediods to make the cluster definitions
+mediods8 <- comps$cell [classes.8$id.med]
+index <- rownames(comps[comps$cell %in% mediods8,])
+
+df8 <- comps[comps$cell %in% mediods8,] # look at the rows that have the mediods
+
+old_classes <- classes.8
+
+# mediod classes:
+
+rem_class <- factor(old_classes$clustering,
+                    labels=c(
+                            "Oak/Hickory",
+                             "Elm/Maple/Hickory/Oak/Beech",
+                              "Oak",
+                             # mediod 3
+                             'Poplar/Oak', # mediod 4
+                             "Beech/Maple",
+                             'Hemlock/Beech/Cedar/Birch/Maple',
+                             'Pine/Tamarack/Poplar',# mediod 5
+                             'Tamarack/Spruce/Birch/Pine/Poplar' # mediod6 # not as much birch
+                             
+                    ))
+
+classes.8$silinfo$clus.avg.widths
+clust_plot8 <- data.frame(comps, speciescluster = rem_class)
+
+png("outputs/Composition/eight_cluster_map_pls.png")
+ggplot(clust_plot8, aes(x, y, fill = speciescluster))+geom_raster()+coord_equal()+theme_bw()
+dev.off()
+
+
+
+
 #do the same clustering for FIA data and plot:
 # -----------------------Clustering of FIA data----------------------
 
-FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
-speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
-
-FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
-FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
-FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum the total density in each plot
-fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
-fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
-
-fcomps <- fia.by.cell
-fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
-
-fcomps[,4:34] <- fcomps[,4:34]/fcomps[,35] # calculate the proportion of the total density that each species takes up
-fcomps <- fcomps[,1:34]
-
-# remove prairie cells:
-fcomps <- data.frame(fcomps[complete.cases(fcomps),])
-# write as a csv so we don't have to keep doing this:
-write.csv(fcomps, "data/outputs/FIA_pct_density_composition.csv")
-
+# read in fcomps csv from 04_combine_umw_pls_fia.R
+fcomps <- read.csv("outputs/cluster/fullcomps.csv")
+fcomps <- 
 library(cluster)
-library(fpc)
-
-# need to match up the species with pls and fia
-colnames(fcomps) <- c("x" , "y" , "cell"  ,"Alder",       
-                      "Ash" ,"Basswood" ,"Beech", "Birch" ,     
-                      "Black.gum", "Buckeye"    ,    "Cedar.juniper" , "Cherry" ,       
-                      "Dogwood" , "Douglas fir" ,   "Elm"  ,  "Fir",           
-                      "Hackberry"  ,"Hemlock"   ,  "Hickory"  ,   "Ironwood",      
-                      "Maple"   , "Oak"     ,  "Other.hardwood" ,"Other.softwood",
-                      "Pine"   ,  "Poplar"  ,  "Spruce" ,   "Sweet.gum",     
-                      "Sycamore"    ,   "Tamarack"     ,  "Tulip.poplar"  , "Unknown.tree",  
-                      "Walnut","Willow")
-
-# add douglas fir to fir
-fcomps$Fir <- rowSums(fcomps[,c("Fir", "Douglas fir")], na.rm=TRUE)
-fcomps <- fcomps[,-14] # get rid of douglas fir
-
-plscols <- colnames(comps)
-fiacols <- colnames(fcomps)
-
-notinfia <- plscols[ !plscols %in% fiacols ]
-notinpls <- fiacols[ !fiacols %in% plscols ] 
-
-comps[,notinpls] <- 0
-fcomps[,notinfia] <-0 
-
-
-#reorder the columns so the comp.inil and comp.umw dataframes match
-fcomps <- fcomps[ ,order(names(fcomps))]
-
-# add and fia vs. pls flag:
-comps$period <- "PLS"
-fcomps$period<- "FIA"
-
-
-#move around the columns
-require(dplyr)
-fcomps<- fcomps %>%
-  dplyr::select(period, everything())
-
-fcomps<- fcomps %>%
-  dplyr::select(cell, everything())
-
-fcomps<- fcomps %>%
-  dplyr::select(y, everything())
-
-fcomps<- fcomps %>%
-  dplyr::select(x, everything())
-
-fcomps <- fcomps %>%
-  dplyr::select( -Other.softwood, everything())
-
-require(dplyr)
-comps<- comps %>%
-  dplyr::select(period, everything())
-
-comps<- comps %>%
-  dplyr::select(cell, everything())
-
-comps<- comps %>%
-  dplyr::select(y, everything())
-
-comps<- comps %>%
-  dplyr::select(x, everything())
-
 
 
 #---------------------- get dissimilarity of fcomp cells from the mediod of the PLS cells:
 indexpls <- rownames(comps[comps$cell %in% mediods,])
 
-fia_with_pls_meds<- rbind(comps[comps$cell %in% mediods,], fcomps)
-indexpls <- row.names(fia_with_pls_meds[fia_with_pls_meds$period %in% "PLS",])
+fia_with_pls_meds <- rbind(comps[comps$cell %in% mediods,], fcomps)
+indexpls <- row.names(fia_with_pls_meds[fia_with_pls_meds$period %in% "Past",])
 
 #index <- fcomps[fcomps$cell %in% mediods,]$idvar
 brays.f <- vegdist(fia_with_pls_meds[,5:40], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
@@ -372,6 +373,7 @@ dev.off()
 # need to merge clust6fia.m with the dissimilarities from the pls era and plot them together:
 #------------------------------------Fcomps fia classification----------------------------
 #fcomps classifcation only
+fcomps <- fcomps[fcomps$period %in% "Modern",]
 
 classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3, diss = FALSE,  keep.diss = TRUE)
 classes.4 <- pam(fcomps[,5:ncol(fcomps)], k = 4, diss = FALSE,  keep.diss = TRUE)
@@ -383,17 +385,17 @@ classes.9 <- pam(fcomps[,5:ncol(fcomps)], k = 9, diss = FALSE,  keep.diss = TRUE
 
 
 
-#summary(classes.8) # Avg. Silhouette width = 
-summary(classes.7) # Avg. Silhouette width = 0.2569736
-summary(classes.6) # Avg. Silhouette width = 0.2403284
-summary(classes.5) # Avg. Silhouette width = 0.2175309
+summary(classes.8) # Avg. Silhouette width = 0.3341524
+summary(classes.7) # Avg. Silhouette width = 0.3205277
+summary(classes.6) # Avg. Silhouette width = 0.3066968
+summary(classes.5) # Avg. Silhouette width = 0.29738
 summary(classes.4) # Avg. Silhouette width = 0.2133939
-summary(classes.3) # Avg. Silhouette width = 0.5900055
+summary(classes.3) # Avg. Silhouette width = 0.20429
 fcomps$idvar <- 1:nrow(fcomps)
-mediods <- classes.5$medoids
+
 #mediods <- fcomps[fcomps$idvar %in%  classes.5$medoids,]
 #mediods <- fcomps$idvar [classes.5$id.med]
-mediods <- fcomps$cell [classes.6$id.med]
+mediods7 <- fcomps$cell [classes.7$id.med]
 index <- rownames(fcomps[fcomps$cell %in% mediods,])
 
 #index <- fcomps[fcomps$cell %in% mediods,]$idvar
@@ -403,13 +405,16 @@ brays.f2 <- as.matrix(brays.f)
 
 diss.f5.dissimilarity <- brays.f2[,index]
 
-df5 <- fcomps[fcomps$cell %in% mediods,] # look at the rows that have the mediods
+df7 <- fcomps[fcomps$cell %in% mediods7,] # look at the rows that have the mediods
 
-old_classes <- classes.5
+old_classes <- classes.7
 
 #[1] 1292 2201 4618 4978 4604# idvars of the mediods
-rem_class5 <- factor(old_classes$clustering,
-                    labels=c('Oak/OtherHardwood/Elm', # 1,
+rem_class7 <- factor(old_classes$clustering,
+                    labels=c("Cherry",
+                             "Poplar",
+                             
+                             'Oak/OtherHardwood/Elm', # 1,
                             'Maple/Ash/Birch', # 2
                             'Poplar/Spruce/Maple',#3
                            "Pine/Poplar", # 4,
@@ -418,7 +423,7 @@ rem_class5 <- factor(old_classes$clustering,
 
   ))
 
-rem_class5 <- factor(old_classes$clustering,
+rem_class7 <- factor(old_classes$clustering,
                      labels=c('Ash/Beech/Elm/Hickory/Oak', # 1,
                               'Poplar/Spruce/Tamarack', # 2
                               'Hemlock/Maple/Birch/Cedar.juniper',#3

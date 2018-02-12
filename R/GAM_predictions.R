@@ -231,6 +231,58 @@ dev.off()
 
 # now lets make the gam prediction using southern michigan in the test data:
 
+#split training and testing data 
+Y <- dens.full.df$ecotype
+msk <- sample.split( Y, SplitRatio = 3/4, group = NULL)
+
+
+train <- dens.full.df[msk,]
+test <- dens.full.df[!msk,]
+
+
+PLS.lgr15.f <- gam(ecocode ~ s(PC1), family = 'binomial',data = train)
+PLS.lgr15L.f <- gam(ecocode ~ PC1, family = 'binomial',data = train)
+
+
+
+
+logsample <- predict(PLS.lgr15.f, dens.full.df, type="response")
+dens.full.df$ypred <- as.numeric(logsample)
+
+
+# use same probability cuts as above
+dens.full.df$ypreddiscrete <- cut(dens.full.df$ypred, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+dens.full.df$ypreddiscrete <- as.character(dens.full.df$ypreddiscrete)
+
+
+
+dens.fullnona <- dens.full.df[!is.na(dens.full.df$ypreddiscrete),]
+
+# plot the discrete probability of forest 
+p.forest.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.fullnona, aes(x=x, y=y, fill = ypreddiscrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Climate Predicted Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ annotate("text", x=-90000, y=1486000,label= "B", size = 5)+ggtitle("")
+
+p.forest.f
+
+# plot PLS forests
+pls.full <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.full.df, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                                                                                                                                        panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(width = 8, height = 4, units = 'in', res = 300, 'outputs/paper_figs/log_pred_prob_forests_full.png')
+grid.arrange(pls.full, p.forest.f, nrow = 1, ncol=2)
+dev.off()
 
 #-------------------------------------binomial GAMs for  FIA era p(forest) predictions----------------------
 fiadens <- read.csv("outputs/cluster/bimodal_widths/FIA_Dens_Bimodal_width_0.25.csv")

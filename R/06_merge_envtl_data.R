@@ -213,6 +213,7 @@ dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("
 write.csv(dens.rm, "data/PLS_FIA_density_climate_full.csv")
 
 dens.pr <- dens.rm
+
 #--------------------------- Read in CMIP 4 projections----------------------
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R
 ccesm <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")

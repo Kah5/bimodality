@@ -158,7 +158,8 @@ spec.table <- data.frame(PointX = final.data$PointX,
                          #shhould density be /2 or not??
                          basal =  rep(stem.density$basal/2, 2),
                          diams = c(final.data$diam1, final.data$diam2),
-                         dists = c(final.data$dist1, final.data$dist2))#,
+                         dists = c(final.data$dist1, final.data$dist2),
+                         state = final.data$state)#,
                          #scc = stem.density$SCC,stringsAsFactors = FALSE)
 
 

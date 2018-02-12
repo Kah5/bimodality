@@ -96,7 +96,7 @@ write.csv(avgs.df, "/Users/kah/Documents/bimodality/outputs/pr_monthly_Prism_30y
 
 # read in and average prism data
 prism <- raster(paste0(workingdir,"PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil"))
-prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
 #spec.table<- read.csv(paste0(workingdir,"midwest_pls_fia_density_alb.csv")
 #spec.table <- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_fia_density_alb1.6.csv')
 spec.table <- data.frame(spec.table)
@@ -115,7 +115,7 @@ write.csv(temp30yr, paste0(workingdir,'outputs/tmean_30yr_prism.csv'))
 setwd(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_all_bil/'))
 coordinates(spec.table) <- ~x +y
 proj4string(spec.table) <- '+init=epsg:3175'
-spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+spec.table.ll <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
 month <- sprintf("%02d", 1:12)
 for (i in 1:length(month)) {
@@ -169,10 +169,10 @@ plot(avgs) #plots averages
 
 # extract mean temp to the grid 
 spec.table <- data.frame(spec.table)
-avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
+avgs.df <- data.frame(raster::extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
-avgs.df$cv <- (apply(avgs.df[,1:12],1, sd, na.rm = TRUE)/avgs.df[,13])*100
+avgs.df$cv <- (apply(avgs.df[,2:13],1, sd, na.rm = TRUE)/avgs.df[,14])*100
 
 
 write.csv(avgs.df, "/Users/kah/Documents/bimodality/outputs/tmean_monthly_Prism_30yrnorms_full.csv")

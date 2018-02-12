@@ -190,7 +190,7 @@ dev.off()
 # now make predictions for southern michigan:
 
 #full <- test
-logsamplefull <- predict(PLS.lgr15, dens.full.df, type="response")
+logsamplefull <- predict(PLS.lgr15L, dens.full.df, type="response")
 dens.full.df$ypred <- as.numeric(logsamplefull)
 
 

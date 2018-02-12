@@ -26,8 +26,12 @@ for(i in 1:length(pls$prob_forest)){
       low <- x$PC1 - 0.15
       high <- x$PC1 + 0.15
       # sample the number of forests and savannas in each climate range, with replacement:
-      forest.num <- sample(pls[pls$PC1 >= low  & pls$PC1 < high,]$ecocode, size = 500, replace = TRUE)
+      forest.cell <- sample(pls[pls$PC1 >= low  & pls$PC1 < high,]$cell, size = 100, replace = TRUE)
+      forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
+      forest.dens <- pls[pls$cell %in% forest.cell, ]$PLSdensity
       
+      bimodality_coefficient(forest.dens)
+      diptest::dip.test(na.omit(density(forest.dens)$y))$p
       
       N = length(forest.num) # sample size should be 500
       nForest = sum(forest.num == 1) # number of forests
@@ -104,6 +108,96 @@ png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_fi
 grid.arrange(pls.map, p.forest, nrow = 1, ncol=2)
 dev.off()
 
+# save the file with p(forest):
+
+write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_pls.csv", row.names = FALSE)
+
+
+dens.samp <- read.csv("outputs/density_100samples_by_cell.csv")
+
+# probability of bimodality for each grid cell:
+library(modes)
+dens.samp <- merge(dens.samp, pls[,c("x", "y", "cell", "PC1")], by = "cell")
+#dens.test <- dens.samp[na.omit(dens.samp)]
+
+dens.samp$prob_bimodal <- NA
+dens.samp$bimodal <- NA
+
+BC <- apply(dens.samp[,3:102], MARGIN = 1, FUN = bimodality_coefficient)
+
+dipP <- apply(dens.samp[,3:102], MARGIN = 1, FUN = function(x){diptest::dip.test(na.omit(density(x)$y))$p})
+dens.samp$dipP <- dipP
+dens.samp$BC <- BC
+dens.samp$bimodal <- ifelse(dens.samp$BC >= 0.55 & dens.samp$dipP < 0.05, "Bimodal", "Stable")
+
+ggplot(dens.samp, aes(x,y, fill = bimodal))+geom_raster()
+
+
+pls$prob_bimodal <- NA
+
+# this loops through each grid cell estimates probability of bimodality in each grid cell:
+# for each grid cell, find all grid cells within +/- 0.15 PC1 units 
+# sample 100 random w/replacement grid cells, evaluate wither or not the density distn is bimodal
+# repeat the random sampling + bimodality evaluation 500 times
+
+# then you have a designation of "bimodal" or "unimodal" for 100 distributions randomly sampled from within similar envrionmental space
+# we then estimate the posterior mean probability of bimodality based on the sampled data
+# 
+for(i in 1:length(pls$prob_bimodal)){
+  
+  x <- pls[i,]
+  low <- x$PC1 - 0.15
+  high <- x$PC1 + 0.15
+  
+  # sample the number of forests and savannas in each climate range, with replacement:
+  BC <- vector()
+  dipP <- vector()
+  forest.num <- vector()
+ 
+  # estimate unimodal vs. bimodal based on 100 random draws, 500 times
+  for(j in 1:100){
+    
+  
+      forest.cell <- sample(pls[pls$PC1 >= low  & pls$PC1 < high,]$cell, size = 100, replace = TRUE)
+      #forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
+      forest.dens <- pls[pls$cell %in% forest.cell, ]$PLSdensity
+      
+      BC[j] <- bimodality_coefficient(forest.dens)
+      dipP[j]<- diptest::dip.test(na.omit(density(forest.dens)$y))$p
+      forest.num[j] <- ifelse(BC[j] >= 0.55 & dipP[j] <= 0.05, 1, 2) # 1 is bimodal 2 is unimodal
+  }
+  
+  N = length(forest.num) # sample size should be 500
+  nForest = sum(forest.num == 1) # number of forests
+  nSav = sum(forest.num== 0 ) # number of savannas
+  
+  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+  
+  ### prior distribution
+  
+  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  
+  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+  
+  # calculate the likelihood given theta
+  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+  
+  
+  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+  pData = sum(pDataGivenTheta*pTheta)
+  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+  
+  # prints out df
+  #round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+  
+  # get the posterior mean probability of bimodality given data
+  posteriorMean = sum(pThetaGivenData*theta) 
+  
+  pls[i,]$prob_bimodal <- posteriorMean
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(pls, aes(x,y, fill = prob_bimodal))+geom_raster()
 
 
 
@@ -206,5 +300,8 @@ fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
                                                                                                                                                         panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
 
 png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/binomial_prob_forest_fia.png')
-grid.arrange(pls.map, p.forest, nrow = 1, ncol=2)
+grid.arrange(fia.map, p.forest, nrow = 1, ncol=2)
 dev.off()
+
+# save the FIA file with p(forest):
+write.csv(fia[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_fia.csv", row.names = FALSE)

@@ -89,6 +89,7 @@ mean.dens - sd.dens
 
 pls.inil2 <- pls.inil[1:100,c("x", "y", "cell", "density")]
 
+density.samples <- list()
 # create a function that does the bootstrapped CI intervals
 boot.calcs <- function(x){
         func.mean <- function(d, indices){
@@ -111,10 +112,26 @@ boot.calcs <- function(x){
       out <- data.frame(mean =  bootcorr$t0,
                         ci.low = bootci$percent[4], 
                         ci.high = bootci$percent[5])
+      
       }
+      
       out
   }
 
+
+boot.dens <- function(x){
+  func.mean <- function(d, indices){
+    d2 <- d[indices]
+    return(mean(d2, na.rm=TRUE))
+  }
+  
+  bootcorr <- boot(x, stat = func.mean, R=1000)
+  
+  
+  
+ density.samples <- bootcorr$t
+ density.samples
+}
 
 # create a list of densities by each cell:
 dens.by.cells <- split(pls$density, pls$cell)
@@ -126,7 +143,7 @@ dens.ci.mean.df <- do.call(rbind, dens.ci.mean)
 dens.ci.mean.df$cell<- row.names(dens.ci.mean.df)
 dens.ci.df <- merge(dens.ci.mean.df, pls.mean[,c("x", "y", "cell", "PLSdensity")], by = "cell")
 
-
+dens.boot.samples <- lapply( dens.by.cells, FUN = boot.dens)
 
 # how does the above method compare to getting estimates "by hand" --i.e. not using default CI and bootstrap function:
 
@@ -435,8 +452,14 @@ point.dens.mat <- matrix(dens.by.cells, nrow = length(dens.by.cells),ncol = 100 
 
 cell.dens.mat <- apply(X = point.dens.mat, FUN = sample100, MARGIN = 2)
 
+cell.dens <- as.data.frame(cell.dens.mat)
+cell.dens$cell <- names(dens.by.cells)
+
+write.csv(cell.dens, "outputs/density_100samples_by_cell.csv")
+
 cell.dens.mat[cell.dens.mat < 1 ] <- NA  # get rid of prairie cells
 cell.dens.mat[cell.dens.mat > 1000 ] <- NA  # get rid of high density cells
+
 
 #  get the CI on histogram after removing the prairie ecoclass:
 # note, we are generatinge CI on counts for 40 bins here
@@ -471,6 +494,8 @@ dev.off()
 png(width = 6, height = 4, units = "in", res = 300, "outputs/density_unc/PLS_counts_unc_lineplot.png")
 ggplot(count.sds, aes(breaks, counts) )+geom_line(color = "blue", width = 1)+geom_ribbon(aes(ymin=ci.5, ymax=ci.95),alpha = 0.5)+xlim(0,600)+theme_bw()+xlab("Tree Density")
 dev.off()
+
+
 
 #-------------------------CI estimation for FIA histogram data---------------------------------
 

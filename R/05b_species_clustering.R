@@ -546,7 +546,7 @@ dis.fia.hist
 dev.off()
 
 # write as csv for future 
-write.csv(clust_plot6, "outputs/six_clust_pls_dissimilarity.csv", row.names = FALSE)
+write.csv(clust_plot6f, "outputs/six_clust_fia_dissimilarity.csv", row.names = FALSE)
 
 # plot pls and fia cluster figures together:
 png(width = 10, height=4, units="in", res=300, "outputs/paper_figs/Fig_S1CD.png")

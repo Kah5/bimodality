@@ -94,17 +94,19 @@ pls.dens.pc1.hex
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 
 # need to reorder the factors:
+dens.clust$foresttype<- factor(dens.clust$foresttype, levels = rev(c("Boreal/sub-Boreal", "Pine", "Aspen", "Beech/Maple/Hemlock", "Hemlock/Beech", "Oak", "Mesic Hardwoods")))
 
 clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1, ], aes(PLSdensity, fill = foresttype, binwidth = 30))+xlim(0,600)+
-  scale_fill_manual(values = c( '#bf5b17','#beaed4','#ffff99','#386cb0','#fdc086', '#f0027f','#7fc97f'), name = " ")+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = c(0.85, 0.75), legend.background = element_rect(fill=alpha('white', 0.4)))+ggtitle("")+xlim(0,600)+ylim(0,600)
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = c(0.85, 0.75), legend.background = element_rect(fill=alpha('white', 0.4)))+ggtitle("")+xlim(0,600)+ylim(0,600)
 clust.hist
 
 
 
 
 # E: map of bimodal regions:
-# read in data from the rolling bimodality:
+# sample the p(forest) at each environmental bitn
+
 pls.roll.bim <- read.csv("outputs/cluster/bimodal_widths/PLS_Dens_Bimodal_width_0.25.csv")
 
 bimodal.map <- ggplot(pls.roll.bim, aes(x, y, fill = bimodal))+geom_raster()+coord_equal()+

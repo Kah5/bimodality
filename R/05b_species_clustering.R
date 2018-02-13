@@ -281,7 +281,7 @@ dev.off()
 
 # read in fcomps csv from 04_combine_umw_pls_fia.R
 fcomps <- read.csv("outputs/cluster/fullcomps.csv")
-fcomps <- 
+fcomps <- fcomps[fcomps$period %in% "Modern",] 
 library(cluster)
 
 
@@ -373,7 +373,8 @@ dev.off()
 # need to merge clust6fia.m with the dissimilarities from the pls era and plot them together:
 #------------------------------------Fcomps fia classification----------------------------
 #fcomps classifcation only
-fcomps <- fcomps[fcomps$period %in% "Modern",]
+fcomps <- read.csv('data/outputs/FIA_pct_density_composition.csv')
+
 
 classes.3 <- pam(fcomps[,5:ncol(fcomps)], k = 3, diss = FALSE,  keep.diss = TRUE)
 classes.4 <- pam(fcomps[,5:ncol(fcomps)], k = 4, diss = FALSE,  keep.diss = TRUE)
@@ -395,46 +396,43 @@ fcomps$idvar <- 1:nrow(fcomps)
 
 #mediods <- fcomps[fcomps$idvar %in%  classes.5$medoids,]
 #mediods <- fcomps$idvar [classes.5$id.med]
-mediods7 <- fcomps$cell [classes.7$id.med]
-index <- rownames(fcomps[fcomps$cell %in% mediods,])
+mediods5 <- fcomps$cell [classes.5$id.med]
+index <- rownames(fcomps[fcomps$cell %in% mediods5,])
 
 #index <- fcomps[fcomps$cell %in% mediods,]$idvar
-brays.f <- vegdist(fcomps[,5:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+brays.f <- vegdist(fcomps[,4:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
                  na.rm = FALSE) 
 brays.f2 <- as.matrix(brays.f)
 
 diss.f5.dissimilarity <- brays.f2[,index]
 
-df7 <- fcomps[fcomps$cell %in% mediods7,] # look at the rows that have the mediods
+df5 <- fcomps[fcomps$cell %in% mediods5,] # look at the rows that have the mediods
 
-old_classes <- classes.7
+old_classes <- classes.5
 
 #[1] 1292 2201 4618 4978 4604# idvars of the mediods
-rem_class7 <- factor(old_classes$clustering,
-                    labels=c("Cherry",
-                             "Poplar",
-                             
-                             'Oak/OtherHardwood/Elm', # 1,
-                            'Maple/Ash/Birch', # 2
-                            'Poplar/Spruce/Maple',#3
-                           "Pine/Poplar", # 4,
-                          'Cedar.juniper/Tamarack' 
+rem_class5 <- factor(old_classes$clustering,
+                    labels=c(  'Oak/Maple',
+                               'Maple/Ash/Birch/Aspen', # 2
+                              'Maple', # 1,
+                              
+                            'Aspen',#3
+                           "Pine/Poplar" # 4
+                           ))
 
-
-  ))
-
-rem_class7 <- factor(old_classes$clustering,
-                     labels=c('Ash/Beech/Elm/Hickory/Oak', # 1,
-                              'Poplar/Spruce/Tamarack', # 2
-                              'Hemlock/Maple/Birch/Cedar.juniper',#3
-                              "Tamarack/Cedar.juniper/Spruce", # 4,
-                              'Cedar.juniper/Hemlock/Spruce' 
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c( 'Oak/Maple',
+                               'Maple/Ash/Birch/Aspen', # 2
+                               'Maple', # 1,
+                               
+                               'Aspen',#3
+                               "Pine/Poplar" 
                               
                               
                      ))
 
 clust_plot5 <- data.frame(fcomps, 
-                          cluster = rem_class5,
+                          speciescluster = rem_class5,
                           clustNum = as.numeric(rem_class5),
                           diss1 = diss.f5.dissimilarity[,1],
                           diss2 = diss.f5.dissimilarity[,2],
@@ -444,7 +442,7 @@ clust_plot5 <- data.frame(fcomps,
 
 ggplot(clust_plot5, aes(x = x, y=y, fill=speciescluster))+geom_raster()
 
-classes.6$silinfo$clus.avg.widths
+classes.5$silinfo$clus.avg.widths
 # they are all equally dissimilar
 #0.40663776 -0.04516793  0.51842603  0.47118307  0.46843040  0.33582488
 
@@ -455,7 +453,7 @@ mediods <- fcomps$cell [classes.6$id.med]
 index <- rownames(fcomps[fcomps$cell %in% mediods,])
 
 #index <- fcomps[fcomps$cell %in% mediods,]$idvar
-brays.f <- vegdist(fcomps[,5:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
+brays.f <- vegdist(fcomps[,4:39], method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
                    na.rm = FALSE) 
 brays.f2 <- as.matrix(brays.f)
 
@@ -468,11 +466,9 @@ rem_class <- factor(old_classes$clustering,
                     labels=c('Oak/Maple', # 1,
                              'Maple/Birch/Ash/Oak/Hickory/Otherhardwood', # 2
                              'Maple',#3
-                             "Poplar/Spruce/Maple/Fir", # 4,
-                             'Pine/Poplar', #5,
-                             'Cedar.juniper/Poplar/Maple' #6
-                             
-                             
+                             "Poplar", # 4,
+                             'Cedar.juniper/Tamarack', #5
+                             'Pine/Poplar' #6
                     ))
 
 clust_plot6f <- data.frame(fcomps, 

@@ -145,9 +145,10 @@ pls$prob_bimodal <- NA
 # 
 for(i in 1:length(pls$prob_bimodal)){
   
+  x <- pls[pls$cell %in% 28558,]
   x <- pls[i,]
-  low <- x$PC1 - 0.15
-  high <- x$PC1 + 0.15
+  l <- x$PC1 - 0.15
+  h <- x$PC1 + 0.15
   
   # sample the number of forests and savannas in each climate range, with replacement:
   BC <- vector()
@@ -155,17 +156,35 @@ for(i in 1:length(pls$prob_bimodal)){
   forest.num <- vector()
  
   # estimate unimodal vs. bimodal based on 100 random draws, 500 times
-  for(j in 1:100){
+  #for(j in 1:100){
     
-  
-      forest.cell <- sample(pls[pls$PC1 >= low  & pls$PC1 < high,]$cell, size = 100, replace = TRUE)
+  getBCdipP <- function(data, low, high){
+      forest.cell <- sample(data[data$PC1 >= low  & data$PC1 < high,]$cell, size = 100, replace = TRUE)
       #forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
-      forest.dens <- pls[pls$cell %in% forest.cell, ]$PLSdensity
+      forest.dens <- data[data$cell %in% forest.cell, ]$PLSdensity
       
-      BC[j] <- bimodality_coefficient(forest.dens)
-      dipP[j]<- diptest::dip.test(na.omit(density(forest.dens)$y))$p
-      forest.num[j] <- ifelse(BC[j] >= 0.55 & dipP[j] <= 0.05, 1, 2) # 1 is bimodal 2 is unimodal
+      BC <- bimodality_coefficient(forest.dens)
+      dipP <- diptest::dip.test(na.omit(density(forest.dens)$y))$p
+      forest.num <- ifelse(BC >= 0.55 & dipP <= 0.05, 1, 0) # 1 is bimodal 2 is unimodal
+     forest.num 
   }
+  
+  #test <- data.frame(index = 1:100, 
+   #                  forest.num = NA)
+ #forest.num <- rep(getBCdipP(data = pls, low = l, high = h), 1, 100)
+  
+  forest.num <- replicate(100, {
+    forest.cell <- sample(data[data$PC1 >= l  & data$PC1 < h,]$cell, size = 100, replace = TRUE)
+    forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
+    forest.dens <- data[data$cell %in% forest.cell, ]$PLSdensity
+    
+    BC <- bimodality_coefficient(forest.dens)
+    dipP <- diptest::dip.test(na.omit(density(forest.dens)$y))$p
+    forest.num <- ifelse(BC >= 0.55 & dipP <= 0.05, 1, 0) # 1 is bimodal 2 is unimodal
+    forest.num 
+  })
+  
+      
   
   N = length(forest.num) # sample size should be 500
   nForest = sum(forest.num == 1) # number of forests
@@ -175,8 +194,8 @@ for(i in 1:length(pls$prob_bimodal)){
   
   ### prior distribution
   
-  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
-  
+ #pTheta = pmin(theta, 1-theta) 
+  pTheta = dbeta(theta, 10, 10)# beta prior with mean = .5
   pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
   
   # calculate the likelihood given theta
@@ -197,8 +216,9 @@ for(i in 1:length(pls$prob_bimodal)){
 }
 
 # plot out the probability of forests in the pls region:
+png("outputs/preliminary_posterior_prob_bimodality_pls.png")
 ggplot(pls, aes(x,y, fill = prob_bimodal))+geom_raster()
-
+dev.off()
 
 
 #------------------------------p(forest) for FIA-----------------------------------------
@@ -236,8 +256,9 @@ for(i in 1:length(fia$prob_forest)){
   
   ### prior distribution
   
-  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
-  
+  #pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  # beta prior with mean = .5
+  pTheta = dbeta(theta, 10, 10)
   pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
   
   # calculate the likelihood given theta

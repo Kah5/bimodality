@@ -331,11 +331,11 @@ FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum th
 fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
 fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 
-fcomps <- FIA.by.paleon
+fcomps <- fia.by.cell
 fcomps <- fcomps[fcomps$cell %in% density.full$cell, ]
 
-fcomps[,5:35] <- fcomps[,5:35]/fcomps[,36] # calculate the proportion of the total density that each species takes up
-fcomps <- fcomps[,1:35]
+fcomps[,4:35] <- fcomps[,4:34]/fcomps[,35] # calculate the proportion of the total density that each species takes up
+fcomps <- fcomps[,1:34]
 
 # remove prairie cells:
 fcomps <- data.frame(fcomps[complete.cases(fcomps),])

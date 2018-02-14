@@ -8,6 +8,7 @@
 library(plyr)
 library(reshape2)
 library(raster)
+library(tidyr)
 version <- "1.7-5"
 
 #-----------------------load data------------------------------------------------
@@ -48,7 +49,7 @@ ggplot(final.data, aes(PointX, PointY, color = diam2))+geom_point(size = 0.2)
 source('R/morisita.r') # morisita density estimator from Simon Goring's Witness Trees code
 
 # morisita function calculates basal area and stem density
-estimates <- morisita(final.data, correction.factor, veil = FALSE)
+estimates <- morisita(final.data, correction.factor, veil = TRUE)
 
 stem.density <- estimates[[1]]
 basal.area <- estimates[[2]]
@@ -88,9 +89,17 @@ base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
 #create spatial object with density, basal area & diameters data
 stem.density <- data.frame(x = final.data$PointX, 
                            y = final.data$PointY,
+                           corner = final.data$corner,
                            density = stem.density$stem.density,
-                           basal   = stem.density$basal.area)#,
+                           basal   = stem.density$basal.area,
+                           state = final.data$state,
+                           township = final.data$Township)#,
                           #diams = rowMeans(diams[,1:2], na.rm=TRUE) * 2.54)
+
+
+
+# get the density estimates all of southern MI:
+
 
 # find the 99% percentile here for stem density and basal area:
 #nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
@@ -99,8 +108,8 @@ stem.density <- data.frame(x = final.data$PointX,
 #1076.0074  251.9382 
 
 # convert anything over 99th percentile to the 99th percentile value
-stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
-stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+#stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
+#stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
 ggplot(stem.density[stem.density$density < 600,], aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
@@ -129,6 +138,20 @@ stem.density$basal[wet.trees] <- 0
 # kill cells with na for x or y:
 stem.density <- stem.density[!is.na(stem.density$x),]
 
+filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+
+filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+
+filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
+
+
+filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+
 # make stem.density spatial
 coordinates(stem.density)<- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
@@ -141,7 +164,7 @@ writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.7-5.shp", layer 
 
 
 numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
-numbered.cell <- extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
+numbered.cell <- raster::extract(numbered.rast, spTransform(stem.density,CRSobj=CRS('+init=epsg:3175')))
 
 species[species==""]<- "No tree" #gets rid of blank listing for no trees
 final.data <- data.frame(final.data)
@@ -159,10 +182,26 @@ spec.table <- data.frame(PointX = final.data$PointX,
                          basal =  rep(stem.density$basal/2, 2),
                          diams = c(final.data$diam1, final.data$diam2),
                          dists = c(final.data$dist1, final.data$dist2),
-                         state = final.data$state)#,
+                         state = final.data$state,
+                         corner = final.data$corner, 
+                         township = final.data$Township)#,
                          #scc = stem.density$SCC,stringsAsFactors = FALSE)
 
 
+
+filter(spec.table, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+
+filter(spec.table, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+filter(spec.table, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+
+filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(spec.table, state == "MI" & township %like% "E" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+
+
+filter(spec.table, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
 
 
 #fix the captalized "No tree" problem
@@ -323,8 +362,7 @@ density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
 X11(width =12)
-ggplot(data = biomass.table, aes(x = x, y = y, fill = Beech)) + geom_raster()+coord_equal()+
-  scale_fill_gradient(low = "yellow", high= "red")
+ggplot(data = biomass.table, aes(x = x, y = y, fill = Maple)) + geom_raster()+coord_equal()
 
 
 
@@ -361,11 +399,11 @@ writeRaster(dens, "data/dens.grd", overwrite=TRUE)
 plot(dens)
 
 #pdf("biomass.density.99percentile.rasters.pdf")
-plot(biomass,xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean total biomass (Mg/ha)", xlab ="Easting", ylab = "Northing") 
+plot(biomass, main = "Mean total biomass (Mg/ha)", xlab ="Easting", ylab = "Northing") 
 plot(dens, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean stem density (stems/ha)", xlab ="Easting", ylab = "Northing")
 #plot(biomass, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean biomass (Mg/ha)", xlab ="Easting", ylab = "Northing")
 plot(basal, xlim= c(592741.1 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean basal area")
-plot(mdiam, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean tree diameter (cm)", xlab ="Easting", ylab = "Northing")
+plot(mdiam,  main = "Mean tree diameter (cm)", xlab ="Easting", ylab = "Northing")
 #dev.off()
 
 

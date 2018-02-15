@@ -113,112 +113,150 @@ dev.off()
 write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_pls.csv", row.names = FALSE)
 
 
-dens.samp <- read.csv("outputs/density_100samples_by_cell.csv")
 
 # probability of bimodality for each grid cell:
 library(modes)
-dens.samp <- merge(dens.samp, pls[,c("x", "y", "cell", "PC1")], by = "cell")
-#dens.test <- dens.samp[na.omit(dens.samp)]
 
-dens.samp$prob_bimodal <- NA
-dens.samp$bimodal <- NA
+# read in results from crc_sample_bimodality_probability.R (run on crc):
+pls.b <- read.csv("outputs/posterior_prob_bimodal_pls.csv")
+pls.b$pbimodal <- cut(pls.b$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-BC <- apply(dens.samp[,3:102], MARGIN = 1, FUN = bimodality_coefficient)
+cbpaletteb <- c('#ca0020',
+  '#f4a582',
+  '#f7f7f7',
+  '#92c5de',
+  '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
 
-dipP <- apply(dens.samp[,3:102], MARGIN = 1, FUN = function(x){diptest::dip.test(na.omit(density(x)$y))$p})
-dens.samp$dipP <- dipP
-dens.samp$BC <- BC
-dens.samp$bimodal <- ifelse(dens.samp$BC >= 0.55 & dens.samp$dipP < 0.05, "Bimodal", "Stable")
+pls.b$pbimodal <- as.character(pls.b$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
 
-ggplot(dens.samp, aes(x,y, fill = bimodal))+geom_raster()
-
-
-pls$prob_bimodal <- NA
-
-# this loops through each grid cell estimates probability of bimodality in each grid cell:
-# for each grid cell, find all grid cells within +/- 0.15 PC1 units 
-# sample 100 random w/replacement grid cells, evaluate wither or not the density distn is bimodal
-# repeat the random sampling + bimodality evaluation 500 times
-
-# then you have a designation of "bimodal" or "unimodal" for 100 distributions randomly sampled from within similar envrionmental space
-# we then estimate the posterior mean probability of bimodality based on the sampled data
-# 
-for(i in 1:length(pls$prob_bimodal)){
-  
-  x <- pls[pls$cell %in% 28558,]
-  x <- pls[i,]
-  l <- x$PC1 - 0.15
-  h <- x$PC1 + 0.15
-  
-  # sample the number of forests and savannas in each climate range, with replacement:
-  BC <- vector()
-  dipP <- vector()
-  forest.num <- vector()
- 
-  # estimate unimodal vs. bimodal based on 100 random draws, 500 times
-  #for(j in 1:100){
-    
-  getBCdipP <- function(data, low, high){
-      forest.cell <- sample(data[data$PC1 >= low  & data$PC1 < high,]$cell, size = 100, replace = TRUE)
-      #forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
-      forest.dens <- data[data$cell %in% forest.cell, ]$PLSdensity
-      
-      BC <- bimodality_coefficient(forest.dens)
-      dipP <- diptest::dip.test(na.omit(density(forest.dens)$y))$p
-      forest.num <- ifelse(BC >= 0.55 & dipP <= 0.05, 1, 0) # 1 is bimodal 2 is unimodal
-     forest.num 
-  }
-  
-  #test <- data.frame(index = 1:100, 
-   #                  forest.num = NA)
- #forest.num <- rep(getBCdipP(data = pls, low = l, high = h), 1, 100)
-  
-  forest.num <- replicate(100, {
-    forest.cell <- sample(data[data$PC1 >= l  & data$PC1 < h,]$cell, size = 100, replace = TRUE)
-    forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
-    forest.dens <- data[data$cell %in% forest.cell, ]$PLSdensity
-    
-    BC <- bimodality_coefficient(forest.dens)
-    dipP <- diptest::dip.test(na.omit(density(forest.dens)$y))$p
-    forest.num <- ifelse(BC >= 0.55 & dipP <= 0.05, 1, 0) # 1 is bimodal 2 is unimodal
-    forest.num 
-  })
-  
-      
-  
-  N = length(forest.num) # sample size should be 500
-  nForest = sum(forest.num == 1) # number of forests
-  nSav = sum(forest.num== 0 ) # number of savannas
-  
-  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
-  
-  ### prior distribution
-  
- #pTheta = pmin(theta, 1-theta) 
-  pTheta = dbeta(theta, 10, 10)# beta prior with mean = .5
-  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
-  
-  # calculate the likelihood given theta
-  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
-  
-  
-  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
-  pData = sum(pDataGivenTheta*pTheta)
-  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
-  
-  # prints out df
-  #round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
-  
-  # get the posterior mean probability of bimodality given data
-  posteriorMean = sum(pThetaGivenData*theta) 
-  
-  pls[i,]$prob_bimodal <- posteriorMean
-}
 
 # plot out the probability of forests in the pls region:
-png("outputs/preliminary_posterior_prob_bimodality_pls.png")
-ggplot(pls, aes(x,y, fill = prob_bimodal))+geom_raster()
+png("outputs/preliminary_posterior_prob_bimodality_pls_15.png")
+p.bimodal <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.bimodal
 dev.off()
+
+# for bins of 0.20:
+
+pls.b20 <- read.csv("outputs/posterior_prob_bimodal_pls_20bins.csv")
+pls.b20$pbimodal <- cut(pls.b20$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+pls.b20$pbimodal <- as.character(pls.b20$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the pls region:
+png("outputs/preliminary_posterior_prob_bimodality_pls_20.png")
+p.bimodal20 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b20, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal20
+dev.off()
+
+
+# for bins of 0.25 PC1 units
+# read in results from crc_sample_bimodality_probability.R (run on crc):
+pls.b25 <- read.csv("outputs/posterior_prob_bimodal_pls_25bins.csv")
+pls.b25$pbimodal <- cut(pls.b25$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+pls.b25$pbimodal <- as.character(pls.b25$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the pls region:
+png("outputs/preliminary_posterior_prob_bimodality_pls_25.png")
+p.bimodal25 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b25, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal25
+dev.off()
+
+# for bins of +/- 0.5 PC1 bins:
+
+pls.b50 <- read.csv("outputs/posterior_prob_bimodal_pls_50bins.csv")
+pls.b50$pbimodal <- cut(pls.b50$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+pls.b50$pbimodal <- as.character(pls.b50$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the pls region:
+png("outputs/preliminary_posterior_prob_bimodality_pls_50.png")
+p.bimodal50 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b50, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal50
+dev.off()
+
+
+# for bins of +/- 0.75 bins:
+pls.b75 <- read.csv("outputs/posterior_prob_bimodal_pls_75bins.csv")
+pls.b75$pbimodal <- cut(pls.b75$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+pls.b75$pbimodal <- as.character(pls.b75$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the pls region:
+png("outputs/preliminary_posterior_prob_bimodality_pls_75.png")
+p.bimodal75 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b75, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal75
+dev.off()
+
 
 
 #------------------------------p(forest) for FIA-----------------------------------------
@@ -326,3 +364,152 @@ dev.off()
 
 # save the FIA file with p(forest):
 write.csv(fia[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_fia.csv", row.names = FALSE)
+
+
+# ---------------------probability bimodal from FIA:
+
+# scripts run on the crc for looking at p(bimodality) in density over different environmental binwidths:
+# read in results from crc_sample_bimodality_probability.R (run on crc):
+fia.b <- read.csv("outputs/posterior_prob_bimodal_fia.csv")
+fia.b$pbimodal <- cut(fia.b$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+fia.b$pbimodal <- as.character(fia.b$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the fia region:
+png("outputs/preliminary_posterior_prob_bimodality_fia_15.png")
+p.bimodalf <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.bimodalf
+dev.off()
+
+# for bins of 0.20:
+
+fia.b20 <- read.csv("outputs/posterior_prob_bimodal_fia_20.csv")
+fia.b20$pbimodal <- cut(fia.b20$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+fia.b20$pbimodal <- as.character(fia.b20$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the fia region:
+png("outputs/preliminary_posterior_prob_bimodality_fia_20.png")
+p.bimodal20f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b20, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal20f
+dev.off()
+
+
+# for bins of 0.25 PC1 units
+# read in results from crc_sample_bimodality_probability.R (run on crc):
+fia.b25 <- read.csv("outputs/posterior_prob_bimodal_fia_25.csv")
+fia.b25$pbimodal <- cut(fia.b25$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+fia.b25$pbimodal <- as.character(fia.b25$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the fia region:
+png("outputs/preliminary_posterior_prob_bimodality_fia_25.png")
+p.bimodal25f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b25, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal25f
+dev.off()
+
+# for bins of +/- 0.5 PC1 bins:
+
+fia.b50 <- read.csv("outputs/posterior_prob_bimodal_fia_50.csv")
+fia.b50$pbimodal <- cut(fia.b50$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+fia.b50$pbimodal <- as.character(fia.b50$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the fia region:
+png("outputs/preliminary_posterior_prob_bimodality_fia_50.png")
+p.bimodal50f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b50, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal50f
+dev.off()
+
+
+# for bins of +/- 0.75 bins:
+fia.b75 <- read.csv("outputs/posterior_prob_bimodal_fia_75bins.csv")
+fia.b75$pbimodal <- cut(fia.b75$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+cbpaletteb <- c('#ca0020',
+                '#f4a582',
+                '#f7f7f7',
+                '#92c5de',
+                '#0571b0')
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+fia.b75$pbimodal <- as.character(fia.b75$pbimodal)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+# plot out the probability of forests in the fia region:
+png("outputs/preliminary_posterior_prob_bimodality_fia_75.png")
+p.bimodal75f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b75, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rev(cbpaletteb), labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+p.bimodal75f
+dev.off()
+
+
+# combine all pls and fia plots together in one big figure:
+
+grid.arrange(p.bimodal20f, p.bimodal25f, p.bimodal50f, p.bimodal75f, ncol = 4)

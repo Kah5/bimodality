@@ -258,6 +258,12 @@ p.bimodal75
 dev.off()
 
 
+library(grid)
+
+png(height = 4, width = 14, units = "in", res = 300,"outputs/posterior_prob_bimodality_pls_allbins.png")
+grid.arrange(p.bimodal + ggtitle("PLS binwidth = 0.15"),p.bimodal20+ggtitle("PLS binwidth = 0.2"), p.bimodal25 +ggtitle("PLS binwidth = 0.25"), 
+             p.bimodal50+ggtitle("PLS binwidth = 0.5"), p.bimodal75+ggtitle("PLS binwidth = 0.75"), ncol = 5)
+dev.off()
 
 #------------------------------p(forest) for FIA-----------------------------------------
 fia <- read.csv("data/PLS_FIA_density_climate_full.csv")
@@ -483,7 +489,7 @@ dev.off()
 
 
 # for bins of +/- 0.75 bins:
-fia.b75 <- read.csv("outputs/posterior_prob_bimodal_fia_75bins.csv")
+fia.b75 <- read.csv("outputs/posterior_prob_bimodal_fia_75.csv")
 fia.b75$pbimodal <- cut(fia.b75$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
 cbpaletteb <- c('#ca0020',
@@ -510,6 +516,10 @@ p.bimodal75f
 dev.off()
 
 
-# combine all pls and fia plots together in one big figure:
+# combine all  fia plots together in one big figure:
+library(grid)
 
-grid.arrange(p.bimodal20f, p.bimodal25f, p.bimodal50f, p.bimodal75f, ncol = 4)
+png(height = 4, width = 14, units = "in", res = 300,"outputs/posterior_prob_bimodality_fia_allbins.png")
+grid.arrange(p.bimodalf + ggtitle("FIA binwidth = 0.15"),p.bimodal20f+ggtitle("FIA binwidth = 0.2"), p.bimodal25f +ggtitle("FIA binwidth = 0.25"), 
+             p.bimodal50f+ggtitle("FIA binwidth = 0.5"), p.bimodal75f+ggtitle("FIA binwidth = 0.75"), ncol = 5)
+dev.off()

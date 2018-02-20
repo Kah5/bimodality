@@ -79,7 +79,7 @@ pls.clust <- ggplot(clust_7, aes(x = x, y=y, fill=orderedforesttype))+geom_raste
 pls.clust
 # merge clust_plot6 and dens.pr
 
-dens.clust <- merge(dens.pr, clust_7[,c("x","y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"))
+dens.clust <- merge(dens.pr, clust_7[,c("x","y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"), all.x = TRUE)
 
 png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
 ggplot(dens.clust, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
@@ -92,9 +92,9 @@ dev.off()
 
 pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 8)+scale_fill_distiller(palette = "Spectral", limits = c(1,130))+
-  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,600)+coord_fixed(ratio = 1/60)+theme(legend.position = "top",legend.direction = "horizontal", 
+  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,600)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.5, 0.95),legend.direction = "horizontal", 
                                                                                                                                                                                legend.background = element_rect(fill=alpha('transparent', 0)), 
-                                                                                                                                                                               legend.key.size = unit(0.35, "line"))
+                                                                                                                                                                               legend.key.size = unit(0.75, "line"))
 pls.dens.pc1.hex
 
 # D: Histogram colored by species cluster:

@@ -6,18 +6,21 @@ library(ggplot2)
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 
-pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna","Prairie"))
+pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
 
 # dummyvariables for logistic regression:
-pls$ecocode <- 0
+pls$ecocode <- NA
 pls[pls$ecotype %in% 'Forest', ]$ecocode <- 1
-pls <- pls[!pls$ecotype %in% 'Prairie',]
+pls[pls$ecotype %in% 'Savanna', ]$ecocode <- 0
+#pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
 
 
 # get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1 away from grid cell:
 
 pls$prob_forest <- NA
 
+pls <- pls[!is.na(pls$PC1), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
 
 # this for loop is not ideal, but it works:
 for(i in 1:length(pls$prob_forest)){
@@ -26,15 +29,15 @@ for(i in 1:length(pls$prob_forest)){
       low <- x$PC1 - 0.15
       high <- x$PC1 + 0.15
       # sample the number of forests and savannas in each climate range, with replacement:
-      forest.cell <- sample(pls[pls$PC1 >= low  & pls$PC1 < high,]$cell, size = 100, replace = TRUE)
-      forest.num <- pls[pls$cell %in% forest.cell, ]$ecocode
-      forest.dens <- pls[pls$cell %in% forest.cell, ]$PLSdensity
+      forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 100, replace = TRUE)
+      forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+      forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
       
       bimodality_coefficient(forest.dens)
       diptest::dip.test(na.omit(density(forest.dens)$y))$p
       
       N = length(forest.num) # sample size should be 500
-      nForest = sum(forest.num == 1) # number of forests
+      nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
       nSav = sum(forest.num== 0 ) # number of savannas
       
       theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 

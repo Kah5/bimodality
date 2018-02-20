@@ -24,7 +24,8 @@ library(rgdal)
 
 
 # read in pont level density data
-pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
+#pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi_v',version, '.csv'))
+pls.inil <- read.csv(paste0('outputs/density_biomass_pointwise.ests_inilmi_v1.7-5.csv'))
 pls.inil <- pls.inil[!is.na(pls.inil$spec),]
 
 
@@ -35,7 +36,7 @@ pls.spec <- dcast(pls.inil, x + y + cell ~ spec, sum, na.rm = TRUE, value.var = 
 
 ## This is to normalize.  Diameters need to be averaged by the tree number, otherwise, by
 ##  the point number.
-count.table <- dcast(spec.table, x + y + cell ~ spec, sum, na.rm = TRUE, value.var = 'count')
+count.table <- dcast(pls.inil, x + y + cell ~ spec, sum, na.rm = TRUE, value.var = 'count')
 points.by.cell <- rowSums(count.table[,4:ncol(count.table)], na.rm = TRUE)
 trees.by.cell  <- rowSums(count.table[,!colnames(count.table) %in% c('x', 'y', 'cell', 'No tree', 'Water')], na.rm = TRUE)
 

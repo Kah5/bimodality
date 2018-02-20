@@ -102,14 +102,14 @@ stem.density <- data.frame(x = final.data$PointX,
 
 
 # find the 99% percentile here for stem density and basal area:
-nine.nine.pct <- apply(stem.density[,4:5], 2, quantile, probs = 0.99, na.rm=TRUE)
+#nine.nine.pct <- apply(stem.density[,4:5], 2, quantile, probs = 0.99, na.rm=TRUE)
 #99th percentiles still seem high
 #density     basal 
 #1076.0074  251.9382 
 
 # convert anything over 99th percentile to the 99th percentile value
-stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
-stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+#stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
+#stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
 ggplot(stem.density, aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
@@ -271,7 +271,7 @@ spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests_inil
 pre.quantile <- spec.table
 
 #take the 99 percentile of these, since density blows up in some places
-nine.nine.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.99, na.rm=TRUE)
+nine.nine.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.995, na.rm=TRUE)
 #count       point     density       basal       diams       dists      Pointx 
 #1.0000  95230.1700    517.4408    200.6453     38.0000    567.0000 857335.2342 
 #Pointy        biom 

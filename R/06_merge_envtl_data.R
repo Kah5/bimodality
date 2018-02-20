@@ -3,7 +3,7 @@
 
 library(tidyr)
 library(dplyr)
-
+setwd("/Users/kah/Documents/bimodality")
 #precipitation, temperature, and temperuater are all extracted/calculated in R/crc03_Extract_Prism_historical.R.R
 #outputs/pr_monthly_Prism_1985-1925_full.csv
 past.precip.mo <- read.csv('data/pr_monthly_Prism_1895-1925_full.csv')
@@ -39,7 +39,7 @@ climate.data <- list(mod.precip[,c('x', 'y', 'pr30yr')], past.precip[,c('x', 'y'
      past.tmean[,c('x', 'y', 'Mean', 'deltaT')], mod.tmean.mo[,c('x', 'y', 'moddeltaT')]) %>% Reduce(function(dtf1,dtf2) left_join(dtf1,dtf2,by=c("x", "y")), .)
 colnames(climate.data) <- c("x", "y",  "MAP2011", "MAP1910","moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT")
 
-ggplot(climate.data, aes(x, y, fill=moddeltaT))+geom_raster()
+ggplot(climate.data, aes(x, y, color=moddeltaT))+geom_point()
 
 
 
@@ -47,13 +47,13 @@ ggplot(climate.data, aes(x, y, fill=moddeltaT))+geom_raster()
 
 # read in the P-PET data (generated from crc03_Extract_Prism_Historical.R)
 
-P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
-climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
+#P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
+#climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
 
 
-ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
+#ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
 
-write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
+#write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
 
 #----------------------------- Read in Soils Data -------------------------------
 
@@ -101,21 +101,24 @@ pls <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv")) # pl
 
 fia <- read.csv(paste0("data/midwest_pls_fia_density_alb",version,".csv")) # fia density data
 
-pls.clim <- merge(pls, climate.data, by = c("x", "y"))
-fia.clim <- merge(fia, climate.data, by = c("x", "y"))
+pls.clim <- merge(pls, climate.data, by = c("x", "y"), all.x = TRUE)
+fia.clim <- merge(fia, climate.data, by = c("x", "y"), all.x = TRUE)
 
+ggplot(pls.clim, aes(x,y, fill = sandpct))+geom_raster()
 
 # ---------------------- Principal Component Analysis of Environmental Data ----------------------------
 
 #------------------------PCA of environmental variables-------------------------------
 
-dens.rm <- na.exclude(pls.clim)
+dens.rm <- na.exclude(pls.clim[,c("x","y", "cell",'MAP1910', "MAP2011", "moderndeltaP", 
+                                  "pastdeltaP", "modtmean", "pasttmean",
+                                  "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3")])
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
                                 "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3")]) #PC all but ksat and diff
 
-dens.dens <- dens.rm[, c('PLSdensity')] # pls density
+dens.dens <- pls.clim[pls.clim$cell %in% dens.rm$cell,]$PLSdensity # pls density
 
 # apply PCA - scale. = TRUE 
 dens.pca <- princomp(scale.dens[,c('MAP1910',   
@@ -127,7 +130,7 @@ plot(dens.pca)
 dens.pca$loadings
 scores <- data.frame(dens.pca$scores[,1:2])
 scores$PLS <- dens.dens
-scores$ecotype <- dens.rm$ecotype
+#scores$ecotype <- dens.rm$ecotype
 
 dens.rm$PC1 <- scores[,1]
 dens.rm$PC2 <- scores[,2]
@@ -136,7 +139,7 @@ PC <- dens.pca
 
 #plot scores by tree density in trees per hectare
 png(paste0("outputs/pca_no_loadings.png"))
-ggplot(scores, aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
+ggplot(na.omit(scores), aes(x = Comp.1, y = Comp.2, color = PLS)) +geom_point()+
   scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw()
 dev.off()
 
@@ -159,12 +162,12 @@ colnames(pretty.scale) <- c("MAP", "PSI", "MAT", "TSI", "sand", "awc", "cec", "C
 pretty.pca <- princomp(pretty.scale,
                        na.rm=TRUE) 
 
-g <- newggbiplot(pretty.pca, obs.scale = 1, var.scale = 1, labels.size
+g <- newggbiplot(na.omit(pretty.pca), obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5)
 
 # layer the points from pls underneath the pca biplot
 # using a clever trick to manipulate the layers
-g$layers <- c(geom_point(data = scores, aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
+g$layers <- c(geom_point(data = na.omit(scores), aes(x = Comp.1, y = Comp.2, color = PLS)), g$layers)
 g <- g + scale_color_gradientn(colours = rev(terrain.colors(8)), limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +theme_bw(base_size = 15) 
 
 #write to png
@@ -210,9 +213,13 @@ dens.rm[,paste0('PC1fia')] <- newscores[,1]
 dens.rm[,paste0('PC2fia')]  <- newscores[,2]
 
 dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("x", "y", "cell"), all.x = TRUE)
-write.csv(dens.rm, "data/PLS_FIA_density_climate_full.csv")
+full.dens.pls <- merge(pls.clim[,c('x',"y","cell","PLSdensity")], fia.clim[,c("x","y","cell", "FIAdensity")], by = c("x","y","cell"),all.x = TRUE)
+full.clim.dens <- merge(full.dens.pls, dens.rm[,c("x", "y", "cell","MAP1910", "MAP2011", "moderndeltaP", "modtmean", "moddeltaT", 
+                                "sandpct", "awc", "CEC", "CaCO3", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
 
-dens.pr <- dens.rm
+write.csv(full.clim.dens, "data/PLS_FIA_density_climate_full.csv")
+
+dens.pr <- full.clim.dens
 
 #--------------------------- Read in CMIP 4 projections----------------------
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R

@@ -48,7 +48,7 @@ normalize <- function(x, mult = 2, value = points.by.cell) {
 
 pls.spec <- normalize(pls.spec)
 
-pls.spec$PLSdensity <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet")], na.rm=TRUE) # sum species density in the grid cell
+pls.spec$PLSdensity <- rowSums(pls.spec[,!names(pls.spec)%in% c("x", "y", "cell", "Water", "wet", "No tree")], na.rm=TRUE) # sum species density in the grid cell
 hist(pls.spec$PLSdensity, breaks = 50)
 pls.new <- pls.spec[,c('x', 'y', 'cell', 'PLSdensity')]
 colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
@@ -57,12 +57,12 @@ colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
 # -----------------------read in Uppermidwest data at paleon grid scale
 umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
 #umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
-umdw$total <- rowSums(umdw[,5:32], na.rm= TRUE)
+umdw$PLSdensity <- rowSums(umdw[,5:32], na.rm= TRUE)
 umdw.new <- umdw[,c('x', 'y', 'cell', "PLSdensity")]
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
 
 # combine density data: 
-densitys <- rbind(pls.spec[,c("x", "y", "cell", "PLSdensity")], umdw.new)
+densitys <- rbind(pls.new[,c("x", "y", "cell", "PLSdensity")], umdw.new)
 
 
 #note that for some reason, 1 grid cell is duplicated
@@ -73,7 +73,7 @@ densitys <- nodups
 
 hist(densitys$PLSdensity, breaks = 50)
 #map out density:
-ggplot(densitys, aes(x,y,fill = PLSdensity))+geom_raster()
+ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 
 
 #keep only the 99th percentile of densitys---this is also what simon does
@@ -85,15 +85,45 @@ summary(densitys)
 hist(densitys$PLSdensity, breaks = 50)
 hist(densitys[densitys$PLSdensity > 0.5,]$PLSdensity, breaks = 100)
 
+ggplot(densitys, aes(x, y, fill = PLSdensity))+geom_raster()
+
+
 # ----------------------mapping out tree density-------------------------------
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  'minnesota','wisconsin','michigan',"illinois",  'indiana') )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
-mapdata<-spTransform(states, CRS('+init=epsg:3175'))
-mapdata <- data.frame(mapdata)
+mapdata.sp<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata.sp)
 
+
+
+us.alb <- readOGR("/Users/kah/Documents/bimodality/data/us_alb/us_alb.shp", layer = "us_alb" )
+
+mw <- us.alb[us.alb@data$STATE_NAME %in% c("Indiana", "Illinois", "Minnesota", "Michigan", "Wisconsin"),]
+
+
+base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
+                    ymn = 58000,  ymx = 1498000, nrows = 180,
+                    crs = '+init=epsg:3175')
+
+
+
+numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
+numbered.cell <- raster::extract(numbered.rast, mw)
+
+
+cells <- unlist(numbered.cell)
+full.cells <- data.frame(cell = cells)
+full.cells[2:3]<- xyFromCell(numbered.rast, cells)
+colnames(full.cells) <- c("cell","x", "y")
+
+cells2add <- full.cells[!full.cells$cell %in% densitys$cell, ]
+cells2add$PLSdensity <- NA
+nacells <- cells2add[,c("x", "y", "cell", "PLSdensity")]
+
+densitys <- rbind(nacells, densitys)
 # Map out tree density below: 
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
@@ -116,7 +146,7 @@ dev.off()
 
 # write out combinded datasets to use later:
 write.csv(densitys, paste0("data/midwest_pls_full_density_alb",version,".csv"), row.names = FALSE)
-
+ 
 
 
 # -----------Get species composition PLS data------------------------------------
@@ -199,7 +229,7 @@ write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv", row.names
 #read in FIA from Sean's repository
 
 
-setwd( "C:/Users/JMac/Documents/Kelly/biomodality")
+
 library(data.table)
 library(reshape2)
 library(dtplyr)

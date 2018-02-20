@@ -102,16 +102,16 @@ stem.density <- data.frame(x = final.data$PointX,
 
 
 # find the 99% percentile here for stem density and basal area:
-#nine.nine.pct <- apply(stem.density[,3:4], 2, quantile, probs = 0.99, na.rm=TRUE)
+nine.nine.pct <- apply(stem.density[,4:5], 2, quantile, probs = 0.99, na.rm=TRUE)
 #99th percentiles still seem high
 #density     basal 
 #1076.0074  251.9382 
 
 # convert anything over 99th percentile to the 99th percentile value
-#stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
-#stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
+stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
+stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-ggplot(stem.density[stem.density$density < 600,], aes(x, y, color=density))+geom_point(size = 0.5)
+ggplot(stem.density, aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
 
 
@@ -217,7 +217,7 @@ spec.table$density[spec.table$spec == 'Wet'] <- 0
 spec.table$Pointx <- spec.table$PointX
 spec.table$Pointy <- spec.table$PointY
 spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
-
+colnames(spec.table)[1:2] <- c("x", "y")
 # read in table with allometric equations for each taxa
 biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
                        stringsAsFactors = FALSE)
@@ -271,13 +271,13 @@ spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests_inil
 pre.quantile <- spec.table
 
 #take the 99 percentile of these, since density blows up in some places
-nine.nine.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.99, na.rm=TRUE)
+nine.nine.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.99, na.rm=TRUE)
 #count       point     density       basal       diams       dists      Pointx 
 #1.0000  95230.1700    517.4408    200.6453     38.0000    567.0000 857335.2342 
 #Pointy        biom 
 #652074.7000   1321.4863
  
-nine.five.pct <- apply(spec.table[,6:ncol(spec.table)], 2, quantile, probs = 0.95, na.rm=TRUE)
+nine.five.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.95, na.rm=TRUE)
 #count       point     density       basal       diams       dists      Pointx 
 #1.0000  95230.1700    517.4408    200.6453     38.0000    567.0000 857335.2342 
 #Pointy        biom 
@@ -361,8 +361,8 @@ write.csv(density.table, "outputs/density.table_test.csv")
 density.table$total = rowSums(density.table[,4:ncol(density.table)], na.rm=TRUE)
 
 # plotting example taxa
-X11(width =12)
-ggplot(data = biomass.table, aes(x = x, y = y, fill = Maple)) + geom_raster()+coord_equal()
+#X11(width =12)
+#ggplot(data = biomass.table, aes(x = x, y = y, fill = Maple)) + geom_raster()+coord_equal()
 
 
 
@@ -400,7 +400,7 @@ plot(dens)
 
 #pdf("biomass.density.99percentile.rasters.pdf")
 plot(biomass, main = "Mean total biomass (Mg/ha)", xlab ="Easting", ylab = "Northing") 
-plot(dens, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean stem density (stems/ha)", xlab ="Easting", ylab = "Northing")
+plot(dens, xlim= c(320000 ,991200.5), ylim = c(104720.2,998673.5), main = "Mean stem density (stems/ha)", xlab ="Easting", ylab = "Northing")
 #plot(biomass, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean biomass (Mg/ha)", xlab ="Easting", ylab = "Northing")
 plot(basal, xlim= c(592741.1 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean basal area")
 plot(mdiam,  main = "Mean tree diameter (cm)", xlab ="Easting", ylab = "Northing")
@@ -513,7 +513,7 @@ add.v(diameter.full, 'plss_spec_diam', row.names=FALSE)
 add.v(diam.table, 'plss_diam', row.names=FALSE)
 
 # extra stuff to look at density estimates for now
-#ggplot(density.table, aes(x = x, y=y, fill = total))+geom_raster()
+ggplot(density.full, aes(x = x, y=y, fill = Oak))+geom_raster()
 
 #density.table$ecotype<- 'test'
 #ecotype <- ifelse(density.table$total == 0,  "prairie", 

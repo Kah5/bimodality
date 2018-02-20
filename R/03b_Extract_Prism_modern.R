@@ -91,7 +91,7 @@ write.csv(avgs.df, "/Users/kah/Documents/bimodality/outputs/pr_monthly_Prism_30y
 
 
 #################################################################################
-#                 Extract modern precipitation data
+#                 Extract modern temperature data
 #################################################################################
 
 # read in and average prism data

@@ -1,6 +1,7 @@
 # script for sampling p(forest) within environmental bin of each grid cell:
 library(ggplot2)
-
+library(modes)
+library(diptest)
 
 #------------------------------p(forest) for PLS-----------------------------------------
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
@@ -33,8 +34,7 @@ for(i in 1:length(pls$prob_forest)){
       forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
       forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
       
-      bimodality_coefficient(forest.dens)
-      diptest::dip.test(na.omit(density(forest.dens)$y))$p
+      
       
       N = length(forest.num) # sample size should be 500
       nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
@@ -270,19 +270,25 @@ dev.off()
 
 #------------------------------p(forest) for FIA-----------------------------------------
 fia <- read.csv("data/PLS_FIA_density_climate_full.csv")
-fia <- fia[! is.na(fia$FIAdensity),]
+#fia <- fia[! is.na(fia$FIAdensity),]
 
-fia$ecotype <- ifelse(fia$FIAdensity > 47, "Forest", ifelse(fia$FIAdensity > 0.5, "Savanna","Prairie"))
+#fia$ecotype <- ifelse(fia$FIAdensity > 47, "Forest", ifelse(fia$FIAdensity > 0.5, "Savanna","Prairie"))
+fia$ecotype <- ifelse(fia$FIAdensity > 47, "Forest", ifelse(fia$FIAdensity > 0.5, "Savanna",ifelse(is.na(fia$FIAdensity),"NA", "Prairie")))
 
 # dummyvariables for logistic regression:
-fia$ecocode <- 0
+fia$ecocode <- NA
 fia[fia$ecotype %in% 'Forest', ]$ecocode <- 1
-fia <- fia[!fia$ecotype %in% 'Prairie',]
+fia[fia$ecotype %in% 'Savanna', ]$ecocode <- 0
+#pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
 
 
 # get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1 away from grid cell:
 
 fia$prob_forest <- NA
+
+fia <- fia[!is.na(fia$PC1fia), ]
+fia.density <- fia[!is.na(fia$FIAdensity) & ! is.na(fia$ecocode),]
+
 
 
 # this for loop is not ideal, but it works:
@@ -292,7 +298,7 @@ for(i in 1:length(fia$prob_forest)){
   low <- x$PC1fia - 0.15
   high <- x$PC1fia + 0.15
   # sample the number of forests and savannas in each climate range, with replacement:
-  forest.num <- sample(fia[fia$PC1fia >= low  & fia$PC1fia < high,]$ecocode, size = 500, replace = TRUE)
+  forest.num <- sample(fia.density[fia.density$PC1fia >= low  & fia.density$PC1fia < high,]$ecocode, size = 500, replace = TRUE)
   
   
   N = length(forest.num) # sample size should be 500
@@ -526,3 +532,246 @@ png(height = 4, width = 14, units = "in", res = 300,"outputs/posterior_prob_bimo
 grid.arrange(p.bimodalf + ggtitle("FIA binwidth = 0.15"),p.bimodal20f+ggtitle("FIA binwidth = 0.2"), p.bimodal25f +ggtitle("FIA binwidth = 0.25"), 
              p.bimodal50f+ggtitle("FIA binwidth = 0.5"), p.bimodal75f+ggtitle("FIA binwidth = 0.75"), ncol = 5)
 dev.off()
+
+
+
+#-------------------Sample probability forest in the future based on pls p(forest)-----------------
+future.pr <- read.csv("outputs/Future_PCA.csv")
+
+future.pr.alb <- future.pr[!is.na(future.pr$PC1_cc26) | !is.na(future.pr$PC1_cc45)| !is.na(future.pr$PC1_cc60) | !is.na(future.pr$PC1_cc85), ]
+
+# pls was read in previously:
+
+pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
+
+# dummyvariables for logistic regression:
+pls$ecocode <- NA
+pls[pls$ecotype %in% 'Forest', ]$ecocode <- 1
+pls[pls$ecotype %in% 'Savanna', ]$ecocode <- 0
+#pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
+
+
+# get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1 away from grid cell:
+
+future.pr.alb$prob_forest26 <- NA
+
+fut.26 <- future.pr.alb[!is.na(future.pr.alb$PC1_cc26), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+# this for loop is not ideal, but it works:
+for(i in 1:length(fut.26$prob_forest26)){
+  
+  x <- fut.26[i,]
+  low <- x$PC1_cc26 - 0.15
+  high <- x$PC1_cc26 + 0.15
+  # sample the number of forests and savannas in each climate range, with replacement:
+  if(length(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell) < 1){
+    posteriorMean <- "Out-of-Sample"
+  }else{
+  forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 100, replace = TRUE)
+  forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+  forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+  
+  
+  
+  N = length(forest.num) # sample size should be 500
+  nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+  nSav = sum(forest.num== 0 ) # number of savannas
+  
+  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+  
+  ### prior distribution
+  
+  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  
+  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+  
+  # calculate the likelihood given theta
+  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+  
+  
+  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+  pData = sum(pDataGivenTheta*pTheta)
+  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+  
+  # prints out df
+  round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+  
+  # get the posterior mean probability of forest given data
+  posteriorMean = sum(pThetaGivenData*theta) 
+  }
+  fut.26[i,]$prob_forest26 <- posteriorMean
+  
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(fut.26, aes(x,y, fill = prob_forest26))+geom_raster()
+
+
+# for 4.5:
+future.pr.alb$prob_forest45 <- NA
+
+fut.45 <- future.pr.alb[!is.na(future.pr.alb$PC1_cc45), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+# this for loop is not ideal, but it works:
+for(i in 1:length(fut.45$prob_forest45)){
+  
+  x <- fut.45[i,]
+  low <- x$PC1_cc45 - 0.15
+  high <- x$PC1_cc45 + 0.15
+  # sample the number of forests and savannas in each climate range, with replacement:
+  if(length(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell) < 1){
+    posteriorMean <- "Out-of-Sample"
+  }else{
+    forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 100, replace = TRUE)
+    forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+    forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+    
+    
+    
+    N = length(forest.num) # sample size should be 500
+    nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+    nSav = sum(forest.num== 0 ) # number of savannas
+    
+    theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+    
+    ### prior distribution
+    
+    pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+    
+    pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+    
+    # calculate the likelihood given theta
+    pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+    
+    
+    # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+    pData = sum(pDataGivenTheta*pTheta)
+    pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+    
+    # prints out df
+    round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+    
+    # get the posterior mean probability of forest given data
+    posteriorMean = sum(pThetaGivenData*theta) 
+  }
+  fut.45[i,]$prob_forest45 <- posteriorMean
+  
+}
+
+
+# for 6.0:
+# plot out the probability of forests in the pls region:
+ggplot(fut.60, aes(x,y, fill = prob_forest60))+geom_raster()
+
+# for 4.5:
+future.pr.alb$prob_forest45 <- NA
+
+fut.60 <- future.pr.alb[!is.na(future.pr.alb$PC1_cc60), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+# this for loop is not ideal, but it works:
+for(i in 1:length(fut.60$prob_forest60)){
+  
+  x <- fut.60[i,]
+  low <- x$PC1_cc60 - 0.15
+  high <- x$PC1_cc60 + 0.15
+  # sample the number of forests and savannas in each climate range, with replacement:
+  if(length(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell) < 1){
+    posteriorMean <- "Out-of-Sample"
+  }else{
+    forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 100, replace = TRUE)
+    forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+    forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+    
+    
+    
+    N = length(forest.num) # sample size should be 500
+    nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+    nSav = sum(forest.num== 0 ) # number of savannas
+    
+    theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+    
+    ### prior distribution
+    
+    pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+    
+    pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+    
+    # calculate the likelihood given theta
+    pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+    
+    
+    # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+    pData = sum(pDataGivenTheta*pTheta)
+    pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+    
+    # prints out df
+    round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+    
+    # get the posterior mean probability of forest given data
+    posteriorMean = sum(pThetaGivenData*theta) 
+  }
+  fut.60[i,]$prob_forest60 <- posteriorMean
+  
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(fut.60, aes(x,y, fill = prob_forest60))+geom_raster()
+
+
+# for 8.5:
+future.pr.alb$prob_forest45 <- NA
+
+fut.85 <- future.pr.alb[!is.na(future.pr.alb$PC1_cc85), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+# this for loop is not ideal, but it works:
+for(i in 1:length(fut.85$prob_forest85)){
+  
+  x <- fut.45[i,]
+  low <- x$PC1_cc85 - 0.15
+  high <- x$PC1_cc85 + 0.15
+  # sample the number of forests and savannas in each climate range, with replacement:
+  if(length(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell) < 1){
+    posteriorMean <- "Out-of-Sample"
+  }else{
+    forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 100, replace = TRUE)
+    forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+    forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+    
+    
+    
+    N = length(forest.num) # sample size should be 500
+    nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+    nSav = sum(forest.num== 0 ) # number of savannas
+    
+    theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+    
+    ### prior distribution
+    
+    pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+    
+    pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+    
+    # calculate the likelihood given theta
+    pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+    
+    
+    # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+    pData = sum(pDataGivenTheta*pTheta)
+    pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+    
+    # prints out df
+    round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+    
+    # get the posterior mean probability of forest given data
+    posteriorMean = sum(pThetaGivenData*theta) 
+  }
+  fut.85[i,]$prob_forest85 <- posteriorMean
+  
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(fut.85, aes(x,y, fill = prob_forest85))+geom_raster()

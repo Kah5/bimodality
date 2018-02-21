@@ -165,8 +165,8 @@ write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
 #
 #setwd ("/Users/kah/Documents/bimodality")
 
-full.PET <- readRDS('data/full.PET.rds')
-#full.PET <- readRDS("data/PET_full/full.PET.rds")
+#full.PET <- readRDS('data/full.PET.rds')
+full.PET <- readRDS("data/PET_full/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
 colnames(full) <- c("lat", "long", "Jan", 'Mar',"Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -182,7 +182,8 @@ proj4string(avgs) <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=
 avgs.alb <- projectRaster(avgs, crs='+init=epsg:3175')
 
 # spec.table is a spatial points df, convert to regular df:
-spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
+spec.table <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv"))
+
 coordinates(spec.table) <- ~x + y
 
 # project the grid to lat long
@@ -191,12 +192,12 @@ spec.table <- as.data.frame(spec.table)
 
 plot(avgs.alb)
 
-avgs.df <- data.frame(extract(avgs.alb, spec.table[,c("x","y")]))
+avgs.df <- data.frame(raster::extract(avgs.alb, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
 write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1925_pls_extracted_mar_nov.csv"))
-#ggplot(avgs.df, aes(x,y, fill = Aug))+geom_raster()
+ggplot(avgs.df, aes(x,y, fill = Aug))+geom_raster()
 
 
 

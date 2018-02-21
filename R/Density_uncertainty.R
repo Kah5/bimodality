@@ -143,7 +143,7 @@ dens.ci.mean.df <- do.call(rbind, dens.ci.mean)
 dens.ci.mean.df$cell<- row.names(dens.ci.mean.df)
 dens.ci.df <- merge(dens.ci.mean.df, pls.mean[,c("x", "y", "cell", "PLSdensity")], by = "cell")
 
-dens.boot.samples <- lapply( dens.by.cells, FUN = boot.dens)
+#dens.boot.samples <- lapply( dens.by.cells, FUN = boot.dens)
 
 # how does the above method compare to getting estimates "by hand" --i.e. not using default CI and bootstrap function:
 

@@ -183,13 +183,13 @@ full.spec <- rbind(pls.spec, umdw)
 
 #move around the columns
 require(dplyr)
-full.spec<- full.spec %>%
+full.spec <- full.spec %>%
   dplyr::select(cell, everything())
 
-full.spec<- full.spec %>%
+full.spec <- full.spec %>%
   dplyr::select(y, everything())
 
-full.spec<- full.spec %>%
+full.spec <- full.spec %>%
   dplyr::select(x, everything())
 
 #full.spec<- full.spec %>%
@@ -215,7 +215,7 @@ comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total 
 comps <- comps[,1:38]
 
 # remove prairie cells:
-comps <- data.frame( comps[ complete.cases(comps),] )
+#comps <- data.frame( comps[ complete.cases(comps),] )
 
 # write as a csv so we don't have to keep doing this:
 write.csv(comps, "data/outputs/plss_pct_density_composition_v1.6.csv", row.names = FALSE)
@@ -441,7 +441,7 @@ fullcomps <- fullcomps %>%
 fullcomps <- fullcomps %>%
   dplyr::select(x, everything())
 
-fullcomps <- fullcomps[complete.cases(fullcomps),]
+#fullcomps <- fullcomps[complete.cases(fullcomps),]
 
 write.csv(fullcomps, "outputs/cluster/fullcomps.csv", row.names = FALSE)
 

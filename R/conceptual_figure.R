@@ -119,8 +119,24 @@ ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
 ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")+facet_wrap(~bins)
 
+png(height = 4, width = 2, units = "in", res = 300, "outputs/paper_figs/conceptual_hist_1.png")
+ggplot(full[full$bins %in% c("(-2,0]") & full$time %in% "Past",], aes(x = value*2, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
+  scale_fill_manual(values = c("red"), limits = c("Past"))+xlab("Tree Density")+ylab("frequency")+coord_flip()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                                                                                                     legend.position = 'none',
+                                                                                                                     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
 
 
+dev.off()
+
+png(height = 4, width = 2, units = "in", res = 300, "outputs/paper_figs/conceptual_hist_2.png")
+
+ggplot(full[full$bins %in% c("(-2,0]") & full$time %in% "Modern",], aes(x = value*2, fill = time)) + geom_density(alpha = 0.5, position = "identity", bw = 30)+theme_bw()+
+  scale_fill_manual(values = c("blue"), limits = c("Modern"))+xlab("Tree Density")+ylab("frequency")+coord_flip()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                                                                                                     legend.position = 'none',
+                                                                                                                     panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+
+dev.off()
 # write outputs
 png("outputs/conceptual_fig_density.png")
 ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+

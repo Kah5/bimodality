@@ -101,7 +101,7 @@ nwmw [ nwmw == '999'] <- NA
 #  Basal area removals:
 #nwmw[which(as.numeric(nwmw$diam1) >100),] <- rep(NA, ncol(nwmw))  #  removes 19 trees with reported diameters over 250cm.
 #nwmw[which(as.numeric(nwmw$diam2) >100),] <- rep(NA, ncol(nwmw))  #  removes an additional 14 trees.
-nwmw[(is.na(nwmw$species1) & nwmw$diam1>0) | (is.na(nwmw$species2) & nwmw$diam2>0),] <- rep(NA, ncol(nwmw))  #  removes four records with no identified trees, but identified diameters
+nwmw[(is.na(nwmw$species1) & nwmw$diam1 > 0) | (is.na(nwmw$species2) & nwmw$diam2>0),] <- rep(NA, ncol(nwmw))  #  removes four records with no identified trees, but identified diameters
 
 diams <-  cbind(as.numeric(nwmw$diam1), 
                 as.numeric(nwmw$diam2), 
@@ -337,7 +337,7 @@ write.csv(final.data, "data/lower_mi_final_data.csv")
 #note there are still many NA values in the dataset--need to remove these!
 
 X11(width=12)
-ggplot(final.data[final.data$species1 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species1))+geom_point()
+ggplot(final.data[final.data$species2 %in% c("Oak", "Maple", "Beech","Pine", "Hemlock", "No tree", "Ash"),], aes(PointX, PointY, color = species2))+geom_point()
 ggplot(final.data, aes(PointX, PointY, color = diam1))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 hist(final.data$diam1)
 hist(final.data$diam2)

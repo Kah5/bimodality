@@ -75,8 +75,8 @@ dev.off()
 
 
 n = 2000
-y1 = rnorm(n, 25, 15)  
-y2 = rnorm(n, 100, 25)
+y1 = rnorm(n, 25, 20)  
+y2 = rnorm(n, 150, 20)
 w = rbinom(n, 1, .5)                      # 50:50 random choice
 x2 = w*y1 + (1-w)*y2      
 x3 = rnorm(2000, -3, 2)

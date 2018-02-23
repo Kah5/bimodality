@@ -202,17 +202,17 @@ full.spec<- full.spec %>%
 full.spec$total <- rowSums(full.spec[,4:41], na.rm = TRUE)
 summary(full.spec$total)
 hist(full.spec$total, breaks = 1000, xlim = c(0,600))
-
-colnames(full.spec)[42] <- 'PLSdensity'
+full.spec[is.na(full.spec)] <- 0
+colnames(full.spec)[43] <- 'PLSdensity'
 
 # create a density.full data.frame
-full.spec[is.na(full.spec)] <- 0
+
 
 
 comps <- full.spec[!names(full.spec) %in% c("Water", "Wet", "No Tree", "No.tree")]
 #comps <- comps[!is.na(comps),]
-comps[,4:38] <- comps[,4:38]/comps[,39] # calculate the proportion of the total density that each species takes up
-comps <- comps[,1:38]
+comps[,4:39] <- comps[,4:39]/comps$PLSdensity.1 # calculate the proportion of the total density that each species takes up
+comps <- comps[,1:39]
 
 # remove prairie cells:
 #comps <- data.frame( comps[ complete.cases(comps),] )
@@ -448,15 +448,18 @@ write.csv(fullcomps, "outputs/cluster/fullcomps.csv", row.names = FALSE)
 
 #-----------------------PCA of full dataset (PLS and FIA)----------------------
 fullcomps <- read.csv("outputs/cluster/fullcomps.csv")
-fc <- fullcomps
-fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity")]
+cells <- fullcomps[fullcomps$period %in% "Past",]$cell
+fullcomps <- fullcomps[fullcomps$cell %in% cells, ]
+fullcomps <-fc <- na.omit(fullcomps) 
+
+fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity", "PLSdensity", "Sweet.gum.1")]
 
 
 # pca on the scaled data
-full.pca <- princomp(scale(fullcomps[,6:ncol(fullcomps)])) #scale to 0 variance
+full.pca <- princomp(scale(fullcomps[,4:ncol(fullcomps)], center = TRUE))#scale to 0 variance
 plot(full.pca)
 
-biplot(full.pca)
+#biplot(full.pca)
 scores <- full.pca$scores
 
 fc$pc1 <- scores[,1]
@@ -467,7 +470,7 @@ library(ggbiplot)
 source("R/newggbiplot.R")
 
 # make generic biplot
-ggbiplot(full.pca, pc.biplot = TRUE)+geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
+#ggbiplot(full.pca, pc.biplot = TRUE)+geom_point(data= fc, aes(x=pc1, y=pc2, color = period))
 
 
 
@@ -489,4 +492,14 @@ dev.off()
 
 
 
+fia.pcs <- fc[fc$period %in% "Modern",]
+pls.pcs <- fc[fc$period %in% "PLS",]
+
+colnames(pls.pcs)[43:44] <- c("pls_pc1", "pls_pc2")
+
+colnames(fia.pcs)[43:44] <- c("fia_pc1", "fia_pc2")
+
+fc.m <- merge(pls.pcs[, c("x", "y", "cell","pls_pc1", "pls_pc2")], fia.pcs[,c("x", "y", "cell","fia_pc1", "fia_pc2")], by = c("x", "y", "cell"))
+
+write.csv(fc, "outputs/full_comp_pcs.csv", row.names = FALSE)
 

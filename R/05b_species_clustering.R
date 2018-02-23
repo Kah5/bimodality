@@ -13,7 +13,7 @@ library(rgdal)
 # load PLS data from 04_combine_umw_pls_fia.R
 density.full <- comps <- full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
 
-
+summary(comps)
 
 #----------------------k-mediods cluster analysis---------------------------------
 

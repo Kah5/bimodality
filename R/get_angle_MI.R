@@ -40,7 +40,7 @@ get_angle_MI <- function(azimuth, qvals) {
   quad <- north | east | south | west
   
   #  Special case of the trees with a unidirectional direction.
-  uni  <- (!quad) & (north | south | east | west) & (nchar(azimuth) == 1)
+  #uni  <- (!quad) & (north | south | east | west) & (nchar(azimuth) == 1)
   
   angl[ uni & north ] <- 0
   angl[ uni & south ] <- 180

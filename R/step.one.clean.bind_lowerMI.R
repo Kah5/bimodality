@@ -36,33 +36,16 @@ library(spdep)
 library(rgdal)
 library(raster)
 library(ggplot2)
+library(data.table)
 
-#wisc <- readOGR('data/raw_data/wisc/glo_corn.shp', 'glo_corn')
-#minn <- readOGR('data/raw_data/minn/Minnesota.shp', 'Minnesota')
-#mich <- readOGR('data/southern_MI/southern_MI/so_michigan.shp', 'so_michigan')
 mich <- read.csv("data/southernmi_projected_v1/southernMI_projected_v1.0.csv", stringsAsFactors = FALSE)
-#  The files are in unique projections, this standardizes the projections to
-#  a long-lat projection:
 
+head(mich) 
 
-
-
-# convert to a data.frame
-
-head(mich) # look at df
-# the dist1 and diam1 columns are switched, so we need to fix this
-#dist1 <- mich$diam1
-diam1 <- mich$dist1
-
-#mich$dist1 <- dist1
-#mich$diam1 <- diam1
 
 ggplot(mich[mich$L3_tree1 %in% "No tree",], aes(point_x, point_y))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
-#df <- mich[mich$quad %in% c("Sodus", "BentonHarbor", "SisterLakes"),]
-#write.csv(df, "test_mich_quad.csv", row.names= FALSE)
-#unique(mich[mich$coords.x1 >= pt$long+0.01,]$quad)
 
 not.no.tree <- !(!is.na(mich$L3_tree1) & is.na(mich$species1))
 no.tree     <- is.na(mich$species1)
@@ -189,11 +172,6 @@ dists[rowSums(dists == 1, na.rm=T) > 1, ] <- NA#,rep(NA, 4)
 #  the distance to NA.
 dists[is.na(species) | species %in% c('No tree', 'Water', 'Missing')] <- NA
 
-#  Now we're looking at 36843 points with no usable data,
-#  5022 points with only one tree
-#  524 points with only two trees
-#  59 points with three trees
-#  380645 points with four trees
 
 #  At this point we need to make sure that the species are ordered by distance
 #  so that trees one and two are actually the closest two trees.
@@ -256,46 +234,7 @@ state <- data.frame(state = rep("MI", length(species$species1)))
 
 corner <- mich$sec_corner
 
-#  We need to bin the year information so that we can use it to calculate
-#  appropriate Cottam Correction factors.  The survey instructions for the PLS
-#  change at a number of points during the sirveys in Wisconsin, but are
-#  considered to be fixed by the time.
-#  Some wisconsin samples don't have a year.  Look this up and figure out why.
-#  It causes a problem with the Cottam correction factor.
 
-#mn_survey <- read.csv('data/raw_data/minn/MN_Surveys.csv')
-#mn_survey$TOWN <- paste('T', formatC(mn_survey$TOWN, width=3, flag='0'), 'N', sep ='')
-#mn_survey$RANG <- paste('R', formatC(mn_survey$RANG, width=2, flag='0'), mn_survey$RDIR, sep ='')
-
-#get.minn.year <- function(x)which(paste(mn_survey$TOWN, mn_survey$RANG) == paste(x$TWP, x$RNG))
-
-#minn.year <- rep(NA, nrow(minn@data))
-#for(i in 1:nrow(minn@data)){
- # if(is.na(minn.year[i])){
-  #  minn.test <- get.minn.year(minn@data[i,])
-   # if(length(minn.test) == 1)minn.year[i] <- mn_survey$YEAR[minn.test]
-  
-#} 
-#}
-
-#wisc.year <- ifelse(wisc@data$YEAR_ > 1851, '1851+',
- #                   ifelse(wisc@data$YEAR_ > 1846, '1846-1851',
-  #                         ifelse(wisc@data$YEAR_ > 1834, '1834-1846',
-   #                               ifelse(wisc@data$YEAR_ > 1832, '1832-1834','None'))))
-#
-#  Michigan has 47 instances where the year is '2', and 12 where the year is '9999'
-#  The 9999s don't clean up because we're not using the nwmw data here:
-
-#mich.year <- as.numeric(as.character(mich@data$SURVYR))
-#mich.year[mich.year == '9999'] <- 2
-
-#mich.year <- ifelse(mich.year > 1851, '1851+',
- #                   ifelse(mich.year > 1846, '1846-1851',
-  #                         ifelse(mich.year > 1834, '1834-1846',
-   #                               ifelse(mich.year > 1832, '1832-1834','None'))))
-#mich.year[is.na(mich.year)] <- 'None'
-
-#survey.year <- factor(c(minn.year, wisc.year, mich.year))
 
 #  These are the columns for the final dataset.
 
@@ -319,13 +258,18 @@ colnames(final.data) <- c('PointX','PointY', 'Township',"state",
                           paste('az',      1:4, sep = ''), 'corner',"cornertype",'surveyyear')
 
 
+final.data$az1[final.data$az1 <= 0 ] <- NA
+final.data$az2[final.data$az2 <= 0] <- NA
+final.data$az3[final.data$az3 <= 0] <- NA
+final.data$az4[final.data$az4 <= 0] <- NA
+
 summary(final.data)
 final.data <- final.data[!is.na(final.data$PointX),]
 # kill ths cells that are not == Extsec or ==Intsec
 
 final.data <- final.data[final.data$corner %in% c("Extsec", "Intsec"),]
+
 # now kill missing cells:
-#final.data <- final.data[ !final.data$species1 %in% c('Water', 'Missing'), ]
 
 # there are a few strange points with erroneous X or Y values. Get rid of them here:
 final.data <- final.data[ !final.data$PointX < 1000, ]
@@ -347,7 +291,7 @@ hist(final.data$dist2)
 ggplot(final.data, aes(PointX, PointY, color = dist2))+geom_point()+scale_color_continuous(low = 'blue', high = 'red', limits = c(0,400))
 
 #Pair <- ifelse(final.data$Township %like% "N",paste0(as.character(final.data$corner), "MI-E"), paste0(as.character(final.data$corner), "MI-W"))
-
+used.data <- final.data
 # --------------------generate correction factors------------------------------:
 # read in the correction factors provided by Charlie Cogbill:
 corr.vals <- read.csv('data/cogbill_corrections.csv')

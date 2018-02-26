@@ -46,20 +46,9 @@ ind <- read.csv("data/ndinpls_v1.7.csv", stringsAsFactors = FALSE) # version 1.6
 X11(width = 12)
 ggplot(ind[ind$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x,y, color = L3_tree1))+geom_point(size = 0.1)+coord_equal()
 
-# this version has several errors in the column names--I think it is an artefact of exporting from ArcGIS after georeferencing.
-#colnames(ind)[41] <- "speciescode2"
-#colnames(ind)[48] <- "bearingdir2"
-#colnames(ind)[49] <- "chainstree2"
-#colnames(ind)[51] <- "speciescode2"
-#colnames(ind)[58] <- "bearingdir3"
-#colnames(ind)[59] <- "chainstree3"
-#colnames(ind)[61] <- "speciescode4"
-#colnames(ind)[68] <- "bearingdir4"
-#colnames(ind)[69] <- "chainstree4"
 
-# Read in the il data
+# Read in the il data on version v1.8
 il <- read.csv("data/ndilpls_v1.8.csv", stringsAsFactors = FALSE) # version 1.6
-#il <- read.csv("data/ndilpls_v1.5-1.csv", stringsAsFactors = FALSE) # version 1.5-1
 
 
 
@@ -70,30 +59,14 @@ il <- read.csv("data/ndilpls_v1.8.csv", stringsAsFactors = FALSE) # version 1.6
 ind[ind$L3_tree1 %in% 'No data',] <- NA
 ind[ind$L3_tree2 %in% 'No data',] <- NA
 
-
-
 il[il$L3_tree1 %in% 'No data',] <- NA
 il[il$L3_tree2 %in% 'No data',] <- NA
 
-
-
-# remove all points with 'No data' points for chainstree in Indiana
-#ind <- ind[!ind$chainstree == 'NA',]
-#ind <- ind[ind$chainstree == 88888,]<- NA
-#ind <- ind[!ind$chainstree == 99999,]
-#ind <- ind[!ind$chainstree2 == 88888,]
-#ind <- ind[!ind$chainstree2 == 99999,]
 
 # remove all instances of no data for the l3tree 1
 ind <- ind[!is.na(ind$L3_tree1),]
 il <- il[!is.na(il$L3_tree1),]
 
-#it just has NA if it is no tree due to water or no data, 
-#so we have to removed points where there is "No data" or "Water listed as a tree
-#il <- il[!il$L3_tree1 == 'Water'| !il$L3_tree1=='No data',]
-#il <- il[!il$L3_tree2 == 'Water'| !il$L3_tree2 == 'No data',]
-#il <- il[!il$L1_tree3 == 'Water'| !il$L1_tree3 == 'No data',]
-#il <- il[!il$L1_tree4 == 'Water'| !il$L1_tree4 == 'No data',]
 
 #  IN distances are in chains
 ind$DIST1 <- as.numeric(ind$chainstree)
@@ -105,34 +78,20 @@ ind$DIST4 <- as.numeric(ind$chainstree4)
 il$DIST1 <- as.numeric(il$chainstree)
 il$DIST2 <- as.numeric(il$chainstree2)
 il$DIST3 <- as.numeric(il$chainstree3)
-
 il$DIST4 <- as.numeric(il$chainstree4)
 
+# make sure township names have the state in front of them:
+ind$twp <- c(paste('IN', as.character(ind$TRP)))
 
-#this removes all points (including no trees) that dont have distances provided. 
-#il <- il[!il$DIST1 == 88888,]
-#il <- il[!il$DIST1 == 99999,]
-#il <- il[!il$DIST2 == 88888,]
-#il <- il[!il$DIST2 == 99999,]
+il$twp_il <- c(paste('IL', as.character(il$TRP)))
 
 
-#  Character vectors are read into R as factors, to merge them they need to
-#  be converted to character strings first and then bound together.  To ensure
-#  township and ranges are unique we add a state abbreviation to the front of
-#  the twonship name.
-twp <- c(paste('IN', as.character(ind$TRP)))
-#rng <- c(as.character(ind$TownshipRange))
-ind$twp <- twp
-twp_il <- c(paste('IL', as.character(il$TRP)))
-il$twp <- twp_il
-
-## for the getAngle function to work later, we need a 4character Azimuth
+## for the getAngle function to work later, we need a 4 character Azimuth from the tree bearings and bearing direction
 ind$bearings1 <- c(paste0(as.character(ind$bearing),  as.character(ind$bearingdir)))
 ind$bearings2 <- c(paste0(as.character(ind$bearing2),  as.character(ind$bearingdir2)))
 ind$bearings3 <- c(paste0(as.character(ind$bearing3),  as.character(ind$bearingdir3)))
 ind$bearings4 <- c(paste0(as.character(ind$bearing4),  as.character(ind$bearingdir4)))
 
-#there is something off about the labeing for bearing direction in illinios for version 1.5-2
 il$bearings1 <- c(paste0(as.character(il$bearing),  as.character(il$bearingdir)))
 il$bearings2 <- c(paste0(as.character(il$bearing2),  as.character(il$bearingdir2)))
 il$bearings3 <- c(paste0(as.character(il$bearing3),  as.character(il$bearingdir3)))
@@ -141,7 +100,7 @@ il$bearings4 <- c(paste0(as.character(il$bearing4),  as.character(il$bearingdir4
 il$state <-'IL'
 ind$state <-'IN'
 
-#create and rename columns to match that of indiana
+#create and rename columns to match up columns from indiana and illinois
 il$twp <- il$TRP
 
 il$DIST4 <- NA
@@ -155,11 +114,7 @@ il.data <- il[keeps]
 
 #  The merged dataset is called inil
 inil <- rbind(data.frame(ind.data), data.frame(il.data))
-
-
-
-
-inil<-data.frame(inil, stringsAsFactors = FALSE)
+inil <-data.frame(inil, stringsAsFactors = FALSE)
 
 # visualize the data:
 X11(width = 12)
@@ -167,40 +122,10 @@ ggplot(inil[inil$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),
   scale_color_manual(limits = c("No tree", "Oak", "Beech", "Maple", "Hickory"),values = c("Tan", "Brown", "Blue", "Red","ForestGreen"))
 
 #  There are a set of 99999 values for distances which I assume are meant to be NAs. 
-inil$DIST1[inil$DIST1 == 88888] <- NA
-inil$DIST1[inil$DIST1 == 99999] <- NA
-inil$DIST2[inil$DIST2 == 88888] <- NA
-inil$DIST2[inil$DIST2 == 99999] <- NA
-inil$DIST3[inil$DIST3 == 88888] <- NA
-inil$DIST3[inil$DIST3 == 99999] <- NA
-inil$DIST4[inil$DIST4 == 88888] <- NA
-inil$DIST4[inil$DIST4 == 99999] <- NA
-inil$diameter[inil$diameter == 99999] <- NA 
-inil$diameter[inil$diameter == 88888] <- NA
-inil$diameter2[inil$diameter2 == 99999] <- NA     
-inil$diameter2[inil$diameter2 == 88888] <- NA
-inil$diameter3[inil$diameter3 == 99999] <- NA     
-inil$diameter3[inil$diameter3 == 88888] <- NA
-inil$diameter4[inil$diameter4 == 99999] <- NA     
-inil$diameter4[inil$diameter4 == 88888] <- NA
-inil$degrees[inil$degrees == 99999] <- NA     
-inil$degrees[inil$degrees == 88888] <- NA
-inil$degrees2[inil$degrees2 == 99999] <- NA     
-inil$degrees2[inil$degrees2 == 88888] <- NA
-inil$degrees2[inil$degrees2 == 8888] <- NA
-inil$degrees3[inil$degrees3 == 99999] <- NA     
-inil$degrees3[inil$degrees3 == 88888] <- NA
-inil$degrees4[inil$degrees4 == 99999] <- NA     
-inil$degrees4[inil$degrees4 == 88888] <- NA
-inil$bearing[inil$bearing == 99999] <- NA     
-inil$bearing[inil$bearing == 88888] <- NA
-inil$bearing2[inil$bearing2 == 99999] <- NA     
-inil$bearing2[inil$bearing2 == 88888] <- NA
-inil$bearing2[inil$bearing2 == 8888] <- NA
-inil$bearing3[inil$bearing3 == 99999] <- NA     
-inil$bearing3[inil$bearing3 == 88888] <- NA
-inil$bearing4[inil$bearing4 == 99999] <- NA     
-inil$bearing4[inil$bearing4 == 88888] <- NA
+
+inil[inil == 88888 ] <- NA
+inil[inil == 99999 ] <- NA
+  
 inil$bearing[inil$bearing == ''] <- NA     
 inil$bearing2[inil$bearing2 == ''] <- NA
 inil$bearing3[inil$bearing3 == ''] <- NA     
@@ -208,6 +133,7 @@ inil$bearing4[inil$bearing4 == ''] <- NA
 inil$year[inil$year == 99999] <- NA # our correction factors are by year, so we need the year
 
 summary(inil)
+
 # There are some points in Illinois where distances are listed as 0, but they are "Water" or "wet" or "No tree"
 # Here we change these distnces to 'NA'
 
@@ -466,7 +392,6 @@ colnames(final.data) <- c('PointX','PointY', 'Township','state',
 #  Turn it into a SpatialPointsDataFrame (for YR manuscript):
 coordinates(final.data) <- ~ PointX + PointY
 final.data <- data.frame(final.data)
-summary(final.data[final.data$species1 == c("No tree", "Water", "Wet") & final.data$species2 == c("No tree", "Water", "Wet"),])
 summary(final.data)
 
 
@@ -476,9 +401,6 @@ ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point
 
 
 full.final <- final.data
-test<- full.final[!full.final$corner == "NAIL",] # there are some NA corners in 
-
-
 
 # write the correction factors to a file for reference later:
 Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)

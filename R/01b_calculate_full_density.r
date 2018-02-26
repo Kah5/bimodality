@@ -34,10 +34,7 @@ colnames(correction.factor.mi) <- c("X","Pair", "kappa", "theta", "zeta", "phi")
 final.data <- rbind(final.data, final.data.mi)
 correction.factor <- rbind(correction.factor, correction.factor.mi)
 
-final.data$az1[final.data$az1 <= 0 ] <- NA
-final.data$az2[final.data$az2 <= 0] <- NA
-final.data$az3[final.data$az3 <= 0] <- NA
-final.data$az4[final.data$az4 <= 0] <- NA
+
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]
 
@@ -115,8 +112,6 @@ ggplot(stem.density, aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
 
 
-
-
 #fix the captalized "No tree" problem
 species[species == 'No Tree'] <- 'No tree'
 species[species==""]<- "No tree"
@@ -138,22 +133,22 @@ stem.density$basal[wet.trees] <- 0
 # kill cells with na for x or y:
 stem.density <- stem.density[!is.na(stem.density$x),]
 
-filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
 
 
-filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
 
 # make stem.density spatial
-coordinates(stem.density)<- ~x+y
+coordinates(stem.density) <- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 
 # write to an arcGIS compatible shapefile
@@ -189,19 +184,19 @@ spec.table <- data.frame(PointX = final.data$PointX,
 
 
 
-filter(spec.table, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(spec.table, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
-filter(spec.table, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(spec.table, state == "MI" & township %like% "E" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & township %like% "E" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
 
 
-filter(spec.table, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(spec.table, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Intsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
 
 
 #fix the captalized "No tree" problem
@@ -243,16 +238,9 @@ form <- function(x) {
 #biomass <- rep(NA, nrow(spec.table))
 biomass <- apply(spec.table, 1, form)
 
-#for (i in 1:nrow(spec.table)) {
-  # It's just really slow, so I do it this way to see what's happening.
- # biomass[i] <- form(spec.table[i,])
-  #cat(i,'\n')
-  #flush.console()
-#}
 
 # convert to Mg./hectare
 spec.table$biom <- biomass * spec.table$density / 1000
-#spec.table      <- spec.table[!is.na(spec.table$density), ]
 
 spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already be corrected
 

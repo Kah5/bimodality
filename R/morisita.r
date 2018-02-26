@@ -42,7 +42,7 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   #  points around.  We can accept that these points are categorically wrong.
   #  
   #  
-  #  sum((two.quads == 1 & !(is.na(azim[,1]) | is.na(azim[,2]))))
+  sum((two.quads == 1 & !(is.na(azim[,1]) | is.na(azim[,2]))))
   
 
   #  we need to change:

@@ -652,6 +652,10 @@ grid.arrange(p.bimodalf + ggtitle("FIA binwidth = 0.15"),p.bimodal20f+ggtitle("F
 dev.off()
 
 
+png(height = 4, width = 6, units = "in", res = 300,"outputs/paper_figs/posterior_prob_bimodality_pls_fia.png")
+grid.arrange(p.bimodal50+ggtitle(" ")+ annotate("text", x=-90000, y=1486000,label= "A", size = 3),  
+             p.bimodal50f+ggtitle(" ")+ annotate("text", x=-90000, y=1486000,label= "B", size = 3),  ncol = 2)
+dev.off()
 
 #-------------------Sample probability forest in the future based on pls p(forest)-----------------
 future.pr <- read.csv("outputs/Future_PCA.csv")

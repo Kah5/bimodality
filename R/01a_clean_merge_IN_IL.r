@@ -125,6 +125,7 @@ ggplot(inil[inil$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),
 
 inil[inil == 88888 ] <- NA
 inil[inil == 99999 ] <- NA
+inil[inil == 8888 ] <- NA
   
 inil$bearing[inil$bearing == ''] <- NA     
 inil$bearing2[inil$bearing2 == ''] <- NA
@@ -352,17 +353,13 @@ intqtr <- c(140200, 240200, 340200, 440200, 540200, 640200,
             200640, 300640, 400640, 500640, 600640)
 corner <- rep('NA', length(inil$cornerid))
 
-corner<- ifelse(inil$cornerid %in% intsec, 'intsec',
+corner <- ifelse(inil$cornerid %in% intsec, 'intsec',
        ifelse(inil$cornerid %in% intqtr, 'intqtr',
               ifelse(inil$cornerid %in% extsec, 'extsec',
                      ifelse(inil$cornerid %in% extqtr,  'extqtr',
                             ifelse(inil$typecorner == "(1/4) Section", "intqtr",
                                    ifelse(inil$typecorner == "Section", "intsec", "extsec"))))))
        
-#corner[ inil$cornerid %in% intsec ] <- 'intsec'
-#corner[ inil$cornerid %in% intqtr ] <- 'intqtr'
-#corner[ inil$cornerid %in% extsec ] <- 'extsec'
-#corner[ inil$cornerid %in% extqtr ] <- 'extqtr'
 
 inil$cornertype <- paste0(corner, inil$state)
 
@@ -395,7 +392,10 @@ final.data <- data.frame(final.data)
 summary(final.data)
 
 
-ggplot(data = final.data, aes(x = PointX, y = PointY, color = az2)) + geom_point()
+ggplot(data = final.data, aes(x = PointX, y = PointY, color = dist1)) + geom_point()
+ggplot(final.data[final.data$species1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x = PointX, y = PointY, color = species1))+geom_point(size = 0.05)+coord_equal()+
+  scale_color_manual(limits = c("No tree", "Oak", "Beech", "Maple", "Hickory"),values = c("Tan", "Brown", "Blue", "Red","ForestGreen"))
+
 #hist(c(final.data[!final.data$diam1 == 0 & final.data$state == "IN",]$diam1 , final.data[!final.data$diam2 == 0 & final.data$state == "IN",]$diam2), breaks = 80, xlim=c(0,15), xlab = "Diameter Tree 1 and 2 (in)",
   #   main = "IN only tree diameter distribution")
 
@@ -405,13 +405,33 @@ full.final <- final.data
 # write the correction factors to a file for reference later:
 Pair <- paste0(as.character(full.final$corner), full.final$surveyyear)
 
-corr.factor <- read.csv('data//charlie_corrections.csv')
-test.correct <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
-colnames(test.correct) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
+corr.vals <- read.csv('data/charlie_corrections.csv')
+#corr.vals <- data.frame(corr.factor$Pair,corr.factor$kappa, corr.factor$zeta,corr.factor$theta, corr.factor$phi)
+#colnames(corr.vals) <- c('Pair', 'kappa', 'zeta', 'theta', 'phi')
+corner <- ifelse(inil$cornerid %in% intsec, 'intsec',
+                 ifelse(inil$cornerid %in% intqtr, 'intqtr',
+                        ifelse(inil$cornerid %in% extsec, 'extsec',
+                               ifelse(inil$cornerid %in% extqtr,  'extqtr',
+                                      ifelse(inil$typecorner == "(1/4) Section", "intqtr",
+                                             ifelse(inil$typecorner == "Section", "intsec", "extsec"))))))
+
+internal <- ifelse(!inil$cornerid %in% c("extsec", "extqtr"), 'internal', 'external')
+#trees    <- ifelse(plot.trees == 2, 'P', '2NQ')
+section  <- ifelse(inil$typecorner %in% "Section", 'section', 'quarter-section')
+state <- final.data$state
+
+corr.year     <- as.character(final.data$surveyyear)
+#corr.year[state == 'MI' & final.data$Township %like% "W"] <- 'W'
+#corr.year[state == 'MI' & final.data$Township %like% "E"] <- 'E'
+
+
+match.vec <- apply(corr.vals[,c("Pair", "year", "corner", "sectioncorner")], 1, paste, collapse = '')
+to.match <- apply(data.frame(state, corr.year, internal, section, stringsAsFactors = FALSE), 1, paste, collapse = '')
+
+
 
 # merge corretion factors with the Pair dataset for each inil point
-require(plyr)
-corrections <- join(data.frame(Pair), data.frame(test.correct), type="left")
+corrections <- corr.vals[match(to.match, match.vec),]
 
 write.csv(corrections, 'data/correction_factors.csv')
 

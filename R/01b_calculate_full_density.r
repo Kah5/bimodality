@@ -17,6 +17,9 @@ version <- "1.7-5"
 final.data <- read.csv(paste0("outputs/ndilin_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 # corrections for stem density:
 correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
+colnames(correction.factor) <- c("X","Pair","regions","year","corner" ,      
+                                "sectioncorner", "point" ,"Qdrt.model","kappa","theta" ,       
+                                  "zeta","phi")
 final.data <- final.data[,1:23]
 
 # read in final data from michigan
@@ -25,11 +28,9 @@ final.data.mi <- final.data.mi[!names(final.data.mi) %in% c("cornertype", "NA.")
 
 # corrections for stem density:
 correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
-correction.factor.mi <- correction.factor.mi[!names(correction.factor.mi) %in% c("X.1", "State", "Internal", "Section")]
-colnames(correction.factor.mi) <- c("X","Pair", "kappa", "theta", "zeta", "phi")
+
+
 # add the lower MI data below the INIL data: 
-
-
 
 final.data <- rbind(final.data, final.data.mi)
 correction.factor <- rbind(correction.factor, correction.factor.mi)
@@ -38,7 +39,7 @@ correction.factor <- rbind(correction.factor, correction.factor.mi)
 # also join together the lower MI species and upper mi species
 species <- final.data[,14:17]
 
-ggplot(final.data, aes(PointX, PointY, color = diam2))+geom_point(size = 0.2)
+ggplot(final.data, aes(PointX, PointY, color = az1))+geom_point(size = 0.2)
 
 #------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
@@ -108,7 +109,7 @@ stem.density <- data.frame(x = final.data$PointX,
 #stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 #stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-ggplot(stem.density, aes(x, y, color=density))+geom_point(size = 0.5)
+ggplot(stem.density[stem.density$density <= 1000,], aes(x, y, color=density))+geom_point(size = 0.5)
 # ---------------------fixing some lingering data naming issues:-------------------
 
 
@@ -132,15 +133,17 @@ stem.density$basal[wet.trees] <- 0
 
 # kill cells with na for x or y:
 stem.density <- stem.density[!is.na(stem.density$x),]
+stem.density <- data.frame(stem.density)
 
-#filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+library(dplyr)
+filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-#filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
-#filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-#filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
 
 
 #filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
@@ -390,8 +393,8 @@ plot(dens)
 plot(biomass, main = "Mean total biomass (Mg/ha)", xlab ="Easting", ylab = "Northing") 
 plot(dens, xlim= c(320000 ,991200.5), ylim = c(104720.2,998673.5), main = "Mean stem density (stems/ha)", xlab ="Easting", ylab = "Northing")
 #plot(biomass, xlim= c(320000 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean biomass (Mg/ha)", xlab ="Easting", ylab = "Northing")
-plot(basal, xlim= c(592741.1 ,861200.5), ylim = c(104720.2,708673.5), main = "Mean basal area")
-plot(mdiam,  main = "Mean tree diameter (cm)", xlab ="Easting", ylab = "Northing")
+plot(basal, xlim=  c(320000 ,991200.5), ylim = c(104720.2,998673.5), main = "Mean basal area")
+plot(mdiam,   xlim=  c(320000 ,991200.5), ylim = c(104720.2,998673.5),main = "Mean tree diameter (cm)", xlab ="Easting", ylab = "Northing")
 #dev.off()
 
 
@@ -501,7 +504,7 @@ add.v(diameter.full, 'plss_spec_diam', row.names=FALSE)
 add.v(diam.table, 'plss_diam', row.names=FALSE)
 
 # extra stuff to look at density estimates for now
-ggplot(density.full, aes(x = x, y=y, fill = Oak))+geom_raster()
+#ggplot(density.full, aes(x = x, y=y, fill = Oak))+geom_raster()
 
 #density.table$ecotype<- 'test'
 #ecotype <- ifelse(density.table$total == 0,  "prairie", 

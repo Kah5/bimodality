@@ -11,8 +11,9 @@ library(raster)
 library(rgdal)
 
 # load PLS data from 04_combine_umw_pls_fia.R
-density.full <- comps <- full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
-
+full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
+full.spec <- full.spec[!is.na(full.spec$cell),]
+density.full <- comps <- full.spec
 summary(comps)
 
 #----------------------k-mediods cluster analysis---------------------------------
@@ -22,7 +23,7 @@ summary(comps)
 library(cluster)
 
 
-
+comps <- comps[!is.na(comps$Oak),]
 set.seed(11)
 
 # use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each
@@ -386,12 +387,12 @@ classes.9 <- pam(fcomps[,5:ncol(fcomps)], k = 9, diss = FALSE,  keep.diss = TRUE
 
 
 
-summary(classes.8) # Avg. Silhouette width = 0.3341524
-summary(classes.7) # Avg. Silhouette width = 0.3205277
-summary(classes.6) # Avg. Silhouette width = 0.3066968
-summary(classes.5) # Avg. Silhouette width = 0.29738
-summary(classes.4) # Avg. Silhouette width = 0.2133939
-summary(classes.3) # Avg. Silhouette width = 0.20429
+summary(classes.8) # Avg. Silhouette width = 0.2352843
+summary(classes.7) # Avg. Silhouette width = 0.2525737
+summary(classes.6) # Avg. Silhouette width = 0.2362255
+summary(classes.5) # Avg. Silhouette width = 0.2139102
+summary(classes.4) # Avg. Silhouette width = 0.2081704
+summary(classes.3) # Avg. Silhouette width = 0.1584407
 fcomps$idvar <- 1:nrow(fcomps)
 
 #mediods <- fcomps[fcomps$idvar %in%  classes.5$medoids,]
@@ -548,3 +549,115 @@ write.csv(clust_plot6f, "outputs/six_clust_fia_dissimilarity.csv", row.names = F
 png(width = 10, height=4, units="in", res=300, "outputs/paper_figs/Fig_S1CD.png")
 grid.arrange(pls.clust, fia.clust, ncol = 2)
 dev.off()
+
+
+
+# map out the clusters from the previoius FIA surveys:
+
+prevcomps <- read.csv("outputs/cluster/fullcomps_oldsurvey.csv")
+prev1980 <- prevcomps[prevcomps$period %in% "Modern-1980s",]
+prev1990 <- prevcomps[prevcomps$period %in% "Modern-1990s",]
+
+
+classes.5.1980 <- pam(prev1980[,5:ncol(prev1980)], k = 5, diss = FALSE,  keep.diss = TRUE)
+summary(classes.5.1980) # avg silhouette width = 0.2624983
+
+classes.5.1990 <- pam(prev1990[,5:ncol(prev1990)], k = 5, diss = FALSE,  keep.diss = TRUE)
+summary(classes.5.1990) # avg silhouette width = 0.246144
+
+mediods5.1980 <- prev1980$cell [classes.5.1980$id.med]
+index <- rownames(prev1980[prev1980$cell %in% mediods5.1980,])
+
+#index <- fcomps[fcomps$cell %in% mediods,]$idvar
+
+df5 <- prev1980[prev1980$cell %in% mediods5.1980,] # look at the rows that have the mediods
+
+old_classes <- classes.5.1980
+
+#[1] 1292 2201 4618 4978 4604# idvars of the mediods
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c(  'Oak/Maple',
+                                'Maple/Oak/Ash/Poplar', # 2
+                                "Pine/Poplar", # 4
+                                'Maple', # 1,
+                                
+                                'Aspen'#3
+                                
+                     ))
+
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c( 'Oak/Maple',
+                               'Maple/Ash/Birch/Aspen', # 2
+                               "Pine/Poplar",
+                               'Maple', # 1,
+                               
+                               'Aspen'#3
+                                
+                               
+                               
+                     ))
+
+clust_plot5.1980 <- data.frame(prev1980, 
+                          speciescluster = rem_class5,
+                          clustNum = as.numeric(rem_class5))
+                          #diss1 = diss.f5.dissimilarity[,1],
+                          #diss2 = diss.f5.dissimilarity[,2],
+                          #diss3 = diss.f5.dissimilarity[,3],
+                          #diss4 = diss.f5.dissimilarity[,4],
+                          #diss5 = diss.f5.dissimilarity[,5])
+
+
+ggplot(clust_plot5.1980, aes(x,y,fill = speciescluster))+geom_raster()
+
+
+
+classes.5.1990 <- pam(prev1990[,5:ncol(prev1990)], k = 5, diss = FALSE,  keep.diss = TRUE)
+summary(classes.5.1990) # avg silhouette width = 0.246144
+
+mediods5.1990 <- prev1990$cell [classes.5.1990$id.med]
+index <- rownames(prev1990[prev1990$cell %in% mediods5.1990,])
+
+#index <- fcomps[fcomps$cell %in% mediods,]$idvar
+
+df5 <- prev1990[prev1990$cell %in% mediods5.1990,] # look at the rows that have the mediods
+
+old_classes <- classes.5.1990
+
+#[1] 1292 2201 4618 4978 4604# idvars of the mediods
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c( 'Oak/Maple', 
+                          'Maple/Oak/Ash/Poplar', # 2
+                                "Pine/Poplar", # 4
+                                'Maple', # 1,
+                                
+                                'Aspen'#3
+                                
+                     ))
+
+rem_class5 <- factor(old_classes$clustering,
+                     labels=c( 'Oak/Maple',
+                               'Maple/Ash/Birch/Aspen', # 2
+                               "Pine/Poplar",
+                               'Maple', # 1,
+                               
+                               'Aspen'#3
+                               
+                               
+                               
+                     ))
+
+clust_plot5.1990 <- data.frame(prev1990, 
+                               speciescluster = rem_class5,
+                               clustNum = as.numeric(rem_class5))
+#diss1 = diss.f5.dissimilarity[,1],
+#diss2 = diss.f5.dissimilarity[,2],
+#diss3 = diss.f5.dissimilarity[,3],
+#diss4 = diss.f5.dissimilarity[,4],
+#diss5 = diss.f5.dissimilarity[,5])
+
+
+ggplot(clust_plot5.1990, aes(x,y,fill = speciescluster))+geom_raster()
+
+
+write.csv(clust_plot5.1990, "outputs/cluster/density_fia_1990s_with_clusters.csv", row.names = FALSE)
+write.csv(clust_plot5.1980, "outputs/cluster/density_fia_1980s_with_clusters.csv", row.names = FALSE)

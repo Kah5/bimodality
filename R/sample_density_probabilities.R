@@ -7,10 +7,10 @@ library(diptest)
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 
-pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
+pls$ecotype <- ifelse(pls$PLSdensity > 100, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
 
 # dummyvariables for logistic regression:
-pls$ecocode <- NA
+pls$ecocode <- 0
 pls[pls$ecotype %in% 'Forest', ]$ecocode <- 1
 pls[pls$ecotype %in% 'Savanna', ]$ecocode <- 0
 #pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
@@ -20,15 +20,15 @@ pls[pls$ecotype %in% 'Savanna', ]$ecocode <- 0
 
 pls$prob_forest <- NA
 
-pls <- pls[!is.na(pls$PC1fia), ]
+pls <- pls[!is.na(pls$PC1), ]
 pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
 
 # this for loop is not ideal, but it works:
 for(i in 1:length(pls$prob_forest)){
       
       x <- pls[i,]
-      low <- x$PC1 - 0.15
-      high <- x$PC1 + 0.15
+      low <- x$PC1 - 0.5
+      high <- x$PC1 + 0.5
       # sample the number of forests and savannas in each climate range, with replacement:
       forest.cell <- sample(pls.density[pls.density$PC1fia >= low  & pls.density$PC1fia < high,]$cell, size = 100, replace = TRUE)
       forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
@@ -67,7 +67,7 @@ for(i in 1:length(pls$prob_forest)){
 
 # plot out the probability of forests in the pls region:
 ggplot(pls, aes(x,y, fill = prob_forest))+geom_raster()
-
+ggplot(pls, aes(x,y, fill = ecotype))+geom_raster()
 
 # create discrete probability cuts
 label.breaks <- function(beg, end, splitby){

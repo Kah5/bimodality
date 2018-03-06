@@ -123,6 +123,66 @@ ggplot(fia.by.cell, aes(FIAdensity)) + geom_histogram() + xlim(0,500)+facet_wrap
 
 ggplot(fia.by.cell, aes(x,y, fill = FIAdensity)) + geom_raster() + facet_wrap(~INVYRcd)
 
+ggplot(fia.by.cell, aes( FIAdensity, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+ggplot(fia.by.cell, aes(Hemlock, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+ggplot(fia.by.cell, aes(Beech, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+
 # need to check this method but it gives reasonable vals
 
+
 write.csv(fia.by.cell, "data/FIA_plot_data/fia.by.cell.out_1980_1990.csv", row.names = FALSE)
+
+#---------------------------------------------------------------------
+# Which types of grid cells are being logged??
+
+wiplot.new <- wiplot[wiplot$INVYR > 1999,]
+wicond.new <- wicond[wicond$INVYR > 1999,] 
+witree.new <- witree[witree$INVYR > 1999,] 
+
+miplot.new <- miplot[miplot$INVYR > 1999,]
+micond.new <- micond[micond$INVYR > 1999,] 
+mitree.new <- mitree[mitree$INVYR > 1999,] 
+
+mnplot.new <- mnplot[mnplot$INVYR > 1999,]
+mncond.new <- mncond[mncond$INVYR > 1999,] 
+mntree.new <- mntree[mntree$INVYR > 1999,] 
+
+inplot.new <- inplot[inplot$INVYR > 1999,]
+incond.new <- incond[incond$INVYR > 1999,] 
+intree.new <- intree[intree$INVYR > 1999,] 
+
+ilplot.new <- ilplot[ilplot$INVYR > 1999,]
+ilcond.new <- ilcond[ilcond$INVYR > 1999,] 
+iltree.new <- iltree[iltree$INVYR > 1999,] 
+
+
+plot.new <- rbind(inplot.new, ilplot.new, miplot.new, mnplot.new, wiplot.new)
+cond.new <- rbind(incond.new, ilcond.new, micond.new, mncond.new, wicond.new)
+tree.new <- rbind(intree.new, iltree.new, mitree.new, mntree.new, witree.new)
+
+
+
+tree.new <- tree.new[tree.new$STATUSCD == 1,]
+tree.new$DIA <- tree.new$DIA*2.54
+tree.new <- tree.new[tree.new$DIA >= 20.32,]
+test1 <- merge(plot.new, cond.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR","STDAGE", "TRTCD1", "DSTRBCD1")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD"))
+test <- merge(test1, tree.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD", "PLT_CN"))
+
+
+merged.tree <- test
+
+merged.tree$TRTcode <- as.character(merged.tree$TRTCD1)
+ggplot(merged.tree, aes(LON,LAT, color = TRTcode))+geom_point(size = 0.5)+facet_wrap(~INVYR)
+
+cut.plots <- merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),]
+
+uncut.plots <- merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),]
+
+
+
+
+disturb.count <- merged.tree %>% dplyr::count(PLT_CN, INVYR, STATECD, PLOT,LAT,LON, TRTCD1)
+cut.log.treat <- disturb.count[disturb.count$TRTCD1 > 0,]
+ggplot(disturb.count, aes(LON, LAT, color = TRTCD1))+geom_point()+facet_wrap(~INVYR)
+length(disturb.count$n)
+

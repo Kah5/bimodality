@@ -700,20 +700,23 @@ cells <- fullcomps[fullcomps$period %in% "Past",]$cell
 fullcomps <- fullcomps[fullcomps$cell %in% cells, ]
 fullcomps <- fullcomps[! duplicated(fullcomps),]
 fullcomps <-fc <- na.omit(fullcomps) 
-
-fullcomps <- fullcomps[!names(fullcomps) %in% c("No.tree", "Other.softwood", "period", "FIAdensity", "PLSdensity", "Sweet.gum.1")]
+fullcomps.old <- fc.old <- fullcomps[!fullcomps$period %in% "Past",]
+fullcomps.old <- fullcomps.old[!names(fullcomps.old) %in% c("No.tree", "Other.softwood", "period", "FIAdensity", "PLSdensity", "Sweet.gum.1")]
 
 ggplot(fc, aes(Oak, fill = period))+geom_histogram()+facet_wrap(~period)
 
 # pca on the scaled data
-full.pca <- princomp(scale(fullcomps[,4:ncol(fullcomps)], center = TRUE))#scale to 0 variance
-plot(full.pca)
+
+cc <- scale(fullcomps.old[,4:ncol(fullcomps.old)])
+cc[is.na(cc)]<- 0
+newscores <- predict(full.pca, newdata=cc)
+
 
 #biplot(full.pca)
-scores <- full.pca$scores
+scores <- newscores
 
-fc$pc1 <- scores[,1]
-fc$pc2 <- scores[,2]
+fc.old$pc1 <- scores[,1]
+fc.old$pc2 <- scores[,2]
 
 
 
@@ -726,22 +729,22 @@ source("R/newggbiplot.R")
 
 g <- newggbiplot(full.pca, obs.scale = 1, var.scale = 1, labels.size
                  = 25,alpha = 0,color = "blue",  alpha_arrow = 1, line.size = 1.5, scale = TRUE)
-g$layers <- c(geom_point(data = fc, aes(x = pc1, y = pc2, color = period)), g$layers)
+g$layers <- c(geom_point(data = fc.old, aes(x = pc1, y = pc2, color = period)), g$layers)
 
-png("outputs/cluster/full_composition_PCA_biplot_w_somi.png")
+png("outputs/cluster/full_composition_PCA_biplot_w_somi_old_fia.png")
 g + theme_bw()
 dev.off()
 
-png("outputs/cluster/full_composition_PCA1_maps_w_somi.png")
-ggplot(data = fc, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
+png("outputs/cluster/full_composition_PCA1_maps_w_somi_old_fia.png")
+ggplot(data = fc.old, aes(x = x, y=y, fill = pc1))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
 dev.off()
 
-png("outputs/cluster/full_composition_PCA2_maps.png")
-ggplot(data = fc, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
+png("outputs/cluster/full_composition_PCA2_maps_oldfia.png")
+ggplot(data = fc.old, aes(x = x, y=y, fill = pc2))+geom_raster()+facet_wrap(~period)+theme_bw()+coord_equal()
 dev.off()
 
 
 
 
-write.csv(fc, "outputs/full_comp_pcs_old_surveys.csv", row.names = FALSE)
+write.csv(fc.old, "outputs/full_comp_pcs_old_surveys.csv", row.names = FALSE)
 

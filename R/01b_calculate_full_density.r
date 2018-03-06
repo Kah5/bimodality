@@ -29,6 +29,11 @@ final.data.mi <- final.data.mi[!names(final.data.mi) %in% c("cornertype", "NA.")
 # corrections for stem density:
 correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
 
+# read in UMW data:
+final.data.umw <- read.csv("data/outputs/Point_Data_From_Goringetal16_used_data_alb.csv", stringsAsFactors = FALSE)
+# corrections for stem density:
+correction.factor.umw <- read.csv("outputs/umw_corrections.csv", header = TRUE)
+
 
 # add the lower MI data below the INIL data: 
 
@@ -120,7 +125,7 @@ species[species==""]<- "No tree"
 #change all No tree densities to 0
 stem.density$density[species[,1] == 'No tree'| species[,2]=='No tree'] <- 0
 #classify trees as zero or as wet trees
-zero.trees <- is.na(stem.density$density) & (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
+zero.trees <- is.na(stem.density$density) | (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
 wet.trees <- (species[,2] %in% c('Wet', "Water") | species[,1] %in% c('Wet','Water'))
 
 #designate all zero trees as density of 0
@@ -259,7 +264,12 @@ spec.table<- read.csv(file = paste0('outputs/density_biomass_pointwise.ests_inil
                        version, 
                        '.csv'))
 
-pre.quantile <- spec.table
+#  Any one tree plot will have the first tree listed, the second not:
+one_tree <- c(which(!species[,1] %in% "No tree" & species[,2] %in% "No tree"),
+              which(species[,1] %in% "No tree" & !species[,2] %in% "No tree"))
+
+spec.table <- subset(spec.table, !point %in% one_tree)
+
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.995, na.rm=TRUE)
@@ -465,7 +475,7 @@ comp.inil <- composition.table[complete.cases(composition.table),]
 #extract biomass.full table by the extent of the state of indiana to get a datatable
 #with just indiana data
 
-biomass.df.test <- extract(biomass, extent(ind_il), cellnumbers=TRUE, xy=TRUE)
+biomass.df.test <- raster::extract(biomass, extent(ind_il), cellnumbers=TRUE, xy=TRUE)
 #biomass.df.test has the cell numbers of the extent of indiana, so I will use these
 
 #get the indiana biomass.full cells out of biomass.full

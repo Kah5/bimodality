@@ -43,7 +43,7 @@ mich <- read.csv("data/southernmi_projected_v1/southernMI_projected_v1.0.csv", s
 head(mich) 
 
 
-ggplot(mich[mich$L3_tree1 %in% "No tree",], aes(point_x, point_y))+geom_point(size = 0.1)+theme(legend.position = "none")
+ggplot(mich[mich$L3_tree1 %in% "Oak",], aes(point_x, point_y))+geom_point(size = 0.1)+theme(legend.position = "none")
 
 
 
@@ -294,9 +294,9 @@ ggplot(final.data, aes(PointX, PointY, color = dist2))+geom_point()+scale_color_
 used.data <- final.data
 # --------------------generate correction factors------------------------------:
 # read in the correction factors provided by Charlie Cogbill:
-corr.vals <- read.csv('data/cogbill_corrections.csv')
+#corr.vals <- read.csv('data/cogbill_corrections.csv')
 
-
+corr.vals <- read.csv('data/charlie_corrections_full_midwest.csv')
 correction <- data.frame(kappa = rep(NA, length(used.data)),
                          theta = rep(NA, length(used.data)),
                          zeta  = rep(NA, length(used.data)),
@@ -306,26 +306,39 @@ species2table <- data.frame(species1 = final.data$species1,
                             species2 = final.data$species2,
                             species3 = final.data$species3,
                             species4 = final.data$species4)
-plot.trees <- rowSums(!(species2table == 'Water' | species2table == 'NonTree'), na.rm = TRUE)
+
+aztable <- data.frame(az1 = final.data$az1,
+                            az2 = final.data$az2,
+                            az3 = final.data$az3,
+                            az4 = final.data$az4)
+qtable <- aztable
+
+qtable[qtable <= 90 ] <- 1
+qtable[qtable > 90 & qtable <=180 ] <- 2
+qtable[qtable > 180 & qtable <=240 ] <- 3
+qtable[qtable > 240 & qtable <=360 ] <- 4
+
+plot.trees <- rowSums(!(species2table == 'Water' | species2table == 'No tree'), na.rm = TRUE)
 
 point.no <- as.character(final.data$corner)
 
 #  So there are a set of classes here, we can match them all up:
 
 internal <- ifelse(!point.no %in% "Extsec", 'internal', 'external')
-trees    <- ifelse(plot.trees == 2, 'P', '2NQ')
-section  <- ifelse(final.data$cornertype %in% "section", 'section', 'quartersection')
+trees    <- ifelse(plot.trees == 2, 'P', '2nQ')
+section  <- ifelse(final.data$cornertype %in% "section", 'section', 'quarter-section')
 state <- final.data$state
 
-corr.year     <- as.character(final.data$year)
-corr.year[state == 'MI' & final.data$Township %like% "W"] <- 'W'
-corr.year[state == 'MI' & final.data$Township %like% "E"] <- 'E'
 
-match.vec <- apply(corr.vals[,1:4], 1, paste, collapse = '')
-to.match <- apply(data.frame(state, corr.year, internal, section, stringsAsFactors = FALSE), 1, paste, collapse = '')
+corr.year     <- as.character(final.data$year)
+corr.year[state == 'MI' & final.data$Township %like% "W"] <- 'SW'
+corr.year[state == 'MI' & final.data$Township %like% "E"] <- 'SE'
+
+match.vec <- apply(corr.vals[,c("Pair", "year", "corner", "sectioncorner", "point")], 1, paste, collapse = '')
+to.match <- apply(data.frame(state, corr.year, internal, section,trees, stringsAsFactors = FALSE), 1, paste, collapse = '')
 
 correction <- corr.vals[match(to.match, match.vec),]
-
+correction$kappa <- as.numeric(as.character(correction$kappa))
 
 write.csv(correction, 'data/MI_correction_factors.csv')
 

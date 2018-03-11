@@ -100,8 +100,8 @@ morisita <- function(processed.data, correction.factor = NULL, veil=FALSE) {
   
   #  Basal area is the average diameter times the stem density.
   #  The stem density is measured in trees / ha.
-  #met.rad <- (diam / 2)*2.54 / 100
-  met.rad <- (diam / 2)/100
+  met.rad <- (diam / 2)*2.54 / 100
+  #met.rad <- (diam / 2)/100
   basal.area <- morisita.est * rowSums(pi * met.rad^2, na.rm=TRUE)
   
   basal.area[ q < 2 ] <- NA

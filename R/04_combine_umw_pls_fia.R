@@ -24,8 +24,9 @@ library(rgdal)
 
 
 # read in pont level density data
-pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'))
+#pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'))
 #pls.inil <- read.csv(paste0('outputs/density_biomass_pointwise.ests_inilmi_v1.7-5.csv'))
+pls.inil <- read.csv(paste0('outputs/biomass_no_na_pointwise.ests_full_MW_v1.7-5.csv'))
 pls.inil <- pls.inil[!is.na(pls.inil$spec),]
 
 
@@ -59,6 +60,7 @@ colnames(pls.new) <- c('x', 'y', 'cell','PLSdensity')
 #pls.spec$PLSdensity[pls.spec$PLSdensity > nine.nine.pct['99.5%']] <- nine.nine.pct['99.5%']
 
 summary(pls.spec)
+
 # -----------------------read in Uppermidwest data at paleon grid scale
 umdw <- read.csv('data/plss_density_alb_v0.9-10.csv')
 #umdw.mean <- dcast(umdw, x + y + cell ~., mean, na.rm = TRUE, value.var = 'density')
@@ -67,8 +69,8 @@ umdw.new <- umdw[,c('x', 'y', 'cell', "PLSdensity")]
 colnames(umdw.new) <- c('x', 'y', 'cell', 'PLSdensity')
 
 # combine density data: 
-densitys <- rbind(pls.new[,c("x", "y", "cell", "PLSdensity")], umdw.new)
-
+#densitys <- rbind(pls.new[,c("x", "y", "cell", "PLSdensity")], umdw.new)
+densitys <- pls.spec
 
 #note that for some reason, 1 grid cell is duplicated
 nodups <- densitys[!duplicated(densitys$cell),] # remove dups
@@ -80,8 +82,13 @@ hist(densitys$PLSdensity, breaks = 50)
 #map out density:
 ggplot(densitys, aes(x,y,color = PLSdensity))+geom_point()
 
+# merge with simons estimates to see if they match
+test.merge <- merge(umdw.new, densitys, by = c("x", "y", "cell"))
+ggplot(test.merge, aes(PLSdensity.x, PLSdensity.y))+geom_point(size = 0.1)
 
-
+test.merge$diff<- test.merge$PLSdensity.x - test.merge$PLSdensity.y
+ggplot(test.merge, aes(x,y, fill = diff))+geom_raster()#+scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  
 
 hist(densitys$PLSdensity, breaks = 50)
 hist(densitys[densitys$PLSdensity > 0.5,]$PLSdensity, breaks = 100)
@@ -136,8 +143,9 @@ pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =l
   geom_raster(data=densitys, aes(x=x, y=y, fill = PLSdensity))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="PLS tree density") + 
-  scale_fill_gradientn(colours = cbpalette, limits = c(0,700), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,600), name ="Tree \n Density \n (trees/hectare)", na.value = 'darkgrey') +
   coord_equal()+theme_bw()
+pls.map
 
 workingdir <- "/Users/kah/Documents/bimodality"
 

@@ -365,6 +365,10 @@ inil$cornertype <- paste0(corner, inil$state)
 
 
 #These are the columns for the final dataset.
+internal <- ifelse(!inil$cornerid %in% c("extsec", "extqtr", "external"), 'internal', 'external')
+#trees    <- ifelse(plot.trees == 2, 'P', '2NQ')
+section  <- ifelse(inil$typecorner %in% "Section", 'section', 'quarter-section')
+point <- rep("P", length(inil$typecorner))
 
 final.data <- data.frame(inil$x,
                          inil$y,
@@ -373,15 +377,17 @@ final.data <- data.frame(inil$x,
                          ranked.data[,1:8],
                          species[,1:4],
                          ranked.data[,13:16], 
-                         inil$cornertype,
+                         internal,
+                         section,
                          inil$surveyyear,
+                         point,
                          stringsAsFactors = FALSE)
 
 colnames(final.data) <- c('PointX','PointY', 'Township','state',
                           paste('diam',    1:4, sep =''),
                           paste('dist',    1:4, sep = ''), 
                           paste('species', 1:4, sep = ''),
-                          paste('az',      1:4, sep = ''), 'corner', 'surveyyear')
+                          paste('az',      1:4, sep = ''), 'corner', "sectioncorner",'surveyyear', "point")
 
                           
 # part of the high density problem in indiana might be due to a large number of points with really low distances                  
@@ -392,7 +398,7 @@ final.data <- data.frame(final.data)
 summary(final.data)
 
 
-ggplot(data = final.data, aes(x = PointX, y = PointY, color = dist1)) + geom_point()
+#ggplot(data = final.data, aes(x = PointX, y = PointY, color = dist1)) + geom_point()
 ggplot(final.data[final.data$species1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x = PointX, y = PointY, color = species1))+geom_point(size = 0.05)+coord_equal()+
   scale_color_manual(limits = c("No tree", "Oak", "Beech", "Maple", "Hickory"),values = c("Tan", "Brown", "Blue", "Red","ForestGreen"))
 
@@ -415,7 +421,7 @@ corner <- ifelse(inil$cornerid %in% intsec, 'intsec',
                                       ifelse(inil$typecorner == "(1/4) Section", "intqtr",
                                              ifelse(inil$typecorner == "Section", "intsec", "extsec"))))))
 
-internal <- ifelse(!inil$cornerid %in% c("extsec", "extqtr"), 'internal', 'external')
+internal <- ifelse(!inil$cornerid %in% c("extsec", "extqtr", "external"), 'internal', 'external')
 #trees    <- ifelse(plot.trees == 2, 'P', '2NQ')
 section  <- ifelse(inil$typecorner %in% "Section", 'section', 'quarter-section')
 state <- final.data$state
@@ -437,5 +443,5 @@ write.csv(corrections, 'data/correction_factors.csv')
 
 
 #write the data as a csv
-write.csv(full.final, paste0("outputs/ndilin_pls_for_density_v",version,".csv"))
+write.csv(full.final, paste0("outputs/ndilin_pls_for_density_v",version,".csv"), row.names = FALSE )
 

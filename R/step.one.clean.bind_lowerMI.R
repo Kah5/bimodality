@@ -229,11 +229,25 @@ species <- data.frame(species1 = sp.levels[as.numeric(ranked.data[, 9])],
                       species3 = sp.levels[as.numeric(ranked.data[,11])],
                       species4 = sp.levels[as.numeric(ranked.data[,12])])
 
-year <- rep("NA", length(species$species1))
-state <- data.frame(state = rep("MI", length(species$species1)))
 
 corner <- mich$sec_corner
 
+state <- rep("Michigan", length(species$species1))
+year <- rep("NA", length(species$species1))
+
+# assign year as the SW or SE of michigan (this is just for correction factors)
+year[state == 'Michigan' & nwmw$twnrng %like% "W"] <- 'SW'
+year[state == 'Michigan' & nwmw$twnrng %like% "E"] <- 'SE'
+
+plot.trees <- rowSums(!(species == 'Water' | species == 'No tree'), na.rm = TRUE)
+
+point.no <- as.character( mich$sec_corner)
+
+#  So there are a set of classes here, we can match them all up:
+
+internal <- ifelse(!point.no %in% "Extsec", 'internal', 'external')
+trees    <- ifelse(plot.trees == 2, 'P', '2nQ')
+section  <- ifelse(mich$sec_corner %in% "section", 'section', 'quarter-section')
 
 
 #  These are the columns for the final dataset.
@@ -245,17 +259,17 @@ final.data <- data.frame(nwmw$point_x,
                         ranked.data[,1:8],
                         species,
                         ranked.data[,13:16],
-                        corner,
-                        nwmw$cornertype,
+                        internal,
+                        section,
                         year ,
-                        nwmw$twnrng,
+                        trees,
                         stringsAsFactors = FALSE)
 
 colnames(final.data) <- c('PointX','PointY', 'Township',"state",
                           paste('diam',    1:4, sep =''),
                           paste('dist',    1:4, sep = ''), 
                           paste('species', 1:4, sep = ''),
-                          paste('az',      1:4, sep = ''), 'corner',"cornertype",'surveyyear')
+                          paste('az',      1:4, sep = ''), 'corner',"sectioncorner",'surveyyear', 'point')
 
 
 final.data$az1[final.data$az1 <= 0 ] <- NA
@@ -267,7 +281,7 @@ summary(final.data)
 final.data <- final.data[!is.na(final.data$PointX),]
 # kill ths cells that are not == Extsec or ==Intsec
 
-final.data <- final.data[final.data$corner %in% c("Extsec", "Intsec"),]
+#final.data <- final.data[final.data$corner %in% c("Extsec", "Intsec"),]
 
 # now kill missing cells:
 
@@ -277,7 +291,7 @@ final.data <- final.data[ !final.data$PointY < 1000, ]
 
 
 #write data to a csv:
-write.csv(final.data, "data/lower_mi_final_data.csv")
+write.csv(final.data, "data/lower_mi_final_data.csv", row.names = FALSE)
 #note there are still many NA values in the dataset--need to remove these!
 
 X11(width=12)

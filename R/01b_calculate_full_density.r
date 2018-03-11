@@ -16,35 +16,44 @@ version <- "1.7-5"
 #read in final.data from the step_one_clean_IN.r script:
 final.data <- read.csv(paste0("outputs/ndilin_pls_for_density_v",version,".csv"), stringsAsFactors = FALSE)
 # corrections for stem density:
-correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
-colnames(correction.factor) <- c("X","Pair","regions","year","corner" ,      
-                                "sectioncorner", "point" ,"Qdrt.model","kappa","theta" ,       
-                                  "zeta","phi")
-final.data <- final.data[,1:23]
+#correction.factor <- read.csv("data//correction_factors.csv", header = TRUE)
+
+#colnames(correction.factor) <- c("X","Pair","regions","year","corner" ,      
+                        #        "sectioncorner", "point" ,"Qdrt.model","kappa","theta" ,       
+                         #         "zeta","phi")
+final.data <- final.data[,1:24]
 
 # read in final data from michigan
 final.data.mi <- read.csv(paste0("data/lower_mi_final_data.csv"), stringsAsFactors = FALSE)
 final.data.mi <- final.data.mi[!names(final.data.mi) %in% c("cornertype", "NA.")]
 
 # corrections for stem density:
-correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
+#correction.factor.mi <- read.csv("data//MI_correction_factors.csv", header = TRUE)
 
 # read in UMW data:
 final.data.umw <- read.csv("data/outputs/Point_Data_From_Goringetal16_used_data_alb.csv", stringsAsFactors = FALSE)
 # corrections for stem density:
-correction.factor.umw <- read.csv("outputs/umw_corrections.csv", header = TRUE)
+#correction.factor.umw <- read.csv("outputs/umw_corrections.csv", header = TRUE)
 
 
 # add the lower MI data below the INIL data: 
 
-final.data <- rbind(final.data, final.data.mi)
-correction.factor <- rbind(correction.factor, correction.factor.mi)
+final.data <- rbind(final.data, final.data.mi, final.data.umw)
+#final.data <- final.data.umw
+
+# read in charlies correction factor matching table:
+
+corr.vals <- read.csv('data/charlie_corrections_full_midwest_mi_all.csv')
+match.vec <- apply(corr.vals[,c("state", "year", "corner", "sectioncorner")], 1, paste, collapse = '')
+to.match <- apply(data.frame(final.data$state, final.data$surveyyear, final.data$corner, final.data$sectioncorner, stringsAsFactors = FALSE), 1, paste, collapse = '')
+
+correction.factor <- corr.vals[match(to.match, match.vec),]
 
 
 # also join together the lower MI species and upper mi species
-species <- final.data[,14:17]
+species <- final.data[,13:16]
 
-ggplot(final.data, aes(PointX, PointY, color = az1))+geom_point(size = 0.2)
+ggplot(final.data, aes(PointX, PointY, color = diam1))+geom_point(size = 0.2)
 
 #------------------------Estimate Tree Density-----------------------------------
 ## Morisita estimates for indiana densities and basal area with charlies correction factors
@@ -52,7 +61,7 @@ ggplot(final.data, aes(PointX, PointY, color = az1))+geom_point(size = 0.2)
 source('R/morisita.r') # morisita density estimator from Simon Goring's Witness Trees code
 
 # morisita function calculates basal area and stem density
-estimates <- morisita(final.data, correction.factor, veil = TRUE)
+estimates <- morisita(final.data, correction.factor, veil = FALSE)
 
 stem.density <- estimates[[1]]
 basal.area <- estimates[[2]]
@@ -60,7 +69,11 @@ basal.area <- estimates[[2]]
 # there are some very high estimates of stem density 
 summary(stem.density)
 summary(basal.area)
-zero.trees <- is.na(stem.density) 
+#zero.trees <- is.na(stem.density) 
+
+zero.trees <- is.na(stem.density) & 
+  (species[,2] %in% c('No tree', 'Water') | 
+     species[,1] %in% c('No tree', 'Water'))
 
 #plot Histogram of point estimates of stem density
 hist(stem.density, breaks = 1000, xlim = c(0,1000))
@@ -74,7 +87,7 @@ summary(basal.area)
 
 # make into a data frame and export as csv
 stem.density <- data.frame(stem.density, basal.area, final.data)
-write.csv(stem.density, paste0('outputs/IN_IL_MI_densestimates_v',version,'.csv'))
+write.csv(stem.density, paste0('outputs/full_MW_densestimates_v',version,'.csv'))
 
 #----------------------------Density Regridding------------------------------
 
@@ -114,7 +127,8 @@ stem.density <- data.frame(x = final.data$PointX,
 #stem.density$density[stem.density$density > nine.nine.pct['density']] <- nine.nine.pct['density']
 #stem.density$basal[stem.density$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 
-ggplot(stem.density[stem.density$density <= 1000,], aes(x, y, color=density))+geom_point(size = 0.5)
+ggplot(stem.density, aes(x, y, color=density))+geom_point(size = 0.5)
+
 # ---------------------fixing some lingering data naming issues:-------------------
 
 
@@ -123,32 +137,29 @@ species[species == 'No Tree'] <- 'No tree'
 species[species==""]<- "No tree"
 
 #change all No tree densities to 0
-stem.density$density[species[,1] == 'No tree'| species[,2]=='No tree'] <- 0
-#classify trees as zero or as wet trees
-zero.trees <- is.na(stem.density$density) | (species[,2] %in% c('No tree') | species[,1] %in% c('No tree'))
-wet.trees <- (species[,2] %in% c('Wet', "Water") | species[,1] %in% c('Wet','Water'))
+#zero.trees <- is.na(stem.density$density) & 
+ # (species[,2] %in% c('No tree', 'Water') | 
+  #   species[,1] %in% c('No tree', 'Water'))
 
-#designate all zero trees as density of 0
 stem.density$density[zero.trees] <- 0
 stem.density$basal[zero.trees] <- 0
 
-#desgnate all wet trees as 0
-stem.density$density[wet.trees] <- 0
-stem.density$basal[wet.trees] <- 0
+
+
 
 # kill cells with na for x or y:
-stem.density <- stem.density[!is.na(stem.density$x),]
+#stem.density <- stem.density[!is.na(stem.density$density$x),]
 stem.density <- data.frame(stem.density)
 
 library(dplyr)
-filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" ) %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & corner %in% "Extsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & corner %in% "Intsec") %>% summarise(density.ext = mean(density, na.rm = TRUE))
 
-filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
-filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Extsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" & corner %in% "Intsec") %>% group_by(corner)%>% summarise(density = mean(density, na.rm = TRUE))
+#filter(stem.density, state == "MI" & township %like% "E" )%>%  summarise(density = mean(density, na.rm = TRUE))
 
 
 #filter(stem.density, state == "MI" & township %like% "W" & corner %in% "Extsec")%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
@@ -160,7 +171,7 @@ coordinates(stem.density) <- ~x+y
 proj4string(stem.density)<-CRS('+init=epsg:3175')
 
 # write to an arcGIS compatible shapefile
-writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_v1.7-5.shp", layer = "stem_density_alb_v1.7-5", driver = "ESRI Shapefile", overwrite=TRUE)
+writeOGR(obj = stem.density, dsn = "outputs/stem_density_alb_full_v1.7-5.shp", layer = "stem_density_alb_v1.7-5", driver = "ESRI Shapefile", overwrite=TRUE)
 
 
 #------------------------Formatting for biomass estimation-------------------------
@@ -207,21 +218,17 @@ spec.table <- data.frame(PointX = final.data$PointX,
 #filter(stem.density, state == "MI" & township %like% "W" )%>% group_by(corner) %>% summarise(density = mean(density, na.rm = TRUE))
 
 
-#fix the captalized "No tree" problem
-spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree'
-
-#change all No tree densities to 0
-spec.table$density[spec.table$spec == 'No tree'] <- 0
-spec.table$density[spec.table$spec == 'Water'] <- 0
-spec.table$density[spec.table$spec == 'Wet'] <- 0
-
 #-----------------Estimating Biomass from density and diameter-------------------
 # changing column names
 spec.table$Pointx <- spec.table$PointX
 spec.table$Pointy <- spec.table$PointY
 spec.table[,1:2] <- xyFromCell(base.rast, spec.table$cell)
 colnames(spec.table)[1:2] <- c("x", "y")
+
+ggplot(spec.table, aes(x,y, color = density))+geom_point()
+
 # read in table with allometric equations for each taxa
+
 biom.table <- read.csv('data/plss.pft.conversion_v0.1-1.csv', 
                        stringsAsFactors = FALSE)
 
@@ -250,7 +257,14 @@ biomass <- apply(spec.table, 1, form)
 # convert to Mg./hectare
 spec.table$biom <- biomass * spec.table$density / 1000
 
-spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already be corrected
+#spec.table$spec[spec.table$spec == 'No Tree'] <- 'No tree' # this should already be corrected
+# Any plot with only one tree (and one No tree) should be removed.
+# Start with plot numbers:
+#  Any one tree plot will have the first tree listed, the second not:
+one_tree <- c(which(!species[,1] %in% "No tree" & species[,2] %in% "No tree"),
+              which(species[,1] %in% "No tree" & !species[,2] %in% "No tree"))
+
+spec.table <- subset(spec.table, !point %in% one_tree)
 
 #spec.table <- spec.table[,2:14]
 colnames(spec.table)[1:2] <- c("x", "y")# rename grid cell x and y colnames
@@ -270,6 +284,7 @@ one_tree <- c(which(!species[,1] %in% "No tree" & species[,2] %in% "No tree"),
 
 spec.table <- subset(spec.table, !point %in% one_tree)
 
+ggplot(spec.table, aes(x,y, color = density))+geom_point(size = 0.5)
 
 #take the 99 percentile of these, since density blows up in some places
 nine.nine.pct <- apply(spec.table[,c("density", "basal", "diams", "dists", "biom")], 2, quantile, probs = 0.995, na.rm=TRUE)
@@ -290,7 +305,7 @@ spec.table$density[spec.table$density > nine.nine.pct['density']] <- nine.nine.p
 spec.table$basal[spec.table$basal > nine.nine.pct['basal']] <- nine.nine.pct['basal']
 spec.table  <- spec.table[!is.na(spec.table$density), ]
 
-write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests_inilmi','_v',version, '.csv'), row.names = FALSE)
+write.csv(spec.table, file=paste0('outputs/biomass_no_na_pointwise.ests_full_MW','_v',version, '.csv'), row.names = FALSE)
 
 #-------------------------Paleon gridding----------------------------------------------
 

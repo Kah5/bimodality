@@ -172,17 +172,143 @@ test <- merge(test1, tree.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR",
 merged.tree <- test
 
 merged.tree$TRTcode <- as.character(merged.tree$TRTCD1)
-ggplot(merged.tree, aes(LON,LAT, color = TRTcode))+geom_point(size = 0.5)+facet_wrap(~INVYR)
+ggplot(merged.tree, aes(LON, LAT, color = TRTcode))+geom_point(size = 0.5)+facet_wrap(~INVYR)
 
-cut.plots <- merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),]
+# get the unique plot name, the inventory year of the treatement, and the type
 
-uncut.plots <- merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),]
+# there are 3270 plots with some treatment code 10, 20, 30:
+cut.plots <- unique(merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),c("PLT_CN", "PLOT","INVYR", "TRTcode", "PREV_PLT_CN", "STATECD")])
+#uncut.plots <- merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),]
+
+# need to find the previous density of the cut.plots in the previous inventory year:
+# need to select cells by lat, lon, state, and  plot
+
+unique(cut.plots[,c("PLT_CN", "PLOT", "STATECD")])
+
+merged.tree[merged.tree$PLT_CN == 3.755549e+14,]
+
+
+yrs <- unique(merged.tree[merged.tree$PLOT %in% cut.plots[2951,]$PLOT & merged.tree$STATECD %in% cut.plots[2951,]$STATECD & ! merged.tree$INVYR == cut.plots[2951,]$INVYR,]$INVYR)
+
+prev_year <- yrs[which(abs(yrs-cut.plots[2951,]$INVYR) == min(abs(yrs-cut.plots[2951,]$INVYR)))]
+
+merged.tree[merged.tree$PLOT %in% cut.plots[2951,]$PLOT & merged.tree$STATECD %in% cut.plots[2951,]$STATECD & merged.tree$INVYR %in% yrs[6],]
+#merged.tree[merged.tree$PLT_CN == 2.471089e+14,]
+
+# for each plot in cut.plots, find the survey year before logging treatement:
+
+# loop works, but is slow:
+prev.year <- 1:length(cut.plots$PLOT)
+
+for(i in 1:length(cut.plots$PLOT)){
+
+  yrs <- unique(merged.tree[merged.tree$PLOT %in% cut.plots[i,]$PLOT & merged.tree$STATECD %in% cut.plots[i,]$STATECD & ! merged.tree$INVYR == cut.plots[i,]$INVYR,]$INVYR)
+
+  if(length(unique(merged.tree[merged.tree$PLOT %in% cut.plots[i,]$PLOT & merged.tree$STATECD %in% cut.plots[i,]$STATECD &  !merged.tree$INVYR == cut.plots[i,]$INVYR,]$INVYR)) < 1){ # if there are no previous plots have prev_year == NA
+    prev_year[i] <- NA
+    
+  }else{ # if there is a previous year, save in prev_year:
+    
+  prev_year[i] <- yrs[which(abs(yrs-cut.plots[i,]$INVYR) == min(abs(yrs-cut.plots[i,]$INVYR)))]
+  
+  }
+}
+
+cut.plots$prev_yr <- prev_year
+
+
+# changing to apply function: This still isnot working
+get_prev_year <- function(cuts2plot){
+  plt<- cuts2plot['PLOT']
+  st <- cuts2plot['STATECD']
+  invyr <- cuts2plot['INVYR']
+  
+  yrs <- as.numeric(unique(merged.tree[merged.tree$PLOT %in% plt & merged.tree$STATECD %in% st & ! merged.tree$INVYR == invyr,]$INVYR))
+  
+  if(length(unique(merged.tree[merged.tree$PLOT %in% plt & merged.tree$STATECD %in% st &  merged.tree$INVYR < as.numeric(invyr),]$INVYR)) < 1){ # if there are no previous plots have prev_year == NA
+    prev_year <- NA
+    
+  }else{ # if there is a previous year, save in prev_year:
+    
+    prev_year <- yrs[which((yrs-as.numeric(invyr)) == min(yrs-as.numeric(invyr)))]
+    
+  }
+  return(prev_year)
+}
 
 
 
+# apply function over the whole cut.plots dataset:
+prev_yrs <- list()
 
-disturb.count <- merged.tree %>% dplyr::count(PLT_CN, INVYR, STATECD, PLOT,LAT,LON, TRTCD1)
-cut.log.treat <- disturb.count[disturb.count$TRTCD1 > 0,]
-ggplot(disturb.count, aes(LON, LAT, color = TRTCD1))+geom_point()+facet_wrap(~INVYR)
-length(disturb.count$n)
+cut.2000 <- cut.plots[!cut.plots$INVYR == 2000,]
+# this still takes awhile, but is shorter than the loop
+prev_yrs <- apply(X = as.matrix(cut.2000), MARGIN=1, FUN = get_prev_year)
+
+
+# save the previous year for each cut plot
+cut.2000$prev_year <- prev_yrs
+
+# need to get the data from each of these plots in previous years and put into a new df:
+prev_yr_survey <- merge(cut.2000[,c("STATECD", "PREV_PLT_CN", "PLOT", "prev_year", "TRTcode")], merged.tree[,c("INVYR","PLOT", "STATECD","PLT_CN", "COUNTYCD", "CN", "PLOT_STATUS_CD", "LAT", "LON", "TREE", "TPA_UNADJ", "SPCD", "SUBP")], by.x = c(  "prev_year", "PLOT",  "STATECD"), by.y = c(  "INVYR", "PLOT", "STATECD"))
+
+#merged.tree[merged.tree$PLT_CN %in% 6.670160e+13 ,]
+
+# now estimate density for these past surveys:
+prev_yr_survey <- prev_yr_survey[!names(prev_yr_survey) %in% "PREV_PLT_CN", ]
+tree.count <- prev_yr_survey %>% dplyr::count(PLT_CN, SPCD, prev_year, STATECD, PLOT,LAT,LON)
+
+
+# select trees > 8 inches (>=20.32)
+ac2ha   <- 0.404686 
+
+merged.tree.new <- tree.count#<- merge(merged.tree, tree.count, by = c("PLT_CN", "SPCD", "INVYR", "PLOT","STATECD"))
+
+# need to matach tree count up with overall merged data
+#merged.tree$DENS <- merged.tree$n * merged.tree$TPA_UNADJ * (1/ac2ha)
+merged.tree.new$DENS <- merged.tree.new$n * 6.018046 * (1/ac2ha)
+
+hist(merged.tree.new$DENS)
+ggplot(merged.tree.new, aes(DENS))+geom_histogram()+facet_wrap(~prev_year)+xlim(0,500)
+
+# convert to paleon coordinates (roughly b/c these are fuzzed + swapped)
+
+head(merged.tree.new)
+merged.tree <- merged.tree.new[complete.cases(merged.tree.new[,c("LON", "LAT")]),]
+
+coordinates(merged.tree) <- ~ LON + LAT
+proj4string(merged.tree)=CRS("+proj=longlat +datum=WGS84") #define: WGS-84 lon,lat projection
+tree.albers <- spTransform(merged.tree,CRS("+init=epsg:3175")) #convert to: NAD83/Great Lakes and St Lawrence Albers projection
+
+
+numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
+numbered.cell <- raster::extract(numbered.rast, tree.albers)
+
+xys <- raster::xyFromCell(numbered.rast, cell = numbered.cell)
+
+tree.albers <- data.frame(tree.albers)
+tree.albers$x <- xys[,1]
+tree.albers$y <- xys[,2]
+tree.albers$cell <- numbered.cell
+
+
+head(tree.albers)
+speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
+
+FIA.pal <- merge(tree.albers, speciesconversion, by.x = 'SPCD', by.y = "spcd" )
+FIA.by.paleon <- dcast(FIA.pal, LON + LAT + PLT_CN+ x + y + cell + prev_year ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,8:length(FIA.by.paleon)], na.rm = TRUE) # sum the total density in each plot
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y',"LON", "LAT", 'cell', "PLT_CN",  "prev_year")) # melt the dataframe
+fia.by.cell <- dcast(fia.melt, x + y+ cell + prev_year ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+#fia.by.cell$total <- rowSums(fia.by.cell[,4:28], na.rm = TRUE)
+
+ggplot(fia.by.cell, aes(x, y, fill = FIAdensity)) + geom_raster()
+ggplot(fia.by.cell, aes(x, y, fill = FIAdensity)) + geom_raster() + facet_wrap(~prev_year)
+
+ggplot(fia.by.cell, aes( FIAdensity)) + geom_histogram() + facet_wrap(~prev_year)
+
+
+
+write.csv(fia.by.cell, "data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv", row.names = FALSE)
+summary(prev_yr_survey)
 

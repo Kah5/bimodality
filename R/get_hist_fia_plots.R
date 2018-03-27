@@ -166,26 +166,27 @@ tree.new <- tree.new[tree.new$STATUSCD == 1,]
 tree.new$DIA <- tree.new$DIA*2.54
 tree.new <- tree.new[tree.new$DIA >= 20.32,]
 test1 <- merge(plot.new, cond.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR","STDAGE", "TRTCD1", "DSTRBCD1")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD"))
-test <- merge(test1, tree.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD", "PLT_CN"))
+test <- merge(test1, tree.new[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD","PLOT"))
 
 
 merged.tree <- test
 
 merged.tree$TRTcode <- as.character(merged.tree$TRTCD1)
-ggplot(merged.tree, aes(LON, LAT, color = TRTcode))+geom_point(size = 0.5)+facet_wrap(~INVYR)
-
+ggplot(merged.tree, aes(LON, LAT, color = TRTcode))+geom_point(size = 0.5)#+facet_wrap(~INVYR)
+unique(merged.tree$STATECD)
 # get the unique plot name, the inventory year of the treatement, and the type
 
 # there are 3270 plots with some treatment code 10, 20, 30:
-cut.plots <- unique(merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),c("PLT_CN", "PLOT","INVYR", "TRTcode", "PREV_PLT_CN", "STATECD")])
+cut.plots <- unique(merged.tree[merged.tree$TRTcode %in% c("10", "20", "30"),c("PLT_CN.x","PLOT","INVYR", "TRTcode", "PREV_PLT_CN", "STATECD")])
 uncut.plots <- merged.tree[!merged.tree$TRTcode %in% c("10", "20", "30"),]
 
+unique(cut.plots$STATECD)
 # need to find the previous density of the cut.plots in the previous inventory year:
 # need to select cells by lat, lon, state, and  plot
 
-unique(cut.plots[,c("PLT_CN", "PLOT", "STATECD")])
+unique(cut.plots[,c("STATECD")])
 
-merged.tree[merged.tree$PLT_CN == 3.755549e+14,]
+merged.tree[merged.tree$PLT_CN.x == 3.755549e+14,]
 
 
 yrs <- unique(merged.tree[merged.tree$PLOT %in% cut.plots[2951,]$PLOT & merged.tree$STATECD %in% cut.plots[2951,]$STATECD & ! merged.tree$INVYR == cut.plots[2951,]$INVYR,]$INVYR)
@@ -269,13 +270,15 @@ prev_yr_survey <- apply(X = as.matrix(cut.2000), MARGIN=1, FUN = get_prev_survey
 write.csv(cut.2000, "outputs/logged_prev_years.csv",row.names = FALSE)
 
 # need to get the data from each of these plots in previous years and put into a new df:
-prev_yr_survey <- merge(cut.2000[,c("STATECD", "PLOT", "INVYR", "TRTcode","PLT_CN")], merged.tree[,c("INVYR","PLOT", "STATECD","PLT_CN", "COUNTYCD", "CN", "PLOT_STATUS_CD", "LAT", "LON", "TREE", "TPA_UNADJ", "SPCD", "SUBP")], by.x = c(  "INVYR", "PLOT",  "STATECD", "PLT_CN"), by.y = c(  "INVYR", "PLOT", "STATECD", "PLT_CN"))
+prev_yr_survey <- merge(cut.2000[,c("STATECD", "PLOT", "INVYR", "TRTcode","PLT_CN.x")], merged.tree[,c("INVYR","PLOT", "STATECD","PLT_CN.x", "COUNTYCD", "CN", "PLOT_STATUS_CD", "LAT", "LON", "TREE", "TPA_UNADJ", "SPCD", "SUBP")], by.x = c(  "INVYR", "PLOT",  "STATECD"), by.y = c(  "INVYR", "PLOT", "STATECD"))
 #prev_yr_survey <- read.csv("outputs/logged_prev_years_data.csv")
 #merged.tree[merged.tree$PLT_CN %in% 6.670160e+13 ,]
 
 # now estimate density for these past surveys:
 #prev_yr_survey <- prev_yr_survey[!names(prev_yr_survey) %in% "PREV_PLT_CN", ]
-tree.count <- prev_yr_survey %>% dplyr::count(PLT_CN, SPCD, INVYR, STATECD, PLOT,LAT,LON)
+tree.count <- prev_yr_survey %>% dplyr::count( SPCD, INVYR, STATECD, PLOT,LAT,LON)
+
+unique(cut.2000$STATECD)
 
 
 # select trees > 8 inches (>=20.32)
@@ -289,7 +292,7 @@ merged.tree.new$DENS <- merged.tree.new$n * 6.018046 * (1/ac2ha)
 
 hist(merged.tree.new$DENS)
 ggplot(merged.tree.new, aes(DENS))+geom_histogram()+facet_wrap(~INVYR)+xlim(0,500)
-
+#ggplot(merged.tree.new, aes(DENS))+geom_histogram()+facet_wrap(~INVYR)+xlim(0,500)
 # convert to paleon coordinates (roughly b/c these are fuzzed + swapped)
 
 head(merged.tree.new)
@@ -315,9 +318,9 @@ head(tree.albers)
 speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
 
 FIA.pal <- merge(tree.albers, speciesconversion, by.x = 'SPCD', by.y = "spcd" )
-FIA.by.paleon <- dcast(FIA.pal, LON + LAT + PLT_CN +STATECD + x + y + cell + INVYR ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon <- dcast(FIA.pal, LON + LAT  +STATECD + x + y + cell + INVYR ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS') #sum all species in common taxa in FIA grid cells
 FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,9:length(FIA.by.paleon)], na.rm = TRUE) # sum the total density in each plot
-fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y',"LON", "LAT", 'cell', "PLT_CN",  "INVYR","STATECD")) # melt the dataframe
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y',"LON", "LAT", 'cell',   "INVYR","STATECD", "TR")) # melt the dataframe
 fia.by.cell <- dcast(fia.melt, x + y+ cell + INVYR ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 #fia.by.cell$total <- rowSums(fia.by.cell[,4:28], na.rm = TRUE)
 
@@ -326,10 +329,10 @@ ggplot(fia.by.cell, aes(x, y, fill = FIAdensity)) + geom_raster() + facet_wrap(~
 
 ggplot(fia.by.cell, aes( FIAdensity)) + geom_histogram() + facet_wrap(~INVYR)
 
-ggplot(fia.by.cell, aes(FIAdensity))+geom_histogram()
+ggplot(fia.by.cell, aes(FIAdensity))+geom_histogram()+
 
 write.csv(fia.by.cell, "data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv", row.names = FALSE)
-summary(prev_yr_survey)
+summary(fia.by.cell)
 
 
 # want to get an estimate of the porportion of total plots in each density class that are logged between 1999-2017:
@@ -341,7 +344,7 @@ summary(prev_yr_survey)
 # need to get all unlogged places:
 
 
-tree.count.uncut <- uncut.plots %>% dplyr::count(PLT_CN, SPCD, INVYR, STATECD, PLOT,LAT,LON)
+tree.count.uncut <- uncut.plots %>% dplyr::count(SPCD, INVYR, STATECD, PLOT,LAT,LON)
 
 
 # select trees > 8 inches (>=20.32)
@@ -381,9 +384,9 @@ head(tree.albers)
 speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
 
 FIA.pal.uncut <- merge(tree.albers, speciesconversion, by.x = 'SPCD', by.y = "spcd" )
-FIA.by.paleon.uncut <- dcast(FIA.pal.uncut, LON + LAT + PLT_CN +STATECD + x + y + cell + INVYR ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS') #sum all species in common taxa in FIA grid cells
-FIA.by.paleon.uncut$FIAdensity <- rowSums(FIA.by.paleon.uncut[,9:length(FIA.by.paleon.uncut)], na.rm = TRUE) # sum the total density in each plot
-fia.melt.uncut <- melt(FIA.by.paleon.uncut, id.vars = c('x', 'y',"LON", "LAT", 'cell', "PLT_CN",  "INVYR","STATECD")) # melt the dataframe
+FIA.by.paleon.uncut <- dcast(FIA.pal.uncut, LON + LAT +STATECD + x + y + cell + INVYR ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon.uncut$FIAdensity <- rowSums(FIA.by.paleon.uncut[,8:length(FIA.by.paleon.uncut)], na.rm = TRUE) # sum the total density in each plot
+fia.melt.uncut <- melt(FIA.by.paleon.uncut, id.vars = c('x', 'y',"LON", "LAT", 'cell',  "INVYR","STATECD")) # melt the dataframe
 fia.by.cell.uncut <- dcast(fia.melt.uncut, x + y+ cell + INVYR ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 #fia.by.cell$total <- rowSums(fia.by.cell[,4:28], na.rm = TRUE)
 
@@ -401,9 +404,10 @@ fia.by.cell.uncut$dens_bins <- cut(fia.by.cell.uncut$FIAdensity, breaks = seq(0,
 #fia.by.cell$dens_binsx <- ifelse(is.na(fia.by.cell$dens_bins), "600 +", fia.by.cell$dens_bins)
 
 n_uncut_by_dens <- fia.by.cell.uncut %>% dplyr::count( dens_bins)
+n_uncut_by_dens_invyr <- fia.by.cell.uncut %>% dplyr::count(INVYR, dens_bins)
 ggplot(n_uncut_by_dens, aes(dens_bins, n))+geom_bar(stat = "identity")
 
-
+ggplot(n_uncut_by_dens_invyr, aes(dens_bins, n))+geom_bar(stat = "identity")+facet_wrap(~INVYR)
 
 
 # get # of plots in each density classes of the logged plots in the recent surveys:
@@ -418,6 +422,9 @@ fia.by.cell$dens_bins <- cut(fia.by.cell$FIAdensity, breaks = seq(0,600, by = 30
 #fia.by.cell$dens_binsx <- ifelse(is.na(fia.by.cell$dens_bins), "600 +", fia.by.cell$dens_bins)
 
 n_logged_by_dens <- fia.by.cell %>% dplyr::count( dens_bins)
+n_logged_by_dens_invyr <- fia.by.cell %>% dplyr::count(INVYR, dens_bins)
+
+
 ggplot(n_logged_by_dens, aes(dens_bins, n))+geom_bar(stat = "identity")
 
 # get the ratio of plots logged in each density class
@@ -444,4 +451,25 @@ ggplot(logged_counts, aes(dens_bins, ratio))+geom_bar(stat = "identity")+ylab("%
 dev.off()
 
 
+# get ratio of grid cells logged by invyr:
+logged_counts_invyr<- merge(n_uncut_by_dens_invyr, n_logged_by_dens_invyr, by = c("dens_bins", "INVYR"))
+colnames(logged_counts_invyr) <- c("dens_bins", "INVYR","unlogged", "logged")
+
+logged_counts_invyr$ratio <- logged_counts_invyr$logged/(logged_counts_invyr$logged+logged_counts_invyr$unlogged)*100
+# need to replace NA factor with "600+"
+logged_counts_invyr$dens_bins<- as.character(logged_counts_invyr$dens_bins) 
+logged_counts_invyr[logged_counts_invyr$dens.bins %in% NA,]$dens_bins <- "600+"
+logged_counts_invyr$dens_bins <- as.factor(logged_counts_invyr$dens_bins)
+
+# need to reorder the dens_bins:
+logged_counts_invyr$dens_bins = factor(logged_counts_invyr$dens_bins, levels = c("0 - 30", "30 - 60", "60 - 90", 
+                                                                    "90 - 120", "120 - 150", "150 - 180",
+                                                                    "180 - 210", "210 - 240" ,"240 - 270", "270 - 300",
+                                                                    "300 - 330", "330 - 360", "360 - 390", "390 - 420" ,"420 - 450", "450 - 480", "480 - 510", "510 - 540", "540 - 570", "570 - 600","600+"))
+
+
+png(height = 8, width = 12, units = "in",res = 250,"outputs/paper_figs/pct_FIA_dens_class_logged_by_INVYR.png")
+ggplot(logged_counts_invyr, aes(dens_bins, ratio))+geom_bar(stat = "identity")+facet_wrap(~INVYR)+ylab("% of density class logged")+xlab("Density Class")+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+dev.off()
 

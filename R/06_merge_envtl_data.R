@@ -46,14 +46,24 @@ ggplot(climate.data, aes(x, y, color=moddeltaT))+geom_point()
 
 
 # read in the P-PET data (generated from crc03_Extract_Prism_Historical.R)
+#newf<- file.choose()
 
-#P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
-#climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
+P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
+climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
 
 
-#ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
+ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
 
-#write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
+write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
+
+# read in Modern PPET data:
+
+P.PET.mod <- read.csv('/Users/kah/Documents/bimodality/outputs/P.PET_prism_modern_Mar_Nov.csv')
+colnames(P.PET.mod) <- c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
+                         "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Nov_ppet", "GS_ppet_mod")
+
+
+climate.data <- merge(climate.data, P.PET.mod[,c("x", "y", "GS_ppet_mod")], by = c("x", "y"))
 
 #----------------------------- Read in Soils Data -------------------------------
 
@@ -184,10 +194,12 @@ test1 <- merge(pls.clim,unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x',
 dens.rm <- test1
 
 png(width = 6, height = 6, units = "in", res = 300, "outputs/paper_figs/PPET_PC1_linear_relationship.png")
-ggplot(dens.rm, aes(PC1, PLSdensity))+geom_point(size = 0.1) + stat_smooth(method = 'lm') + theme_bw(base_size = 20)+ylab("Growing Season P-PET (mm)")+xlab("Principal Component 1")
+ggplot(dens.rm, aes(PC1, GS_ppet))+geom_point(size = 0.1) + stat_smooth(method = 'lm') + theme_bw(base_size = 20)+ylab("Growing Season P-PET (mm)")+xlab("Principal Component 1")
 dev.off()
 
-
+png(width = 6, height = 6, units = "in", res = 300, "outputs/paper_figs/PPET_PC1_linear_relationship.png")
+ggplot(dens.rm, aes( GS_ppet, PLSdensity))+geom_point(size = 0.1) + stat_smooth(method = 'lm') + theme_bw(base_size = 20)+ylab("PLSdensity")+xlab("Growing Season P-PET (mm)")+ylim(0,1000)
+dev.off()
 # --------------------------------------PCA on FIA dataset------------------------------
 
 
@@ -215,7 +227,7 @@ dens.rm[,paste0('PC2fia')]  <- newscores[,2]
 dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("x", "y", "cell"), all.x = TRUE)
 full.dens.pls <- merge(pls.clim[,c('x',"y","cell","PLSdensity")], fia.clim[,c("x","y","cell", "FIAdensity")], by = c("x","y","cell"),all.x = TRUE)
 full.clim.dens <- merge(full.dens.pls, dens.rm[,c("x", "y", "cell","MAP1910", "MAP2011", "moderndeltaP", "modtmean", "moddeltaT", 
-                                "sandpct", "awc", "CEC", "CaCO3", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
+                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
 
 write.csv(full.clim.dens, "data/PLS_FIA_density_climate_full.csv")
 

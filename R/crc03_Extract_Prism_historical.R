@@ -165,12 +165,13 @@ write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
 #
 #setwd ("/Users/kah/Documents/bimodality")
 
-#full.PET <- readRDS('data/full.PET.rds')
-full.PET <- readRDS("data/PET_full/full.PET.rds")
+full.PET <- readRDS('data/full.PET.rds') # read in file extracted from crc script
+#full.PET <- readRDS("data/PET_full/full.PET.rds")
+
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
-colnames(full) <- c("lat", "long", "Jan", 'Mar',"Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-
+colnames(full.PET) <- c("lat", "long", "Jan", 'Mar',"Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+#full <- full.PET
 
 coordinates(full) <- ~long + lat
 gridded(full) <- TRUE
@@ -197,12 +198,12 @@ avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
 write.csv(avgs.df, paste0(workingdir, "PETJJA_1895_1925_pls_extracted_mar_nov.csv"))
-ggplot(avgs.df, aes(x,y, fill = Aug))+geom_raster()
+ggplot(avgs.df, aes(x,y, fill = X07))+geom_raster()
 
 
 
 #PETjja <- read.csv("data/PETJJA_1895_1925_pls_extracted.csv")
-Precip <- read.csv(paste0("data/outputs/pr_monthly_Prism_1895-1925_full.csv"))
+Precip <- read.csv(paste0("data/pr_monthly_Prism_1895-1925_full.csv"))
 PETjja <- avgs.df
 PrJJA <- Precip[,c("x", "y","Mar","Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov")]
 colnames(PrJJA) <- c("x", "y", "Mar_pr","Apr_pr", "May_pr","Jun_pr", "Jul_pr", "Aug_pr", "Sep_pr", "Oct_pr", "Nov_pr")

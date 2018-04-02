@@ -320,7 +320,7 @@ colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "m
 saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
 saveRDS(PET.means, paste0(workingdir, "PET.means.rds"))
 
-#full.PET <- readRDS("data/full.PET.rds")
+full.PET <- readRDS("data/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
 

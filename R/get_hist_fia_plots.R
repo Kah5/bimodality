@@ -401,13 +401,19 @@ label.breaks <- function(beg, end, splitby){
 
 
 fia.by.cell.uncut$dens_bins <- cut(fia.by.cell.uncut$FIAdensity, breaks = seq(0,600, by = 30), labels = label.breaks(0,570, 30))
-#fia.by.cell$dens_binsx <- ifelse(is.na(fia.by.cell$dens_bins), "600 +", fia.by.cell$dens_bins)
+fia.by.cell.uncut$dens_binsx <- ifelse(fia.by.cell.uncut$FIAdensity <= 47, "0 - 47", 
+                                 ifelse(fia.by.cell.uncut$FIAdensity > 47 & fia.by.cell.uncut$FIAdensity <= 100, "48 - 100",
+                                        ifelse(fia.by.cell.uncut$FIAdensity > 100 & fia.by.cell.uncut$FIAdensity <= 200, "100 - 200",
+                                               ifelse(fia.by.cell.uncut$FIAdensity > 200 & fia.by.cell.uncut$FIAdensity <= 300, "200 - 300",
+                                                      ifelse(fia.by.cell.uncut$FIAdensity > 300 & fia.by.cell.uncut$FIAdensity <= 400, "300 - 400", 
+                                                             ifelse(fia.by.cell.uncut$FIAdensity > 400 & fia.by.cell.uncut$FIAdensity <= 500,"400 - 500", "500 +"))))))
 
-n_uncut_by_dens <- fia.by.cell.uncut %>% dplyr::count( dens_bins)
-n_uncut_by_dens_invyr <- fia.by.cell.uncut %>% dplyr::count(INVYR, dens_bins)
-ggplot(n_uncut_by_dens, aes(dens_bins, n))+geom_bar(stat = "identity")
 
-ggplot(n_uncut_by_dens_invyr, aes(dens_bins, n))+geom_bar(stat = "identity")+facet_wrap(~INVYR)
+n_uncut_by_dens <- fia.by.cell.uncut %>% dplyr::count( dens_binsx)
+n_uncut_by_dens_invyr <- fia.by.cell.uncut %>% dplyr::count(INVYR, dens_binsx)
+ggplot(n_uncut_by_dens, aes(dens_binsx, n))+geom_bar(stat = "identity")
+
+ggplot(n_uncut_by_dens_invyr, aes(dens_binsx, n))+geom_bar(stat = "identity")+facet_wrap(~INVYR)
 
 
 # get # of plots in each density classes of the logged plots in the recent surveys:
@@ -419,32 +425,41 @@ label.breaks <- function(beg, end, splitby){
 
 
 fia.by.cell$dens_bins <- cut(fia.by.cell$FIAdensity, breaks = seq(0,600, by = 30), labels = label.breaks(0,570, 30))
-#fia.by.cell$dens_binsx <- ifelse(is.na(fia.by.cell$dens_bins), "600 +", fia.by.cell$dens_bins)
+fia.by.cell$dens_binsx <- ifelse(fia.by.cell$FIAdensity <= 47, "0 - 47", 
+                                 ifelse(fia.by.cell$FIAdensity > 47 & fia.by.cell$FIAdensity <= 100, "48 - 100",
+                                 ifelse(fia.by.cell$FIAdensity > 100 & fia.by.cell$FIAdensity <= 200, "100 - 200",
+                                        ifelse(fia.by.cell$FIAdensity > 200 & fia.by.cell$FIAdensity <= 300, "200 - 300",
+                                               ifelse(fia.by.cell$FIAdensity > 300 & fia.by.cell$FIAdensity <= 400, "300 - 400", 
+                                               ifelse(fia.by.cell$FIAdensity > 400 & fia.by.cell$FIAdensity <= 500,"400 - 500", "500 +"))))))
 
-n_logged_by_dens <- fia.by.cell %>% dplyr::count( dens_bins)
-n_logged_by_dens_invyr <- fia.by.cell %>% dplyr::count(INVYR, dens_bins)
+n_logged_by_dens <- fia.by.cell %>% dplyr::count( dens_binsx)
+n_logged_by_dens_invyr <- fia.by.cell %>% dplyr::count(INVYR, dens_binsx)
 
 
-ggplot(n_logged_by_dens, aes(dens_bins, n))+geom_bar(stat = "identity")
+ggplot(n_logged_by_dens, aes(dens_binsx, n))+geom_bar(stat = "identity")
 
 # get the ratio of plots logged in each density class
 n_uncut_by_dens
 n_logged_by_dens
 
-logged_counts<- merge(n_uncut_by_dens, n_logged_by_dens, by = "dens_bins")
+logged_counts<- merge(n_uncut_by_dens, n_logged_by_dens, by = "dens_binsx")
 colnames(logged_counts) <- c("dens_bins", "unlogged", "logged")
 
 logged_counts$ratio <- logged_counts$logged/(logged_counts$logged+logged_counts$unlogged)*100
 # need to replace NA factor with "600+"
 logged_counts$dens_bins<- as.character(logged_counts$dens_bins) 
-logged_counts[21,]$dens_bins <- "600+"
+#logged_counts[21,]$dens_bins <- "600+"
 logged_counts$dens_bins <- as.factor(logged_counts$dens_bins)
 
 # need to reorder the dens_bins:
-logged_counts$dens_bins = factor(logged_counts$dens_bins,levels = c("0 - 30", "30 - 60", "60 - 90", 
-                                                                     "90 - 120", "120 - 150", "150 - 180",
-                                                                     "180 - 210", "210 - 240" ,"240 - 270", "270 - 300",
-                                                                     "300 - 330", "330 - 360", "360 - 390", "390 - 420" ,"420 - 450", "450 - 480", "480 - 510", "510 - 540", "540 - 570", "570 - 600","600+"))
+#logged_counts$dens_bins = factor(logged_counts$dens_bins,levels = c("0 - 30", "30 - 60", "60 - 90", 
+ #                                                                    "90 - 120", "120 - 150", "150 - 180",
+  #                                                                   "180 - 210", "210 - 240" ,"240 - 270", "270 - 300",
+   #                                                                  "300 - 330", "330 - 360", "360 - 390", "390 - 420" ,"420 - 450", "450 - 480", "480 - 510", "510 - 540", "540 - 570", "570 - 600","600+"))
+
+logged_counts$dens_bins = factor(logged_counts$dens_bins,levels = c( "0 - 47", "48 - 100", "100 - 200", "200 - 300", "300 - 400",
+                                                                     "400 - 500", "500 +"))
+
 
 png("outputs/paper_figs/pct_FIA_dens_class_logged.png")
 ggplot(logged_counts, aes(dens_bins, ratio))+geom_bar(stat = "identity")+ylab("% of density class logged")+xlab("Density Class")+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -452,13 +467,13 @@ dev.off()
 
 
 # get ratio of grid cells logged by invyr:
-logged_counts_invyr<- merge(n_uncut_by_dens_invyr, n_logged_by_dens_invyr, by = c("dens_bins", "INVYR"))
+logged_counts_invyr <- merge(n_uncut_by_dens_invyr, n_logged_by_dens_invyr, by = c("dens_binsx", "INVYR"))
 colnames(logged_counts_invyr) <- c("dens_bins", "INVYR","unlogged", "logged")
 
 logged_counts_invyr$ratio <- logged_counts_invyr$logged/(logged_counts_invyr$logged+logged_counts_invyr$unlogged)*100
 # need to replace NA factor with "600+"
 logged_counts_invyr$dens_bins<- as.character(logged_counts_invyr$dens_bins) 
-logged_counts_invyr[logged_counts_invyr$dens.bins %in% NA,]$dens_bins <- "600+"
+#logged_counts_invyr[logged_counts_invyr$dens.bins %in% NA,]$dens_bins <- "600+"
 logged_counts_invyr$dens_bins <- as.factor(logged_counts_invyr$dens_bins)
 
 # need to reorder the dens_bins:
@@ -467,6 +482,8 @@ logged_counts_invyr$dens_bins = factor(logged_counts_invyr$dens_bins, levels = c
                                                                     "180 - 210", "210 - 240" ,"240 - 270", "270 - 300",
                                                                     "300 - 330", "330 - 360", "360 - 390", "390 - 420" ,"420 - 450", "450 - 480", "480 - 510", "510 - 540", "540 - 570", "570 - 600","600+"))
 
+logged_counts_invyr$dens_bins = factor(logged_counts_invyr$dens_bins,levels = c( "0 - 47", "48 - 100", "100 - 200", "200 - 300", "300 - 400",
+                                                                     "400 - 500", "500 +"))
 
 png(height = 8, width = 12, units = "in",res = 250,"outputs/paper_figs/pct_FIA_dens_class_logged_by_INVYR.png")
 ggplot(logged_counts_invyr, aes(dens_bins, ratio))+geom_bar(stat = "identity")+facet_wrap(~INVYR)+ylab("% of density class logged")+xlab("Density Class")+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))

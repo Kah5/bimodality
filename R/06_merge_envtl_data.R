@@ -59,11 +59,16 @@ write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,"
 # read in Modern PPET data:
 
 P.PET.mod <- read.csv('/Users/kah/Documents/bimodality/outputs/P.PET_prism_modern_Mar_Nov.csv')
+P.PET.mod<- P.PET.mod[,c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
+             "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Nov_ppet", "GS_ppet")]
 colnames(P.PET.mod) <- c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
                          "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Nov_ppet", "GS_ppet_mod")
 
 
 climate.data <- merge(climate.data, P.PET.mod[,c("x", "y", "GS_ppet_mod")], by = c("x", "y"))
+ggplot(climate.data, aes(x, y, fill=GS_ppet_mod))+geom_raster()
+
+ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 #----------------------------- Read in Soils Data -------------------------------
 

@@ -75,7 +75,7 @@ pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
     '#005a32'), name ="Tree \n Density", na.value = 'darkgrey') +
   
   theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
-                                 legend.key.size = unit(0.5, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
                                  
                                  axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
 
@@ -111,11 +111,13 @@ pls.clust
 # merge clust_plot6 and dens.pr
 
 dens.clust <- merge(dens.pr, clust_7[,c("x" ,"y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"), all.x = TRUE)
+dens.clust <- dens.clust[!dupliated(dens.clust),] # remove any duplicates created in merge
 
 png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
 ggplot(dens.clust, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
 dev.off()
 
+ggplot(dens.clust, aes(GS_ppet, PLSdensity, color = speciescluster))+geom_point()
 
 dens.clust.m <- melt(dens.clust[,c("x", "y", "cell",  "foresttype", "PC1", "PLSdensity")], id.vars = c("x", "y", "cell", "PC1","PLSdensity" ))
 
@@ -144,10 +146,19 @@ pls.dens.pc1.hex <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() 
                                                                                                                                                                                legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 pls.dens.pc1.hex
 
+
+pls.dens.ppet.hex <- ggplot(data = dens.clust, aes(GS_ppet, PLSdensity)) +geom_hex() + 
+  theme_bw(base_size = 8)+#scale_fill_distiller(palette = "Spectral", limits = c(1,140))+
+  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")#+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+                                                                                                                                                                              # legend.background = element_rect(fill=alpha('transparent', 0)), 
+                                                                                                                                                                               #legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+pls.dens.ppet.hex
+
 smoothScatter(x =dens.clust$PC1, y = dens.clust$PLSdensity, pch = NA, nrpoints = 1000,  nbin = c(1000, 1000) )
 
 p4 <- ggplot(dens.clust, aes(PC1, PLSdensity)) +
   stat_density_2d(aes(fill = ..density..), geom = 'raster', contour = FALSE)+scale_fill_continuous(low = 'white', high = 'red')   
+
 png("outputs/alt_hexbin_raster_pls.png")
 p4
 dev.off()
@@ -199,18 +210,33 @@ plot.smooth <- smoothScatter(x=dens.clust$PC1,y=dens.clust$PLSdensity,
 
 
 # plot scaling overlapping histograms with density plot overlaid:
+
+png("outputs/alt_hexbin_smooth_scatter_with_density2doverlay.png")
 p1 = ggplot(dens.clust,aes(x=PC1, y=PLSdensity)) +
-   geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
   geom_density2d() + 
   theme_bw()
 
-png("outputs/alt_hexbin_smooth_scatter_with_density2doverlay.png")
-p1+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+scatter_dens_2dpls<- p1+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
                                                                                                                                                                                 legend.background = element_rect(fill=alpha('transparent', 0)), 
                                                                                                                                                                                legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 dev.off() 
 
+
+p1 = ggplot(dens.clust,aes(x=GS_ppet, y=PLSdensity)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d() + 
+  theme_bw()
+
+scatter_dens_2dpls_ppet <- p1+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+ylim(0,650)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+                                                                                                                                                                                                          legend.background = element_rect(fill=alpha('transparent', 0)), 
+                                                                                                                                                                                                          legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+png("outputs/alt_hexbin_smooth_scatter_with_density2doverlay_gs_ppet.png")
+scatter_dens_2dpls_ppet
+dev.off()
 
 p2 = ggplot(na.omit(dens.clust),aes(x=PC1, y=PLSdensity)) +
    #+ geom_count(alpha = 0.1, colour="orange")+
@@ -250,25 +276,44 @@ p4+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xinter
 # need to reorder the factors:
 dens.clust$foresttype_ordered<- factor(dens.clust$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen", "Beech-Maple", "N. Mixed Forest", "Oak", "Oak-Hickory")))
 dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
+dens.clust <- dens.clust[!duplicated(dens.clust),]
 
-clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 30))+xlim(0,600)+
-  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,700)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 0.25 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 0.25 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 30))+xlim(0,600)+
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,500)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist
+
+ggplot(dens.clust[dens.clust$PC1 > -0.25 & dens.clust$PC1 < 0.5 , ], aes(x,y, fill = PLSdensity))+geom_raster()+
+  geom_tile(data = dens.clust[dens.clust$PC1 > -0.25 & dens.clust$PC1 < 0.5 , ], aes(x,y, color = foresttype_ordered))+scale_color_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")
 
 
 # where are the highest densities
 # places with bimodal vegetation:
-ggplot(dens.clust[dens.clust$PC1 > -0.1 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
+png(height = 10, width = 10, units = "in", res = 300, "outputs/maps_veg_by_pc1bins.png")
+ggplot(dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+coord_equal()+facet_wrap(~PC1bins)
+dev.off()
 
+
+png(height = 10, width = 10, units = "in", res = 300, "outputs/hist_veg_by_pc1bins.png")
+ggplot(dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered))+geom_histogram( binwidth = 30)+xlim(0,650)+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+
+facet_wrap(~PC1bins)
+dev.off()
 
 # bimodal places with 100 - 200 + trees /ha
-ggplot(dens.clust[dens.clust$PC1 > -0.1 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 100 & dens.clust$PLSdensity <=200, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
+ggplot(dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < -0.25 & dens.clust$PLSdensity > 100 & dens.clust$PLSdensity <=200, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
 
 # bimodal places with 200 + trees/ha
-ggplot(dens.clust[dens.clust$PC1 > -0.1 & dens.clust$PC1 < 1 & dens.clust$PLSdensity >= 200, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
+ggplot(dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 0.25 & dens.clust$PLSdensity >= 200, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
 
+png("outputs/PC1_bins_map_pls.png")
+ggplot(dens.clust, aes(x,y, fill = PC1bins))+geom_raster()#+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
+dev.off()
 
+ggplot(dens.clust, aes(x,y, fill = PC1))+geom_raster()#+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")
 
 # E: map of bimodal regions:
 # sample the p(forest) at each environmental bitn
@@ -276,7 +321,7 @@ ggplot(dens.clust[dens.clust$PC1 > -0.1 & dens.clust$PC1 < 1 & dens.clust$PLSden
 pls.prob.forest <- read.csv("outputs/posterior_prob_forest_pls.csv") # from sample_density_probabilities script
 
 
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbpalette <- c("#ffffcc", "#c2e699", "#d73027", "#31a354", "#006837")
 names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
 
 p.forest.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -322,7 +367,7 @@ ggplot(pls.bim50[!is.na(pls.bim50$foresttype_ordered),], aes(PC1, prob_bimodal, 
 dev.off()
 
 
-pls.b20 <- read.csv("outputs/posterior_prob_bimodal_pls_20bins.csv")
+pls.b20 <- read.csv("outputs/posterior_prob_bimodal_pls_25bins_dipP_only.csv")
 pls.b20$pbimodal <- cut(pls.b20$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
 rpalette <- c('#fee5d9',
@@ -349,6 +394,30 @@ pls.bim20 <- merge(pls.b20, dens.clust, by = c("x", "y", "cell"))
 
 png("outputs/prob_bimodal_vs_PC1_0.2_bins.png")
 ggplot(pls.bim20[!is.na(pls.bim20$foresttype_ordered),], aes(PC1, prob_bimodal, color = foresttype_ordered))+geom_point(size = 1)+scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()
+dev.off()
+
+png(height = 10, width = 10, units = "in", res = 300,"outputs/prob_bimodal_facet_by_PC1bins.png")
+ggplot(pls.bim20, aes(prob_bimodal, fill = foresttype_ordered))+geom_histogram()+facet_wrap(~PC1bins)
+dev.off()
+
+
+# make a plot of the maps of composition by PC bins:
+png(width = 12, height = 12, units = "in", res = 300, "outputs/map_comp_facet_by_PC1bins.png")
+ggplot(pls.bim20[pls.bim20$PC1 > - 2.5 & pls.bim20$PC1 <= 0.5,], aes(x,y, fill = foresttype_ordered))+geom_raster()+facet_wrap(~PC1bins)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()+coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                                                                                                                                                                                                              panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+dev.off()
+
+
+png(width = 12, height = 12, units = "in", res = 300, "outputs/map_comp_bimodal_-2.5_0.5.png")
+ggplot(pls.bim20[pls.bim20$PC1 > - 2.5 & pls.bim20$PC1 <= 0.5,], aes(x,y, fill = foresttype_ordered))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()+coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                                                                                                                                                                                                              panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+
+dev.off()
+
+png(height = 10, width = 10, units = "in", res = 300,"outputs/density_facet_by_PC1bins.png")
+ggplot(pls.bim20, aes(PLSdensity, fill = foresttype_ordered))+geom_histogram()+facet_wrap(~PC1bins)
 dev.off()
 
 # for 0.75 bins:
@@ -391,6 +460,9 @@ grid.arrange(pls.map + annotate("text", x=-90000, y=1486000,label= "A", size = 5
              p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 5), ncol = 2)
 dev.off()
 
+
+plot_grid(pls.map, pls.clust, pls.dens.pc1.hex, clust.hist, p.forest.map, labels = c("A", "B", "C", "D", "E"), ncol = 2, align = "hv")
+
 # ----------------------------PLS plots for grid cells that also exist in FIA:
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
@@ -410,7 +482,7 @@ mapdata <- data.frame(mapdata)
 
 # fia and pls plots
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+#cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 dens.pr<- dens.pr[!is.na(dens.pr$FIAdensity),]
@@ -607,7 +679,7 @@ species.clust$foresttype <- plyr::revalue(species.clust$speciescluster,c("Oak/Ma
 fia.clust <- ggplot(species.clust, aes(x = x, y=y, fill=foresttype))+geom_raster()+
   scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00',
                                '#ffff33'), name = " ")+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.15),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.25, 0.10),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                                            axis.title.x=element_blank(),
@@ -630,13 +702,70 @@ fia.dens.pc1.hex <- ggplot(data = fia.dens.clust, aes(PC1fia, FIAdensity)) +geom
                                                                                                                                                                                legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 fia.dens.pc1.hex
 
+# alternate to geom_hex: geom_point with overlaid density contours:
+p1fia <- ggplot(fia.dens.clust,aes(x=PC1fia, y=FIAdensity, color = foresttype)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d(data = fia.dens.clust,aes(x=PC1fia, y=FIAdensity), color = "blue") + 
+  theme_bw()
+
+scatter_dens_2dfia <- p1fia+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+                                                                                                                                                                                                     legend.background = element_rect(fill=alpha('transparent', 0)))
+                                                                                                                                                                                                     
+
+
+past.logged<- read.csv("data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv")
+past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
+past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
+
+# get data frame w/ 1980s, 1990s, and modern survey estimates:
+modern.fia <- fia.dens.clust[,c("x", "y", "cell", "FIAdensity")]
+modern.fia$INVYRcd <- "2000s"
+
+full.fia.surveys <- rbind(modern.fia, past.survey[,c("x", "y", "cell", "FIAdensity", "INVYRcd")])
+
+full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s", "2000s"))
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
-f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC1 < 1 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
-  geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 1, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 1, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,700)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.70, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"), 
-                                                                                                                                                                                                                                                                                                                                                                   panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-f.clust.hist
+f.clust.hist <- ggplot()+ geom_density(data = dens.nodups[dens.nodups$PC1 > -2.5 & dens.nodups$PC1 < 0.25 & dens.nodups$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+  geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 0.25, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 0.25, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,700)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+                                                                                                                                                                                                                                                                                                                                                                   panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
+f.clust.hist 
+
+
+inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw(base_size = 8)+theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none")#+theme_bw()
+ #theme_transparent()
+# Box plot of the y variable
+#ybp <- ggboxplot(iris$Sepal.Width, width = 0.3, fill = "lightgray") +
+ # theme_transparent()
+# Create the external graphical objects
+# called a "grop" in Grid terminology
+xbp_grob <- ggplotGrob(inset)
+
+# Place box plots inside the scatter plot
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+f.clust.hist.inset <- f.clust.hist + annotation_custom(grob = xbp_grob, ymin = 375, ymax = 760, xmin = 0.005, xmax = 655)
+
+#Other way of overlaying the plots:
+box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
+
+hist.inset <- ggdraw() +
+  draw_plot(f.clust.hist + theme(legend.justification = "bottom"), 0, 0, 1, 1) +
+  draw_plot(inset, 0.6, 0.025, 0.3, 0.975)# +
+  #draw_plot_label(c("A", "B"), c(0, 0.5), c(1, 0.92), size = 15)
+
+ggplot(fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 0.25, ], aes(x,y, fill = foresttype))+geom_raster()
+
+vpb_ <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)  # the larger map
+vpa_ <- viewport(width = 0.3, height = 1, x = 0.8, y = 0.51)  # the inset in upper right
+print(f.clust.hist, vp = vpb_)
+print(box.inset, vp = vpa_)
+
+
+
+
+test.plot <-print(f.clust.hist, vp = vpb_); print(box.inset, vp = vpa_)
 
 f.clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.nona$PC1 > -2.5 & dens.clust.nona$PC1 < 1 & dens.clust.nona$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia > -2.5 & fia.dens.clust$PC1fia < 1, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
@@ -655,13 +784,13 @@ f.clust.hist.nona
 fia.prob.forest <- read.csv("outputs/posterior_prob_forest_fia.csv") # from sample_density_probabilities script
 
 
-cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbpalette <- c("#ffffcc", "#c2e699", "#d73027", "#31a354", "#006837")
 names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
 
 p.forest.map.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=fia.prob.forest, aes(x=x, y=y, fill = pforest))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  labs(title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
   coord_equal()+theme_bw(base_size = 8)+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
                                           axis.title = element_blank(),
                                           legend.key.size = unit(0.3,'lines'), legend.position = c(0.205, 0.13),
@@ -671,23 +800,65 @@ p.forest.map.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lon
 p.forest.map.f
 
 
+# redraw the iset histogram
+hist.inset <- ggdraw() +
+  draw_plot(f.clust.hist, 0, 0, 1, 1) +
+  draw_plot(inset + theme(axis.text.x = element_text(angle = 45)), 0.7, 0.075, 0.3, 0.85)# +
+
+
 # write out new figure 2 to a png and annotate with A-F designations
-png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel.png")
-grid.arrange(pls.map + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
-             fia.map + annotate("text", x=-90000, y=1486000,label= "F", size = 3)+ggtitle("MODERN"),
+png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2.png")
+grid.arrange(pls.map.alt.color + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
+             fia.map.alt.color + annotate("text", x=-90000, y=1486000,label= "F", size = 3)+ggtitle("MODERN"),
              pls.clust+ annotate("text", x=-90000, y=1486000,label= "B", size = 3),
              fia.clust + annotate("text", x=-90000, y=1486000,label= "G", size = 3), 
-             pls.dens.pc1.hex + annotate("text", x=4, y=600,label= "C", size = 3),
-             fia.dens.pc1.hex + annotate("text", x=4, y=600,label= "H", size = 3), 
+             scatter_dens_2dpls + annotate("text", x=4, y=600,label= "C", size = 3),
+             scatter_dens_2dfia + annotate("text", x=4, y=600,label= "H", size = 3), 
              clust.hist + annotate("text", x=600, y=20,label= "D", size = 3),
-             f.clust.hist + annotate("text", x=600, y=20,label= "I", size = 3), 
+             hist.inset + annotate("text", x=600, y=20,label= "I", size = 3), 
              p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
              p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
              ncol = 2)
 dev.off()
 
+png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2b.png")
 
-png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_non_ag_supplement.png")
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm")), 
+          fia.map.alt.color+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          pls.clust+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          scatter_dens_2dpls+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          scatter_dens_2dfia+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          clust.hist+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          p.forest.map+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          p.forest.map.f+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),labels = c("A", "B", "C", "D", "E","F", "G", "H", "I", "J"), ncol = 2, align = "v")
+
+dev.off()
+
+
+
+png(height = 9, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2b.png")
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
+             fia.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "F", size = 3)+ggtitle("MODERN"),
+             pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+             fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "G", size = 3), 
+             scatter_dens_2dpls + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5, margin = unit(c(0, 0, 0, 0), "mm")))+ annotate("text", x=4, y=600,label= "C", size = 3),
+             scatter_dens_2dfia + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=4, y=600,label= "H", size = 3), 
+             clust.hist + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "D", size = 3),
+             hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "I", size = 3), 
+             p.forest.map + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA))+ annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.forest.map.f+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             ncol = 2,align = "h",axis="tb", scale = 1) #scale = c(1.2, 1.2,
+                                                         #1.2,1.2,
+                                                         #1.09,1.09,
+                                                         #1.09,1.09,
+                                                         #1.2, 1.2,
+                                                         #1.2,1.2))
+
+dev.off()
+
+
+png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_non_ag_supplement_v2.png")
 grid.arrange(pls.map.nona + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
              fia.map + annotate("text", x=-90000, y=1486000,label= "B", size = 3)+ggtitle("MODERN"),
              pls.clust.nona+ annotate("text", x=-90000, y=1486000,label= "C", size = 3),
@@ -702,6 +873,152 @@ grid.arrange(pls.map.nona + annotate("text", x=-90000, y=1486000,label= "A", siz
 dev.off()
 
 
+#------------------------------------P - PET figures----------------------------------
+# lets make a version of figure 2 that displays bimdoality w.r.t. P-PET climate:
+
+# Maps of P-PET in Past + modern
+# relationship of PC1 and P-PET
+# 2d isoline relationship wbeteen density + P-PET
+# histogram of densitys 
+# map of p(forest) w.r.t p-pet
+dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
+
+
+ppetpalette <- c('#8c510a','#d8b365','#f6e8c3','#c7eae5','#5ab4ac','#01665e')
+
+pls.ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = ppetpalette, limits =c(-170, 300),name ="P-PET", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text.x=element_blank(),
+                                               legend.key.size = unit(0.5, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                               axis.title.x=element_blank(),
+                                               axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")
+
+
+fia.ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = GS_ppet_mod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = ppetpalette,limits =c(-170, 300), name ="P-PET", na.value = 'darkgrey') +
+  coord_equal()+theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text.x=element_blank(),
+                                               legend.key.size = unit(0.5, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                               axis.title.x=element_blank(),
+                                               axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")
+
+
+
+
+pc1.gsppet.pls <- ggplot(dens.pr, aes(PC1, GS_ppet))+geom_point(size = 0.5)+ylab("P - PET (mm)")+xlab("Principal Component 1")
+
+pc1.gsppet.fia <- ggplot(dens.pr, aes(PC1fia, GS_ppet_mod))+geom_point(size = 0.5)+ylab("P - PET (mm)")+xlab("Principal Component 1")
+
+
+p1pls.ppet <- ggplot(fia.dens.clust,aes(x=GS_ppet, y=PLSdensity, color = foresttype)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d(data = fia.dens.clust,aes(x=GS_ppet, y=PLSdensity), color = "blue") + 
+  theme_bw()
+
+scatter_ppet_dens_2dpls <- p1pls.ppet+xlab('P-PET') + ylab("Tree Density (stems/ha)")+ylim(0,650)+geom_vline(xintercept = 65)+geom_vline(xintercept = 150)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", legend.background = element_rect(fill=alpha('transparent', 0)))
+
+
+p1fia.ppet <- ggplot(fia.dens.clust,aes(x=GS_ppet_mod, y=FIAdensity, color = foresttype)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d(data = fia.dens.clust,aes(x=GS_ppet_mod, y=FIAdensity), color = "blue") + 
+  theme_bw()
+
+scatter_ppet_dens_2dfia <- p1fia.ppet+xlab('P - PET') + ylab("Tree Density (stems/ha)")+ylim(0,650)+geom_vline(xintercept = 65)+geom_vline(xintercept = 150)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", legend.background = element_rect(fill=alpha('transparent', 0)))
+
+# cluster histograms:
+
+# fia:
+past.logged<- read.csv("data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv")
+past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
+past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
+
+# get data frame w/ 1980s, 1990s, and modern survey estimates:
+modern.fia <- fia.dens.clust[,c("x", "y", "cell", "FIAdensity")]
+modern.fia$INVYRcd <- "2000s"
+
+full.fia.surveys <- rbind(modern.fia, past.survey[,c("x", "y", "cell", "FIAdensity", "INVYRcd")])
+
+full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s", "2000s"))
+# D: Histogram colored by species cluster:
+# make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+dens.clust <- dens.clust[!duplicated(dens.clust),]
+
+clust.hist.ppet <- ggplot()+ geom_density(data = dens.clust[dens.clust$GS_ppet > 65 & dens.clust$GS_ppet < 150 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$GS_ppet > 65 & dens.clust$GS_ppet < 150 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 30))+xlim(0,600)+
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,750)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.ppet
+
+
+f.clust.hist.ppet <- ggplot()+ geom_density(data = dens.clust[dens.clust$GS_ppet > 65 & dens.clust$GS_ppet < 150 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+  geom_density(data = fia.dens.clust[fia.dens.clust$GS_ppet_mod > 65 & fia.dens.clust$GS_ppet_mod < 150, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$GS_ppet_mod > 65 & fia.dens.clust$GS_ppet_mod < 150, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,750)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+                                                                                                                                                                                                                                                                                                                                                                      panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
+f.clust.hist.ppet 
+
+
+hist.inset <- ggdraw() +
+  draw_plot(f.clust.hist.ppet, 0, 0, 1, 1) +
+  draw_plot(inset + theme(axis.text.x = element_text(angle = 45)), 0.7, 0.075, 0.3, 0.85)# +
+
+# draw p(forest):
+pls.prob.forest <- read.csv("outputs/posterior_prob_forest_pls_ppet.csv") # from sample_density_probabilities script
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#d73027", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+p.forest.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.prob.forest, aes(x=x, y=y, fill = pforest_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")) +
+  coord_equal()+theme_bw(base_size = 8)+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                                       axis.title = element_blank(),
+                                                       legend.key.size = unit(0.3,'lines'), legend.position = c(0.205, 0.13),
+                                                       legend.background = element_rect(fill=alpha('transparent', 0)),
+                                                       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.forest.map
+
+
+fia.prob.forest <- read.csv("outputs/posterior_prob_forest_fia_ppet.csv") # from sample_density_probabilities script
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#d73027", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+
+p.forest.map.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.prob.forest, aes(x=x, y=y, fill = pforest_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw(base_size = 8)+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                                       axis.title = element_blank(),
+                                                       legend.key.size = unit(0.3,'lines'), legend.position = c(0.205, 0.13),
+                                                       legend.background = element_rect(fill=alpha('transparent', 0)),
+                                                       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.forest.map.f
+
+# write out new figure 2 to a png and annotate with A-F designations
+png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2_ppet.png")
+grid.arrange(pls.ppet.map + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
+             fia.ppet.map + annotate("text", x=-90000, y=1486000,label= "F", size = 3)+ggtitle("MODERN"),
+             pc1.gsppet.pls+theme_bw(base_size = 8) + annotate("text", x=-5, y=200,label= "B", size = 3),
+             pc1.gsppet.fia +theme_bw(base_size = 8)+ annotate("text", x=-5, y=200,label= "G", size = 3), 
+             scatter_ppet_dens_2dpls + annotate("text", x=-100, y=600,label= "C", size = 3),
+             scatter_ppet_dens_2dfia + annotate("text", x=-100, y=600,label= "H", size = 3), 
+             clust.hist.ppet + annotate("text", x=600, y=20,label= "D", size = 3),
+             f.clust.hist.ppet + annotate("text", x=600, y=20,label= "I", size = 3), 
+             p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             ncol = 2)
+dev.off()
+
+#----------------------------------Composition change figs---------------------------------
 comp.pcs <- read.csv( "outputs/full_comp_pcs.csv")
 pls.pcs <- comp.pcs[comp.pcs$period %in% "Past", c("x", "y", "cell", "pc1", "pc2")]
 colnames(pls.pcs) <- c("x", "y","cell", "pls_pc1", "pls_pc2")

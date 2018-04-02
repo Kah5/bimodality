@@ -255,7 +255,7 @@ ggplot(PrJJA, aes(x,y, fill = Jun_pr),color = "red")+geom_point(size = 0.05)+geo
 
 no.match <- PETjja[!unique(PETjja[,2:1]) %in% unique(PrJJA[,1:2]),]
 
-P.PET <- merge(PrJJA, PETjja[], by = c("ind"))
+P.PET <- merge(PrJJA, PETjja, by = c("ind"))
 ggplot(P.PET, aes(x.x,y.y, color = Jun_pr))+geom_point()
 
 
@@ -271,11 +271,12 @@ P.PET$Sep_ppet <- P.PET$Sep_pr - P.PET$Sep_pet
 P.PET$Oct_ppet <- P.PET$Oct_pr - P.PET$Oct_pet
 P.PET$Nov_ppet <- P.PET$Nov_pr - P.PET$Nov_pet
 
-P.PET$GS_ppet <- rowSums(P.PET[,4:12], na.rm=TRUE) - rowSums(P.PET[,15:24], na.rm=TRUE)
+P.PET$GS_ppet <- rowSums(P.PET[,4:12], na.rm=TRUE) - rowSums(P.PET[,c("Mar_pet", "Apr_pet", "May_pet", "Jun_pet", 
+                                                                      "Jul_pet","Aug_pet", "Sep_pet","Oct_pet","Nov_pet")], na.rm=TRUE)
 
-ggplot(P.PET, aes(x.x,y.y, color = Jun_ppet))+geom_point()
+ggplot(P.PET, aes(x.x,y.y, color = GS_ppet))+geom_point()
 ggplot(P.PET, aes(x,y, fill = Jul_ppet))+geom_raster()
-ggplot(P.PET, aes(x,y, fill = Aug_ppet))+geom_raster()
+ggplot(P.PET, aes(x,y, fill = GS_ppet))+geom_raster()
 
 P.PET <- P.PET[,c("x.x", "y.x", "Mar_ppet",
         "Apr_ppet", "May_ppet" ,"Jun_ppet", "Jul_ppet" ,"Aug_ppet",

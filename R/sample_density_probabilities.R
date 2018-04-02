@@ -116,9 +116,107 @@ dev.off()
 write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_pls.csv", row.names = FALSE)
 
 
+# ---------------p(forest) based on p-pet:
+
+pls$prob_forest_ppet <- NA
+pls <- pls[!is.na(pls$PC1), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+for(i in 1:length(pls$prob_forest_ppet)){
+  
+  x <- pls[i,]
+  low <- x$GS_ppet - 10
+  high <- x$GS_ppet + 10
+  # sample the number of forests and savannas in each climate range, with replacement:
+  forest.cell <- sample(pls.density[pls.density$GS_ppet >= low  & pls.density$GS_ppet < high,]$cell, size = 100, replace = TRUE)
+  forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+  forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+  
+  
+  
+  N = length(forest.num) # sample size should be 500
+  nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+  nSav = sum(forest.num== 0 ) # number of savannas
+  
+  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+  
+  ### prior distribution
+  
+  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  
+  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+  
+  # calculate the likelihood given theta
+  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+  
+  
+  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+  pData = sum(pDataGivenTheta*pTheta)
+  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+  
+  # prints out df
+  round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+  
+  # get the posterior mean probability of forest given data
+  posteriorMean = sum(pThetaGivenData*theta) 
+  
+  pls[i,]$prob_forest_ppet <- posteriorMean
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(pls, aes(x,y, fill = prob_forest_ppet))+geom_raster()
+ggplot(pls, aes(x,y, fill = ecotype))+geom_raster()
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
 
 
-# get p(forest) only including grid cells that we have fia density data from on the modern landscape:
+pls$pforest_ppet <- cut(pls$prob_forest_ppet, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+pls$pforest_ppet <- as.character(pls$pforest_ppet)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+
+
+# plot the discrete probability of forest 
+p.forest.ppet <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls, aes(x=x, y=y, fill = pforest_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.forest.ppet
+
+
+# plot PLS forests
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                                                                                                                                        panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/binimial_prob_forest_pls_ppet.png')
+grid.arrange(pls.map, p.forest.ppet, nrow = 1, ncol=2)
+dev.off()
+
+# save the file with p(forest):
+
+write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest_ppet", "prob_forest_ppet")], "outputs/posterior_prob_forest_pls_ppet.csv", row.names = FALSE)
+
+
+
+
+# get p(forest) based on PC1 only including grid cells that we have fia density data from on the modern landscape:
 
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
@@ -497,6 +595,124 @@ dev.off()
 
 # save the FIA file with p(forest):
 write.csv(fia[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest")], "outputs/posterior_prob_forest_fia.csv", row.names = FALSE)
+
+
+
+
+# ---------------p(forest) based on p-pet:
+fia <- read.csv("data/PLS_FIA_density_climate_full.csv")
+#fia <- fia[! is.na(fia$FIAdensity),]
+
+#fia$ecotype <- ifelse(fia$FIAdensity > 47, "Forest", ifelse(fia$FIAdensity > 0.5, "Savanna","Prairie"))
+fia$ecotype <- ifelse(fia$FIAdensity > 47, "Forest", ifelse(fia$FIAdensity > 0.5, "Savanna",ifelse(is.na(fia$FIAdensity),"NA", "Prairie")))
+
+# dummyvariables for logistic regression:
+fia$ecocode <- NA
+fia[fia$ecotype %in% 'Forest', ]$ecocode <- 1
+fia[fia$ecotype %in% 'Savanna', ]$ecocode <- 0
+#pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
+
+
+# get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1fia away from grid cell:
+
+fia$prob_forest_ppet <- NA
+
+fia <- fia[!is.na(fia$GS_ppet_mod), ]
+fia.density <- fia[!is.na(fia$FIAdensity) & ! is.na(fia$ecocode),]
+
+
+for(i in 1:length(fia$prob_forest_ppet)){
+  
+  x <- fia[i,]
+  low <- x$GS_ppet_mod - 10
+  high <- x$GS_ppet_mod + 10
+  # sample the number of forests and savannas in each climate range, with replacement:
+  forest.cell <- sample(fia.density[fia.density$GS_ppet_mod >= low  & fia.density$GS_ppet_mod < high,]$cell, size = 100, replace = TRUE)
+  forest.num <- fia.density[fia.density$cell %in% forest.cell, ]$ecocode
+  forest.dens <- fia.density[fia.density$cell %in% forest.cell, ]$FIAdensity
+  
+  
+  
+  N = length(forest.num) # sample size should be 500
+  nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+  nSav = sum(forest.num== 0 ) # number of savannas
+  
+  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+  
+  ### prior distribution
+  
+  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  
+  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+  
+  # calculate the likelihood given theta
+  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+  
+  
+  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+  pData = sum(pDataGivenTheta*pTheta)
+  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+  
+  # prints out df
+  round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+  
+  # get the posterior mean probability of forest given data
+  posteriorMean = sum(pThetaGivenData*theta) 
+  
+  fia[i,]$prob_forest_ppet <- posteriorMean
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(fia, aes(x,y, fill = prob_forest_ppet))+geom_raster()
+ggplot(fia, aes(x,y, fill = ecotype))+geom_raster()
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+fia$pforest_ppet <- cut(fia$prob_forest_ppet, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+fia$pforest_ppet <- as.character(fia$pforest_ppet)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+
+
+# plot the discrete probability of forest 
+p.forest.ppet <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia, aes(x=x, y=y, fill = pforest_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.forest.ppet
+
+
+# plot PLS forests
+fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                                                                                                                                        panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/binimial_prob_forest_fia_ppet.png')
+grid.arrange(fia.map, p.forest.ppet, nrow = 1, ncol=2)
+dev.off()
+
+# save the file with p(forest):
+
+write.csv(fia[,c("x", "y", "cell", "ecotype", "pforest_ppet", "prob_forest_ppet")], "outputs/posterior_prob_forest_fia_ppet.csv", row.names = FALSE)
+
+
 
 
 # ---------------------probability bimodal from FIA:

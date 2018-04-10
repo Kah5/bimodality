@@ -7,13 +7,13 @@ library(diptest)
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 
-pls$ecotype <- ifelse(pls$PLSdensity > 100, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
+pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
 
 # dummyvariables for logistic regression:
-pls$ecocode <- 0
+pls$ecocode <- NA
 pls[pls$ecotype %in% 'Forest', ]$ecocode <- 1
-pls[pls$ecotype %in% 'Savanna', ]$ecocode <- 0
-#pls[!pls$ecotype %in% 'Prairie',]$ecocode <- 0
+pls[pls$ecotype %in% 'Savanna' , ]$ecocode <- 0
+pls[pls$ecotype %in% 'Prairie',]$ecocode <- 0
 
 
 # get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1fia away from grid cell:
@@ -27,10 +27,10 @@ pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
 for(i in 1:length(pls$prob_forest)){
       
       x <- pls[i,]
-      low <- x$PC1 - 0.5
-      high <- x$PC1 + 0.5
+      low <- x$PC1 - 0.1
+      high <- x$PC1 + 0.1
       # sample the number of forests and savannas in each climate range, with replacement:
-      forest.cell <- sample(pls.density[pls.density$PC1fia >= low  & pls.density$PC1fia < high,]$cell, size = 100, replace = TRUE)
+      forest.cell <- sample(pls.density[pls.density$PC1 >= low  & pls.density$PC1 < high,]$cell, size = 500, replace = TRUE)
       forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
       forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
       
@@ -77,12 +77,23 @@ label.breaks <- function(beg, end, splitby){
 }
 
 
-pls$pforest <- cut(pls$prob_forest, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+pls$pforest <- cut(pls$prob_forest, breaks = seq(0,1, by = 0.1), labels = label.breaks(0,0.9, 0.1))
 
 
 
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+cbpalette2 <- c('#543005',
+  '#8c510a',
+  '#bf812d',
+  '#dfc27d',
+  '#f6e8c3',
+  '#c7eae5',
+  '#80cdc1',
+  '#35978f',
+  '#01665e',
+  '#003c30')
+names(cbpalette2) <- c("0 - 0.1","0.1 - 0.2", "0.2 - 0.3","0.3 - 0.4", "0.4 - 0.5","0.5 - 0.6", "0.6 - 0.7","0.7 - 0.8", "0.8 - 0.9", "0.9 - 1")
 pls$pforest <- as.character(pls$pforest)
 #ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
 
@@ -93,7 +104,7 @@ pls$pforest <- as.character(pls$pforest)
 p.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=pls, aes(x=x, y=y, fill = pforest))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= cbpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1")) +
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= cbpalette2, labels=c("0 - 0.1","0.1 - 0.2", "0.2 - 0.3","0.3 - 0.4", "0.4 - 0.5","0.5 - 0.6", "0.6 - 0.7","0.7 - 0.8", "0.8 - 0.9", "0.9 - 1")) +
   coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
                                           panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
 
@@ -125,10 +136,10 @@ pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
 for(i in 1:length(pls$prob_forest_ppet)){
   
   x <- pls[i,]
-  low <- x$GS_ppet - 10
-  high <- x$GS_ppet + 10
+  low <- x$GS_ppet - 5
+  high <- x$GS_ppet + 5
   # sample the number of forests and savannas in each climate range, with replacement:
-  forest.cell <- sample(pls.density[pls.density$GS_ppet >= low  & pls.density$GS_ppet < high,]$cell, size = 100, replace = TRUE)
+  forest.cell <- sample(pls.density[pls.density$GS_ppet >= low  & pls.density$GS_ppet < high,]$cell, size = 500, replace = TRUE)
   forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
   forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
   
@@ -214,8 +225,131 @@ dev.off()
 write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest_ppet", "prob_forest_ppet")], "outputs/posterior_prob_forest_pls_ppet.csv", row.names = FALSE)
 
 
+##------------------------------p(forest) for PLS based on soil moisture-----------------------------------------
+pls <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 
+pls$ecotype <- ifelse(pls$PLSdensity > 47, "Forest", ifelse(pls$PLSdensity > 0.5, "Savanna",ifelse(is.na(pls$PLSdensity),"NA", "Prairie")))
+
+# dummyvariables for logistic regression:
+pls$ecocode <- NA
+pls[pls$ecotype %in% 'Forest', ]$ecocode <- 1
+pls[pls$ecotype %in% 'Savanna' , ]$ecocode <- 0
+pls[pls$ecotype %in% 'Prairie',]$ecocode <- 0
+
+
+# get posterior mean probability of forest for each grid cell, base on climate space +/- 0.15 PC1fia away from grid cell:
+
+pls$prob_forest_soil <- NA
+
+pls <- pls[!is.na(pls$meanJJA_soil), ]
+pls.density <- pls[!is.na(pls$PLSdensity) & ! is.na(pls$ecocode),]
+
+# this for loop is not ideal, but it works:
+for(i in 1:length(pls$prob_forest_soil)){
+  
+  x <- pls[i,]
+  low <- x$meanJJA_soil - 0.1
+  high <- x$meanJJA_soil + 0.1
+  # sample the number of forests and savannas in each climate range, with replacement:
+  forest.cell <- sample(pls.density[pls.density$meanJJA_soil >= low  & pls.density$meanJJA_soil < high,]$cell, size = 500, replace = TRUE)
+  forest.num <- pls.density[pls.density$cell %in% forest.cell, ]$ecocode
+  forest.dens <- pls.density[pls.density$cell %in% forest.cell, ]$PLSdensity
+  
+  
+  
+  N = length(forest.num) # sample size should be 500
+  nForest = sum(forest.num == 1, na.rm=TRUE) # number of forests
+  nSav = sum(forest.num== 0 ) # number of savannas
+  
+  theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+  
+  ### prior distribution
+  
+  pTheta = pmin(theta, 1-theta) # beta prior with mean = .5
+  
+  pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+  
+  # calculate the likelihood given theta
+  pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+  
+  
+  # calculate the denominator from Bayes theorem; this is the marginal # probability of y
+  pData = sum(pDataGivenTheta*pTheta)
+  pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+  
+  # prints out df
+  round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+  
+  # get the posterior mean probability of forest given data
+  posteriorMean = sum(pThetaGivenData*theta) 
+  
+  pls[i,]$prob_forest_soil <- posteriorMean
+}
+
+# plot out the probability of forests in the pls region:
+ggplot(pls, aes(x,y, fill = prob_forest_soil))+geom_raster()
+ggplot(pls, aes(x,y, fill = ecotype))+geom_raster()
+
+# create discrete probability cuts
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+
+pls$pforest <- cut(pls$prob_forest_soil, breaks = seq(0,1, by = 0.1), labels = label.breaks(0,0.9, 0.1))
+
+
+
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+names(cbpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+cbpalette2 <- c('#543005',
+                '#8c510a',
+                '#bf812d',
+                '#dfc27d',
+                '#f6e8c3',
+                '#c7eae5',
+                '#80cdc1',
+                '#35978f',
+                '#01665e',
+                '#003c30')
+names(cbpalette2) <- c("0 - 0.1","0.1 - 0.2", "0.2 - 0.3","0.3 - 0.4", "0.4 - 0.5","0.5 - 0.6", "0.6 - 0.7","0.7 - 0.8", "0.8 - 0.9", "0.9 - 1")
+pls$pforest <- as.character(pls$pforest)
+#ggplot(full, aes(x, y, color = ypreddiscrete)) + geom_point()
+
+
+
+
+# plot the discrete probability of forest 
+p.forest <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls, aes(x=x, y=y, fill = pforest))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= cbpalette2, labels=c("0 - 0.1","0.1 - 0.2", "0.2 - 0.3","0.3 - 0.4", "0.4 - 0.5","0.5 - 0.6", "0.6 - 0.7","0.7 - 0.8", "0.8 - 0.9", "0.9 - 1")) +
+  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+p.forest
+
+
+# plot PLS forests
+pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls, aes(x=x, y=y, fill = ecotype))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="PLS classification")+ scale_fill_manual(values= c("#006837", "tan","#c2e699"))+ coord_equal()+theme_bw()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0.4)),
+                                                                                                                                                        panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1), legend.title = element_blank())+ annotate("text", x=-90000, y=1486000,label= "A", size = 5)+ggtitle("")
+
+png(width = 8, height = 4, units = 'in', res = 300, filename = 'outputs/paper_figs/binimial_prob_forest_pls_soil_moist.png')
+grid.arrange(pls.map, p.forest, nrow = 1, ncol=2)
+dev.off()
+
+# save the file with p(forest):
+
+write.csv(pls[,c("x", "y", "cell", "ecotype", "pforest", "prob_forest_soil")], "outputs/posterior_prob_forest_meanJJA_soil_pls.csv", row.names = FALSE)
+
+
+#__________________________________________________________________________________
 # get p(forest) based on PC1 only including grid cells that we have fia density data from on the modern landscape:
 
 pls <- read.csv("data/PLS_FIA_density_climate_full.csv")

@@ -117,7 +117,11 @@ png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
 ggplot(dens.clust, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
 dev.off()
 
-ggplot(dens.clust, aes(GS_ppet, PLSdensity, color = speciescluster))+geom_point()
+png("outputs/cluster/density_vs_envt_JJA_soil_by_species_cluster.png")
+ggplot(dens.clust, aes(meanJJA_soil, PLSdensity, color = speciescluster))+geom_point(size = 0.5)+ylim(0, 650)
+dev.off()
+
+ggplot(dens.clust, aes(GS_ppet, PLSdensity, color = speciescluster))+geom_point(size = 0.5)+ylim(0, 650)
 
 dens.clust.m <- melt(dens.clust[,c("x", "y", "cell",  "foresttype", "PC1", "PLSdensity")], id.vars = c("x", "y", "cell", "PC1","PLSdensity" ))
 
@@ -149,10 +153,17 @@ pls.dens.pc1.hex
 
 pls.dens.ppet.hex <- ggplot(data = dens.clust, aes(GS_ppet, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 8)+#scale_fill_distiller(palette = "Spectral", limits = c(1,140))+
-  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")#+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+ylim(0,650)#+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
                                                                                                                                                                               # legend.background = element_rect(fill=alpha('transparent', 0)), 
                                                                                                                                                                                #legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 pls.dens.ppet.hex
+
+pls.dens.moist.hex <- ggplot(data = dens.clust, aes(meanJJA_soil, PLSdensity)) +geom_hex() + 
+  theme_bw(base_size = 8)+scale_fill_distiller(palette = "Spectral", limits = c(1,140))+
+  xlab('mean JJA soil moisture') + ylab("Tree Density (stems/ha)")+ylim(0,650)#+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+# legend.background = element_rect(fill=alpha('transparent', 0)), 
+#legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+pls.dens.moist.hex
 
 smoothScatter(x =dens.clust$PC1, y = dens.clust$PLSdensity, pch = NA, nrpoints = 1000,  nbin = c(1000, 1000) )
 

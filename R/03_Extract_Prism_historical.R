@@ -164,7 +164,7 @@ write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
 #
 setwd ("/Users/kah/Documents/bimodality")
 
-#full.PET <- readRDS('data/full.PET.rds')
+full.PET <- readRDS('data/full.PET.rds')
 full.PET <- readRDS("data/PET_full/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
@@ -190,7 +190,7 @@ spec.table <- as.data.frame(spec.table)
 
 plot(avgs.alb)
 
-avgs.df <- data.frame(extract(avgs.alb, spec.table[,c("x","y")]))
+avgs.df <- data.frame(raster::extract(avgs.alb, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 

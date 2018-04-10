@@ -39,7 +39,7 @@ climate.data <- list(mod.precip[,c('x', 'y', 'pr30yr')], past.precip[,c('x', 'y'
      past.tmean[,c('x', 'y', 'Mean', 'deltaT')], mod.tmean.mo[,c('x', 'y', 'moddeltaT')]) %>% Reduce(function(dtf1,dtf2) left_join(dtf1,dtf2,by=c("x", "y")), .)
 colnames(climate.data) <- c("x", "y",  "MAP2011", "MAP1910","moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT")
 
-ggplot(climate.data, aes(x, y, color=moddeltaT))+geom_point()
+ggplot(climate.data, aes(x, y, color=MAP1910))+geom_point()
 
 
 
@@ -70,11 +70,21 @@ ggplot(climate.data, aes(x, y, fill=GS_ppet_mod))+geom_raster()
 
 ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
+# merge with soil moisture balance (calucated from P, PET and AWC):
+moist_bal <- read.csv('outputs/pet_with_JJAsoil_moist.csv')
+climate.data <- merge(moist_bal[,c("x", "y", "meanJJA_soil")], climate.data, by = c("x", "y"))
+
 #----------------------------- Read in Soils Data -------------------------------
 
 #read in soils data--soils data from gssurgo database, aggregated in ArcGIS
 # percent sand 0-100cm soil
 sand8km <- raster("data/8km_UMW_sand1.tif")
+
+plot(sand8km)
+# need to project sand to great lakes albers coordinate system
+sand8km.alb <- projectRaster(sand8km, crs ='+init=epsg:3175')
+
+
 
 plot(sand8km)
 # need to project sand to great lakes albers coordinate system
@@ -121,13 +131,15 @@ fia.clim <- merge(fia, climate.data, by = c("x", "y"), all.x = TRUE)
 
 ggplot(pls.clim, aes(x,y, fill = sandpct))+geom_raster()
 
+ggplot(pls.clim, aes(meanJJA_soil, PLSdensity, color = sandpct))+geom_point(size = 0.5)+ylim(0,650)
+
 # ---------------------- Principal Component Analysis of Environmental Data ----------------------------
 
 #------------------------PCA of environmental variables-------------------------------
 
 dens.rm <- na.exclude(pls.clim[,c("x","y", "cell",'MAP1910', "MAP2011", "moderndeltaP", 
                                   "pastdeltaP", "modtmean", "pasttmean",
-                                  "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3")])
+                                  "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3", "meanJJA_soil")])
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
@@ -194,7 +206,7 @@ dev.off()
 
 
 
-test1 <- merge(pls.clim,unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x','y'), all.x= T)
+test1 <- merge(pls.clim, unique(dens.rm[,c('x','y', 'PC1', 'PC2')]),  by = c('x','y'), all.x= T)
 #convert dens.rm to the new dens.pr---we only lose ~150 grid cells
 dens.rm <- test1
 
@@ -205,6 +217,8 @@ dev.off()
 png(width = 6, height = 6, units = "in", res = 300, "outputs/paper_figs/PPET_PC1_linear_relationship.png")
 ggplot(dens.rm, aes( GS_ppet, PLSdensity))+geom_point(size = 0.1) + stat_smooth(method = 'lm') + theme_bw(base_size = 20)+ylab("PLSdensity")+xlab("Growing Season P-PET (mm)")+ylim(0,1000)
 dev.off()
+
+
 # --------------------------------------PCA on FIA dataset------------------------------
 
 
@@ -232,7 +246,7 @@ dens.rm[,paste0('PC2fia')]  <- newscores[,2]
 dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("x", "y", "cell"), all.x = TRUE)
 full.dens.pls <- merge(pls.clim[,c('x',"y","cell","PLSdensity")], fia.clim[,c("x","y","cell", "FIAdensity")], by = c("x","y","cell"),all.x = TRUE)
 full.clim.dens <- merge(full.dens.pls, dens.rm[,c("x", "y", "cell","MAP1910", "MAP2011", "moderndeltaP", "modtmean", "moddeltaT", 
-                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
+                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod","meanJJA_soil", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
 
 write.csv(full.clim.dens, "data/PLS_FIA_density_climate_full.csv")
 

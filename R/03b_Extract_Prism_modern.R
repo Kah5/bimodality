@@ -198,6 +198,8 @@ y <- na.omit(avgs.df.ll[,c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug
 z <- na.omit(avgs.df[,c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec","ind", "x", "y")])
 
 #source("/afs/crc.nd.edu/user/k/kheilman/bimodality/R/Thornthwaite_PET.R")
+source("R/Thornthwaite_PET.R")
+
 system.time(for(i in 1:length(y$y)){
   
   ynew <- t(y[i,1:12])
@@ -242,6 +244,7 @@ saveRDS(PET.means, paste0( "/Users/kah/Documents/bimodality/outputs/fia_full.PET
 # now need to calculate P-PET:
 
 Precip <- read.csv(paste0("/Users/kah/Documents/bimodality/outputs/pr_monthly_Prism_30yrnorms_full.csv"))
+PET.means<- readRDS("/Users/kah/Documents/bimodality/outputs/fia_full.PET_full_reg.rds")
 PETjja <- PET.means
 PrJJA <- Precip[,c("x", "y","Mar","Apr", "May","Jun", "Jul", "Aug", "Sep", "Oct", "Nov")]
 colnames(PrJJA) <- c("x", "y", "Mar_pr","Apr_pr", "May_pr","Jun_pr", "Jul_pr", "Aug_pr", "Sep_pr", "Oct_pr", "Nov_pr")

@@ -73,7 +73,7 @@ system.time(for(i in 1:length(y$y)){
   ynew2 <- data.frame(Tave = ynew[,1], 
                       year <- year, 
                       month <- month)
-  ynew2 <- ynew2[ynew2$month %in% c("01","03","04","05","06", "07", "08", "09", "10", "11", "12"),]
+  ynew2 <- ynew2[ynew2$month %in% c("01","02","03","04","05","06", "07", "08", "09", "10", "11", "12"),]
   # use the thorthwaite equation to attach the PET data to the 
   
   ynew2$PET_tho <- as.numeric(thornthwaite_PET(ynew2$Tave, lat))
@@ -98,24 +98,24 @@ full.PET <- PET.df
 PET.means <- dcast(full.PET, lat + long  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
 colnames(PET.means) <- c("lat", "long",
                          "apr","may","jun", "jul", "aug", "sep", "oct")
-#ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
+
 # get the precipitation data in the same format:
 saveRDS(full.PET, paste0(workingdir, "full.PET_full_reg.rds"))
 saveRDS(PET.means, paste0(workingdir, "PET.means_full_reg.rds"))
 
+# --------------------------code below for processing data in correct format: done outside of crc
+
+
+
 full.PET <- readRDS("outputs/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
+
+
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
 
 full$Mean <- rowMeans(full[,4:length(full)], na.rm=TRUE)
-
-
-
 full2 <- full
 
-#ggplot(full2, aes(long, lat, fill = Aug))+geom_raster()
-# for monthly dataset
-# convert to rasterstack
 coordinates(full) <- ~long + lat
 gridded(full) <- TRUE
 avgs <- stack(full) 
@@ -132,4 +132,29 @@ avgs.df$y <- spec.table$y
 
 ggplot(avgs.df, aes(x,y, fill = Mean))+geom_raster()
 write.csv(avgs.df, paste0(workingdir, "PET_pls_extracted", yrs,".csv"))
+
+
+
+# now lets get the yearly values
+
+full.PET$year <- as.numeric(substring(row.names(full.PET), first = 26, last = 29))
+PET.byll <- dcast(full.PET, lat + long ~  year + month, mean, value.var = 'PET_tho', na.rm = TRUE)
+
+coordinates(PET.byll) <- ~long + lat
+gridded(PET.byll) <- TRUE
+avgs <- stack(PET.byll) 
+
+plot(avgs) #plots averages
+proj4string(avgs) <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' 
+avgs.alb <- projectRaster(avgs, crs='+init=epsg:3175')
+
+# spec.table is a spatial points df, convert to regular df:
+spec.table <- as.data.frame(spec.table)
+avgs.df <- data.frame(raster::extract(avgs.alb, spec.table[,c("x" ,"y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+ggplot(avgs.df, aes(x,y, fill = X1905_11))+geom_raster()
+write.csv(avgs.df, paste0(workingdir, "PET_pls_extracted", yrs,".csv"))
+
 

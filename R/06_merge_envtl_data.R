@@ -71,9 +71,10 @@ ggplot(climate.data, aes(x, y, fill=GS_ppet_mod))+geom_raster()
 ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 # merge with soil moisture balance (calucated from P, PET and AWC):
-moist_bal <- read.csv('outputs/pet_with_JJAsoil_moist.csv')
-climate.data <- merge(moist_bal[,c("x", "y", "meanJJA_soil")], climate.data, by = c("x", "y"))
-
+moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
+climate.data <- merge(moist_bal[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
+colnames(climate.data)[3] <- "mean_GS_soil"
+ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
 #----------------------------- Read in Soils Data -------------------------------
 
 #read in soils data--soils data from gssurgo database, aggregated in ArcGIS
@@ -131,7 +132,7 @@ fia.clim <- merge(fia, climate.data, by = c("x", "y"), all.x = TRUE)
 
 ggplot(pls.clim, aes(x,y, fill = sandpct))+geom_raster()
 
-ggplot(pls.clim, aes(meanJJA_soil, PLSdensity, color = sandpct))+geom_point(size = 0.5)+ylim(0,650)
+ggplot(pls.clim, aes(mean_GS_soil, PLSdensity, color = sandpct))+geom_point(size = 0.5)+ylim(0,650)
 
 # ---------------------- Principal Component Analysis of Environmental Data ----------------------------
 
@@ -139,7 +140,7 @@ ggplot(pls.clim, aes(meanJJA_soil, PLSdensity, color = sandpct))+geom_point(size
 
 dens.rm <- na.exclude(pls.clim[,c("x","y", "cell",'MAP1910', "MAP2011", "moderndeltaP", 
                                   "pastdeltaP", "modtmean", "pasttmean",
-                                  "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3", "meanJJA_soil")])
+                                  "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3", "mean_GS_soil")])
 dens.rm <- data.frame(dens.rm)
 scale.dens <- scale(dens.rm[, c('MAP1910', "MAP2011", "moderndeltaP", 
                                 "pastdeltaP", "modtmean", "pasttmean",
@@ -246,7 +247,7 @@ dens.rm[,paste0('PC2fia')]  <- newscores[,2]
 dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("x", "y", "cell"), all.x = TRUE)
 full.dens.pls <- merge(pls.clim[,c('x',"y","cell","PLSdensity")], fia.clim[,c("x","y","cell", "FIAdensity")], by = c("x","y","cell"),all.x = TRUE)
 full.clim.dens <- merge(full.dens.pls, dens.rm[,c("x", "y", "cell","MAP1910", "MAP2011", "moderndeltaP", "modtmean", "moddeltaT", 
-                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod","meanJJA_soil", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
+                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod","mean_GS_soil", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
 
 write.csv(full.clim.dens, "data/PLS_FIA_density_climate_full.csv")
 

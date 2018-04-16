@@ -13,9 +13,9 @@ version <- "1.7-5" # pls version
 # set the working dir (where the prism data folder is)
 workingdir <- "/Users/kah/Documents/bimodality/data/"
 # for crc:
-workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
+#workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
 # read in the 8km grid for extracting
-spec.table <- read.csv(paste0(workingdir,"data/midwest_pls_full_density_alb",version,".csv"))
+spec.table <- read.csv(paste0(workingdir,"midwest_pls_full_density_alb",version,".csv"))
 
 
 ##########################################################################
@@ -26,12 +26,12 @@ spec.table <- read.csv(paste0(workingdir,"data/midwest_pls_full_density_alb",ver
 setwd(paste0(workingdir,'PRISM_ppt_stable_4kmM2_189501_198012_bil/'))
 
 
-#coordinates(spec.table) <- ~x + y
-#proj4string(spec.table) <- '+init=epsg:3175' 
-#spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+coordinates(spec.table) <- ~x + y
+proj4string(spec.table) <- '+init=epsg:3175' 
+spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
-#spec.table.11<- as.data.frame(spec.table.ll)
-spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
+spec.table.11<- as.data.frame(spec.table.ll)
+#spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
 
 #designate the years we want to extract/ average over
 years <- 1895:1925
@@ -45,10 +45,10 @@ filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
 filenames <- filenames [substring(filenames, first = 24, last = 27) %in% years]
 
 s <- stack(filenames) #make all into a raster
-t <- crop(s, extent(spec.table.ll)) 
+t <- crop(s, extent(c(-97.24357, -82.40131 , 37.1442 , 49.38583))) 
 s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
 y <- data.frame(rasterToPoints(s)) #covert to dataframe
-years <- rep(1895:1904, each = 12)
+years <- rep(years, each = 12)
 mo <- rep(c('Jan', 'Feb', 'Mar', "Apr", "May", 
             'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec"), 10)  
 
@@ -89,7 +89,26 @@ avgs.df$y <- spec.table$y
 write.csv(avgs.df, paste0(workingdir,"outputs/pr_monthly_Prism_",yrs,"_full.csv"))
 
 
+# kh temporary:
+melt.temp <- melted.mo[!melted.mo$mos %in% "02",] # rn we are missing feb in the PET:
 
+saveRDS(melt.temp, paste0("/Users/kah/Documents/bimodality/outputs/PR_pls_extracted", yrs,".RDS"))
+
+melt.temp$year <- as.numeric(substring(melt.temp$variable, first = 24, last = 27))
+melt.temp.byxy <- dcast(melt.temp, x + y ~  year + mos, mean, value.var = 'value', na.rm = TRUE)
+coordinates(melt.temp.byxy) <- ~x + y
+gridded(melt.temp.byxy) <- TRUE
+avgs <- stack(melt.temp.byxy) 
+
+spec.table <- data.frame(spec.table)
+
+plot(avgs) #plots the raster averages
+
+avgs.df <- data.frame(raster::extract(avgs, spec.table[,c("x","y")]))
+avgs.df$x <- spec.table$x
+avgs.df$y <- spec.table$y
+
+saveRDS(avgs.df, paste0("/Users/kah/Documents/bimodality/outputs/PR_pls_extracted", yrs,".RDS"))
 ######################################################################################
 #extract mean temperature data from the prism data#
 ######################################################################################
@@ -156,7 +175,7 @@ avgs.df <- data.frame(extract(avgs, spec.table[,c("x","y")]))
 avgs.df$x <- spec.table$x
 avgs.df$y <- spec.table$y
 
-write.csv(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.csv"))
+saveRDS(avgs.df, paste0(workingdir,"outputs/tmean_yr_Prism_",yrs,"_full.RDS"))
 
 
 ######################################################################

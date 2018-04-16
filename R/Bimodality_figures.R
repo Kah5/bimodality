@@ -111,14 +111,14 @@ pls.clust
 # merge clust_plot6 and dens.pr
 
 dens.clust <- merge(dens.pr, clust_7[,c("x" ,"y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"), all.x = TRUE)
-dens.clust <- dens.clust[!dupliated(dens.clust),] # remove any duplicates created in merge
+dens.clust <- dens.clust[!duplicated(dens.clust),] # remove any duplicates created in merge
 
 png("outputs/cluster/density_vs_envt_pc1_by_species_cluster.png")
 ggplot(dens.clust, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
 dev.off()
 
 png("outputs/cluster/density_vs_envt_JJA_soil_by_species_cluster.png")
-ggplot(dens.clust, aes(meanJJA_soil, PLSdensity, color = speciescluster))+geom_point(size = 0.5)+ylim(0, 650)
+ggplot(dens.clust, aes(mean_GS_soil, PLSdensity, color = speciescluster))+geom_point(size = 0.5)+ylim(0, 650)
 dev.off()
 
 ggplot(dens.clust, aes(GS_ppet, PLSdensity, color = speciescluster))+geom_point(size = 0.5)+ylim(0, 650)
@@ -158,7 +158,7 @@ pls.dens.ppet.hex <- ggplot(data = dens.clust, aes(GS_ppet, PLSdensity)) +geom_h
                                                                                                                                                                                #legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 pls.dens.ppet.hex
 
-pls.dens.moist.hex <- ggplot(data = dens.clust, aes(meanJJA_soil, PLSdensity)) +geom_hex() + 
+pls.dens.moist.hex <- ggplot(data = dens.clust, aes(mean_GS_soil, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 8)+scale_fill_distiller(palette = "Spectral", limits = c(1,140))+
   xlab('mean JJA soil moisture') + ylab("Tree Density (stems/ha)")+ylim(0,650)#+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
 # legend.background = element_rect(fill=alpha('transparent', 0)), 
@@ -250,7 +250,7 @@ scatter_dens_2dpls_ppet
 dev.off()
 
 
-p1 = ggplot(dens.clust,aes(x=meanJJA_soil, y=PLSdensity)) +
+p1 = ggplot(dens.clust,aes(x=mean_GS_soil, y=PLSdensity)) +
   geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
   geom_density2d() + 
   theme_bw()
@@ -312,14 +312,14 @@ clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & d
 clust.hist
 
 
-clust.hist.jja_soil <- ggplot(data = dens.clust[dens.clust$meanJJA_soil > 1  & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered))+geom_histogram()+xlim(0,650)+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.jja_soil <- ggplot(data = dens.clust[dens.clust$mean_GS_soil > 1  & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered))+geom_histogram()+xlim(0,650)+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 png(height = 5, width = 5, units = "in", res = 300, "outputs/paper_figs/hist_by_community_JJA_soil.png")
 clust.hist.jja_soil
 dev.off()
 
 
-clust.map.bimodal.jja_soil <- ggplot(data = dens.clust[dens.clust$meanJJA_soil > 1.25  & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+clust.map.bimodal.jja_soil <- ggplot(data = dens.clust[dens.clust$mean_GS_soil > 1.25  & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                                                                                                                                                                                                                                                                                                                       axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
                                                                                                                                                                                                                                                                                                                                                                                                                       axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                                                                                                                                                                                                                                                                                                                                       axis.title.x=element_blank(),
@@ -332,7 +332,7 @@ clust.map.bimodal.jja_soil
 dev.off()
 
 
-clust.map.bimodal.jja_soil.1 <- ggplot(data = dens.clust[dens.clust$meanJJA_soil > 1  & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+clust.map.bimodal.jja_soil.1 <- ggplot(data = dens.clust[dens.clust$mean_GS_soil > 1  & dens.clust$PLSdensity > 0.5, ], aes(x,y, fill = foresttype_ordered))+geom_raster()+scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                                                                                                                                                                                                                                                                                                                          axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
                                                                                                                                                                                                                                                                                                                                                                                                                          axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                                                                                                                                                                                                                                                                                                                                          axis.title.x=element_blank(),

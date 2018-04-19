@@ -151,7 +151,7 @@ calc.soilmoist <- function(p, pe, awcs, awcu) {
       excess[i] = 0
     } else { # ppt exceeds pe, so our soils will get wetter (or stay at capacity)
       dels[i]   <- min(sempty[i], as.numeric(-dthis)) # either all the precip, or as much as the soils can take in
-      rs[i]     <- dels[i] # surface recharge
+      rs[i]     <- as.numeric(dels[i]) # surface recharge
       excess[i] <- -dthis - dels[i] #
       es[i]     <- 0			
     } # End surface balance ifelse
@@ -248,7 +248,7 @@ calc.soilmoist <- function(p, pe, awcs, awcu) {
   
   meat[["et"   ]] <- et
   
-  return(meat$smean)
+  return(meat$s2)
   # ------------------------------------------
   
 }
@@ -292,8 +292,8 @@ for(k in 1:length(pet$y)){
   p <- past.precip.mo 
   p <- past.precip.mo[past.precip.mo$x == as.numeric(pet[k,]$x) & past.precip.mo$y == as.numeric(pet[k,]$y) , 1:122]
   
-  awcs <- 1 # kh added: since PDSI assumes always 1 for uppers surface layer
-  awcu <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*(30*0.393701) # kh added: AWC from gridded 8km gssurgo estimates-- need to
+  awcs <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*1 # kh added: since PDSI assumes always 1 for uppers surface layer
+  awcu <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*(30) # kh added: AWC from gridded 8km gssurgo estimates-- need to
   # convert from cm/cm AWC to to in in the top 30 cm of soil by multiplying by 30
   
   
@@ -320,8 +320,8 @@ soil.moist.df <- data.frame(soil.moist.df)
 soil.moist.df$x <- pet$x
 soil.moist.df$y <- pet$y
 
-write.csv(soil.moist.df, "outputs/soil.moisture_1895_1905.csv")
-
+write.csv(soil.moist.df, "outputs/soil.moisture_end_of_mo_1895_1905.csv")
+soil.moist.df <- read.csv("outputs/soil.moisture_1895_1905.csv")
 splits <- strsplit(colnames(soil.moist.df), split = "_")
 splits2 <- do.call(rbind, splits)
 #write.csv(pet, "outputs/pet_with_JJAsoil_moist_1895_1905.csv")
@@ -330,66 +330,104 @@ splits2 <- do.call(rbind, splits)
 
 GS_index <- colnames(soil.moist.df) %like% "_06" | colnames(soil.moist.df) %like% "_07"| colnames(soil.moist.df) %like% "_08" | colnames(soil.moist.df) %like% "_09"
 soil.moist.df$Mean_GS <- rowMeans(soil.moist.df[,GS_index], na.rm = TRUE)
+jun_index <- colnames(soil.moist.df) %like% "_06" 
+jul_index <- colnames(soil.moist.df) %like% "_07" 
+aug_index <- colnames(soil.moist.df) %like% "_08" 
+sep_index <- colnames(soil.moist.df) %like% "_09" 
 
-ggplot(soil.moist.df, aes(x,y, fill = Mean_GS))+geom_raster()
+soil.moist.df$Mean_06 <- rowMeans(soil.moist.df[,jun_index], na.rm = TRUE)
+soil.moist.df$Mean_07 <- rowMeans(soil.moist.df[,jul_index], na.rm = TRUE)
+soil.moist.df$Mean_08 <- rowMeans(soil.moist.df[,aug_index], na.rm = TRUE)
+soil.moist.df$Mean_09 <- rowMeans(soil.moist.df[,sep_index], na.rm = TRUE)
+
+ggplot(soil.moist.df, aes(x,y, fill = Mean_09))+geom_raster()
 write.csv(soil.moist.df, "outputs/soil.moisture_1895_1905_with_mean.csv")
 
 #--------------------------calculate soil moisture for FIA:
 
-pe <-  readRDS("/Users/kah/Documents/bimodality/outputs/fia_full.PET_full_reg.rds")
-mod.precip.mo <- read.csv('outputs/pr_monthly_Prism_30yrnorms_full.csv')
+pe <-  read.csv("/Users/kah/Documents/bimodality/data/PET_fia_extracted_full1999-2015.csv")
+  mod.precip.mo <- readRDS(paste0("/Users/kah/Documents/bimodality/outputs/PR_pls_extracted", "1999-2015",".RDS"))
 mod.precip.mo <- mod.precip.mo[complete.cases(mod.precip.mo),]
 
 
-pet <-data.frame(Jan_pet = pe$Jan,
-                 Feb_pet = pe$Feb,
-                 Mar_pet = pe$Mar,
-                 Apr_pet = pe$Apr,
-                 May_pet = pe$May,
-                 Jun_pet = pe$Jun,
-                 Jul_pet = pe$Jul,
-                 Aug_pet = pe$Aug,
-                 Sep_pet = pe$Sep,
-                 Oct_pet = pe$Oct,
-                 Nov_pet = pe$Nov,
-                 Dec_pet = pe$Dec,
-                 y = pe$lat, 
-                 x = pe$long)
+pet <- pe[,2:length(pe)]
+#pet <- pet[!is.na(pet),]
+#pet <-data.frame(Jan = pe [,2],
+#                Feb = pe [,"Feb"],
+#               Mar = pe [,3],
+#              Apr = pe [,4],
+#      May = pe [,5],
+#     Jun = pe [,6],
+#    Jul = pe [,7],
+#   Aug = pe [,8],
+#  Sep = pe [,9],
+# Oct = pe [,10],
+#Nov = pe [,11],
+#Dec = pe [,12],
+#y = pe$y, 
+#x = pe$x)
 
 pet$meanJJA_soil <- NA
 
-merged.pet.precip<- merge(mod.precip.mo, pet, by = c("x", "y"))
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
+soil.moist <- list()
+
 for(k in 1:length(pet$y)){
+  # get p for the site
+  p <- mod.precip.mo 
+  p <- mod.precip.mo[mod.precip.mo$x == as.numeric(pet[k,]$x) & mod.precip.mo$y == as.numeric(pet[k,]$y) , 1:122]
   
-  mod.precip.mo$x <- as.numeric(mod.precip.mo$x)
-  mod.precip.mo$y <- as.numeric(mod.precip.mo$y)
-  p <- mod.precip.mo[mod.precip.mo$x == pet[k,]$x & mod.precip.mo$y == pet[k,]$y , 2:13]
-  
-  awcs <- 1 # kh added: since PDSI assumes always 1 for uppers surface layer
-  awcu <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*(30*0.393701) # kh added: AWC from gridded 8km gssurgo estimates-- need to
+  awcs <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*1 # kh added: since PDSI assumes always 1 for uppers surface layer
+  awcu <- (dens.pr[dens.pr$x == pet[k,]$x & dens.pr$y == pet[k,]$y ,]$awc*0.393701)*(30) # kh added: AWC from gridded 8km gssurgo estimates-- need to
   # convert from cm/cm AWC to to in in the top 30 cm of soil by multiplying by 30
   
   
   
   p <- p*0.0393701
-  pe <- pet[k,1:12]*0.0393701
-  if(length(awcu) == 0){pet[k,]$meanJJA_soil <- "no data"
-  }
-  else{
-    if(is.na(p[,1]) | is.na(awcu)) {pet[k,]$meanJJA_soil <- "no data"
+  pe <- pet[k,1:122]*0.0393701
+  if(length(awcu) == 0 | is.na(awcu) | awcu == 0 ){soil.moist[[k]]  <- NA
+  }else{
+    if(is.na(p[,1]) | is.na(awcu) | is.na(pet[k,1:122])) {soil.moist[[k]] <- NA
     }else{
-      pet[k,]$meanJJA_soil <- mean(calc.soilmoist(p, pe, awcs, awcu)[6:8], na.rm=TRUE)
+      #pet[k,]$meanJJA_soil <- mean(calc.soilmoist(p, pe, awcs, awcu)[6:8], na.rm=TRUE)
+      soil.moist[[k]] <- calc.soilmoist(p, pe,awcs, awcu)
+      
     }
-  }}
+  }
+  
+  
+}
 
+soil.moist.df <- do.call(rbind, soil.moist)
+colnames(soil.moist.df) <- colnames(pet[,1:122])
+soil.moist.df <- data.frame(soil.moist.df)
 
+soil.moist.df$x <- pet$x
+soil.moist.df$y <- pet$y
 
+write.csv(soil.moist.df, "outputs/soil.moisture_end_of_mo_1895_1905.csv")
+soil.moist.df <- read.csv("outputs/soil.moisture_1895_1905.csv")
+splits <- strsplit(colnames(soil.moist.df), split = "_")
+splits2 <- do.call(rbind, splits)
+#write.csv(pet, "outputs/pet_with_JJAsoil_moist_1895_1905.csv")
 
+# select only growing season and get average JJAS moisture:
 
-pet[pet$meanJJA_soil %in% "no data",]$meanJJA_soil<- NA
-pet$meanJJA_soil <- as.numeric(pet$meanJJA_soil)
-ggplot(pet, aes(x,y, color = meanJJA_soil))+geom_point()
+GS_index <- colnames(soil.moist.df) %like% "_06" | colnames(soil.moist.df) %like% "_07"| colnames(soil.moist.df) %like% "_08" | colnames(soil.moist.df) %like% "_09"
+soil.moist.df$Mean_GS <- rowMeans(soil.moist.df[,GS_index], na.rm = TRUE)
+jun_index <- colnames(soil.moist.df) %like% "_06" 
+jul_index <- colnames(soil.moist.df) %like% "_07" 
+aug_index <- colnames(soil.moist.df) %like% "_08" 
+sep_index <- colnames(soil.moist.df) %like% "_09" 
+
+soil.moist.df$Mean_06 <- rowMeans(soil.moist.df[,jun_index], na.rm = TRUE)
+soil.moist.df$Mean_07 <- rowMeans(soil.moist.df[,jul_index], na.rm = TRUE)
+soil.moist.df$Mean_08 <- rowMeans(soil.moist.df[,aug_index], na.rm = TRUE)
+soil.moist.df$Mean_09 <- rowMeans(soil.moist.df[,sep_index], na.rm = TRUE)
+
+ggplot(soil.moist.df, aes(x,y, fill = Mean_09))+geom_raster()
+write.csv(soil.moist.df, "outputs/soil.moisture_1895_1905_with_mean.csv")
+
 
 write.csv(pet, "outputs/pet_FIA_with_JJAsoil_moist.csv")

@@ -607,7 +607,7 @@ pls.clust.nona
 dens.clust.nona <- merge(dens.pr, clust_7[,c("x" ,"y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"), all.x = TRUE)
 
 png("outputs/cluster/density_vs_envt_pc1_by_species_cluster_nona.png")
-ggplot(dens.clust, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
+ggplot(dens.clust.nona, aes(PC1, PLSdensity, color = speciescluster))+geom_point()
 dev.off()
 
 
@@ -618,14 +618,14 @@ ggplot(na.omit(dens.clust.m), aes(PLSdensity))+geom_histogram()+facet_wrap(~valu
 dev.off()
 
 # what areas of the PC1 environment have the highest p(bimodality?)
-dens.clust$PC1bins <- cut(dens.clust$PC1, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
+dens.clust.nona$PC1bins <- cut(dens.clust.nona$PC1, breaks = seq(-5,5.5, by = 1), labels = label.breaks(-5,4.5, 1))
 
-dens.clust.mpc1 <- melt(dens.clust[,c("x", "y", "cell",  "foresttype", "PC1", "PLSdensity", "PC1bins")], id.vars = c("x", "y", "cell", "PC1","PLSdensity", "foresttype" ))
-dens.clust.mpc1$PC_1bins_o <- factor(dens.clust.mpc1$value, c("-5 - -4", "-4 - -3", "-3 - -2", "-2 - -1",
+dens.clust.mpc1.nona <- melt(dens.clust.nona[,c("x", "y", "cell",  "foresttype", "PC1", "PLSdensity", "PC1bins")], id.vars = c("x", "y", "cell", "PC1","PLSdensity", "foresttype" ))
+dens.clust.mpc1.nona$PC_1bins_o <- factor(dens.clust.mpc1.nona$value, c("-5 - -4", "-4 - -3", "-3 - -2", "-2 - -1",
                                                               "-1 - 0",  "0 - 1" ,"1 - 2",   "2 - 3" ,  "3 - 4", "4 - 5", NA))
 
 png("outputs/paper_figs/PLS_hist_bins_by_envt_species_cluster_nona.png")
-ggplot(na.omit(dens.clust.mpc1), aes(PLSdensity, fill = foresttype))+geom_histogram()+facet_wrap(~PC_1bins_o)+scale_fill_manual(values = c('#bf5b17', '#beaed4','#ffff99','#386cb0','#f0027f', '#fdc086','#7fc97f'), name = " ")
+ggplot(na.omit(dens.clust.mpc1.nona), aes(PLSdensity, fill = foresttype))+geom_histogram()+facet_wrap(~PC_1bins_o)+scale_fill_manual(values = c('#bf5b17', '#beaed4','#ffff99','#386cb0','#f0027f', '#fdc086','#7fc97f'), name = " ")
 dev.off()
 
 # C: Density vs PC1 as a hexbin plot
@@ -633,10 +633,34 @@ dev.off()
 
 pls.dens.pc1.hex.nona <- ggplot(data = dens.clust, aes(PC1, PLSdensity)) +geom_hex() + 
   theme_bw(base_size = 8)+scale_fill_distiller(palette = "Spectral", limits = c(1,135))+
-  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2.5)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+  xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = -2)+geom_vline(xintercept = 1)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
                                                                                                                                                                                legend.background = element_rect(fill=alpha('transparent', 0)), 
                                                                                                                                                                                legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 pls.dens.pc1.hex.nona
+
+
+p1.nona = ggplot(dens.clust,aes(x=PC1, y=PLSdensity)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d() + 
+  theme_bw()
+
+scatter_dens_2dpls.nona<- p1.nona+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = low.pc1.bim)+geom_vline(xintercept = high.pc1.bim)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+                                                                                                                                                                                                                            legend.background = element_rect(fill=alpha('transparent', 0)), 
+                                                                                                                                                                                                                            legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
+p2.nona = ggplot(dens.clust,aes(x=PC1fia, y=FIAdensity)) +
+  geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
+  geom_density2d() + 
+  theme_bw()
+
+scatter_dens_2dfia.nona <- p2.nona+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = low.pc1.bim)+geom_vline(xintercept = high.pc1.bim)+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
+                                                                                                                                                                                                                                 legend.background = element_rect(fill=alpha('transparent', 0)), 
+                                                                                                                                                                                                                                 legend.key.size = unit(0.35, "line"),legend.title = element_text(size = 8), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
 
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
@@ -644,12 +668,22 @@ pls.dens.pc1.hex.nona
 # need to reorder the factors:
 dens.clust.nona$foresttype_ordered<- factor(dens.clust.nona$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen", "Beech-Maple", "N. Mixed Forest", "Oak", "Oak-Hickory")))
 dens.clust.omit <- dens.clust.nona[ !is.na(dens.clust.nona$foresttype_ordered),]
+dens.clust.nona <- dens.clust.nona[!duplicated(dens.clust.nona),]
 
-clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.nona$PC1 > -2.5 & dens.clust.nona$PC1 < 1 & dens.clust.nona$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust.nona[dens.clust.nona$PC1 > -2.5 & dens.clust.nona$PC1 < 1 & dens.clust.nona$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 30))+xlim(0,600)+
-  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,700)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.nona <- ggplot()+ geom_density(data = na.omit(dens.clust.nona[dens.clust.nona$cell %in% pls.PC1bimcell, ]), aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust.nona[dens.clust.nona$cell %in% pls.PC1bimcell, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 30))+xlim(0,600)+
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,400)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.nona
 
+
+dens.clust.nona <- merge(dens.clust.nona, pls.b15[,c("x", "y", "cell", "pbimodal")], by = c("x", "y", "cell"))
+
+p.bimodal15.nona <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.clust.nona, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
 
 
@@ -903,9 +937,9 @@ print(box.inset, vp = vpa_)
 
 test.plot <-print(f.clust.hist, vp = vpb_); print(box.inset, vp = vpa_)
 
-f.clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.nona$cell %in% pls.PC1bimcell, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
-  geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim & fia.dens.clust$PC1fia <= high.pc1.bim,, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim & fia.dens.clust$PC1fia <= high.pc1.bim,, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,700)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.70, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"), 
+f.clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.nona$cell %in% pls.PC1bimcell, ], aes(PLSdensity,  23*..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+  geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim & fia.dens.clust$PC1fia <= high.pc1.bim, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim & fia.dens.clust$PC1fia <= high.pc1.bim, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,400)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.70, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"), 
                                                                                                                                                                                                                                                                                                                                                                    panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 f.clust.hist.nona
 
@@ -997,12 +1031,12 @@ grid.arrange(pls.map.nona + annotate("text", x=-90000, y=1486000,label= "A", siz
              fia.map + annotate("text", x=-90000, y=1486000,label= "B", size = 3)+ggtitle("MODERN"),
              pls.clust.nona+ annotate("text", x=-90000, y=1486000,label= "C", size = 3),
              fia.clust + annotate("text", x=-90000, y=1486000,label= "D", size = 3), 
-             pls.dens.pc1.hex.nona + annotate("text", x=4, y=600,label= "E", size = 3),
-             fia.dens.pc1.hex + annotate("text", x=4, y=600,label= "F", size = 3), 
+             scatter_dens_2dpls.nona + annotate("text", x=4, y=600,label= "E", size = 3),
+             scatter_dens_2dfia.nona + annotate("text", x=4, y=600,label= "F", size = 3), 
              clust.hist.nona + annotate("text", x=600, y=20,label= "G", size = 3),
              f.clust.hist.nona + annotate("text", x=600, y=20,label= "H", size = 3), 
-             p.forest.map.nona + annotate("text", x=-90000, y=1486000,label= "I", size = 3),
-             p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             p.bimodal15.nona + annotate("text", x=-90000, y=1486000,label= "I", size = 3),
+             p.bimodal15.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
              ncol = 2)
 dev.off()
 

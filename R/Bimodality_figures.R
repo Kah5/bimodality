@@ -784,7 +784,7 @@ p.bimodalPPET.1.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
 
 # --------------------------------read in p(bimodality PC1 with 0.15 bins)
 # need to change this file
-fia.b15 <- read.csv("outputs/posterior_prob_bimodal_fia_20.csv")
+fia.b15 <- read.csv("outputs/posterior_prob_bimodal_fia_0.1bins_dipP_only_PC1_by_distn.csv")
 fia.b15$pbimodal <- cut(fia.b15$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
 rbpalette <- c('#ca0020',

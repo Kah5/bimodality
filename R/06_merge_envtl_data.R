@@ -35,7 +35,7 @@ mod.tmean.mo$moddeltaT <- mod.tmean.mo$cv/100
 
 # merge all the climate data together:
 climate.data <- list(mod.precip[,c('x', 'y', 'pr30yr')], past.precip[,c('x', 'y', 'total')], 
-     mod.precip.mo[,c('x', 'y', 'SI')], past.precip.mo[,c('x', 'y', 'deltaP')], mod.tmean[,c('x', 'y', 'Mean')],
+     mod.precip.mo[,c('x', 'y', 'cv')], past.precip.mo[,c('x', 'y', 'deltaP')], mod.tmean[,c('x', 'y', 'Mean')],
      past.tmean[,c('x', 'y', 'Mean', 'deltaT')], mod.tmean.mo[,c('x', 'y', 'moddeltaT')]) %>% Reduce(function(dtf1,dtf2) left_join(dtf1,dtf2,by=c("x", "y")), .)
 colnames(climate.data) <- c("x", "y",  "MAP2011", "MAP1910","moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT")
 
@@ -60,9 +60,9 @@ write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,"
 
 P.PET.mod <- read.csv('/Users/kah/Documents/bimodality/outputs/P.PET_prism_modern_Mar_Nov.csv')
 P.PET.mod<- P.PET.mod[,c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
-             "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Nov_ppet", "GS_ppet")]
+             "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Oct_ppet","Nov_ppet", "GS_ppet")]
 colnames(P.PET.mod) <- c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
-                         "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Nov_ppet", "GS_ppet_mod")
+                         "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Oct_ppet","Nov_ppet", "GS_ppet_mod")
 
 
 climate.data <- merge(climate.data, P.PET.mod[,c("x", "y", "GS_ppet_mod")], by = c("x", "y"))
@@ -75,6 +75,14 @@ moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
 climate.data <- merge(moist_bal[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
 colnames(climate.data)[3] <- "mean_GS_soil"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
+
+# merge with modern soil moisture balance (calucated from P, PET and AWC)
+moist_bal.m <- read.csv('outputs/soil.moisture_1999_2015_with_mean.csv')
+climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
+colnames(climate.data)[3] <- "mean_GS_soil_m"
+ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()
+ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
+
 #----------------------------- Read in Soils Data -------------------------------
 
 #read in soils data--soils data from gssurgo database, aggregated in ArcGIS
@@ -247,7 +255,7 @@ dens.rm[,paste0('PC2fia')]  <- newscores[,2]
 dens.rm <- merge(dens.rm, fia.clim[,c("x", "y", "cell", "FIAdensity")], by = c("x", "y", "cell"), all.x = TRUE)
 full.dens.pls <- merge(pls.clim[,c('x',"y","cell","PLSdensity")], fia.clim[,c("x","y","cell", "FIAdensity")], by = c("x","y","cell"),all.x = TRUE)
 full.clim.dens <- merge(full.dens.pls, dens.rm[,c("x", "y", "cell","MAP1910", "MAP2011", "moderndeltaP", "modtmean", "moddeltaT", 
-                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod","mean_GS_soil", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
+                                "sandpct", "awc", "CEC", "CaCO3","GS_ppet","GS_ppet_mod","mean_GS_soil","mean_GS_soil_m", "PC1", "PC2", "PC1fia", "PC2fia")], by = c("x", "y", "cell"), all.x = TRUE)
 
 write.csv(full.clim.dens, "data/PLS_FIA_density_climate_full.csv")
 

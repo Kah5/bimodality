@@ -49,7 +49,7 @@ for(i in 1:length(fia$prob_bimodal)){
   #
   data.distn <-  fia.density[fia.density$PC1fia >= l  & fia.density$PC1fia < h & fia.density$FIAdensity < 650 ,]$FIAdensity
   #data.distn <- data.distn[!is.na(data.distn)]
-  if(length(data.distn >= 2)){
+  if(length(data.distn) >= 2){
   forest.num <- replicate(500,
                           {
                             

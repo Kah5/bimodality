@@ -8,6 +8,7 @@ library(maps)
 library(sp)
 library(plyr)
 library(maps)
+library(cowplot)
 
 # read in density + climate data:
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
@@ -444,121 +445,109 @@ p.forest.map.sm <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
 
 p.forest.map.sm
 
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Prob(biomodality) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+# these come from scripts run on crc to sample probabilty of bimodality from the distribution of tree density w/ given climate
 
-# read in p(bimodality with 0.5 bins)
+# --------------------------------read in p(bimodality) base on Soil moisture with 0.1 width bins)
 
-pls.b50 <- read.csv("outputs/posterior_prob_bimodal_pls_50bins_for100_diptest_only.csv")
-pls.b50$pbimodal <- cut(pls.b50$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+pls.SM0.1 <- read.csv("outputs/posterior_prob_bimodal_pls_0.1bins_dipP_only_GS_soil_by_distn.csv")
+pls.SM0.1$pbimodal <- cut(pls.SM0.1$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-rpalette <- c('#fee5d9',
-  '#fcae91',
-  '#fb6a4a',
-  '#de2d26',
-  '#a50f15')
-names(rpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
+rbpalette <- c('#ca0020',
+               '#f4a582',
+               '#f7f7f7',
+               '#92c5de',
+               '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
 
-pls.b50$pbimodal <- as.character(pls.b50$pbimodal)
+pls.SM0.1$pbimodal <- as.character(pls.SM0.1$pbimodal)
 
-
-p.bimodal50 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=pls.b50, aes(x=x, y=y, fill = pbimodal, alpha = pbimodal))+
+p.bimodalSM0.1 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.SM0.1, aes(x=x, y=y, fill = pbimodal))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+scale_alpha_discrete(range=c(0, 1))+
-  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
 
-p.bimodal50 + geom_tile(data=pls.prob.forest[pls.prob.forest$prob_forest >= 0.2 & pls.prob.forest$prob_forest <= 0.6,], aes(x=x, y=y, color = prob_forest))+scale_color_continuous(low = 'white', high = 'blue')
+# --------------------------------read in p(bimodality) base on P-PET with 10 width bins)
+# not run yet
+pls.PPET.1 <- read.csv("outputs/posterior_prob_bimodal_pls_")
+pls.PPET.1$pbimodal <- cut(pls.PPET.1$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
+rbpalette <- c('#ca0020',
+               '#f4a582',
+               '#f7f7f7',
+               '#92c5de',
+               '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
 
-pls.bim50 <- merge(pls.b50, dens.clust, by = c("x", "y", "cell"))
+pls.PPET.1$pbimodal <- as.character(pls.PPET.1$pbimodal)
 
-png("outputs/prob_bimodal_vs_PC1_0.5_bins.png")
-ggplot(pls.bim50[!is.na(pls.bim50$foresttype_ordered),], aes(PC1, prob_bimodal, color = foresttype_ordered))+geom_point(size = 1)+scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()+geom_jitter()
-dev.off()
-
-
-pls.b20 <- read.csv("outputs/posterior_prob_bimodal_pls_25bins_dipP_only.csv")
-pls.b20$pbimodal <- cut(pls.b20$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
-
-rpalette <- c('#fee5d9',
-              '#fcae91',
-              '#fb6a4a',
-              '#de2d26',
-              '#a50f15')
-names(rpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
-
-pls.b20$pbimodal <- as.character(pls.b20$pbimodal)
-
-
-p.bimodal20 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=pls.b20, aes(x=x, y=y, fill = pbimodal, alpha = pbimodal))+
+p.bimodalPPET.1 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.PPET.1, aes(x=x, y=y, fill = pbimodal))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+scale_alpha_discrete(range=c(0.2, 1))+
-  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.205, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
-
-p.bimodal20 + geom_tile(data=pls.prob.forest[pls.prob.forest$prob_forest <= 0.25 | pls.prob.forest$prob_forest >= 0.6,], aes(x=x, y=y, color = prob_forest))
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
 
 
-pls.bim20 <- merge(pls.b20, dens.clust, by = c("x", "y", "cell"))
+# --------------------------------read in p(bimodality PC1 with 0.15 bins)
 
-png("outputs/prob_bimodal_vs_PC1_0.2_bins.png")
-ggplot(pls.bim20[!is.na(pls.bim20$foresttype_ordered),], aes(PC1, prob_bimodal, color = foresttype_ordered))+geom_point(size = 1)+scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()
+pls.b15 <- read.csv("outputs/posterior_prob_bimodal_pls_0.1bins_dipP_only_PC1_by_distn.csv")
+pls.b15$pbimodal <- cut(pls.b15$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+rbpalette <- c('#ca0020',
+  '#f4a582',
+  '#f7f7f7',
+  '#92c5de',
+  '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
+
+pls.b15$pbimodal <- as.character(pls.b15$pbimodal)
+
+p.bimodal15 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=pls.b15, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+
+# merge with composition cluster data
+pls.b15 <- merge(clust_7, pls.b15, by = c("x", "y", "cell"))
+
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+# use the label.breaks function and cut to cut environmental data up into different bins
+
+pls.b15$PC1bins <- cut(pls.b15$PC1, breaks = seq(-5.5, 4.5, by = 0.5), labels = label.breaks(-5.5, 4,  0.5))
+
+
+png("outputs/prob_bimodal_vs_PC1_0.15_bins.png")
+ggplot(pls.b15[!is.na(pls.b15$orderedforesttype),], aes(PC1, prob_bimodal, color = orderedforesttype))+geom_point(size = 1)+scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()
 dev.off()
 
 png(height = 10, width = 10, units = "in", res = 300,"outputs/prob_bimodal_facet_by_PC1bins.png")
-ggplot(pls.bim20, aes(prob_bimodal, fill = foresttype_ordered))+geom_histogram()+facet_wrap(~PC1bins)
+ggplot(pls.b15, aes(prob_bimodal, fill = orderedforesttype))+geom_histogram()+facet_wrap(~PC1bins)
 dev.off()
 
 
 # make a plot of the maps of composition by PC bins:
-png(width = 12, height = 12, units = "in", res = 300, "outputs/map_comp_facet_by_PC1bins.png")
-ggplot(pls.bim20[pls.bim20$PC1 > - 2.5 & pls.bim20$PC1 <= 0.5,], aes(x,y, fill = foresttype_ordered))+geom_raster()+facet_wrap(~PC1bins)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+png(width = 12, height = 12, units = "in", res = 300, "outputs/map_comp_facet_by_PC1bins_onlypbim_over_0.8.png")
+ggplot(pls.b15[pls.b15$prob_bimodal < 0.8,], aes(x,y, fill = orderedforesttype))+geom_raster()+facet_wrap(~PC1bins)+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(bimodal)")+scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()+coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.background = element_rect(fill=alpha('transparent', 0)),
                                                                                                                                                                                                                               panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 dev.off()
 
 
-png(width = 12, height = 12, units = "in", res = 300, "outputs/map_comp_bimodal_-2.5_0.5.png")
-ggplot(pls.bim20[pls.bim20$PC1 > - 2.5 & pls.bim20$PC1 <= 0.5,], aes(x,y, fill = foresttype_ordered))+geom_raster()+geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(bimodal)")+scale_fill_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()+coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                                                                                                                                                                                                              panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
-
-dev.off()
 
 png(height = 10, width = 10, units = "in", res = 300,"outputs/density_facet_by_PC1bins.png")
-ggplot(pls.bim20, aes(PLSdensity, fill = foresttype_ordered))+geom_histogram()+facet_wrap(~PC1bins)
+ggplot(pls.b15, aes(PLSdensity, fill = orderedforesttype))+geom_histogram()+facet_wrap(~PC1bins)+xlim(0,650)
 dev.off()
 
-# for 0.75 bins:
-pls.b75 <- read.csv("outputs/posterior_prob_bimodal_pls_75bins.csv")
-pls.b75$pbimodal <- cut(pls.b75$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
-
-rpalette <- c('#fee5d9',
-              '#fcae91',
-              '#fb6a4a',
-              '#de2d26',
-              '#a50f15')
-names(rpalette) <- c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1")
-
-pls.b75$pbimodal <- as.character(pls.b75$pbimodal)
-
-
-p.bimodal75 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=pls.b75, aes(x=x, y=y, fill = pbimodal, alpha = pbimodal))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rpalette, labels=c("0 - 0.2","0.2 - 0.4","0.4 - 0.6","0.6 - 0.8","0.8 - 1"))+scale_alpha_discrete(range=c(0.2, 1))+
-  coord_equal()+theme_bw()+ theme()+theme(axis.text = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.6,'lines'), legend.position = c(0.755, 0.125),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                          panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
-
-p.bimodal75 + geom_tile(data=pls.prob.forest[pls.prob.forest$prob_forest <= 0.25 | pls.prob.forest$prob_forest >= 0.6,], aes(x=x, y=y, color = prob_forest))
-
-
-pls.bim75 <- merge(pls.b75, dens.clust, by = c("x", "y", "cell"))
-
-png("outputs/prob_bimodal_vs_PC1_0.75_bins.png")
-ggplot(pls.bim75[!is.na(pls.bim75$foresttype_ordered),], aes(PC1, prob_bimodal, color = foresttype_ordered))+geom_point(size = 1)+scale_color_manual(values = c('#beaed4','#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+theme_bw()
-dev.off()
 
 
 # write out new figure 1 to a png
@@ -910,6 +899,76 @@ p.forest.map.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lon
 p.forest.map.f
 
 
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Prob(biomodality) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+# these come from scripts run on crc to sample probabilty of bimodality from the distribution of tree density w/ given climate
+
+# --------------------------------read in p(bimodality) base on Soil moisture with 0.1 width bins)
+
+fia.SM0.1 <- read.csv("outputs/posterior_prob_bimodal_fia_0.1bins_dipP_only_SM_by_distn.csv")
+fia.SM0.1$pbimodal <- cut(fia.SM0.1$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+rbpalette <- c('#ca0020',
+               '#f4a582',
+               '#f7f7f7',
+               '#92c5de',
+               '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
+
+fia.SM0.1$pbimodal <- as.character(fia.SM0.1$pbimodal)
+
+p.bimodalSM0.1.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.SM0.1, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+# --------------------------------read in p(bimodality) base on P-PET with 10 width bins)
+# not run yet
+fia.PPET.1 <- read.csv("outputs/posterior_prob_bimodal_fia_10bins_dipP_only_PPET_by_distn.csv")
+fia.PPET.1$pbimodal <- cut(fia.PPET.1$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+rbpalette <- c('#ca0020',
+               '#f4a582',
+               '#f7f7f7',
+               '#92c5de',
+               '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
+
+fia.PPET.1$pbimodal <- as.character(fia.PPET.1$pbimodal)
+
+p.bimodalPPET.1.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.PPET.1, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(biomodal)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+
+# --------------------------------read in p(bimodality PC1 with 0.15 bins)
+# need to change this file
+fia.b15 <- read.csv("outputs/posterior_prob_bimodal_fia_20.csv")
+fia.b15$pbimodal <- cut(fia.b15$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
+
+rbpalette <- c('#ca0020',
+               '#f4a582',
+               '#f7f7f7',
+               '#92c5de',
+               '#0571b0')
+names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
+
+fia.b15$pbimodal <- as.character(fia.b15$pbimodal)
+
+p.bimodal15.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=fia.b15, aes(x=x, y=y, fill = pbimodal))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rbpalette) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+
+
+
 # redraw the iset histogram
 hist.inset <- ggdraw() +
   draw_plot(f.clust.hist, 0, 0, 1, 1) +
@@ -926,8 +985,8 @@ grid.arrange(pls.map.alt.color + annotate("text", x=-90000, y=1486000,label= "A"
              scatter_dens_2dfia + annotate("text", x=4, y=600,label= "H", size = 3), 
              clust.hist + annotate("text", x=600, y=20,label= "D", size = 3),
              hist.inset + annotate("text", x=600, y=20,label= "I", size = 3), 
-             p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
-             p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             p.bimodal15 + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.bimodal15.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
              ncol = 2)
 dev.off()
 
@@ -940,14 +999,14 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
           scatter_dens_2dpls+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
           scatter_dens_2dfia+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
           clust.hist+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
-          p.forest.map+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
-          p.forest.map.f+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),labels = c("A", "B", "C", "D", "E","F", "G", "H", "I", "J"), ncol = 2, align = "v")
+          p.bimodal15+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          p.bimodal15.f+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),labels = c("A", "B", "C", "D", "E","F", "G", "H", "I", "J"), ncol = 2, align = "v")
 
 dev.off()
 
 
 
-png(height = 9, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2b.png")
+png(height = 9, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v2c.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
              fia.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "F", size = 3)+ggtitle("MODERN"),
              pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
@@ -956,14 +1015,9 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
              scatter_dens_2dfia + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=4, y=600,label= "H", size = 3), 
              clust.hist + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "D", size = 3),
              hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "I", size = 3), 
-             p.forest.map + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA))+ annotate("text", x=-90000, y=1486000,label= "E", size = 3),
-             p.forest.map.f+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
-             ncol = 2,align = "h",axis="tb", scale = 1) #scale = c(1.2, 1.2,
-                                                         #1.2,1.2,
-                                                         #1.09,1.09,
-                                                         #1.09,1.09,
-                                                         #1.2, 1.2,
-                                                         #1.2,1.2))
+             p.bimodal15 + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA))+ annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.bimodal15.f+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             ncol = 2,align = "h",axis="tb", scale = 1) 
 
 dev.off()
 
@@ -1207,16 +1261,19 @@ full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s",
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 dens.clust <- dens.clust[!duplicated(dens.clust),]
+#dens.clust <- merge(dens.clust, pls.SM0.1[,c("x", "y", "cell", "prob_bimodal", "pbimodal")], by =c("x", "y", "cell"))
+pls.SMbim_cell<- pls.SM0.1[pls.SM0.1$prob_bimodal >= 0.6,]$cell
 
-clust.hist.SM <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_GS_soil > 0.75 & dens.clust$mean_GS_soil < 1.2 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust[dens.clust$mean_GS_soil > 0.75 & dens.clust$mean_GS_soil < 1.2 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, fill = foresttype_ordered, binwidth = 20))+xlim(0,650)+
-  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,1000)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+clust.hist.SM <- ggplot()+ geom_density(data = dens.clust[dens.clust$cell %in% pls.SMbim_cell, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 20,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$cell %in% pls.SMbim_cell ,], aes(PLSdensity, fill = foresttype_ordered, binwidth = 20))+xlim(0,650)+
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,250)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.SM
 
 
-f.clust.hist.SM <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_GS_soil > 0.75 & dens.clust$mean_GS_soil < 1.2 & dens.clust$PLSdensity > 0.5, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
-  geom_density(data = fia.dens.clust[fia.dens.clust$mean_GS_soil > 0.75 & fia.dens.clust$mean_GS_soil < 1.2, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust[fia.dens.clust$mean_GS_soil > 0.75 & fia.dens.clust$mean_GS_soil < 1.2, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,650)+ylim(0,1000)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+f.clust.hist.SM <- ggplot()+ geom_density(data = dens.clust[dens.clust$cell %in% pls.SMbim_cell, ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 20,size = 1.5)+
+  geom_density(data = fia.dens.clust[fia.dens.clust$cell %in% pls.SMbim_cell, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$cell %in% pls.SMbim_cell, ], aes(FIAdensity, fill = foresttype))+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,650)+ylim(0,250)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
                                                                                                                                                                                                                                                                                                                                                                              panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
 f.clust.hist.SM
 
@@ -1273,8 +1330,8 @@ grid.arrange(pls.sm.map + annotate("text", x=-90000, y=1486000,label= "A", size 
              scatter_gsSM_dens_2fia + annotate("text", x=0.4, y=600,label= "H", size = 3), 
              clust.hist.SM + annotate("text", x=600, y=20,label= "D", size = 3),
              f.clust.hist.SM + annotate("text", x=600, y=20,label= "I", size = 3), 
-             p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
-             p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             p.bimodalSM0.1+ annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.bimodalSM0.1.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
              ncol = 2)
 dev.off()
 

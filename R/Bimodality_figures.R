@@ -108,11 +108,11 @@ p.bimodalSM0.1 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lon
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
 # --------------------------------read in p(bimodality) base on P-PET with 10 width bins)
 # not run yet
-pls.PPET.1 <- read.csv("outputs/posterior_prob_bimodal_pls_")
+pls.PPET.1 <- read.csv("outputs/posterior_prob_bimodal_pls_10bins_dipP_only_PPET_by_distn.csv")
 pls.PPET.1$pbimodal <- cut(pls.PPET.1$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
 rbpalette <- c('#ca0020',
@@ -129,7 +129,7 @@ p.bimodalPPET.1 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=lo
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
 
 # --------------------------------read in p(bimodality PC1 with 0.15 bins)
@@ -792,7 +792,7 @@ p.bimodalSM0.1.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rbpalette) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
 # --------------------------------read in p(bimodality) base on P-PET with 10 width bins)
 # not run yet
@@ -813,7 +813,7 @@ p.bimodalPPET.1.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(biomodal)")+ scale_fill_manual(values= rbpalette) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
 
 # --------------------------------read in p(bimodality PC1 with 0.15 bins)
@@ -1182,8 +1182,8 @@ grid.arrange(pls.ppet.map + annotate("text", x=-90000, y=1486000,label= "A", siz
              scatter_ppet_dens_2dfia + annotate("text", x=-100, y=600,label= "H", size = 3), 
              clust.hist.ppet + annotate("text", x=600, y=20,label= "D", size = 3),
              f.clust.hist.ppet + annotate("text", x=600, y=20,label= "I", size = 3), 
-             p.forest.map + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
-             p.forest.map.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
+             p.bimodalPPET.1 + annotate("text", x=-90000, y=1486000,label= "E", size = 3),
+             p.bimodalPPET.1.f + annotate("text", x=-90000, y=1486000,label= "J", size = 3),
              ncol = 2)
 dev.off()
 

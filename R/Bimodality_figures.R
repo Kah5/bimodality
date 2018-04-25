@@ -106,7 +106,7 @@ pls.SM0.1$pbimodal <- as.character(pls.SM0.1$pbimodal)
 p.bimodalSM0.1 <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=pls.SM0.1, aes(x=x, y=y, fill = pbimodal))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= rbpalette) +
+  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rbpalette) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
 
@@ -1247,7 +1247,7 @@ scatter_gsSM_dens_2dpls <- p1pls.gsSM+xlab('GSoil Moisture') + ylab("Tree Densit
 
 p1fia.gsSM <- ggplot(dens.clust,aes(x=mean_GS_soil_m, y=FIAdensity, color = foresttype)) +
   geom_point(alpha = 0.1, colour="orange")+ #+ geom_count(alpha = 0.1, colour="orange")+
-  geom_density2d(data = dens.clust,aes(x=mean_GS_soil, y=FIAdensity), color = "blue", bins = 25) + 
+  geom_density2d(data = dens.clust,aes(x=mean_GS_soil_m, y=FIAdensity), color = "blue", bins = 25) + 
   theme_bw()
 
 scatter_gsSM_dens_2fia <- p1fia.gsSM+xlab('Soil Moisture') + ylab("Tree Density (stems/ha)")+ylim(0,650)+geom_vline(xintercept = minSM01bim)+geom_vline(xintercept = maxSM01bim)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", legend.background = element_rect(fill=alpha('transparent', 0)))

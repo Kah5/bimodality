@@ -131,8 +131,12 @@ climate.data$CaCO3 <- raster::extract(CaCO38km.alb, climate.data[,c('x','y')])
 
 
 # -----------------------Merge climate and vegetation data----------------------------------------------
-pls <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv")) # pls density data
-
+#pls <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv")) # pls density data
+pls <- readRDS("data/cell_dens.RDS") # pls density data from PLS_products repo
+head(pls)
+#pls <- data.frame(pls)
+colnames(pls) <- c("cell", "dens", "x", "y", "PLSdensity")
+pls <- pls[!is.na(pls$PLSdensity),]
 fia <- read.csv(paste0("data/midwest_pls_fia_density_alb",version,".csv")) # fia density data
 
 pls.clim <- merge(pls, climate.data, by = c("x", "y"), all.x = TRUE)

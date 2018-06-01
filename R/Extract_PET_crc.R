@@ -7,18 +7,18 @@ library(reshape2)
 version <- "1.7-5" # pls version
 
 # set the working dir (where the prism data folder is)
-#workingdir <- "/Users/kah/Documents/bimodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 # for crc:
-workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
+#workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
 
 
 # again read in the 8km grid for extracting
 spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
 coordinates(spec.table) <- ~x + y
 proj4string(spec.table) <- '+init=epsg:3175' 
-spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+spec.table.ll <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
 
-spec.table.11<- as.data.frame(spec.table.ll)
+spec.table.11 <- as.data.frame(spec.table.ll)
 #spec.table.ll <- read.csv(paste0(workingdir, "spec.lat.long.csv"))
 ######################################################################################
 # calculate PET from the temperature data:
@@ -44,26 +44,122 @@ yrs <- "1895-1935"
 filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
 
 # use substring to index filenames that match the years designated:
+#s <- stack(filenames[1:12])
 
 filenames <- filenames [substring(filenames, first = 26, last = 29) %in% years]
 
-s <- stack(filenames) #make all into a raster
-t <- crop(s, extent(spec.table.ll)) #crop to the extent of indiana & illinois 
-#s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
-y <- data.frame(rasterToPoints(t)) #covert to dataframe
+#s <- stack(filenames) #make all into a raster
+s <- apply(data.frame(filenames), MARGIN = 1, FUN = raster)
+t.rast <- lapply(s, FUN= function(x){crop(x, extent(c(-97.24357, -82.40131 , 37.1442 , 49.38583)))})
+#t.rast <- crop(s, extent(c(-97.24357, -82.40131 , 37.1442 , 49.38583))) #crop to the extent of indiana & illinois 
+#s <- projectRaster(t.rast, crs='+init=epsg:3175') # project in great lakes albers
+y <- lapply(t.rast, FUN= function(x){data.frame(rasterToPoints(x))}) #covert to list of dataframe
+
+y.list <- lapply(y, function(x){data.frame(year = substring(colnames(x)[3], first = 26, last = 29),
+                      month = substring(colnames(x)[3], first = 30, last = 31), 
+                      x = x$x, 
+                      y = x$y, 
+                      tmean = x[,3], 
+                      cellID = 1:length(x$y))})
 
 
-test <- y
+y.df <- do.call(rbind, y.list)
+head(y.df)
+test <- y.df
+
+
+
+# need to get a list of time series by grid cell/by unique x + y values:
+library(tidyr)
+library(dplyr)
+#test.tib <- y.df %>% group_by(cellID)
+
+#head(test.tib)
+y.df$cellID <- as.factor(y.df$cellID)
+#y.df.list <- split(y.df, f = y.df$cellID)
+#y.df.list <- y.df %>% split(y.df, .$cellID)
+
+
+y.df.list <- y.df %>% group_by(cellID) %>% do(vals=data.frame(.)) %>% select(vals) %>% lapply(function(x) {(x)})
+
+# then apply the thronthwaite process to each dataframe within the list:
+ynew2 <- y.df.list[[1]]
+
+#saveRDS(ynew2, "outputs/ynew_1895_1935_pet.long.rds")
+setwd("/Users/kah/Documents/bimodality")
+source("Thornthwaite_PET.R")
+#ynew2[[1]]$
+library(SPEI)
+
+y.pet <- lapply(ynew2, function(x){data.frame(x = x$x,
+                                     y = x$y,
+                                     month = x$month,
+                                     year = x$year,
+                                     Tave = x$tmean,
+                                     cellID = x$cellID,
+                                     PET_tho = as.numeric(thornthwaite_PET(Tave = x$tmean, lat =  unique(x$x))) 
+                                     )})
+
+
+
+#PET.df <- do.call(rbind, y.pet)
+#PET.df <- rbindlist(y.pet)
+
+# rename the object:
+full.PET <- PET.df <- y.pet
+#remove PET.df
+#rm(PET.df)
+
+y.pet.long <- lapply(y.pet, function(df){df %>% select(x, y, year, month, PET_tho) %>% spread(key = month,   value = PET_tho)})
+class(y.pet[[1]]$year)
+dcast(y.pet[[1]] , x + y  ~ year + month , mean , value.var='PET_tho', na.rm = TRUE)
+
+fwrite(y.pet, "outputy.pet.csv")
+fwrite(y.pet.long, "output.pet.long.csv")
+
+y.pet.long.df <- do.call(rbind, y.pet.long)
+fwrite(y.pet.long.df, "output.pet.long.df.csv")
+
+#<- lapply(y.pet, spread( df.list ,   key = Month  ,   value = PET_tho  ) 
+y.pet2 <- lapply(y.pet, function(df.list){dcast(df.list, x + y  ~ year + month , mean , value.var='PET_tho', na.rm = TRUE)})
+
+y.pet2.df <- do.call(rbind, y.pet2)
+fwrite(y.pet2.df, "data/PET_pls_extracted1895-1935.csv")
+
+
+
+
+
+
+
+
+
+
+# old code, not run:
+PET.means <- dcast(full.PET, x + y  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
+colnames(PET.means) <- c("lat", "long", "jan", "feb", "mar", 
+                         "apr","may","jun", "jul", "aug", "sep", "oct", "nov", "dec")
+ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()
+# get the precipitation data in the same format:
+saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
+saveRDS(PET.means, paste0(workingdir, "PET.means.rds"))
+
+
+#ynew2[[1]]$PET_tho <- as.numeric(thornthwaite_PET(Tave = ynew2[[1]]$tmean, lat =  unique(ynew2[[1]]$x)))
+
+#PET_tho <- thornthwaite(Tave = ynew2[[1]]$tmean, lat = unique(ynew2[[1]]$x), na.rm = FALSE)
 # this does not work in pulling out the data from one grid cell
-y$CellID <- seq(1:nrow(y))
+#y.df$CellID <- seq(1:nrow(y.df))
 
 my.list <- list()
-saveRDS(y, paste0("outputs/PRISM_temp", yrs, "_LL_temp.RDS"))
+setwd("/Users/kah/Documents/bimodality")
+saveRDS(y.df.list, paste0("/outputs/PRISM_temp", yrs, "_LL_temp.RDS"))
 
 # this for loop calculates thornthwaite PET for each month in each grid cell
 #for(i in 1:length(y$y)){
 source("/afs/crc.nd.edu/user/k/kheilman/bimodality/R/Thornthwaite_PET.R")
-system.time(for(i in 1:length(y$y)){
+system.time(
+  for(i in 1:length(y$y)){
   
   ynew <- t(y[i,3:363])
   lat <- y[i,]$y

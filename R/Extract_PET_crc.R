@@ -76,8 +76,7 @@ library(dplyr)
 
 #head(test.tib)
 y.df$cellID <- as.factor(y.df$cellID)
-#y.df.list <- split(y.df, f = y.df$cellID)
-#y.df.list <- y.df %>% split(y.df, .$cellID)
+
 
 
 y.df.list <- y.df %>% group_by(cellID) %>% do(vals=data.frame(.)) %>% select(vals) %>% lapply(function(x) {(x)})
@@ -102,13 +101,11 @@ y.pet <- lapply(ynew2, function(x){data.frame(x = x$x,
 
 
 
-#PET.df <- do.call(rbind, y.pet)
-#PET.df <- rbindlist(y.pet)
+
 
 # rename the object:
 full.PET <- PET.df <- y.pet
-#remove PET.df
-#rm(PET.df)
+
 
 y.pet.long <- lapply(y.pet, function(df){df %>% select(x, y, year, month, PET_tho) %>% spread(key = month,   value = PET_tho)})
 class(y.pet[[1]]$year)
@@ -127,8 +124,75 @@ y.pet2.df <- do.call(rbind, y.pet2)
 fwrite(y.pet2.df, "data/PET_pls_extracted1895-1935.csv")
 
 
+#>>>>>>>>>>>>>>>>>>>>>> now lets extract the precipitation from this same time period for soil mositure model <<<<<<<<<<<<<<<<<<<<<<<<<
+
+setwd(paste0(workingdir,'PRISM_ppt_stable_4kmM2_189501_198012_bil/'))
+
+#read in the grid again
+spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
+coordinates(spec.table) <- ~x + y
+
+# project the grid to lat long
+proj4string(spec.table) <- '+init=epsg:3175'
+#spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+
+years <- 1895:1935
+yrs <- "1895-1935"
+
+# read in the filenames, stack as rasters, extract raster to points
+filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))
+
+# use substring to index filenames that match the years designated:
+#s <- stack(filenames[1:12])
+
+filenames <- filenames [substring(filenames, first = 24, last = 27) %in% years]
+
+s <- stack(filenames) #make all into a raster
+#s <- apply(data.frame(filenames), MARGIN = 1, FUN = raster)
+#t.rast <- lapply(s, FUN= function(x){crop(x, extent(c(-97.24357, -82.40131 , 37.1442 , 49.38583)))})
+t.rast <- crop(s, extent(c(-97.24357, -82.40131 , 37.1442 , 49.38583))) #crop to the extent of indiana & illinois 
+#s <- projectRaster(t.rast, crs='+init=epsg:3175') # project in great lakes albers
+#y <- lapply(t.rast, FUN= function(x){data.frame(rasterToPoints(x))}) #covert to list of dataframe
+y <- data.frame(rasterToPoints(t.rast))
+
+colnames(y)[3:length(colnames(y))] <- paste0(substring(colnames(y)[3:length(colnames(y))], first = 24, last = 27), "_",
+       substring(colnames(y)[3:length(colnames(y))], first = 28, last = 29))
+setwd("/Users/kah/Documents/bimodality")
+fwrite(y, "data/Precip_pls_extracted1895-1935.csv")
+
+#y.df <- data.frame(year = substring(colnames(y), first = 24, last = 27),
+ #          month = substring(colnames(y), first = 28, last = 29), 
+  #         x = y$x, 
+   #        y = y$y, 
+    #       pcp = y[,3], 
+     #      cellID = 1:length(y$y))
 
 
+
+#y.df$Year <- y.df$year
+#y.df$Month <- y.df$month
+
+#y.df$year <- 
+#y.df$month<- substring(y.df$Year, 3)
+#y.df$year <- ifelse(as.numeric(substring(y.df$Year, 1, last = 2))>= 95, paste0(18,substring(y.df$Year, 1, last = 2)), paste0(19,substring(y.df$Year, 1, last = 2)))
+#y.df<- y.df[,1:6]
+
+precip.df <- dcast(y.df[,c("x", 'y',"year", "month", "pcp")], x + y ~ year + month , mean , value.var='pcp', na.rm = TRUE)
+fwrite(precip.df, "data/Precip_pls_extracted1895-1935.csv")
+
+#y.df <- do.call(rbind, y.list)
+head(y.df)
+test <- y.df
+
+
+
+# need to get a list of time series by grid cell/by unique x + y values:
+library(tidyr)
+library(dplyr)
+#test.tib <- y.df %>% group_by(cellID)
+
+#head(test.tib)
+y.df$cellID <- as.factor(y.df$cellID)
 
 
 
@@ -136,7 +200,7 @@ fwrite(y.pet2.df, "data/PET_pls_extracted1895-1935.csv")
 
 
 # old code, not run:
-PET.means <- dcast(full.PET, x + y  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
+PET.means <- dcast(y.df, x + y  ~ month , mean , value.var='PET_tho', na.rm = TRUE)
 colnames(PET.means) <- c("lat", "long", "jan", "feb", "mar", 
                          "apr","may","jun", "jul", "aug", "sep", "oct", "nov", "dec")
 ggplot(PET.means, aes(lat, long, fill = jul))+geom_raster()

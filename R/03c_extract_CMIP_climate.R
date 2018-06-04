@@ -240,6 +240,88 @@ ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill =
   labs(x="easting", y="northing")
 
 
+
+# >>>>>>>>>>>>>>>>>>> extract full RCPs for tmean and get PET for future >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+full.rcps.long <- function(climate, rcp){
+  
+  setwd(paste0('/Users/kah/Documents/bimodality/data/cc',rcp,climate,'70/'))
+  #spec.table<- read.csv('/Users/kah/Documents/bimodality/data/midwest_pls_full_density_pr_alb1.7-5.csv')
+  lowmdw <- read.csv("/Users/kah/Documents/bimodality/outputs/density.table_test.csv")
+  
+  umdw <- read.csv('/Users/kah/Documents/bimodality/data/plss_density_alb_v0.9-10.csv')
+  
+  spec.table <- rbind(lowmdw[,c("x", "y","cell", "Oak")], umdw[,c("x", "y","cell", "Oak")])
+  
+  coordinates(spec.table) <- ~x +y
+  proj4string(spec.table) <- '+init=epsg:3175'
+  spec.table.ll<- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+  
+  month <- sprintf("%02d", 1:12)
+  month.abb <- c('Jan', 'Oct', 'Nov', "Dec","Feb","Mar","Apr", "May", 
+                 'Jun', "Jul", "Aug", "Sep")
+  filenames <- list.files(pattern=paste0("cc",rcp,climate,"70",".*\\.tif$", sep = ""))
+  s <- stack(filenames)
+  t <- crop(s, extent(spec.table.ll))#make all into a raster
+  s <- projectRaster(t, crs='+init=epsg:3175') # project in great lakes albers
+  #crop to the extent of indiana & illinois 
+  y <- data.frame(rasterToPoints(s)) #covert to dataframe
+  
+  colnames(y) <- c("x", "y", month.abb)
+  y$gridNumber <- cellFromXY(s, y[, 1:2])
+  #write.csv(y ,paste0('C:/Users/JMac/Documents/Kelly/biomodality/outputs/ccsm4_2.6_precip.csv' ))
+  
+  full <- y
+  
+  if(climate == 'pr'){
+    full$total<- rowSums(full[,3:14], na.rm=TRUE)
+    full$SI <- rowSums(abs(full[,3:14]-(full[,16]/12)))/full[,16]
+    
+  }else{
+    full[,3:14] <- full[,3:14]/10
+    full$mean <- rowMeans((full[,3:14]), na.rm = TRUE)
+    mean.corr <- full$mean
+    mean.corr[abs(mean.corr) < 0.8 ] <- 0.8 # assign all mean values near 0 to 0.8 to avoid the cv blowing up
+    full$SI <- (abs(apply((full[,3:14]),1, sd, na.rm = TRUE))/abs((mean.corr)))
+    full$cv <- (apply(full[,3:14],1, sd, na.rm = TRUE)/full[,15])*100
+  }
+  
+  coordinates(full) <- ~x + y
+  gridded(full) <- TRUE
+  avgs <- stack(full) 
+  
+  
+  #plot(avgs) #plots averages
+  
+  spec.table <- data.frame(spec.table)
+  
+  
+  rast.fun <- function(x) {
+    
+    to_grid <- data.frame(cell = x$cell, 
+                          total = rowSums(x[,3:4], na.rm = TRUE))
+    
+    empty <- rep(NA, ncell(base.rast))
+    empty[to_grid$cell] <- to_grid$total
+    setValues(base.rast, empty)
+    
+  }
+  
+  full.spec.table     <- as.data.frame(rast.fun(spec.table), xy = TRUE)
+  avgs.df<- data.frame(x = full.spec.table$x, y =full.spec.table$y)
+  if(climate == "pr"){
+    avgs.df$total <- extract(avgs$total, full.spec.table[,c("x","y")])
+    avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
+    colnames(avgs.df) <- c('x', "y", paste0(climate,".", rcp), paste0(climate,'.',rcp,'SI')) 
+  }else{
+    avgs.df$mean <- extract(avgs$mean, full.spec.table[,c("x","y")])
+    avgs.df$SI <- extract(avgs$SI, full.spec.table[,c("x","y")])
+    colnames(avgs.df) <- c('x', "y", paste0(climate,".", rcp), paste0(climate,'.',rcp,'cv')) 
+    
+  }
+  avgs.df
+}
+
 #####################################################################
 # code below for alternative verisons of downscaled climate--
 # deprecated

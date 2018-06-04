@@ -77,7 +77,7 @@ colnames(climate.data)[3] <- "mean_GS_soil"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
 
 # merge with modern soil moisture balance (calucated from P, PET and AWC)
-moist_bal.m <- read.csv('outputs/soil.moisture_1999_2015_with_mean.csv')
+moist_bal.m <- read.csv('outputs/soil.moisture_1985_2015_with_mean.csv')
 climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
 colnames(climate.data)[3] <- "mean_GS_soil_m"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()

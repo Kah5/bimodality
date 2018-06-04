@@ -11,9 +11,11 @@ library(ggplot2)
 version <- "1.7-5" # pls version
 
 # set the working dir (where the prism data folder is)
-setwd( "/afs/crc.nd.edu/user/k/kheilman/bimodality/")
+#setwd( "/afs/crc.nd.edu/user/k/kheilman/bimodality/")
+setwd("/Users/kah/Documents/bimodality")
 # for crc:
 workingdir <- "/afs/crc.nd.edu/user/k/kheilman/bimodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 # read in the 8km grid for extracting
 spec.table <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv"))
 
@@ -36,8 +38,8 @@ spec.table.df<- as.data.frame(spec.table)
 
 
 #designate the years we want to extract/ average over
-years <- 1895:1925
-yrs <- "1895-1925"
+years <- 1895:1935
+yrs <- "1895-1935"
 
 # this chunk of code reads in the filenames within the PRISM data folder
 filenames <- list.files(pattern=paste(".*_",".*\\.bil$", sep = ""))

@@ -74,10 +74,12 @@ ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
 climate.data <- merge(moist_bal[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
 colnames(climate.data)[3] <- "mean_GS_soil"
-ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
+ggplot(moist_bal, aes(x,y, fill = Mean_GS)) + geom_raster()
 
 # merge with modern soil moisture balance (calucated from P, PET and AWC)
-moist_bal.m <- read.csv('outputs/soil.moisture_1985_2015_with_mean.csv')
+moist_bal.m <- read.csv('outputs/soil.moisture_1999_2015_with_mean.csv')
+#moist_bal.m <- read.csv("outputs/soil.moisture_end_of_mo_1985_2015.csv")
+#ggplot(moist_bal, aes(x,y, fill = X2015_06)) + geom_raster()
 climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
 colnames(climate.data)[3] <- "mean_GS_soil_m"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()
@@ -393,4 +395,7 @@ future.pr <- predict.PCA("60")
 future.pr <- predict.PCA("85")
 
 
-write.csv(future.pr, "outputs/Future_PCA.csv",row.names = FALSE)
+moist_bal.future <- read.csv('outputs/soil.moisture_2059_2099_rcp8.5_with_mean.csv')
+ggplot(moist_bal.future, aes(x,y, fill = Mean_GS_post_spin))+geom_raster()
+future.pr2<- merge(future.pr, moist_bal.future[,c("x", "y", "Mean_GS", "Mean_GS_post_spin")])
+write.csv(future.pr2, "outputs/Future_PCA.csv",row.names = FALSE)

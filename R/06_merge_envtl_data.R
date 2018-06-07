@@ -137,7 +137,7 @@ climate.data$CaCO3 <- raster::extract(CaCO38km.alb, climate.data[,c('x','y')])
 pls <- readRDS("data/cell_dens.RDS") # pls density data from PLS_products repo
 head(pls)
 #pls <- data.frame(pls)
-colnames(pls) <- c("cell", "dens", "x", "y", "PLSdensity")
+colnames(pls) <- c("cell", "PLSdensity", "x", "y", "PLSdensity_adj")
 pls <- pls[!is.na(pls$PLSdensity),]
 fia <- read.csv(paste0("data/midwest_pls_fia_density_alb",version,".csv")) # fia density data
 
@@ -397,5 +397,12 @@ future.pr <- predict.PCA("85")
 
 moist_bal.future <- read.csv('outputs/soil.moisture_2059_2099_rcp8.5_with_mean.csv')
 ggplot(moist_bal.future, aes(x,y, fill = Mean_GS_post_spin))+geom_raster()
+
 future.pr2<- merge(future.pr, moist_bal.future[,c("x", "y", "Mean_GS", "Mean_GS_post_spin")])
+colnames(future.pr2)[53:54] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin")
+
+ppet.future <- read.csv("outputs/cmip5_rcp8.5_ppet_long.csv")
+ggplot(ppet.future, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+future.pr2 <- merge(future.pr2, ppet.future[,c("x", "y", "mean_ppet_GS")])
+
 write.csv(future.pr2, "outputs/Future_PCA.csv",row.names = FALSE)

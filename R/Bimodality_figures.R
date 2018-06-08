@@ -1161,6 +1161,9 @@ flipped.soilm.hist <- ggplot(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %
   geom_density(data = kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)
 
 
+# alternative: get
+plot(density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity))
+plot(density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity), add = TRUE)
 # redraw the iset histogram
 hist.inset <- ggdraw() +
   draw_plot(f.clust.hist, 0, 0, 1, 1) +
@@ -1428,12 +1431,12 @@ bimod.ppet.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = grou
 bimod.ppet.85.fia <- read.csv("outputs/new_bim_surface_PPET_rcp85_pred_by_fia.csv")
 bimod.ppet.85.fia$eco <- ifelse(bimod.ppet.85.fia$FIAdensity <= 0.5, "Prairie", 
                               ifelse(bimod.ppet.85.fia$FIAdensity <= 47, "Savanna", "Forest"))
-bimod.ppet.85.fia$bimclass_f_pred_fia_ppet <- ifelse(bimod.ppet.85.fia$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
+#bimod.ppet.85.fia$bimclass_f_pred_fia_ppet <- ifelse(bimod.ppet.85.fia$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
 
 bimod.ppet.85.fia$bimclass_eco <- ifelse(is.na(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet) | is.na(bimod.ppet.85.fia$eco), NA ,paste(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet, bimod.ppet.85.fia$eco))
-
+future.pr$bimclass_f_pred_fia_85_ppet <- "unimodal"
 bimod.ppet.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = dipPint_f_pred_fia_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
                                                                           '#c7eae5',
@@ -1447,10 +1450,10 @@ bimod.ppet.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = 
 ppet.bimpct.f <- round(length(bimod.ppet.85.fia[bimod.ppet.85.fia$bimclass_f_pred_fia_ppet %in% "bimodal",]$bimclass_f_pred_fia_ppet)/length(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet)*100, digits = 2)
 
 bimod.ppet.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_ppet))+
+  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c('#d73027', '#4575b4'
-  ), labels = c("bimodal", "unimodal")) +
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c( '#4575b4'
+  ), labels = c("unimodal")) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", ppet.bimpct.f, "%"))
 
@@ -1551,6 +1554,73 @@ fia.ppet.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long,
                                                legend.key.size = unit(0.5, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                axis.title.x=element_blank(),
                                                axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")
+
+
+# now make the 3 colored maps for the future--need to deal with out of sample points for sm and ppet
+
+# now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
+bim.class.f<- merge(bimod.pc1.85.pls[,c("x", "y", "bimclass_f_pred_pls_85")],bimod.sm.85.pls[,c("x", "y", "bimclass_f_pred_pls_85_ppet")], by = c("x", "y"))
+colnames(bim.class.f)[4] <- "bimcalss_f_pred_pls_85_sm"
+bim.class.f <- merge(bim.class.f, bimod.ppet.85.pls[,c("x", "y", "bimclass_f_pred_pls_ppet")])
+
+bim.class.f$nbimod <- as.character(rowSums(bim.class.f[,3:5] == "bimodal", na.rm = TRUE))
+
+three.color.bimodal.plots.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.f, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
+  ), labels = c("0","1", "2", "3", "0")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+one.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "1",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+two.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "2",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+three.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "3",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+
+one.bimpct <- one.bimpct + two.bimpct + three.bimpct
+two.bimpct <-  two.bimpct + three.bimpct
+three.bimpct <-  three.bimpct
+
+# make 3 bimodal plots for future predticet by fia:
+
+bim.class.f.m <- merge(bimod.pc1.85.fia[,c("x", "y", "bimclass_f_pred_fia_85")],bimod.sm.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_soil")], by = c("x", "y"))
+colnames(bim.class.f)[4] <- "bimcalss_f_pred_fia_85_sm"
+bim.class.f.m <- merge(bim.class.f.m, bimod.ppet.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_ppet")])
+
+bim.class.f.m$nbimod <- as.character(rowSums(bim.class.f.m[,3:5] == "bimodal", na.rm = TRUE))
+
+three.color.bimodal.plots.f.m <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.f.m, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
+  ), labels = c("0","1", "2", "3", "0")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+one.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "1",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
+two.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "2",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
+three.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "3",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
+
+one.bimpct <- one.bimpct + two.bimpct + three.bimpct
+two.bimpct <-  two.bimpct + three.bimpct
+three.bimpct <-  three.bimpct
+
+
+# write to png
+png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs/future_rcp8.5_3bimodal_maps.png")
+plot_grid(three.color.bimodal.plots.f, three.color.bimodal.plots.f.m,labels = "AUTO", label_y = 0.94, label_x= 0.02)
+dev.off()
+
+
+
+
+
+
+
+
+
 
 
 

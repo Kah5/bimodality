@@ -399,7 +399,7 @@ moist_bal.future <- read.csv('outputs/soil.moisture_2059_2099_rcp8.5_with_mean.c
 ggplot(moist_bal.future, aes(x,y, fill = Mean_GS_post_spin))+geom_raster()
 
 future.pr2<- merge(future.pr, moist_bal.future[,c("x", "y", "Mean_GS", "Mean_GS_post_spin")])
-colnames(future.pr2)[53:54] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin")
+colnames(future.pr2)[57:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin")
 
 ppet.future <- read.csv("outputs/cmip5_rcp8.5_ppet_long.csv")
 ggplot(ppet.future, aes(x,y, fill = mean_ppet_GS))+geom_raster()

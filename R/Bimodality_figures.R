@@ -288,7 +288,7 @@ ggplot(bimod.pc.pls, aes(mean_GS_soil, PLSdensity, color = bimclass_soil))+geom_
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
 bim.class.m<- merge(bimod.pc.pls[,c("x", "y", "bimclass")],bimod.sm.pls[,c("x", "y", "bimclass_soil")], by = c("x", "y"))
-bim.class.m <- merge(bim.class.m, bimod.ppet.pls[,c("x", "y", "bimclass_ppet")])
+bim.class.m <- merge(bim.class.m, bimod.ppet.pls[,c("x", "y", "bimclass_ppet", "PLSdensity")])
 
 bim.class.m$nbimod <- as.character(rowSums(bim.class.m[,3:5] == "bimodal", na.rm = TRUE))
 
@@ -298,7 +298,7 @@ three.color.bimodal.plots <- ggplot()+ geom_polygon(data = mapdata, aes(group = 
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
   ), labels = c("0","1", "2", "3", "0")) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "G", size = 4)
 
 
 one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
@@ -309,8 +309,9 @@ one.bimpct <- one.bimpct + two.bimpct + three.bimpct
 two.bimpct <-  two.bimpct + three.bimpct
 three.bimpct <-  three.bimpct
 # make a plot with all three maps side by site:
-
-
+png(height = 6, width = 12, units = "in", res =300, "outputs/bimodal_maps_pls_side_by_side.png")
+plot_grid(  bimod.pc.pls.map, bimod.ppet.pls.map, bimod.sm.pls.map, labels =c("PC1", "PPET", "soil moisture"), ncol = 3)
+dev.off()
 # B: Species clusters:
 # read in the species classifications from" Species_clustering.R"
 clust_plot7 <- read.csv("outputs/seven_clust_pls_dissimilarity.csv")
@@ -507,12 +508,13 @@ interp.densp <- function(pc1val){
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
   points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  #points <- data.frame(x=rep(pc1val, 601 ), y=0:600) # points all at the pc1 value, and along a grid of density
   
-  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0002236024){ # this value is the 95% contour level
+  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
     dipP <- diptest::dip.test( df$freq)$p.value
     
   }
@@ -527,15 +529,16 @@ pls.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 pls.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
 
-#plot_grid(pls.kde.plot.pc1.grob, three.color.bimodal.plots, ncol = 2)
 
 # make the plot with GGPLOT:
 pls.kde.plot.pc1.gg <- ggplot(pls.df, aes(x=PC1, y=PLSdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
   
   
-pls.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue"))
+pls.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue")+ text(-5.5,500, "A"))
 pls.kde.plot.pc1.gg
+
+plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue") + text(-6,500, "A")
 
 ylow2redscale <- c('#ffffcc',
     '#ffeda0',
@@ -592,7 +595,7 @@ ppet.bim.line$bimodal <- ifelse(ppet.bim.line$pval <= 0.05, "bimodal", "unimodal
 ppet.bim.line$y <- -37
 
 # ggplotify the kde plots here:
-pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue"))
+pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue") + text(-170,500, "C"))
 pls.kde.plot.ppet.gg
 #pls.kde.plot.ppet.gg <- ggplot(pls.df, aes(x=PC1, y=PLSdensity) ) +
  # stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("Spectral"), direction=2 )+ylab("Tree Density")+theme(legend.position = "none")
@@ -650,7 +653,7 @@ sm.bim.line$bimodal <- ifelse(sm.bim.line$pval <= 0.05, "bimodal", "unimodal")
 sm.bim.line$y <- -37
 
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue"))
+pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue") + text(-0.05,500, "E"))
 pls.kde.plot.sm.gg
 #pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim=c(0, 1.75)) + lines(x = c(0.67, 1.4), y = c(-38, -38), lwd = 8, col = "darkblue"))
 #pls.kde.plot.sm.gg #+ geom_hline(yintercept  = -40)
@@ -776,7 +779,7 @@ full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s",
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$cell %in% pls.PC1bimcell.1 | dens.clust$cell %in% pls.PC1bimcell.2 , ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1,] , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1 , ], aes(FIAdensity, fill = foresttype), binwidth = 20)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,700)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1 , ], aes(FIAdensity, fill = foresttype), binwidth = 20)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,950)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
                                                                                                                                                                                                                                                                                                                                                                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
 f.clust.hist 
 
@@ -788,7 +791,7 @@ f.clust.hist.full <- ggplot()+ geom_density(data = dens.clust, aes(PLSdensity, 2
 f.clust.hist.full 
 
 library(ggpubr)
-inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw(base_size = 8)+theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none")#+theme_bw()
+inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600)+theme_bw(base_size = 8) +theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none")+theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Create the external graphical objects
 # called a "grop" in Grid terminology
@@ -798,6 +801,7 @@ xbp_grob <- ggplotGrob(inset)
 
 
 f.clust.hist.inset <- f.clust.hist + annotation_custom(grob = xbp_grob, ymin = 375, ymax = 760, xmin = 0.005, xmax = 655)
+f.clust.hist.inset.full <- f.clust.hist.full + annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = 0.005, xmax = 655)
 
 #Other way of overlaying the plots:
 box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
@@ -909,13 +913,13 @@ ppet.bimpct.f <- round(length(bimod.ppet.fia[bimod.ppet.fia$bimclass_ppet_f %in%
 bimod.ppet.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.ppet.fia, aes(x=x, y=y, fill = bimclass_ppet_f))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c( '#4575b4','#d73027'
-  ), labels = c("unimodal", "bimodal")) +
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c(  '#d73027','#4575b4'
+  ), labels = c( "bimodal", "unimodal")) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("bimodal region = 0%")
 
 
-
+head(bimod.ppet.fia)
 # based on soil moisture estimates:
 bimod.sm.fia <- read.csv("outputs/new_bim_surface_soil_moist_fia.csv")
 bimod.sm.fia$eco <- ifelse(bimod.sm.fia$FIAdensity <= 0.5, "Prairie", 
@@ -948,7 +952,7 @@ bimod.sm.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
-bim.class.m.f<- merge(bimod.pc.fia[,c("x", "y", "bimclass_f")],bimod.sm.fia[,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
+bim.class.m.f <- merge(bimod.pc.fia[,c("x", "y", "bimclass_f")],bimod.sm.fia[,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
 bim.class.m.f <- merge(bim.class.m.f, bimod.ppet.fia[,c("x", "y", "bimclass_ppet_f")])
 
 bim.class.m.f$nbimod <- as.character(rowSums(bim.class.m.f[,3:5] == "bimodal", na.rm = TRUE))
@@ -962,6 +966,14 @@ three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(grou
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
 
 
+
+three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m.f, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
+  ), labels = c("0","1", "2", "3")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "H", size = 4)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>.new figures with 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
@@ -991,13 +1003,13 @@ interp.densp <- function(pc1val){
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
   points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0002236024){ # this value is the 95% contour level
+  points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
+  if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    #dipP <- diptest::dip.test( df$freq)$p.value
     
   }
   dipP
@@ -1010,7 +1022,7 @@ pc1.f.bim.line$y <- -37
 fia.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis=1.5
-                                         ))
+                                         )+ text(-6,500, "B"))
 
 #plot_grid(pls.kde.plot.pc1.grob, three.color.bimodal.plots, ncol = 2)
 
@@ -1019,7 +1031,7 @@ fia.kde.plot.pc1.gg <- ggplot(pls.df, aes(x=PC1, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "B"))+ xlab("P-PET")
 fia.kde.plot.pc1.gg + xlab("PC1")
 
 #fia.kde.plot.pc1 <- recordPlot()
@@ -1038,7 +1050,7 @@ fia.kde.plot.ppet <- recordPlot()
 fia.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density"))
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
+                                      z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
 
@@ -1049,18 +1061,18 @@ interp.densp <- function(pc1val){
   maxy <- ceiling(closest$y) # get the closest y value and round up
   points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
   
-  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0002236024){ # this value is the 95% contour level
+  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
     #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
+    dipP <- diptest::dip.test( df$freq )$p.value
     
   }
   dipP
 }
 
-ppet.f.bim.line <- data.frame(PPET = seq(from = -100, to =200, by = 1), pval = NA, bimodal = NA)
+ppet.f.bim.line <- data.frame(PPET = seq(from = -100, to =300, by = 10), pval = NA, bimodal = NA)
 ppet.f.bim.line$pval <- apply(data.frame(ppet.f.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
 ppet.f.bim.line$bimodal <- ifelse(ppet.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
 ppet.f.bim.line$y <- -37
@@ -1068,14 +1080,13 @@ fia.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = NA, ylim = c(-40,550)))
 
-#plot_grid(pls.kde.plot.pc1.grob, three.color.bimodal.plots, ncol = 2)
 
 # make the plot with GGPLOT:
 fia.kde.plot.ppet.gg <- ggplot(pls.df, aes(x=PC1, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "red"))+xlab("P-PET")
+fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "D"))+xlab("P-PET")
 fia.kde.plot.ppet.gg +xlab("P-PET")
 
 
@@ -1092,7 +1103,7 @@ fia.kde.plot.sm <- recordPlot()
 fia.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density"))
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
+                                      z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
 
@@ -1103,7 +1114,7 @@ interp.densp <- function(pc1val){
   maxy <- ceiling(closest$y) # get the closest y value and round up
   points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
   
-  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0002236024){ # this value is the 95% contour level
+  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
@@ -1129,7 +1140,7 @@ fia.kde.plot.sm.gg <- ggplot(pls.df, aes(x=mean_GS_soil_m, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.7) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "red"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.7) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "red")+ text(-0.05,500, "F"))
 fia.kde.plot.sm.gg 
 
 
@@ -1152,18 +1163,365 @@ kde.surf.soilm.df <- merge(kde.surf.soilm.pls.df[,c("x", "y",  "PLSdensity",  "b
 
 
 flipped.pc1.hist <- ggplot(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",], aes(PLSdensity))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)
+  geom_density(data = kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
 
 flipped.ppet.hist <- ggplot(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",], aes(PLSdensity))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)
+  geom_density(data = kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
 
 flipped.soilm.hist <- ggplot(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",], aes(PLSdensity))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)
+  geom_density(data = kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
 
 
-# alternative: get
-plot(density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity))
-plot(density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity), add = TRUE)
+# alternative: get density lines then ggplotify them to align:
+pls.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity)$y, 
+           x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity)$x)
+
+fia.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity)$y, 
+                                 x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity)$x)
+flipped.soilm.hist.gg <- as.ggplot(~plot(fia.soilm.density.df[fia.soilm.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.soilm.density.df[pls.soilm.density.df$x < 550 & pls.soilm.density.df$x > -41,], type = "l", col = "blue"))
+
+
+
+pls.ppet.density.df <- data.frame(y = density(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$PLSdensity)$y, 
+                                 x = density(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$PLSdensity)$x)
+
+fia.ppet.density.df <- data.frame(y = density(na.omit(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$FIAdensity))$y, 
+                                 x = density(na.omit(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$FIAdensity))$x)
+flipped.ppet.hist.gg <- as.ggplot(~plot(fia.ppet.density.df[fia.ppet.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines( pls.ppet.density.df[pls.ppet.density.df$x < 550 & pls.ppet.density.df$x > -41,], type = "l", col = "blue"))
+
+plot(fia.ppet.density.df[fia.ppet.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines( pls.ppet.density.df[pls.ppet.density.df$x < 550 & pls.ppet.density.df$x > -41,], type = "l", col = "blue")
+
+pls.pc1.density.df <- data.frame(y = density(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$PLSdensity)$y, 
+                                  x = density(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$PLSdensity)$x)
+
+fia.pc1.density.df <- data.frame(y = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$y, 
+                                  x = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$x)
+flipped.pc1.hist.gg <- as.ggplot(~plot(pls.pc1.density.df[pls.pc1.density.df$x < 550 & pls.pc1.density.df$x > -41,], type = "l", col = "blue", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(fia.pc1.density.df[fia.pc1.density.df$x < 550 & fia.pc1.density.df$x > -41,], type = "l", col = "red"))
+
+library(gtable)
+g1 <- ggplotGrob(pls.kde.plot.pc1.gg+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
+g2 <- ggplotGrob(fia.kde.plot.pc1.gg+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
+g3 <- ggplotGrob(flipped.pc1.hist.gg+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+
+g4 <- ggplotGrob(pls.kde.plot.ppet.gg+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+g5 <- ggplotGrob(fia.kde.plot.ppet.gg+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+g6 <- ggplotGrob(flipped.ppet.hist.gg+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+
+g7 <- ggplotGrob(pls.kde.plot.sm.gg+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+g8 <- ggplotGrob(fia.kde.plot.sm.gg+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+g9 <- ggplotGrob(flipped.soilm.hist.gg+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+g10 <- ggplotGrob(three.color.bimodal.plots)
+g11 <- ggplotGrob(three.color.bimodal.plots.fia)
+
+g <- cbind(g1 ,g2, g3, size = "first")
+g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
+
+grow2 <- cbind(g4 ,g5, g6, size = "first")
+grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
+
+grow3 <- cbind(g7 ,g8, g9, size = "first")
+grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
+grow4 <- cbind(g10, g11, size = "first")
+grow4$heights <-unit.pmax(g10$heights, g11$heights)
+#png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs/new_figure_3.png")
+grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
+             arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
+             arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
+             arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
+#dev.off()
+
+
+png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs/new_figure_3_kde_plot_with_hist.png")
+fig3 <- grid.arrange(g, grow2, grow3,grow4, ncol = 1)
+fig3
+dev.off()
+
+
+############################################################################################
+# figure S6: same as figure 3, but excluding grid cells that have less than 14 trees /ha:
+
+pls.df <- dens.clust
+pls.omit <- pls.df[pls.df$PLSdensity >= 14,]
+library(ks)
+library(ggplotify)
+# for PC1:
+H <- Hpi.diag(x=na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)) )
+fhat <- kde(x=na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), #H=H, 
+            compute.cont = TRUE )
+
+plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550))
+#points(na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), cex=0.3, pch=16)
+plot(fhat, display="slice", cont=c(85), add = TRUE)
+
+contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
+                                      z=estimate,levels=cont["95%"])[[1]])
+
+
+contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+                                      z=estimate, levels=cont["10%"])[[1]])
+contour_95 <- data.frame(contour_95)
+
+
+interp.densp <- function(pc1val){
+  # find the closest PC1 value in the contour_95 df:
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  #points <- data.frame(x=rep(pc1val, 601 ), y=0:600) # points all at the pc1 value, and along a grid of density
+  
+  if(max(kde(x=na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    dipP <- diptest::dip.test( df$freq)$p.value
+    
+  }
+  dipP
+}
+
+pc1.bim.line <- data.frame(PC1 = seq(from = -5, to =2.5, by = 0.05), pval = NA, bimodal = NA)
+pc1.bim.line$pval <- apply(data.frame(pc1.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
+pc1.bim.line$bimodal <- ifelse(pc1.bim.line$pval <= 0.05, "bimodal", "unimodal")
+pc1.bim.line$y <- -37
+pls.kde.plot.pc1 <- recordPlot()
+library(base2grob)
+pls.kde.plot.pc1.grob.omit <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
+
+
+# make the plot with GGPLOT:
+pls.kde.plot.pc1.gg.omit <- ggplot(pls.omit, aes(x=PC1, y=PLSdensity) ) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
+
+
+pls.kde.plot.pc1.gg.omit <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue")+ text(-5.5,500, "A"))
+pls.kde.plot.pc1.gg.omit
+
+plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue") + text(-6,500, "A")
+
+ylow2redscale <- c('#ffffcc',
+                   '#ffeda0',
+                   '#fed976',
+                   '#feb24c',
+                   '#fd8d3c',
+                   '#fc4e2a',
+                   '#e31a1c',
+                   '#bd0026',
+                   '#800026')
+
+#ggplot(pls.omit, aes(x=PC1, y=PLSdensity) ) +
+# stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_manual(palette= ylow2redscale)
+
+
+# for P-PET:
+H <- Hpi.diag(x=na.omit(cbind(pls.omit$GS_ppet, pls.omit$PLSdensity)) )
+fhat <- kde(x=na.omit(cbind(pls.omit$GS_ppet, pls.omit$PLSdensity)), #H=H, 
+            compute.cont = TRUE )
+
+plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,80,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550))
+#points(na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), cex=0.3, pch=16)
+plot(fhat, display="slice", cont=c(85), add = TRUE)
+pls.kde.plot.ppet.omit <- recordPlot()
+pls.kde.plot.ppet.grob.omit <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550), xlim = c(-200, 300)))
+
+
+contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+                                      z=estimate, levels=cont["15%"])[[1]])
+contour_95 <- data.frame(contour_95)
+
+
+interp.densp <- function(pc1val){
+  # find the closest PC1 value in the contour_95 df:
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  
+  if(max(kde(x=na.omit(cbind(pls.omit$GS_ppet, pls.omit$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.omit$GS_ppet, pls.omit$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    dipP <- diptest::dip.test( df$freq)$p.value
+    
+  }
+  dipP
+}
+
+ppet.bim.line <- data.frame(PPET = seq(from = -200, to = 200, by = 1), pval = NA, bimodal = NA)
+ppet.bim.line$pval <- apply(data.frame(ppet.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
+ppet.bim.line$bimodal <- ifelse(ppet.bim.line$pval <= 0.05, "bimodal", "unimodal")
+ppet.bim.line$y <- -37
+
+# ggplotify the kde plots here:
+pls.kde.plot.ppet.gg.omit <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue") + text(-170,500, "C"))
+pls.kde.plot.ppet.gg.omit
+#pls.kde.plot.ppet.gg <- ggplot(pls.omit, aes(x=PC1, y=PLSdensity) ) +
+# stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("Spectral"), direction=2 )+ylab("Tree Density")+theme(legend.position = "none")
+
+#pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 250)))
+
+#pls.kde.plot.ppet.gg <-
+# ggplot(na.omit(pls.omit[, c("GS_ppet", "PLSdensity")]), aes(x=GS_ppet, y=PLSdensity) ) +
+#stat_density_2d(aes(fill = ..level..), geom = "polygon", n = 200, h = c( 24.63, 73.9, 24.63, 73.9), contour = TRUE)+  scale_fill_gradientn(colours=rev(heat.colors(5)))+ylab("Tree Density")+theme(legend.position = "none")
+
+
+#pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim=c(0, 1.75)))
+
+
+# for soil moisture/bucket model
+
+H <- Hpi.diag(x=na.omit(cbind(pls.omit$mean_GS_soil, pls.omit$PLSdensity)) )
+fhat <- kde(x=na.omit(cbind(pls.omit$mean_GS_soil, pls.omit$PLSdensity)), #H=H, 
+            compute.cont = TRUE )
+
+plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density", ylim = c(-40,550))
+#points(na.omit(cbind(pls.omit$PC1, pls.omit$PLSdensity)), cex=0.3, pch=16)
+abline(h = -40, col = "purple", lwd = 10)
+plot(fhat, display="slice", cont=c(85), add = TRUE)
+pls.kde.plot.sm <- recordPlot()
+pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0, 1.5)))
+
+contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+                                      z=estimate, levels=cont["10%"])[[1]])
+contour_95 <- data.frame(contour_95)
+
+
+interp.densp <- function(pc1val){
+  # find the closest PC1 value in the contour_95 df:
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  
+  if(max(kde(x=na.omit(cbind(pls.omit$mean_GS_soil, pls.omit$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.omit$mean_GS_soil, pls.omit$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    dipP <- diptest::dip.test( df$freq)$p.value
+    
+  }
+  dipP
+}
+
+# predict bimodality at evenly spaced envt values
+sm.bim.line <- data.frame(SM = seq(from = 0, to = 2, by = 0.01), pval = NA, bimodal = NA)
+sm.bim.line$pval <- apply(data.frame(sm.bim.line$SM), MARGIN= 1, FUN=interp.densp)
+sm.bim.line$bimodal <- ifelse(sm.bim.line$pval <= 0.05, "bimodal", "unimodal")
+sm.bim.line$y <- -37
+
+# ggplotify the kde plots here:
+pls.kde.plot.sm.gg.omit <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue") + text(-0.05,500, "E"))
+pls.kde.plot.sm.gg.omit
+
+
+# make ggplot figures of cluster density
+
+# need to merge together all of the bimodal/unimodal tags
+kde.surf.pc1.pls.df <- read.csv("outputs/new_bim_surface_PC1_pls.csv")
+kde.surf.ppet.pls.df <- read.csv("outputs/new_bim_surface_PPET_pls.csv")
+kde.surf.soilm.pls.df <- read.csv("outputs/new_bim_surface_soil_moist_pls.csv")
+
+kde.surf.pc1.fia.df <- read.csv("outputs/new_bim_surface_PC1_fia.csv")
+kde.surf.ppet.fia.df <- read.csv("outputs/new_bim_surface_PPET_fia.csv")
+kde.surf.soilm.fia.df <- read.csv("outputs/new_bim_surface_soil_moist_fia.csv")
+
+kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "PLSdensity",  "bimclass")], kde.surf.pc1.fia.df[,c("x", "y",  "FIAdensity","bimclass_f")], by = c("x", "y"))
+kde.surf.ppet.df <- merge(kde.surf.ppet.pls.df[,c("x", "y",  "PLSdensity",  "bimclass_ppet")], kde.surf.ppet.fia.df[,c("x", "y",  "FIAdensity","bimclass_ppet_f")], by = c("x", "y"))
+kde.surf.soilm.df <- merge(kde.surf.soilm.pls.df[,c("x", "y",  "PLSdensity",  "bimclass_soil")], kde.surf.soilm.fia.df[,c("x", "y",  "FIAdensity","bimclass_soil_f")], by = c("x", "y"))
+
+
+
+flipped.pc1.hist.omit <- ggplot(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal" & kde.surf.pc1.df$PLSdensity >= 14,], aes(PLSdensity))+geom_density(color = "blue")+
+  geom_density(data = kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+
+flipped.ppet.hist.omit <- ggplot(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal"& kde.surf.ppet.df$PLSdensity >= 14,], aes(PLSdensity))+geom_density(color = "blue")+
+  geom_density(data = kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+
+flipped.soilm.hist.omit <- ggplot(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal"& kde.surf.soilm.df$PLSdensity >= 14,], aes(PLSdensity))+geom_density(color = "blue")+
+  geom_density(data = kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",], aes(FIAdensity), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+
+
+# alternative: get density lines then ggplotify them to align:
+pls.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal" & kde.surf.soilm.df$PLSdensity >= 14,]$PLSdensity)$y, 
+                                   x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal"& kde.surf.soilm.df$PLSdensity >= 14,]$PLSdensity)$x)
+
+fia.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity)$y, 
+                                   x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity)$x)
+flipped.soilm.hist.gg.omit <- as.ggplot(~plot(fia.soilm.density.df[fia.soilm.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.soilm.density.df[pls.soilm.density.df$x < 550 & pls.soilm.density.df$x > -41,], type = "l", col = "blue"))
+
+
+
+pls.ppet.density.df <- data.frame(y = density(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal" & kde.surf.ppet.df$PLSdensity >= 14,]$PLSdensity)$y, 
+                                  x = density(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal" & kde.surf.ppet.df$PLSdensity >= 14,]$PLSdensity)$x)
+
+fia.ppet.density.df <- data.frame(y = density(na.omit(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$FIAdensity))$y, 
+                                  x = density(na.omit(kde.surf.ppet.df[kde.surf.ppet.df$bimclass_ppet %in% "bimodal",]$FIAdensity))$x)
+flipped.ppet.hist.gg.omit <- as.ggplot(~plot(fia.ppet.density.df[fia.ppet.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines( pls.ppet.density.df[pls.ppet.density.df$x < 550 & pls.ppet.density.df$x > -41,], type = "l", col = "blue"))
+
+plot(fia.ppet.density.df[fia.ppet.density.df$x < 550,], type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines( pls.ppet.density.df[pls.ppet.density.df$x < 550 & pls.ppet.density.df$x > -41,], type = "l", col = "blue")
+
+pls.pc1.density.df <- data.frame(y = density(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal" & kde.surf.pc1.df$PLSdensity >= 14,]$PLSdensity)$y, 
+                                 x = density(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal" & kde.surf.pc1.df$PLSdensity >= 14,]$PLSdensity)$x)
+
+fia.pc1.density.df <- data.frame(y = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$y, 
+                                 x = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$x)
+flipped.pc1.hist.gg.omit <- as.ggplot(~plot(fia.pc1.density.df[fia.pc1.density.df$x < 550 & fia.pc1.density.df$x > -41,], type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.df[pls.pc1.density.df$x < 550 & pls.pc1.density.df$x > -41,], type = "l", col = "blue"))
+
+library(gtable)
+g1o <- ggplotGrob(pls.kde.plot.pc1.gg.omit+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
+g2o <- ggplotGrob(fia.kde.plot.pc1.gg+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
+g3o <- ggplotGrob(flipped.pc1.hist.gg.omit+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+
+g4o <- ggplotGrob(pls.kde.plot.ppet.gg.omit+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+g5o <- ggplotGrob(fia.kde.plot.ppet.gg+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+g6o <- ggplotGrob(flipped.ppet.hist.gg.omit+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+
+g7o <- ggplotGrob(pls.kde.plot.sm.gg.omit+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+g8o <- ggplotGrob(fia.kde.plot.sm.gg+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+g9o <- ggplotGrob(flipped.soilm.hist.gg.omit+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+
+three.color.bimodal.plots.omit <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m[bim.class.m$PLSdensity >= 14,], aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
+  ), labels = c("0","1", "2", "3", "0")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "G", size = 4)
+
+
+g10o <- ggplotGrob(three.color.bimodal.plots.omit)
+g11o <- ggplotGrob(three.color.bimodal.plots.fia)
+
+go <- cbind(g1o ,g2o, g3o, size = "first")
+go$heights <-unit.pmax(g1o$heights, g2o$heights, g3o$heights)#, 
+
+grow2o<- cbind(g4o ,g5o, g6o, size = "first")
+grow2o$heights <-unit.pmax(g4o$heights, g5o$heights, g6o$heights)#, 
+
+grow3o <- cbind(g7o ,g8o, g9o, size = "first")
+grow3o$heights <-unit.pmax(g7o$heights, g8o$heights, g9o$heights)#, 
+grow4o <- cbind(g10o, g11o, size = "first")
+grow4o$heights <-unit.pmax(g10o$heights, g11o$heights)
+#png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs/new_figure_3.png")
+grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
+             arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
+             arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
+             arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
+#dev.off()
+
+
+png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs/new_figure_3_kde_plot_with_hist_omit_ag.png")
+fig3 <- grid.arrange(go, grow2o, grow3o, grow4o, ncol = 1)
+fig3
+dev.off()
+
+
+
+
+
 # redraw the iset histogram
 hist.inset <- ggdraw() +
   draw_plot(f.clust.hist, 0, 0, 1, 1) +
@@ -1251,13 +1609,34 @@ dev.off()
 
 
 # figure 2 new again:
-png(height = 8, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_6panel.png")
-plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3)+ggtitle("PRE-SETTLEMENT"), 
-          fia.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3)+ggtitle("MODERN"),
+
+f.clust.hist.inset.full <- f.clust.hist.full+theme(plot.background = element_rect(fill = "white"))+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1150, xmin = -141, xmax = 648)
+box <- data.frame(
+  x = 0.75,
+  y = 0
+)
+
+f.clust.hist.full2<- ggdraw(f.clust.hist.full) + 
+  geom_rect(data = box, aes(xmin = x, xmax = x + .15, ymin = y, ymax = y + .15),
+            colour = "gray60", fill = "gray80")
+
+#Other way of overlaying the plots:
+box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
+
+hist.inset <- ggdraw() +
+  draw_plot(f.clust.hist.full + theme(legend.justification = "bottom"), 0, 0, 1, 1) +
+  draw_plot(inset, 0.6, 0.025, 0.3, 0.975)# +
+#draw_plot_label(c("A", "B"), c(0, 0.5), c(1, 0.92), size = 15)
+
+
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_6panel.png")
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          fia.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
           clust.hist.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
-          f.clust.hist.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           ncol = 2,align = "h",axis="tb", scale = 1) 
 dev.off()
 
@@ -1284,7 +1663,7 @@ grid.draw(cbind(
 png(height = 8, width = 5, units = "in", res = 300, "outputs/paper_figs/fig3_kde_3color_maps.png")
 grid.arrange(pls.kde.plot.pc1.gg + ggtitle("Past")+theme(title = element_text(size = 4, hjust = 0.65)), 
              fia.kde.plot.pc1.gg+theme(axis.text.y = element_blank(), axis.title.y = element_blank(), axis.ticks.y = element_blank())+ ggtitle("Modern"),
-             flipped.pc1.hist+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)), 
+             flipped.pc1.hist.gg,#+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)), 
              pls.kde.plot.ppet.gg, 
              fia.kde.plot.ppet.gg, 
              flipped.ppet.hist+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)),
@@ -1294,15 +1673,6 @@ grid.arrange(pls.kde.plot.pc1.gg + ggtitle("Past")+theme(title = element_text(si
              three.color.bimodal.plots, 
              three.color.bimodal.plots.fia, ncol = 3, heights = c(2,2,2,2), widths = c(1,1,0.6))
 dev.off()
-
-
-library(gtable)
-g2 <- ggplotGrob(pls.kde.plot.pc1.gg)
-g3 <- ggplotGrob(flipped.pc1.hist+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-g <- cbind(g2, g3, size = "first")
-g$heights <- unit.pmax(g2$heights, g3$heights) 
-grid.newpage()
-grid.draw(g)
 
 
 
@@ -1316,7 +1686,7 @@ print(flipped.pc1.hist, vp = vplayout(1, 3))
 png(height = 8, width = 5, units = "in", res = 300, "outputs/paper_figs/fig3_kde_3color_maps2.png")
 plot_grid(pls.kde.plot.pc1.gg + ggtitle("Past")+theme(title = element_text(size = 4, hjust = 0.65)), 
           fia.kde.plot.pc1.gg+theme(axis.text.y = element_blank(), axis.title.y = element_blank(), axis.ticks.y = element_blank())+ ggtitle("Modern") +theme(title = element_text(size = 8, hjust = 0.65)),
-          flipped.pc1.hist+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)), 
+          flipped.pc1.hist.gg+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)), 
           pls.kde.plot.ppet.gg, 
           fia.kde.plot.ppet.gg, 
           flipped.ppet.hist+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)),
@@ -1615,10 +1985,17 @@ dev.off()
 
 
 
+png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs/future_rcp8.5_3bimodal_maps_all.png")
+plot_grid(bimod.pc1.85.pls.map+ggtitle(" "),bimod.pc1.85.fia.map+ggtitle(" "),
+          bimod.ppet.85.pls.map+ggtitle(" "),bimod.ppet.85.fia.map+ggtitle(" "), 
+          bimod.sm.85.pls.map+ggtitle(" "),bimod.sm.85.fia.map+ggtitle(" "), ncol = 2, labels = c("A", "B", "C", "D", "E", "F"))
+dev.off()
 
-
-
-
+png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs/past_modern_bimodal_maps_all.png")
+plot_grid(bimod.pc.pls.map+ggtitle(" "),bimod.pc.fia.map+ggtitle(" "),
+          bimod.ppet.pls.map+ggtitle(" "),bimod.ppet.fia.map+ggtitle(" "), 
+          bimod.sm.pls.map+ggtitle(" "),bimod.sm.fia.map+ggtitle(" "), ncol = 2, labels = c("A", "B", "C", "D", "E", "F"))
+dev.off()
 
 
 

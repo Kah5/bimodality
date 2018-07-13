@@ -406,3 +406,11 @@ ggplot(ppet.future, aes(x,y, fill = mean_ppet_GS))+geom_raster()
 future.pr2 <- merge(future.pr2, ppet.future[,c("x", "y", "mean_ppet_GS")])
 
 write.csv(future.pr2, "outputs/Future_PCA.csv",row.names = FALSE)
+
+
+
+# edit: merging environmental data and the count data for composition modeling:
+counts <- read.csv("/Users/kah/Documents/PLS_products/PLS_species_counts.csv")
+head(full.clim.dens)
+counts.df <- merge(counts, full.clim.dens[,c("x", "y", "cell", "PC1")], by = c("x", "y", "cell"))
+write.csv(counts.df, "/Users/kah/Documents/PLS_products/PLS_species_counts_pc1.csv", row.names = FALSE)

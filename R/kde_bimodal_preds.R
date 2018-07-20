@@ -62,64 +62,7 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                     z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
-# get points to evaluate:
-
-diptest::dip.test(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), #H=H, 
-                      compute.cont = TRUE, eval.points = cbind(rep(2,contour_95[which.min(abs(contour_95$x - -4)),]$y), 0:round(contour_95[which.min(abs(contour_95$x - -4)),]$y, 1)))$estimate)
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-ggplot(data=pls.df, aes(PC1, PLSdensity)) +
-  geom_point(size = 0.5) +
-  geom_path(aes(x, y, color = "red"), data=contour_95) +
-  theme_bw()
-
-
-
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-  df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-  dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-  #dipP <- diptest::dip.test( df$freq)$p.value
-  
-  }
-  dipP
-}
-
 set.seed(10)
-
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
-  points <- expand.grid(seq(round(pc1val, 4) - 0.05, round(pc1val, 4) + 0.05, by = 0.01), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
-
 
 interp.densp <- function(pc1val){
   # find the closest PC1 value in the contour_95 df:
@@ -159,23 +102,14 @@ interp.densp <- function(pc1val){
 interp.densp(pc1val = -2.5)
 
 
-rmkde <- function(size,flat){
-  n <- nrow(flat$x)
-  s <- sample(1:n,size,replace=TRUE)
-  t(apply(flat$x[s,],1,function(mean)rmvnorm(1, mean=mean, sigma=flat$H)))
-}
-
-
 pls.df$dipPint <- NA
 pls.df <- pls.df[!is.na(pls.df$PC1),]
 
 
-#for(i in 1:length(pls.df$PC1)){
- # pls.df[i,]$dipPint <- interp.densp(pls.df[i,]$PC1)
-#}
+
 
 pls.df$dipPint <- apply(data.frame(pls.df$PC1), 1, interp.densp)
-#pls.df$dipPint <- as.numeric(pls.df$dipPint)
+
 pls.df$bimclass <- ifelse(pls.df$dipPint <= 0.05 , "bimodal", "unimodal")
 png("outputs/pls_dipP_kdeest_0.1_bin_mode_crit_1000.png")
 ggplot(pls.df, aes(x,y, fill = dipPint))+geom_raster()
@@ -202,52 +136,6 @@ contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
-
-interp.densp.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
- 
-  if(max(kde(x=na.omit(cbind(pls.nona$GS_ppet, pls.nona$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 5.239536e-06 ){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona[pls.nona$GS_ppet <= pls.nona$GS_ppet + 4 & pls.nona$GS_ppet >= pls.nona$GS_ppet - 4, ]$GS_ppet, pls.nona[pls.nona$GS_ppet <= pls.nona$GS_ppet + 4 & pls.nona$GS_ppet >= pls.nona$GS_ppet - 4, ]$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    
-    #plot(sample(x=df$points, prob = freq, size = 100))
-    #plot(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    # dipP <- diptest::dip.test(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)$p.value
-    # get the pvalue of the interpolated density values
-  }
-  dipP
-}
-
-interp.dens.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(ppetval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(ppetval, 4) - 4, round(ppetval, 4) + 4, by = 0.1), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
 
 
 interp.densp.ppet <- function(ppetval){
@@ -315,52 +203,6 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
-interp.densp.soil <- function(soilval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(ks::kde(x=na.omit(cbind(pls.nona$mean_GS_soil, pls.nona$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0003617781 ){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona[pls.nona$mean_GS_soil <= pls.nona$mean_GS_soil + 0.15 & pls.nona$mean_GS_soil >= pls.nona$mean_GS_soil - 0.15, ]$mean_GS_soil, pls.nona[pls.nona$mean_GS_soil <= pls.nona$mean_GS_soil + 0.15 & pls.nona$mean_GS_soil >= pls.nona$mean_GS_soil - 0.15, ]$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(sample(x=df$points, prob = freq, size = 100))
-    #plot(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    # dipP <- diptest::dip.test(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)$p.value
-    # get the pvalue of the interpolated density values
-  }
-  dipP
-}
-
-interp.densp.soil <- function(soilval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(soilval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(soilval, 4) - 0.07, round(soilval, 4) + 0.07, by = 0.005), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
 
 interp.densp.soil <- function(soilval){
   # find the closest PC1 value in the contour_95 df:
@@ -434,59 +276,6 @@ contour_95 <- data.frame(contour_95)
 
 diptest::dip.test(kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), #H=H, 
                       compute.cont = TRUE, eval.points = cbind(rep(2,contour_95[which.min(abs(contour_95$x - -4)),]$y), 0:round(contour_95[which.min(abs(contour_95$x - -4)),]$y, 1)))$estimate)
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-ggplot(data=pls.nona, aes(PC1fia, FIAdensity)) +
-  geom_point(size = 0.5) +
-  geom_path(aes(x, y, color = "red"), data=contour_95) +
-  theme_bw()
-
-
-
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
-  if(max(kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona[pls.nona$PC1fia <= pls.nona$PC1fia + 0.1 & pls.nona$PC1fia >= pls.nona$PC1fia - 0.1, ]$PC1fia, pls.nona[pls.nona$PC1fia <= pls.nona$PC1fia + 0.1 & pls.nona$PC1fia >= pls.nona$PC1fia - 0.1, ]$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    
-  }
-  dipP
-}
-
-
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
-  points <- expand.grid(seq(round(pc1val, 4) - 0.05, round(pc1val, 4) + 0.05, by = 0.01), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
 
 
 interp.densp <- function(pc1val){
@@ -565,52 +354,6 @@ contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
-interp.densp.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
-  if(max(kde(x=na.omit(cbind(pls.nona[pls.nona$GS_ppet_mod <= pls.nona$GS_ppet_mod +  4 & pls.nona$GS_ppet_mod >= pls.nona$GS_ppet_mod - 4, ]$GS_ppet_mod, pls.nona[pls.nona$GS_ppet_mod <= pls.nona$GS_ppet_mod +  4 & pls.nona$GS_ppet_mod >= pls.nona$GS_ppet_mod - 4, ]$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level) ){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona$GS_ppet_mod, pls.nona$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    
-    #plot(sample(x=df$points, prob = freq, size = 100))
-    #plot(kde(x=na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    # dipP <- diptest::dip.test(kde(x=na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)$p.value
-    # get the pvalue of the interpolated density values
-  }
-  dipP
-}
-
-
-interp.dens.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(ppetval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(ppetval, 4) - 4, round(ppetval, 4) + 4, by = 0.1), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
 
 interp.densp.ppet <- function(ppetval){
   # find the closest PC1 value in the contour_95 df:
@@ -676,66 +419,6 @@ contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
-interp.densp.soil <- function(soilval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(kde(x=na.omit(cbind(pls.nona$mean_GS_soil_m, pls.nona$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level) ){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona[pls.nona$mean_GS_soil_m <= pls.nona$mean_GS_soil_m +  0.015 & pls.nona$mean_GS_soil_m >= pls.nona$mean_GS_soil_m - 0.015, ]$mean_GS_soil_m, pls.nona[pls.nona$mean_GS_soil_m <= pls.nona$mean_GS_soil_m +  0.015 & pls.nona$mean_GS_soil_m >= pls.nona$mean_GS_soil_m - 0.015, ]$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    
-    dipP <- diptest::dip.test( df$freq)$p.value
-    #plot(sample(x=df$points, prob = freq, size = 100))
-    #plot(kde(x=na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    # dipP <- diptest::dip.test(kde(x=na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)$p.value
-    # get the pvalue of the interpolated density values
-  }
-  dipP
-}
-
-
-interp.densp.soil <- function(soilval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(soilval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(soilval, 2) - 0.05, round(soilval, 2) + 0.05, by = 0.01), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    
-    samp2 <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    
-   # dipP <- ifelse(length(pks) >= 2 & max(pks) >= 47, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
-
 
 interp.densp.soil <- function(soilval){
   # find the closest PC1 value in the contour_95 df:
@@ -821,23 +504,6 @@ ggplot(data=pls.nona, aes(PC1fia, PLSdensity)) +
 
 
 
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < 0.0001608099){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
-    
-  }
-  dipP
-}
 
 interp.densp <- function(pc1val){
   # find the closest PC1 value in the contour_95 df:
@@ -905,7 +571,11 @@ png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs/suppleme
 plot_grid(bimod.pc1.mod_by_pls.map+ggtitle(" "), bimod.pc.fia.map+ggtitle(" "), labels = c("A",  "B"))  
 dev.off()
 
-# now lets predict future scenarios:
+
+
+
+
+
 # >>>>>>>>>>>>> Predict future based on pls relationship with climate <<<<<<<<<<<<<<<<<<<<<<<<<<
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
@@ -926,31 +596,9 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
-# get points to evaluate:
 
 
 # need to evaluate diptest over the density values where we have 95% probability of data:
-
-
-
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
-  if(max(kde(x=na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
-    
-  }
-  dipP
-}
-
 
 interp.densp <- function(pc1val){
   # find the closest PC1 value in the contour_95 df:
@@ -993,7 +641,7 @@ future <- future[!is.na(future$PC1_cc85),]
 
 
 
-
+# apply interp function over the whole dataset
 
 future$dipPint_f_pred_pls_85 <- apply(data.frame(future$PC1_cc85), 1, interp.densp)
 
@@ -1006,7 +654,7 @@ png("outputs/rcp85_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
 ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85))+geom_raster()
 dev.off()
 
-# for 6.0
+# -----------------------for 6.0
 future$dipPint_f_pred_pls_60 <- apply(data.frame(future$PC1_cc60), 1, interp.densp)
 
 future$bimclass_f_pred_pls_60 <- ifelse(future$dipPint_f_pred_pls_60 <= 0.05 , "bimodal", "unimodal")
@@ -1018,7 +666,7 @@ png("outputs/rcp60_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
 ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_60))+geom_raster()
 dev.off()
 
-# for 45
+# ---------------------------for 45
 future$dipPint_f_pred_pls_45 <- apply(data.frame(future$PC1_cc45), 1, interp.densp)
 
 future$bimclass_f_pred_pls_45 <- ifelse(future$dipPint_f_pred_pls_45 <= 0.05 , "bimodal", "unimodal")
@@ -1030,7 +678,7 @@ png("outputs/rcp45_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
 ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_45))+geom_raster()
 dev.off()
 
-# for 2.6;
+#----------------------- for 2.6;
 future$dipPint_f_pred_pls_26 <- apply(data.frame(future.pr$PC1_cc26), 1, interp.densp)
 
 future$bimclass_f_pred_pls_26 <- ifelse(future.pr$dipPint_f_pred_pls_26 <= 0.05 , "bimodal", "unimodal")
@@ -1046,8 +694,7 @@ write.csv(future,"outputs/new_bim_surface_PC1_future_8.5_pred_by_pls_0.1_mode_cr
 
 ########################################################################
 # make predictions for the future from FIA relationship to climate
-#future.pr <- future.pr[!is.na(future.pr$FIAdensity),]
-
+#
 future.pr <- read.csv("outputs/Future_PCA.csv")
 H <- Hpi.diag(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)) )
 fhat <- kde(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)), #H=H, 
@@ -1183,7 +830,6 @@ contour_95 <- data.frame(contour_95)
 
 
 # need to evaluate diptest over the density values where we have 95% probability of data:
-
 
 
 interp.densp.ppet <- function(ppetval){

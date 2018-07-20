@@ -10,6 +10,9 @@ library(ggplot2)
 
 pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
+# get the differece btween # of FIA grid cells and PLS grid cells:
+
+((nrow(pls.df[!is.na(pls.df$PLSdensity),]) - nrow(pls.df[!is.na(pls.df$FIAdensity),])) / nrow(pls.df[!is.na(pls.df$PLSdensity),]))*100
 
 pls.nona <- pls.df[!is.na(pls.df$PLSdensity) & pls.df$PLSdensity <= 550,]
 
@@ -585,7 +588,7 @@ plot(fhat, display="slice", cont=c(85), add = TRUE)
 bimodal.fia.ppet <- read.csv("outputs/new_bim_surface_PPET_fia_4_mode_crit_1000_non_ag.csv")
 
 
-ppet.f.bim.line <- data.frame(PPET = ifelse(is.null(nrow(unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet %in% "bimodal",]$GS_ppet_mod))),NA, 
+ppet.f.bim.line <- data.frame(PPET = ifelse(length(unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet_f %in% "bimodal",]$PC1fia)) < 1, NA, 
                                             unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet %in% "bimodal",]$GS_ppet_mod)), y = -37, bimodal = "bimodal")
 
 
@@ -742,7 +745,27 @@ dev.off()
 
 
 
+# calculate the % ranges of the dataset with at least 1 bimodality for PLS:
 
+# number of grid cells with at least 1 bimodal class
+(nrow(bim.class[bim.class$nbimod >= 1,])/nrow(!is.na(bim.class)))*100
+
+# number of grid cells with at least 2 bimodal class
+(nrow(bim.class[bim.class$nbimod >= 2,])/nrow(!is.na(bim.class)))*100
+
+# number of grid cells with at least 3 bimodal class
+(nrow(bim.class[bim.class$nbimod >= 3,])/nrow(!is.na(bim.class)))*100
+
+# for FIA:
+
+# number of grid cells with at least 1 bimodal class
+(nrow(bim.class.f[bim.class.f$nbimod >= 1,])/nrow(!is.na(bim.class.f)))*100
+
+# number of grid cells with at least 2 bimodal class
+(nrow(bim.class.f[bim.class.f$nbimod >= 2,])/nrow(!is.na(bim.class.f)))*100
+
+# number of grid cells with at least 3 bimodal class
+(nrow(bim.class.f[bim.class.f$nbimod >= 3,])/nrow(!is.na(bim.class.f)))*100
 
 
 # >>>>>>>>>>>>> Predict modern based on pls relationship with climate <<<<<<<<<<<<<<<<<<<<<<<<<<

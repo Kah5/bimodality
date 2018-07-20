@@ -194,7 +194,7 @@ dev.off()
 
 # map bimodal based on PC1:
 
-bimod.pc.pls<- read.csv("outputs/new_bim_surface_PC1_pls.csv")
+bimod.pc.pls <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit_1000.csv")
 bimod.pc.pls$eco <- ifelse(bimod.pc.pls$PLSdensity <= 0.5, "Prairie", 
                            ifelse(bimod.pc.pls$PLSdensity <= 47, "Savanna", "Forest"))
 bimod.pc.pls$bimclass_eco <- ifelse(is.na(bimod.pc.pls$bimclass),NA ,paste(bimod.pc.pls$bimclass, bimod.pc.pls$eco))
@@ -225,7 +225,7 @@ ggplot(bimod.pc.pls, aes(PC1, PLSdensity, color = bimclass))+geom_point()
 
 # pased on P-PET:
 
-bimod.ppet.pls<- read.csv("outputs/new_bim_surface_PPET_pls.csv")
+bimod.ppet.pls <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit_1000.csv")
 bimod.ppet.pls$eco <- ifelse(bimod.ppet.pls$PLSdensity <= 0.5, "Prairie", 
                              ifelse(bimod.ppet.pls$PLSdensity <= 47, "Savanna", "Forest"))
 bimod.ppet.pls$bimclass_eco <- ifelse(is.na(bimod.ppet.pls$bimclass_ppet),NA ,paste(bimod.ppet.pls$bimclass_ppet, bimod.ppet.pls$eco))
@@ -255,7 +255,7 @@ bimod.ppet.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
 ggplot(bimod.ppet.pls, aes(GS_ppet, PLSdensity, color = bimclass_ppet))+geom_point()
 
 # based on soil moisture estimates:
-bimod.sm.pls<- read.csv("outputs/new_bim_surface_soil_moist_pls.csv")
+bimod.sm.pls <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit_1000.csv")
 bimod.sm.pls$eco <- ifelse(bimod.sm.pls$PLSdensity <= 0.5, "Prairie", 
                            ifelse(bimod.sm.pls$PLSdensity <= 47, "Savanna", "Forest"))
 bimod.sm.pls$bimclass_eco <- ifelse(is.na(bimod.sm.pls$bimclass_soil),NA ,paste(bimod.sm.pls$bimclass_soil, bimod.sm.pls$eco))
@@ -287,7 +287,7 @@ bimod.sm.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 ggplot(bimod.pc.pls, aes(mean_GS_soil, PLSdensity, color = bimclass_soil))+geom_point()
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
-bim.class.m<- merge(bimod.pc.pls[,c("x", "y", "bimclass")],bimod.sm.pls[,c("x", "y", "bimclass_soil")], by = c("x", "y"))
+bim.class.m <- merge(bimod.pc.pls[,c("x", "y", "bimclass")],bimod.sm.pls[,c("x", "y", "bimclass_soil")], by = c("x", "y"))
 bim.class.m <- merge(bim.class.m, bimod.ppet.pls[,c("x", "y", "bimclass_ppet", "PLSdensity")])
 
 bim.class.m$nbimod <- as.character(rowSums(bim.class.m[,3:5] == "bimodal", na.rm = TRUE))
@@ -312,6 +312,7 @@ three.bimpct <-  three.bimpct
 png(height = 6, width = 12, units = "in", res =300, "outputs/bimodal_maps_pls_side_by_side.png")
 plot_grid(  bimod.pc.pls.map, bimod.ppet.pls.map, bimod.sm.pls.map, labels =c("PC1", "PPET", "soil moisture"), ncol = 3)
 dev.off()
+
 # B: Species clusters:
 # read in the species classifications from" Species_clustering.R"
 clust_plot7 <- read.csv("outputs/seven_clust_pls_dissimilarity.csv")
@@ -521,10 +522,63 @@ interp.densp <- function(pc1val){
   dipP
 }
 
-pc1.bim.line <- data.frame(PC1 = seq(from = -5, to =2.5, by = 0.05), pval = NA, bimodal = NA)
-pc1.bim.line$pval <- apply(data.frame(pc1.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
-pc1.bim.line$bimodal <- ifelse(pc1.bim.line$pval <= 0.05, "bimodal", "unimodal")
-pc1.bim.line$y <- -37
+interp.densp.new <- function(pc1val){
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy)
+  
+  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    # df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df[pls.df$PC1fia <= pc1val + 0.05 & pls.df$PC1fia >= pc1val - 0.05, ]$PC1fia, pls.df[pls.df$PC1fia <= pc1val + 0.05 & pls.df$PC1fia >= pc1val - 0.05, ]$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    df <- data.frame(na.omit(pls.df[pls.df$PC1 <= pc1val + 0.04 & pls.df$PC1 >= pc1val - 0.04, c("PC1", "PLSdensity")]),
+                     freq = predict(fhat, x = na.omit(pls.df[pls.df$PC1 <= pc1val + 0.04 & pls.df$PC1 >= pc1val - 0.04, c("PC1", "PLSdensity")])))
+    dip <- rep(NA, 100)
+    rand.sample <- rep(NA, 100, 100)
+    for(i in 1:1000){
+      rand.sample <- sample(1:length(df$freq), 1000, replace = TRUE)
+      dip[i] <- diptest::dip.test(df[rand.sample,]$freq)$p.value
+    }
+    dipP <- mean(dip)
+    
+    #dipP <- diptest::dip.test(predict(fhat, x = na.omit(pls.df[pls.df$PC1fia <= pc1val + 0.04 & pls.df$PC1fia >= pc1val - 0.04, c("PC1fia", "FIAdensity")])))$p.value
+    #dipP <- diptest::dip.test(predict(fhat, x = pls.df[rand, c("PC1fia", "FIAdensity")]))$p.value
+    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+  }
+  
+  dipP
+  
+}
+
+interp.densp <- function(pc1val){
+  # find the closest PC1 value in the contour_95 df:
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
+  points <- expand.grid(seq(pc1val - 0.05, pc1val + 0.05, by = 0.001), y=0:400)
+  colnames(points) <- c("x", "y")
+  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    #dipP <- diptest::dip.test( df$freq)$p.value
+    
+  }
+  dipP
+}
+
+
+#pc1.bim.line <- data.frame(PC1 = seq(from = -5, to = 4, by = 0.05), pval = NA, bimodal = NA)
+#pc1.bim.line$pval <- apply(data.frame(pc1.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
+#pc1.bim.line$bimodal <- ifelse(pc1.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#pc1.bim.line$y <- -37
+
+bimodal.pls.pc1 <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit.csv")
+pc1.bim.line<- data.frame(PC1 = unique(bimodal.pls.pc1[bimodal.pls.pc1$bimclass %in% "bimodal",]$PC1), y = -37, bimodal = "bimodal")
 pls.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 pls.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
@@ -576,12 +630,13 @@ interp.densp <- function(pc1val){
   contour_95 <- contour_95[contour_95$y >=0,]
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
   
-  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+  if(max(kde(x=na.omit(cbind(pls.df[pls.df$GS_ppet <= pls.df$GS_ppet + 4 & pls.df$GS_ppet >= pls.df$GS_ppet - 4, ]$GS_ppet, pls.df[pls.df$GS_ppet <= pls.df$GS_ppet + 4 & pls.df$GS_ppet >= pls.df$GS_ppet - 4, ]$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df[pls.df$GS_ppet <= pls.df$GS_ppet + 4 & pls.df$GS_ppet >= pls.df$GS_ppet - 4, ]$GS_ppet, pls.df[pls.df$GS_ppet <= pls.df$GS_ppet + 4 & pls.df$GS_ppet >= pls.df$GS_ppet - 4,]$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
     #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
     dipP <- diptest::dip.test( df$freq)$p.value
     
@@ -589,10 +644,16 @@ interp.densp <- function(pc1val){
   dipP
 }
 
-ppet.bim.line <- data.frame(PPET = seq(from = -200, to = 200, by = 1), pval = NA, bimodal = NA)
-ppet.bim.line$pval <- apply(data.frame(ppet.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
-ppet.bim.line$bimodal <- ifelse(ppet.bim.line$pval <= 0.05, "bimodal", "unimodal")
-ppet.bim.line$y <- -37
+
+interp.densp(pc1val = 200)
+#ppet.bim.line <- data.frame(PPET = seq(from = -200, to = 200, by = 1), pval = NA, bimodal = NA)
+#ppet.bim.line$pval <- apply(data.frame(ppet.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
+#ppet.bim.line$bimodal <- ifelse(ppet.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#ppet.bim.line$y <- -37
+
+bimodal.pls.ppet <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit.csv")
+ppet.bim.line <- data.frame(PPET = unique(bimodal.pls.ppet[bimodal.pls.ppet$bimclass_ppet %in% "bimodal",]$GS_ppet), y = -37, bimodal = "bimodal")
+
 
 # ggplotify the kde plots here:
 pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue") + text(-170,500, "C"))
@@ -633,34 +694,33 @@ interp.densp <- function(pc1val){
   contour_95 <- contour_95[contour_95$y >=0,]
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
   if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df[pls.df$mean_GS_soil <= pls.df$mean_GS_soil + 0.015 & pls.df$mean_GS_soil >= pls.df$mean_GS_soil - 0.015,]$mean_GS_soil, pls.df[pls.df$mean_GS_soil <= pls.df$mean_GS_soil + 0.05 & pls.df$mean_GS_soil >= pls.df$mean_GS_soil - 0.05,]$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    #dipP <- diptest::dip.test( df$freq)$p.value
     
   }
   dipP
 }
 
 # predict bimodality at evenly spaced envt values
-sm.bim.line <- data.frame(SM = seq(from = 0, to = 2, by = 0.01), pval = NA, bimodal = NA)
-sm.bim.line$pval <- apply(data.frame(sm.bim.line$SM), MARGIN= 1, FUN=interp.densp)
-sm.bim.line$bimodal <- ifelse(sm.bim.line$pval <= 0.05, "bimodal", "unimodal")
-sm.bim.line$y <- -37
+#sm.bim.line <- data.frame(SM = seq(from = 0, to = 2, by = 0.001), pval = NA, bimodal = NA)
+#sm.bim.line$pval <- apply(data.frame(sm.bim.line$SM), MARGIN= 1, FUN=interp.densp)
+#sm.bim.line$bimodal <- ifelse(sm.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#sm.bim.line$y <- -37
+
+bimodal.pls.soil <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit.csv")
+sm.bim.line <- data.frame(SM = unique(bimodal.pls.soil[bimodal.pls.soil$bimclass_soil %in% "bimodal",]$mean_GS_soil), y = -37, bimodal = "bimodal")
 
 # ggplotify the kde plots here:
 pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue") + text(-0.05,500, "E"))
 pls.kde.plot.sm.gg
-#pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim=c(0, 1.75)) + lines(x = c(0.67, 1.4), y = c(-38, -38), lwd = 8, col = "darkblue"))
-#pls.kde.plot.sm.gg #+ geom_hline(yintercept  = -40)
-#pls.kde.plot.sm.gg + ylim(0, 550)+ geom_subview(x=.7, y=.78, subview=legend)
 
-
-# D: Histogram colored by species cluster:
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>D: Histogram colored by species cluster:
 
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 
@@ -860,7 +920,7 @@ p.forest.map.f
 
 # map bimodal based on PC1:
 
-bimod.pc.fia <- read.csv("outputs/new_bim_surface_PC1_fia.csv")
+bimod.pc.fia <- read.csv("outputs/new_bim_surface_PC1_fia_0.1_mode_crit_1000.csv")
 bimod.pc.fia$eco <- ifelse(bimod.pc.fia$FIAdensity <= 0.5, "Prairie", 
                            ifelse(bimod.pc.fia$FIAdensity <= 47, "Savanna", 
                                   ifelse(bimod.pc.fia$FIAdensity > 47,"Forest", NA)))
@@ -892,7 +952,7 @@ bimod.pc.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 # pased on P-PET:
 
-bimod.ppet.fia<- read.csv("outputs/new_bim_surface_PPET_fia.csv")
+bimod.ppet.fia<- read.csv("outputs/new_bim_surface_PPET_fia_4_mode_crit_1000.csv")
 bimod.ppet.fia$eco <- ifelse(bimod.ppet.fia$FIAdensity <= 0.5, "Prairie", 
                              ifelse(bimod.ppet.fia$FIAdensity <= 47, "Savanna", "Forest"))
 bimod.ppet.fia$bimclass_eco <- ifelse(is.na(bimod.ppet.fia$bimclass_ppet_f) | is.na(bimod.ppet.fia$eco),NA ,paste(bimod.ppet.fia$bimclass_ppet_f, bimod.ppet.fia$eco))
@@ -919,9 +979,9 @@ bimod.ppet.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("bimodal region = 0%")
 
 
-head(bimod.ppet.fia)
+
 # based on soil moisture estimates:
-bimod.sm.fia <- read.csv("outputs/new_bim_surface_soil_moist_fia.csv")
+bimod.sm.fia <- read.csv("outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit_1000.csv")
 bimod.sm.fia$eco <- ifelse(bimod.sm.fia$FIAdensity <= 0.5, "Prairie", 
                            ifelse(bimod.sm.fia$FIAdensity <= 47, "Savanna", "Forest"))
 bimod.sm.fia$bimclass_eco <- ifelse(is.na(bimod.sm.fia$bimclass_soil_f) | is.na(bimod.sm.fia$eco), NA ,paste(bimod.sm.fia$bimclass_soil_f, bimod.sm.fia$eco))
@@ -981,7 +1041,7 @@ pls.df <- dens.clust
 library(ks)
 # for PC1:
 H <- Hpi.diag(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), #H=H, 
+fhat <- kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, 
             compute.cont = TRUE )
 
 plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density")
@@ -993,7 +1053,7 @@ contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
 
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
+                                      z=estimate, levels=cont["16%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
 
@@ -1003,7 +1063,64 @@ interp.densp <- function(pc1val){
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
   points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
+  #points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
+ 
+   if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    dipP <- NA
+  }else{
+    #df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df[pls.df$PC1fia <= (pc1val + 0.05) & pls.df$PC1fia >= (pc1val - 0.05), ]$PC1fia, pls.df[pls.df$PC1fia <= (pc1val + 0.05) & pls.df$PC1fia >= (pc1val - 0.05), ]$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    
+    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE))$p.value
+    dipP <- diptest::dip.test( df$freq)$p.value
+   
+  }
+  dipP
+}
+
+# diptest on surface over a range of envt:
+interp.densp.new <- function(pc1val){
+      contour_95 <- contour_95[contour_95$y >=0,]
+      closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+      maxy <- ceiling(closest$y) # get the closest y value and round up
+      points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy)
+      #points <- expand.grid(seq(from = pc1val - 0.05, to = pc1val + 0.05, by = 0.001), 1:maxy)
+      if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+       dipP <- NA
+      }else{
+        #df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+        
+        df <- data.frame(points = points$Var1, freq = kde(x=na.omit(cbind(pls.df[pls.df$PC1fia <= pc1val + 0.05 & pls.df$PC1fia >= pc1val - 0.05, ]$PC1fia, pls.df[pls.df$PC1fia <= pc1val + 0.05 & pls.df$PC1fia >= pc1val - 0.05, ]$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+       # df <- data.frame(na.omit(pls.df[pls.df$PC1fia <= pc1val + 0.04 & pls.df$PC1fia >= pc1val - 0.04, c("PC1fia", "FIAdensity")]),
+        #      freq = predict(fhat, x = na.omit(pls.df[pls.df$PC1fia <= pc1val + 0.04 & pls.df$PC1fia >= pc1val - 0.04, c("PC1fia", "FIAdensity")])))
+        
+        dip <- rep(NA, 100)
+        rand.sample <- rep(NA, 100, 100)
+        
+        for(i in 1:1000){
+        rand.sample <- sample(1:length(df$freq), 1000, replace = TRUE)
+        dip[i] <- diptest::dip.test(df[rand.sample,]$freq)$p.value
+        }
+        dipP <- mean(dip)
+        
+      #dipP <- diptest::dip.test(predict(fhat, x = na.omit(pls.df[pls.df$PC1fia <= pc1val + 0.04 & pls.df$PC1fia >= pc1val - 0.04, c("PC1fia", "FIAdensity")])))$p.value
+      #dipP <- diptest::dip.test(predict(fhat, x = pls.df[rand, c("PC1fia", "FIAdensity")]))$p.value
+      #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+      }
+      
+      dipP
+
+}
+
+interp.densp <- function(pc1val){
+  # find the closest PC1 value in the contour_95 df:
+  contour_95 <- contour_95[contour_95$y >=0,]
+  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
+  points <- expand.grid(seq(pc1val - 0.05, pc1val + 0.05, by = 0.001), y=0:400)
+  colnames(points) <- c("x", "y")
   if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
@@ -1015,11 +1132,19 @@ interp.densp <- function(pc1val){
   dipP
 }
 
-pc1.f.bim.line <- data.frame(PC1 = seq(from = -5, to =2.5, by = 0.1), pval = NA, bimodal = NA)
-pc1.f.bim.line$pval <- apply(data.frame(pc1.f.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
-pc1.f.bim.line$bimodal <- ifelse(pc1.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
-pc1.f.bim.line$y <- -37
-fia.kde.plot.pc1 <- recordPlot()
+
+interp.densp(0.37403230)
+bimodal.fia.pc1 <- read.csv("outputs/new_bim_surface_PC1_fia_0.1_mode_crit_1000.csv")
+
+pc1.f.bim.line <- data.frame(PC1 = ifelse(is.null(nrow(unique(bimodal.fia.pc1[bimodal.fia.pc1$bimclass_f %in% "bimodal",]$PC1fia))),NA, 
+                                          unique(bimodal.fia.pc1[bimodal.fia.pc1$bimclass_f %in% "bimodal",]$PC1fia)), y = -37, bimodal = "bimodal")
+
+
+#pc1.f.bim.line <- data.frame(PC1 = seq(from = -6, to =6, by = 0.05), pval = NA, bimodal = NA)
+#pc1.f.bim.line$pval <- apply(data.frame(pc1.f.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
+#pc1.f.bim.line$bimodal <- ifelse(pc1.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#pc1.f.bim.line$y <- -37
+#fia.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis=1.5
                                          )+ text(-6,500, "B"))
@@ -1059,26 +1184,38 @@ interp.densp <- function(pc1val){
   contour_95 <- contour_95[contour_95$y >=0,]
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
   if(max(kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet_mod, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq )$p.value
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    #dipP <- diptest::dip.test( df$freq )$p.value
     
   }
   dipP
 }
 
-ppet.f.bim.line <- data.frame(PPET = seq(from = -100, to =300, by = 10), pval = NA, bimodal = NA)
-ppet.f.bim.line$pval <- apply(data.frame(ppet.f.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
-ppet.f.bim.line$bimodal <- ifelse(ppet.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
-ppet.f.bim.line$y <- -37
+#ppet.f.bim.line <- data.frame(PPET = seq(from = -100, to =300, by = 10), pval = NA, bimodal = NA)
+#ppet.f.bim.line$pval <- apply(data.frame(ppet.f.bim.line$PPET), MARGIN= 1, FUN=interp.densp)
+#ppet.f.bim.line$bimodal <- ifelse(ppet.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#ppet.f.bim.line$y <- -37
+
+bimodal.fia.ppet <- read.csv("outputs/new_bim_surface_PPET_fia_4_mode_crit_1000.csv")
+
+roundUpNice <- function(x, nice=c(1,2,4,5,6,8,10)) {
+  if(length(x) != 1) stop("'x' must be of length 1")
+  10^floor(log10(x)) * nice[[which(x <= 10^floor(log10(x)) * nice)[[1]]]]
+}
+
+ppet.f.bim.line <- data.frame(PPET = ifelse(is.null(nrow(unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet %in% "bimodal",]$GS_ppet_mod))),NA, 
+                                            unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet %in% "bimodal",]$GS_ppet_mod)), y = -37, bimodal = "bimodal")
+
+
 fia.kde.plot.pc1 <- recordPlot()
 library(base2grob)
-fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = NA, ylim = c(-40,550)))
+fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PPET", ylab = NA, ylim = c(-40,550)))
 
 
 # make the plot with GGPLOT:
@@ -1112,23 +1249,31 @@ interp.densp <- function(pc1val){
   contour_95 <- contour_95[contour_95$y >=0,]
   closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
   maxy <- ceiling(closest$y) # get the closest y value and round up
-  points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  
+  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
+  points <- data.frame(x=rep(pc1val, 551 ), y=0:550)
   if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    #dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
-    dipP <- diptest::dip.test( df$freq)$p.value
+    dipP <- diptest::dip.test(sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE))$p.value
+    #dipP <- diptest::dip.test( df$freq)$p.value
     
   }
   dipP
 }
 
-sm.f.bim.line <- data.frame(SM = seq(from = 0, to = 1.5, by = 0.05), pval = NA, bimodal = NA)
-sm.f.bim.line$pval <- apply(data.frame(sm.f.bim.line$SM), MARGIN= 1, FUN=interp.densp)
-sm.f.bim.line$bimodal <- ifelse(sm.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
-sm.f.bim.line$y <- -37
+#sm.f.bim.line <- data.frame(SM = seq(from = 0, to = 1.5, by = 0.05), pval = NA, bimodal = NA)
+#sm.f.bim.line$pval <- apply(data.frame(sm.f.bim.line$SM), MARGIN= 1, FUN=interp.densp)
+#sm.f.bim.line$bimodal <- ifelse(sm.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
+#sm.f.bim.line$y <- -37
+
+bimodal.fia.sm <- read.csv("outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit.csv")
+
+sm.f.bim.line <- data.frame(SM = ifelse(is.null(nrow(unique(bimodal.fia.sm[bimodal.fia.sm$bimclass_soil %in% "bimodal",]$mean_GS_soil_m))),NA, 
+                                        unique(bimodal.fia.sm[bimodal.fia.sm$bimclass_soil %in% "bimodal",]$mean_GS_soil_m)), y = -37, bimodal = "bimodal")
+
+
+
 fia.kde.plot.pc1 <- recordPlot()
 library(base2grob)
 fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
@@ -1140,20 +1285,20 @@ fia.kde.plot.sm.gg <- ggplot(pls.df, aes(x=mean_GS_soil_m, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.7) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "red")+ text(-0.05,500, "F"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "F"))
 fia.kde.plot.sm.gg 
 
 
 # make ggplot figures of cluster density
 
 # need to merge together all of the bimodal/unimodal tags
-kde.surf.pc1.pls.df <- read.csv("outputs/new_bim_surface_PC1_pls.csv")
-kde.surf.ppet.pls.df <- read.csv("outputs/new_bim_surface_PPET_pls.csv")
-kde.surf.soilm.pls.df <- read.csv("outputs/new_bim_surface_soil_moist_pls.csv")
+kde.surf.pc1.pls.df <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit_1000.csv")
+kde.surf.ppet.pls.df <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit_1000.csv")
+kde.surf.soilm.pls.df <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit_1000.csv")
 
-kde.surf.pc1.fia.df <- read.csv("outputs/new_bim_surface_PC1_fia.csv")
-kde.surf.ppet.fia.df <- read.csv("outputs/new_bim_surface_PPET_fia.csv")
-kde.surf.soilm.fia.df <- read.csv("outputs/new_bim_surface_soil_moist_fia.csv")
+kde.surf.pc1.fia.df <- read.csv("outputs/new_bim_surface_PC1_fia_0.1_mode_crit_1000.csv")
+kde.surf.ppet.fia.df <- read.csv("outputs/new_bim_surface_PPET_fia_4_mode_crit_1000.csv")
+kde.surf.soilm.fia.df <- read.csv("outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit_1000.csv")
 
 kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "PLSdensity",  "bimclass")], kde.surf.pc1.fia.df[,c("x", "y",  "FIAdensity","bimclass_f")], by = c("x", "y"))
 kde.surf.ppet.df <- merge(kde.surf.ppet.pls.df[,c("x", "y",  "PLSdensity",  "bimclass_ppet")], kde.surf.ppet.fia.df[,c("x", "y",  "FIAdensity","bimclass_ppet_f")], by = c("x", "y"))
@@ -1196,7 +1341,7 @@ pls.pc1.density.df <- data.frame(y = density(kde.surf.pc1.df[kde.surf.pc1.df$bim
 
 fia.pc1.density.df <- data.frame(y = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$y, 
                                   x = density(na.omit(kde.surf.pc1.df[kde.surf.pc1.df$bimclass %in% "bimodal",]$FIAdensity))$x)
-flipped.pc1.hist.gg <- as.ggplot(~plot(pls.pc1.density.df[pls.pc1.density.df$x < 550 & pls.pc1.density.df$x > -41,], type = "l", col = "blue", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(fia.pc1.density.df[fia.pc1.density.df$x < 550 & fia.pc1.density.df$x > -41,], type = "l", col = "red"))
+flipped.pc1.hist.gg <- as.ggplot(~plot(fia.pc1.density.df[fia.pc1.density.df$x < 550 & fia.pc1.density.df$x > -41,], type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.df[pls.pc1.density.df$x < 550 & pls.pc1.density.df$x > -41,], type = "l", col = "blue"))
 
 library(gtable)
 g1 <- ggplotGrob(pls.kde.plot.pc1.gg+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))

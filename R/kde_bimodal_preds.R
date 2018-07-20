@@ -1371,6 +1371,7 @@ contour_95 <- data.frame(contour_95)
 
 
 interp.densp.soil <- function(soilval){
+  
   # find the closest PC1 value in the contour_95 df:
   contour_95 <- contour_95[contour_95$y >=0,]
   closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
@@ -1382,6 +1383,7 @@ interp.densp.soil <- function(soilval){
   if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
     dipP <- NA
   }else{
+    
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
     samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
     dipP <- diptest::dip.test(samp)$p.value
@@ -1419,7 +1421,7 @@ ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_pls_soil))+geom_raster()
 dev.off()
 
 png("outputs/rcp85_bimodal_kdeest_by_pls_ppet.png")
-ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_pls_soil))+geom_raster()
+ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_pls_85_soil))+geom_raster()
 dev.off()
 
 write.csv(future.pr, "outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
@@ -1486,7 +1488,7 @@ interp.densp.soil <- function(soilval){
   
 }
 
-interp.densp.soil(pc1val = 0.25)
+interp.densp.soil(soilval = 0.25)
 
 future.pr$dipPint_f_pred_fia_soil_8.5 <- NA
 future.pr$bimclass_f_pred_fia_soil_8.5 <- NA

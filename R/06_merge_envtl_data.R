@@ -271,8 +271,14 @@ dens.pr <- full.clim.dens
 # CCESM climate projections extracted using the R/Extract_CMIP_climate.R
 ccesm <- read.csv("/Users/kah/Documents/bimodality/outputs/CCSM4pr_t_2070_full.csv")
 
+# select the full midwest data:
+mw.ccesm <- merge(ccesm, past.precip.mo[,c("x", "y")], by = c("x", "y"))
+ggplot(mw.ccesm, aes(x,y, fill = x))+geom_raster()
 # create dataframe with density and all of the future climate valuesfor the whole region (not just those with PLS data)
-future.pr <- merge(dens.pr, ccesm, by = c("x", "y"), all.y = TRUE)
+future.pr <- merge(dens.pr, mw.ccesm, by = c("x", "y"), all = TRUE)
+
+# verify that the whole 
+ggplot(future.pr, aes(x,y, fill = x))+geom_raster()
 
 
 # for each rcp, we need to determine the places outside of the range of PLS climate:
@@ -389,7 +395,7 @@ predict.PCA <- function(rcp){
   future.pr
 }
 
-future.pr <- predict.PCA("26")
+future.pr <- predict.PCA(rcp = "26")
 future.pr <- predict.PCA("45")
 future.pr <- predict.PCA("60")
 future.pr <- predict.PCA("85")
@@ -398,14 +404,15 @@ future.pr <- predict.PCA("85")
 moist_bal.future <- read.csv('outputs/soil.moisture_2059_2099_rcp8.5_with_mean.csv')
 ggplot(moist_bal.future, aes(x,y, fill = Mean_GS_post_spin))+geom_raster()
 
-future.pr2<- merge(future.pr, moist_bal.future[,c("x", "y", "Mean_GS", "Mean_GS_post_spin")])
-colnames(future.pr2)[57:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin")
+future.pr2 <- merge(future.pr, moist_bal.future[,c("x", "y", "Mean_GS", "Mean_GS_post_spin")], all = TRUE)
+colnames(future.pr2)[56:57] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin")
 
 ppet.future <- read.csv("outputs/cmip5_rcp8.5_ppet_long.csv")
 ggplot(ppet.future, aes(x,y, fill = mean_ppet_GS))+geom_raster()
-future.pr2 <- merge(future.pr2, ppet.future[,c("x", "y", "mean_ppet_GS")])
-
+future.pr2 <- merge(future.pr2, ppet.future[,c("x", "y", "mean_ppet_GS")], all = TRUE)
+ggplot(future.pr2, aes(x,y, fill = mean_ppet_GS))+geom_raster()
 write.csv(future.pr2, "outputs/Future_PCA.csv",row.names = FALSE)
+
 
 
 

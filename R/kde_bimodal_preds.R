@@ -47,6 +47,7 @@ dev.off()
 #<<<<<<<<<<<<<<<<<<<<<<<< estimate PDF of data using kde >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # estimate surfaces:
 library(ks)
+library(modes)
 H <- Hpi.diag(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)) )
 fhat <- kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), #H=H, 
             compute.cont = TRUE )
@@ -329,6 +330,7 @@ pls.nona <- pls.nona[!is.na(pls.nona$PC1fia),]
 pls.nona$dipPint_f <- apply(data.frame(pls.nona$PC1fia), 1, interp.densp)
 
 pls.nona$bimclass_f <- ifelse(pls.nona$dipPint_f <= 0.05 , "bimodal", "unimodal")
+pls.nona$bimclass_f <- ifelse(is.na(pls.nona$bimclass_f), "low sample", pls.nona$bimclass_f)
 png("outputs/fia_dipP_kdeest_0.1_mode_crit_1000.png")
 ggplot(pls.nona, aes(x,y, fill = dipPint_f))+geom_raster()
 dev.off()
@@ -475,13 +477,13 @@ write.csv(pls.nona, "outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit_1000.
 # >>>>>>>>>>>>> Predict modern based on pls relationship with climate <<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-H <- Hpi.diag(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$PLSdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$PLSdensity)), #H=H, 
+H <- Hpi.diag(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)) )
+fhat <- kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), #H=H, 
             compute.cont = TRUE )
 plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), cex=0.3, pch=16)
+#points(na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), cex=0.3, pch=16)
 plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
+
 contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
                                       z=estimate,levels=cont["95%"])[[1]])
 
@@ -490,17 +492,8 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["15%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
-# get points to evaluate:
+set.seed(10)
 
-diptest::dip.test(kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), #H=H, 
-                      compute.cont = TRUE, eval.points = cbind(rep(2,contour_95[which.min(abs(contour_95$x - -4)),]$y), 0:round(contour_95[which.min(abs(contour_95$x - -4)),]$y, 1)))$estimate)
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-ggplot(data=pls.nona, aes(PC1fia, PLSdensity)) +
-  geom_point(size = 0.5) +
-  geom_path(aes(x, y, color = "red"), data=contour_95) +
-  theme_bw()
 
 
 
@@ -536,36 +529,36 @@ interp.densp <- function(pc1val){
 
 interp.densp(pc1val = -1.567)
 
-pls.nona$dipPint_f_pred_pls <- NA
-pls.nona <- pls.nona[!is.na(pls.nona$PC1fia),]
+pls.df$dipPint_f_pred_pls <- NA
+pls.df <- pls.df[!is.na(pls.df$PC1fia),]
 
 
 
 
 
-pls.nona$dipPint_f_pred_pls <- apply(data.frame(pls.nona$PC1fia), 1, interp.densp)
+pls.df$dipPint_f_pred_pls <- apply(data.frame(pls.df$PC1fia), 1, interp.densp)
 
-pls.nona$bimclass_f_pred_pls <- ifelse(pls.nona$dipPint_f_pred_pls <= 0.05 , "bimodal", "unimodal")
+pls.df$bimclass_f_pred_pls <- ifelse(pls.df$dipPint_f_pred_pls <= 0.05 , "bimodal", "unimodal")
 png("outputs/fia_dipP_kdeest_pred_by_pls_0.1_modes_crit_1000.png")
-ggplot(pls.nona, aes(x,y, fill = dipPint_f_pred_pls))+geom_raster()
+ggplot(pls.df, aes(x,y, fill = dipPint_f_pred_pls))+geom_raster()
 dev.off()
 
 png("outputs/fia_bimodal_kdeest_pred_by_pls_modes_crit_1000.png")
-ggplot(pls.nona, aes(x,y, fill = bimclass_f_pred_pls))+geom_raster()
+ggplot(pls.df, aes(x,y, fill = bimclass_f_pred_pls))+geom_raster()
 dev.off()
 
-
+pls.df$bimclass_f_pred_pls <- ifelse(is.na(pls.df$bimclass_f_pred_pls) , "low sample", as.character(pls.df$bimclass_f_pred_pls)  )
 bimod.pc1.mod_by_pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=pls.nona, aes(x=x, y=y, fill = bimclass_f_pred_pls))+
+  geom_raster(data=pls.df, aes(x=x, y=y, fill = bimclass_f_pred_pls))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c( '#d73027', '#4575b4'
-  ), labels = c("bimodal", "unimodal")) +
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c('bimodal' = '#d73027', 'unimodal'='#4575b4', "low sample" = "tan"
+  )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", ppet.bimpct.f, "%"))
 
 
 
-write.csv(pls.nona, "outputs/new_bim_surface_PC1_fia_pred_by_pls_0.1_modes.crit_1000.csv", row.names = FALSE)
+write.csv(pls.df, "outputs/new_bim_surface_PC1_fia_pred_by_pls_0.1_modes.crit_1000.csv", row.names = FALSE)
 
 png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs/supplemental_bimodal_pls_modern_climate_change_1000.png")
 plot_grid(bimod.pc1.mod_by_pls.map+ggtitle(" "), bimod.pc.fia.map+ggtitle(" "), labels = c("A",  "B"))  
@@ -696,6 +689,7 @@ write.csv(future,"outputs/new_bim_surface_PC1_future_8.5_pred_by_pls_0.1_mode_cr
 # make predictions for the future from FIA relationship to climate
 #
 future.pr <- read.csv("outputs/Future_PCA.csv")
+future <- future.pr
 H <- Hpi.diag(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)) )
 fhat <- kde(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)), #H=H, 
             compute.cont = TRUE )
@@ -758,22 +752,22 @@ interp.densp <- function(pc1val){
 
 interp.densp(pc1val = -1.567)
 
-future.pr$dipPint_f_pred_fia_85 <- NA
-future.pr <- future.pr[!is.na(future.pr$PC1_cc85),]
+future$dipPint_f_pred_fia_85 <- NA
+future <- future[!is.na(future$PC1_cc85),]
 
-#future.pr
+#future
 
-future.pr$dipPint_f_pred_fia_85 <- apply(data.frame(future.pr$PC1_cc85), 1, interp.densp)
+future$dipPint_f_pred_fia_85 <- apply(data.frame(future$PC1_cc85), 1, interp.densp)
 
-future.pr$bimclass_f_pred_fia_85 <- ifelse(future.pr$dipPint_f_pred_fia_85 <= 0.05 , "bimodal", "unimodal")
+future$bimclass_f_pred_fia_85 <- ifelse(future$dipPint_f_pred_fia_85 <= 0.05 , "bimodal", "unimodal")
 
-write.csv(future.pr, "outputs/new_bim_surface_PC1_future_8.5_pred_by_fia.csv", row.names = FALSE)
+write.csv(future, "outputs/new_bim_surface_PC1_future_8.5_pred_by_fia_1000_mode_crit.csv", row.names = FALSE)
 
-ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_fia_85))+geom_raster()
+ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85))+geom_raster()
 
-future.pr.1 <- read.csv( "outputs/new_bim_surface_PC1_future_scenarios_pred_by_pls.csv")
-future.test <- merge(future.pr.1, future.pr[,c("x", "y","cell", "bimclass_f_pred_fia_85", "dipPint_f_pred_fia_85")], by = c("x", "y", "cell"))
-#future.pr <- future.test
+future.1 <- read.csv( "outputs/new_bim_surface_PC1_future_scenarios_pred_by_pls.csv")
+future.test <- merge(future.1, future[,c("x", "y","cell", "bimclass_f_pred_fia_85", "dipPint_f_pred_fia_85")], by = c("x", "y", "cell"), all = TRUE)
+#future <- future.test
 
 bimod.pc.fia.85.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=future.test, aes(x=x, y=y, fill = bimclass_f_pred_fia_85))+
@@ -794,7 +788,7 @@ bimod.pc.pls.85.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,
 
 png(height = 4, width = 6, units = 'in', res = 300, "outputs/paper_figs/fig3_preds_kde_surfaces.png")
 grid.arrange(bimod.pc.pls.85.map, bimod.pc.fia.85.map, ncol = 2)
-dev.off()gd
+dev.off()
 
 
 
@@ -802,14 +796,15 @@ dev.off()gd
 
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
+future <- future.pr
 pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 
 pls.nona <- pls.df[!is.na(pls.df$PLSdensity) & pls.df$PLSdensity <= 550,]
 
 colnames(future.pr)[58] <- 'mean_ppet_GS_8.5'
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"))
-
+future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
+future <- future.pr
 #future.pr <- future.pr[!is.na(future.pr$PLSdensity) & future.pr$PLSdensity <= 550,]
 H <- Hpi.diag(x=na.omit(cbind(future.pr$GS_ppet, future.pr$PLSdensity)) )
 fhat <- kde(x=na.omit(cbind(future.pr$GS_ppet, future.pr$PLSdensity)), #H=H, 
@@ -845,7 +840,7 @@ interp.densp.ppet <- function(ppetval){
     dipP <- NA
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
+    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
     dipP <- diptest::dip.test(samp)$p.value
     pks <- amps(samp)$Peaks[,1]
     #dipP <- diptest::dip.test( df$freq)$p.value
@@ -864,33 +859,35 @@ interp.densp.ppet <- function(ppetval){
   #pks
 }
 
-interp.densp.ppet(50)
+interp.densp.ppet(-17)
 
-future.pr$dipPint_f_pred_pls_ppet <- NA
-future.pr <- future.pr[!is.na(future.pr$mean_ppet_GS_8.5),]
+future$dipPint_f_pred_pls_ppet <- NA
+future <- future[!is.na(future$mean_ppet_GS_8.5),]
 
 
 
-future.pr$dipPint_f_pred_pls_ppet <- apply(data.frame(future.pr$mean_ppet_GS_8.5), 1, interp.densp.ppet)
-future.pr$bimclass_f_pred_pls_85_ppet <- NA
-future.pr$bimclass_f_pred_pls_85_ppet <- ifelse(future.pr$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
+future$dipPint_f_pred_pls_ppet <- apply(data.frame(future$mean_ppet_GS_8.5), 1, interp.densp.ppet)
+future$bimclass_f_pred_pls_85_ppet <- NA
+future$bimclass_f_pred_pls_85_ppet <- ifelse(future$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
 
 png("outputs/rcp85_dipP_kdeest_pred_by_pls_ppet_1000_mode_crit.png")
-ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_pls_ppet))+geom_raster()
+ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_ppet))+geom_raster()
 dev.off()
 
 png("outputs/rcp85_bimodal_kdeest_by_pls_ppet_1000_mode_crit.png")
-ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_pls_85_ppet))+geom_raster()
+ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85_ppet))+geom_raster()
 dev.off()
 
-write.csv(future.pr, "outputs/new_bim_surface_PPET_rcp85_pred_by_pls_1000_mode_crit.csv")
+write.csv(future, "outputs/new_bim_surface_PPET_rcp85_pred_by_pls_1000_mode_crit.csv")
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on future P-PET <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
 colnames(future.pr)[58] <- 'mean_ppet_GS_8.5'
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"))
+
+future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
+future <- future.pr
 
 pls.nona.f <- future.pr[!is.na(future.pr$FIAdensity) & future.pr$FIAdensity <= 550,]
 H <- Hpi.diag(x=na.omit(cbind(pls.nona.f$GS_ppet_mod, pls.nona.f$FIAdensity)) )
@@ -946,31 +943,31 @@ interp.densp.ppet <- function(ppetval){
   dipP
   #pks
 }
-interp.densp.ppet(-50)
+interp.densp.ppet(-17)
 
-future.pr$dipPint_f_pred_fia_ppet <- NA
-future.pr$bimclass_f_pred_fia_85_ppet <- NA
-future.pr <- future.pr[!is.na(future.pr$mean_ppet_GS_8.5),]
-
-
+future$dipPint_f_pred_fia_ppet <- NA
+future$bimclass_f_pred_fia_85_ppet <- NA
+future <- future[!is.na(future$mean_ppet_GS_8.5),]
 
 
 
-future.pr$dipPint_f_pred_fia_ppet <- apply(data.frame(future.pr$mean_ppet_GS_8.5), 1, interp.densp.ppet)
 
-future.pr$bimclass_f_pred_fia_85_ppet <- ifelse(future.pr$dipPint_f_pred_fia_ppet <= 0.05 , "bimodal", "unimodal")
+
+future$dipPint_f_pred_fia_ppet <- apply(data.frame(future$mean_ppet_GS_8.5), 1, interp.densp.ppet)
+
+future$bimclass_f_pred_fia_85_ppet <- ifelse(future$dipPint_f_pred_fia_ppet <= 0.05 , "bimodal", "unimodal")
 # all of the future is out of sample, so we will just call it unimodal for now, but we dont know
 
-future.pr$bimclass_f_pred_fia_85_ppet <- "unimodal"
+#future$bimclass_f_pred_fia_85_ppet <- "unimodal"
 png("outputs/rcp85_dipP_kdeest_pred_by_fia_ppet_1000_mode_crit.png")
-ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_fia_ppet ))+geom_raster()
+ggplot(future, aes(x,y, fill = dipPint_f_pred_fia_ppet ))+geom_raster()
 dev.off()
 
 png("outputs/rcp85_bimodal_kdeest_by_fia_ppet_1000_mode_crit.png")
-ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_fia_85_ppet))+geom_raster()
+ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85_ppet))+geom_raster()
 dev.off()
 
-write.csv(future.pr, "outputs/new_bim_surface_PPET_rcp85_pred_by_fia_1000_mode_crit.csv")
+write.csv(future, "outputs/new_bim_surface_PPET_rcp85_pred_by_fia_1000_mode_crit.csv")
 
 
 
@@ -991,8 +988,8 @@ future.pr <- read.csv("outputs/Future_PCA.csv")
 #colnames(future.pr)[56] <- 'mean_GS_soil_8.5'
 colnames(future.pr)[56:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin", "mean_GS_ppet_8.5")
 
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"))
-
+future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
+future <- future.pr
 #future.pr <- future.pr[!is.na(future.pr$PLSdensity) & future.pr$PLSdensity <= 550,]
 H <- Hpi.diag(x=na.omit(cbind(future.pr$mean_GS_soil, future.pr$PLSdensity)) )
 fhat <- kde(x=na.omit(cbind(future.pr$mean_GS_soil, future.pr$PLSdensity)), #H=H, 
@@ -1050,34 +1047,36 @@ interp.densp.soil <- function(soilval){
   
 }
 
-interp.densp.soil( soilval = 1.26 )
+interp.densp.soil( soilval = 0.01 )
 
-future.pr$dipPint_f_pred_pls_soil <- NA
-future.pr$bimclass_f_pred_pls_85_soil <- NA
-future.pr <- future.pr[!is.na(future.pr$mean_GS_soil_8.5),]
+future$dipPint_f_pred_pls_soil <- NA
+future$bimclass_f_pred_pls_85_soil <- NA
+future <- future[!is.na(future$mean_GS_soil_8.5),]
 
 
 
-future.pr$dipPint_f_pred_pls_soil <- apply(data.frame(future.pr$mean_GS_soil_8.5), 1, interp.densp.soil)
+future$dipPint_f_pred_pls_soil <- apply(data.frame(future$mean_GS_soil_8.5), 1, interp.densp.soil)
 
-future.pr$bimclass_f_pred_pls_85_soil <- ifelse(future.pr$dipPint_f_pred_pls_soil <= 0.05 , "bimodal", "unimodal")
+future$bimclass_f_pred_pls_85_soil <- ifelse(future$dipPint_f_pred_pls_soil <= 0.05 , "bimodal", "unimodal")
+future$bimclass_f_pred_pls_85_soil <- ifelse(is.na(future$bimclass_f_pred_pls_85_soil), "out-of-sample", future$bimclass_f_pred_pls_85_soil)
 
 png("outputs/rcp85_dipP_kdeest_pred_by_pls_ppet.png")
-ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_pls_soil))+geom_raster()
+ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_soil))+geom_raster()
 dev.off()
 
 png("outputs/rcp85_bimodal_kdeest_by_pls_ppet.png")
-ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_pls_85_soil))+geom_raster()
+ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85_soil))+geom_raster()
 dev.off()
 
-write.csv(future.pr, "outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
+write.csv(future, "outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on fia soil moisture <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
 colnames(future.pr)[56:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin", "mean_GS_ppet_8.5")
-future.pr<- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"))
+future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
+future <- future.pr
 
 future.pr <- future.pr[!is.na(future.pr$FIAdensity) & future.pr$FIAdensity <= 550,]
 H <- Hpi.diag(x=na.omit(cbind(future.pr$mean_GS_soil_m, future.pr$FIAdensity)) )
@@ -1136,24 +1135,26 @@ interp.densp.soil <- function(soilval){
 
 interp.densp.soil(soilval = 0.25)
 
-future.pr$dipPint_f_pred_fia_soil_8.5 <- NA
-future.pr$bimclass_f_pred_fia_soil_8.5 <- NA
-future.pr <- future.pr[!is.na(future.pr$mean_GS_soil_8.5),]
+future$dipPint_f_pred_fia_soil_8.5 <- NA
+future$bimclass_f_pred_fia_soil_8.5 <- NA
+future <- future[!is.na(future$mean_GS_soil_8.5),]
 
 
 
 
 
-future.pr$dipPint_f_pred_fia_soil_8.5 <- apply(data.frame(future.pr$mean_GS_soil_8.5), 1, interp.densp.soil)
+future$dipPint_f_pred_fia_soil_8.5 <- apply(data.frame(future$mean_GS_soil_8.5), 1, interp.densp.soil)
 
-future.pr$bimclass_f_pred_fia_85_soil <- ifelse(future.pr$dipPint_f_pred_fia_soil_8.5 <= 0.05 , "bimodal", "unimodal")
+future$bimclass_f_pred_fia_85_soil <- ifelse(future$dipPint_f_pred_fia_soil_8.5 <= 0.05 , "bimodal", "unimodal")
+future$bimclass_f_pred_fia_85_soil <- ifelse(is.na(future$bimclass_f_pred_fia_85_soil), "out-of-sample", future$bimclass_f_pred_fia_85_soil)
+
 png("outputs/rcp85_dipP_kdeest_pred_by_fia_soil_8.5.png")
-ggplot(future.pr, aes(x,y, fill = dipPint_f_pred_fia_soil_8.5 ))+geom_raster()
+ggplot(future, aes(x,y, fill = dipPint_f_pred_fia_soil_8.5 ))+geom_raster()
 dev.off()
 
 png("outputs/rcp85_bimodal_kdeest_by_fia_soil_8.5.png")
-ggplot(future.pr, aes(x,y, fill = bimclass_f_pred_fia_85_soil))+geom_raster()
+ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85_soil))+geom_raster()
 dev.off()
 
-write.csv(future.pr, "outputs/new_bim_surface_soil_m_rcp85_pred_by_fia.csv")
+write.csv(future, "outputs/new_bim_surface_soil_m_rcp85_pred_by_fia.csv")
 

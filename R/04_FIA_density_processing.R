@@ -14,9 +14,9 @@ FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
 speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
 
 FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
-FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell + plt_cn ~ PalEON, sum, na.rm=TRUE, value.var = 'density') #sum all species in common taxa in FIA grid cells
 FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,6:35], na.rm = TRUE) # sum the total density in each plot
-fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn', 'Var.5')) # melt the dataframe
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
 fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
 
 density.FIA.table <- fia.by.cell
@@ -69,7 +69,7 @@ pls.inil <- rbind(pls.inil, umdw.new)
 ggplot(pls.inil, aes(x, y, fill = PLSdensity))+geom_raster()
 
 
-
+pls.inil <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 #merge inil pls and inilFIA
 densitys <- merge(pls.inil[,c('x', 'y', 'cell', 'PLSdensity')], density.FIA.table[,c('x', 'y', 'cell', 'FIAdensity')],
@@ -80,6 +80,20 @@ nodups <- densitys[!duplicated(densitys$cell),] # remove dups
 dup <- densitys[duplicated(densitys$cell),] # what is the duplicated row?
 #test <- rbind(nodups, dup)
 densitys <- nodups
+
+
+
+# get the total number of trees and FIA plots per cell of the FIA:
+
+head(FIA.pal[FIA.pal$cell %in% densitys$cell,])
+
+plt_summary <- FIA.pal[FIA.pal$cell %in% densitys$cell,] %>% select(x,y,cell, density, n, plt_cn) %>% group_by(x,y,cell) %>% summarize(totaltree = sum(n), totalplot = length(unique(plt_cn)))
+
+ggplot(plt_summary, aes(x,y, fill = totaltree))+geom_raster()
+write.csv(plt_summary, "outputs/FIA_plot_summary_ntrees_pergrid.csv")
+summary(plt_summary)
+
+sum(plt_summary$totaltree)
 
 hist(densitys$PLSdensity, breaks = 50)
 #map out density:

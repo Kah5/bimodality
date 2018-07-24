@@ -78,13 +78,13 @@ dev.off()
 #two <- data.frame(time = "FIA", value = rnorm(n = 4000, mean = 200, sd = 50))
 
 
-n = 2000
+n = 1700
 y1 = rnorm(n, 25, 20)  
 y2 = rnorm(n, 175, 20)
 w = rbinom(n, 1, .5)                      # 50:50 random choice
 x2 = w*y1 + (1-w)*y2      
-x3 = rnorm(2000, -2.5, 2)
-x4 = rnorm(2000,2,2)
+x3 = rnorm(n, -2.5, 2)
+x4 = rnorm(n,2,2)
 x3 <- c(x3,x4)
 x2 <- x2[order(x2)]
 #x3 <- x3[order(x3)]
@@ -93,10 +93,12 @@ one[one$value <= 0,]$value <- 0
 one$climate<- ifelse(one$value <= 100, one$climate - 3, one$climate + 3)
 
 
-two <- data.frame( time = "Modern", value = rnorm(n = 4000, mean = 100, sd = 40 ), climate = x3)
+two <- data.frame( time = "Modern", value = rnorm(n = n*2, mean = 100, sd = 40 ), climate = x3)
 two[two$value <0,]$value <- 0
 
-full <- rbind(one, two)
+mid <- data.frame(time = "Past", value = rnorm(n = 350, mean = 100, sd = 25), climate = rnorm(n =350 , mean = 0, sd = 2.76))
+
+full <- rbind(one, two, mid)
 A <- ggplot(full[full$time %in% "Past",], aes(x = climate, y = value))+geom_point(size = 0.05)+theme_bw()+theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank())+ylab("Tree Density")+xlab("Environment")+ 
   annotate("segment", x = c(-12,-10, -8, -6, -4, -2, 0, 2, 4), xend = c(-12,-10, -8, -6, -4, -2,0, 2, 4), 
            y = c(200,200,200, 200, 95, 95, 95, 95, 95), yend = c(50,50, 50, 50, 50, 50, 50, 50, 50), colour = "orange", size=0.5, alpha=0.6, arrow=arrow())+

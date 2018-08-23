@@ -738,7 +738,7 @@ dens.clust <- dens.clust[!duplicated(dens.clust),]
 
 
 # clust.hist full
-clust.hist.full <- ggplot()+ geom_density(data = dens.clust, aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust, aes(PLSdensity, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full
@@ -760,30 +760,8 @@ dev.off()
 
 
 
-# --------------------------------read in p(bimodality PC1 with 0.15 bins)
-# need to change this file
-fia.b15 <- read.csv("outputs/posterior_prob_bimodal_fia_0.1bins_dipP_only_PC1_by_distn.csv")
-fia.b15$pbimodal <- cut(fia.b15$prob_bimodal, breaks = seq(0,1, by = 0.2), labels = label.breaks(0,0.8, 0.2))
 
-rbpalette <- c('#ca0020',
-               '#f4a582',
-               '#f7f7f7',
-               '#92c5de',
-               '#0571b0')
-names(rbpalette) <- rev(c("0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1"))
-
-fia.b15$pbimodal <- as.character(fia.b15$pbimodal)
-
-p.bimodal15.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=na.omit(fia.b15), aes(x=x, y=y, fill = pbimodal))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(bimodal)")+ scale_fill_manual(values= rbpalette) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (bimodal)")+ggtitle("")
-
-
-
-# B: Map of species clusters
+# B: Map of FIA species clusters
 
 # from species_clustering.R:
 species.clust <- read.csv("outputs/cluster/density_fia_with_clusters.csv")
@@ -797,19 +775,21 @@ species.clust$foresttype <- plyr::revalue(species.clust$speciescluster,c("Oak/Ma
 
 fia.clust <- ggplot(species.clust, aes(x = x, y=y, fill=foresttype))+geom_raster()+
   scale_fill_manual(values = c('#fdc086', '#003c30','#a6cee3','#f0027f'), name = " ")+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.25, 0.10),legend.background = element_rect(fill=alpha('transparent', 0)) ,
-                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
-                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                                                           axis.title.x=element_blank(),
-                                                                                                                           axis.title.y=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+
+  theme(legend.position=c(0.25, 0.10),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+  axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
+  axis.text.y=element_blank(),axis.ticks=element_blank(),
+  axis.title.x=element_blank(),
+  axis.title.y=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
 fia.clust
 
 # merge clust_plot6 and dens.pr
-
+fia.bim <- read.csv("data/PLS_FIA_density_climate_full.csv")
 fia.dens.clust <- merge(fia.bim, species.clust[,c("x","y", "cell", "speciescluster", "foresttype")], by = c("x", "y", "cell"))
 
 png("outputs/cluster/density_vs_envt_pc1_by_species_cluster_fia.png")
-ggplot(fia.dens.clust, aes(PC1fia,FIAdensity, color = speciescluster))+geom_point()
+ggplot(fia.dens.clust, aes(PC1fia, FIAdensity, color = speciescluster))+geom_point()
 dev.off()
 
 # C: Density vs PC1 as a hexbin plot
@@ -829,7 +809,7 @@ p1fia <- ggplot(fia.dens.clust,aes(x=PC1fia, y=FIAdensity, color = foresttype)) 
 scatter_dens_2dfia <- p1fia+xlab('Environmental PC1') + ylab("Tree Density (stems/ha)")+geom_vline(xintercept = low.pc1.bim.1, color = "red")+geom_vline(xintercept = high.pc1.bim.1, color = "red")+geom_vline(xintercept = low.pc1.bim.2, color = "black")+geom_vline(xintercept = high.pc1.bim.2, color = "black")+xlim(4, -5)+ylim(0,650)+coord_fixed(ratio = 1/60)+theme(legend.position = c(0.85, 0.85),legend.direction = "vertical", 
                                                                                                                                                                                                      legend.background = element_rect(fill=alpha('transparent', 0)))
                                                                                                                                                                                                      
-
+# read in the past survey data and past logged data:
 
 past.logged<- read.csv("data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv")
 past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
@@ -851,9 +831,9 @@ f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$cell %in% pl
 f.clust.hist 
 
 
-f.clust.hist.full <- ggplot()+ geom_density(data = dens.clust, aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+f.clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 20)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,1050)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+  geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 18)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,1050)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
                                                                                                                                                                                                                                                                                                                                                                                                            panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
 f.clust.hist.full 
 
@@ -867,8 +847,8 @@ xbp_grob <- ggplotGrob(inset)
 # Place box plots inside the scatter plot
 
 
-f.clust.hist.inset <- f.clust.hist + annotation_custom(grob = xbp_grob, ymin = 375, ymax = 760, xmin = 0.005, xmax = 655)
-f.clust.hist.inset.full <- f.clust.hist.full + annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = 0.005, xmax = 655)
+f.clust.hist.inset <- f.clust.hist+scale_x_discrete(breaks=seq(0, 750, 250)) + annotation_custom(grob = xbp_grob, ymin = 375, ymax = 760, xmin = 0.005, xmax = 655)
+f.clust.hist.inset.full <- f.clust.hist.full+ scale_y_continuous(breaks=c(0,250,500,750)) + annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = 0.005, xmax = 655)
 
 #Other way of overlaying the plots:
 box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
@@ -896,8 +876,7 @@ f.clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.no
 f.clust.hist.nona
 
 
-#clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, 25 *..count..))+ geom_histogram(data = dens.clust[dens.clust$PC1 > -2.5 & dens.clust$PC2 < 1, ], aes(PLSdensity, fill = speciescluster, binwidth = 30))+scale_fill_manual(values = c('#beaed4','#ffff99','#386cb0', '#f0027f','#fdc086','#7fc97f'))+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw()+theme(legend.position = "none")
-#clust.hist
+
 
 
 # E: map of bimodal regions:
@@ -1334,8 +1313,8 @@ flipped.soilm.hist <- ggplot(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %
 pls.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity)$y, 
            x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$PLSdensity)$x)
 
-fia.soilm.density.df <- data.frame(y = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil_f %in% "bimodal",]$FIAdensity)$y, 
-                                 x = density(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil_f %in% "bimodal",]$FIAdensity)$x)
+fia.soilm.density.df <- data.frame(y = density(na.omit(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity))$y, 
+                                 x = density(na.omit(kde.surf.soilm.df[kde.surf.soilm.df$bimclass_soil %in% "bimodal",]$FIAdensity))$x)
 flipped.soilm.hist.gg <- as.ggplot(~plot(pls.soilm.density.df[pls.soilm.density.df$x < 550 & pls.soilm.density.df$x > -41,], type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(fia.soilm.density.df[fia.soilm.density.df$x < 550,] , type = "l", col = "blue"))
 
 
@@ -1484,7 +1463,7 @@ dev.off()
 
 # figure 2 new again:
 
-f.clust.hist.inset.full <- f.clust.hist.full+theme(plot.background = element_rect(fill = "white"))+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1150, xmin = -141, xmax = 648)
+f.clust.hist.inset.full <- f.clust.hist.full+ scale_y_continuous(breaks=c(0,250,500,750))+theme(plot.background = element_rect(fill = "white"))+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1150, xmin = -141, xmax = 648)
 box <- data.frame(
   x = 0.75,
   y = 0
@@ -1511,8 +1490,11 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
           clust.hist.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
           f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
-          ncol = 2,align = "h",axis="tb", scale = 1) 
+          ncol = 2, align = "h", axis="tb", scale = 1) 
 dev.off()
+
+
+
 
 # figure 3 new:
 require(gridGraphics)

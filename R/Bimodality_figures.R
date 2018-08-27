@@ -57,9 +57,9 @@ dens.pr$density_discrete <- ifelse(dens.pr$PLSdensity <= 0.5, "Prairie",
                                                         ifelse(dens.pr$PLSdensity > 200 & dens.pr$PLSdensity <= 300, "200-300", 
                                                                ifelse(dens.pr$PLSdensity > 300 & dens.pr$PLSdensity <= 400, "300-400",
                                                                       ifelse(dens.pr$PLSdensity > 400 & dens.pr$PLSdensity <= 500, "400-500",
-                                                                             ifelse(dens.pr$PLSdensity > 500 & dens.pr$PLSdensity <= 600, "600 +", "NA"))))))))
+                                                                             ifelse(dens.pr$PLSdensity > 500 , "500+", "No data"))))))))
 
-dens.pr$density_discrete<- factor(dens.pr$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500", "500-600", "600+", "NA"))
+dens.pr$density_discrete<- factor(dens.pr$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
 
 pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -73,7 +73,7 @@ pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
     '#78c679',
     '#41ab5d',
     '#238443',
-    '#005a32'), name ="Tree \n Density", na.value = 'darkgrey') +
+    '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = F) +
   
   theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
                                  legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -298,14 +298,16 @@ bim.class.m <- merge(bimod.pc.pls[,c("x", "y", "bimclass")],bimod.sm.pls[,c("x",
 bim.class.m <- merge(bim.class.m, bimod.ppet.pls[,c("x", "y", "bimclass_ppet", "PLSdensity")])
 
 bim.class.m$nbimod <- as.character(rowSums(bim.class.m[,3:5] == "bimodal", na.rm = TRUE))
+# define nbimod as a category:
+bim.class.m$nbimod <- factor(bim.class.m$nbimod, levels = c("0","1", "2", "3", "No data"))
 
 three.color.bimodal.plots <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bim.class.m, aes(x=x, y=y, fill = nbimod))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
-  ), labels = c("0","1", "2", "3", "0")) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "G", size = 4)
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "D", size = 4)
 
 
 one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
@@ -339,7 +341,7 @@ clust_7$orderedforesttype<- factor(clust_7$foresttype, c("Oak", "Pine", "Aspen",
 pls.clust <- ggplot(clust_7, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
   scale_fill_manual(values = c('#386cb0', '#f0027f','#fdc086','#ffff99','#7fc97f','#beaed4', '#bf5b17'), name = " ")+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
-                                                                                                               axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
+                                                                                                               axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
                                                                                                               axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
@@ -663,7 +665,7 @@ ppet.bim.line <- data.frame(PPET = unique(bimodal.pls.ppet[bimodal.pls.ppet$bimc
 
 
 # ggplotify the kde plots here:
-pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue") + text(-170,500, "C"))
+pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "darkblue") + text(-170,500, "B"))
 pls.kde.plot.ppet.gg
 #pls.kde.plot.ppet.gg <- ggplot(pls.df, aes(x=PC1, y=PLSdensity) ) +
  # stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("Spectral"), direction=2 )+ylab("Tree Density")+theme(legend.position = "none")
@@ -724,7 +726,7 @@ bimodal.pls.soil <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_cr
 sm.bim.line <- data.frame(SM = unique(bimodal.pls.soil[bimodal.pls.soil$bimclass_soil %in% "bimodal",]$mean_GS_soil), y = -37, bimodal = "bimodal")
 
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue") + text(-0.05,500, "E"))
+pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.9,  pch = 15,col = "darkblue") + text(-0.05,500, "C"))
 pls.kde.plot.sm.gg
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>D: Histogram colored by species cluster:
@@ -738,9 +740,11 @@ dens.clust <- dens.clust[!duplicated(dens.clust),]
 
 
 # clust.hist full
-clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust, aes(PLSdensity, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ")+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.65, 0.75),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.35, "line"),panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# remove dens.clust with no forest type assigned:
+
+clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5 & !is.na(dens.clust$foresttype_ordered),], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$PLSdensity >= 0.5 & !is.na(dens.clust$foresttype_ordered),], aes(PLSdensity, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = c( '#beaed4', '#386cb0','#ffff99','#bf5b17','#f0027f','#fdc086', '#7fc97f'), name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full
 
 
@@ -762,6 +766,38 @@ dev.off()
 
 
 # B: Map of FIA species clusters
+dens.pr$density_discretef <- ifelse(dens.pr$FIAdensity <= 0.5, "Prairie", 
+                                   ifelse(dens.pr$FIAdensity <= 47, "Savanna",
+                                          ifelse(dens.pr$FIAdensity > 47 & dens.pr$FIAdensity <= 100, "47-100",
+                                                 ifelse(dens.pr$FIAdensity > 100 & dens.pr$FIAdensity <= 200, "100-200", 
+                                                        ifelse(dens.pr$FIAdensity > 200 & dens.pr$FIAdensity <= 300, "200-300", 
+                                                               ifelse(dens.pr$FIAdensity > 300 & dens.pr$FIAdensity <= 400, "300-400",
+                                                                      ifelse(dens.pr$FIAdensity > 400 & dens.pr$FIAdensity <= 500, "400-500",
+                                                                             ifelse(dens.pr$FIAdensity > 500 & dens.pr$FIAdensity <= 600, "500 +", "No data"))))))))
+
+dens.pr$density_discretef <- factor(dens.pr$density_discretef, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500", "500+", "No data"))
+
+
+fia.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr[!is.na(dens.pr$density_discretef),], aes(x=x, y=y, fill = density_discretef))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c('#dfc27d',
+                               '#8c510a',
+                               '#d9f0a3',
+                               '#addd8e',
+                               '#78c679',
+                               '#41ab5d',
+                               '#238443',
+                               '#005a32',"darkgrey" ), name ="Tree Density", na.value = 'darkgrey', drop = F) +
+  
+  theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
+
+
+
 
 # from species_clustering.R:
 species.clust <- read.csv("outputs/cluster/density_fia_with_clusters.csv")
@@ -774,10 +810,10 @@ species.clust$foresttype <- plyr::revalue(species.clust$speciescluster,c("Oak/Ma
 
 
 fia.clust <- ggplot(species.clust, aes(x = x, y=y, fill=foresttype))+geom_raster()+
-  scale_fill_manual(values = c('#fdc086', '#003c30','#a6cee3','#f0027f'), name = " ")+
+  scale_fill_manual(values = c('#fdc086', '#003c30','#a6cee3','#f0027f'), name = " ", c("Poplar", "Mixed Hardwoods", "Oak/Maple", "Pine"))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+
-  theme(legend.position=c(0.25, 0.10),legend.background = element_rect(fill=alpha('transparent', 0)) ,
-  axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
+  theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) , legend.key = element_rect(color = "black", linetype = "solid"),
+  axis.line=element_blank(),legend.key.size = unit(0.3,'lines'),legend.text=element_text(size=5),axis.text.x=element_blank(),
   axis.text.y=element_blank(),axis.ticks=element_blank(),
   axis.title.x=element_blank(),
   axis.title.y=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
@@ -826,36 +862,52 @@ full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s",
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
 f.clust.hist <- ggplot()+ geom_density(data = dens.clust[dens.clust$cell %in% pls.PC1bimcell.1 | dens.clust$cell %in% pls.PC1bimcell.2 , ], aes(PLSdensity, 23 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1,] , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1 , ], aes(FIAdensity, fill = foresttype), binwidth = 20)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,950)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
+  geom_histogram(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim.1 & fia.dens.clust$PC1fia <= high.pc1.bim.1 , ], aes(FIAdensity, fill = foresttype), binwidth = 20)+ scale_fill_manual(values = c('#fdc086', '#003c30','#a6cee3','#f0027f'), name = " ", c("Poplar", "Mixed Hardwoods", "Oak/Maple", "Pine"))+coord_flip()+xlim(0,600)+ylim(0,950)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
                                                                                                                                                                                                                                                                                                                                                                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
 f.clust.hist 
 
 
 f.clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
-  geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 18)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,1050)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),
-                                                                                                                                                                                                                                                                                                                                                                                                           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
+  geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 18)+ scale_fill_manual(values = c('#fdc086', '#003c30','#a6cee3','#f0027f'), name = " ", c("Poplar", "Mixed Hardwoods", "Oak/Maple", "Pine"))+
+  coord_flip()+xlim(0,600)+ylim(0,1050)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.36, 0.87),legend.background = element_blank(), legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=6), legend.key = element_rect(color= "black", linetype = "solid"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title = element_blank())
 f.clust.hist.full 
 
 library(ggpubr)
-inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600)+theme_bw(base_size = 8) +theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none")+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw()+theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Create the external graphical objects
 # called a "grop" in Grid terminology
 xbp_grob <- ggplotGrob(inset)
 
-# Place box plots inside the scatter plot
+# Place box plots inside the histogram plot
+full.fia.surveys$INV_place <- ifelse(full.fia.surveys$INVYRcd %in% "2000s", 1000, 
+       ifelse(full.fia.surveys$INVYRcd %in% "1990s", 900,
+              ifelse(full.fia.surveys$INVYRcd %in% "1980s", 800, NA )))
 
+
+hist.1 <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+  geom_density(data = fia.dens.clust , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 18)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+
+  scale_x_discrete(breaks=seq(0, 750, 250))
+  bx.plt <- ggplot()+geom_boxplot(data = full.fia.surveys, aes(y = FIAdensity, x = INV_place, group = INV_place))+coord_flip()
+
+
+
+f.clust.hist.full + geom_boxplot(data = full.fia.surveys, aes(y = INV_place, x = FIAdensity, group = INVYRcd))
+f.clust.hist+scale_x_discrete(breaks=seq(0, 750, 250))+geom_boxplot(data = full.fia.surveys, aes(x = INV_place, y = FIAdensity, group = INVYRcd))+coord_flip()
 
 f.clust.hist.inset <- f.clust.hist+scale_x_discrete(breaks=seq(0, 750, 250)) + annotation_custom(grob = xbp_grob, ymin = 375, ymax = 760, xmin = 0.005, xmax = 655)
 f.clust.hist.inset.full <- f.clust.hist.full+ scale_y_continuous(breaks=c(0,250,500,750)) + annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = 0.005, xmax = 655)
 
 #Other way of overlaying the plots:
-box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
+box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)#+theme_transparent()#+theme(axis.title.y = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
 
 hist.inset <- ggdraw() +
   draw_plot(f.clust.hist + theme(legend.justification = "bottom"), 0, 0, 1, 1) +
-  draw_plot(inset, 0.6, 0.025, 0.3, 0.975)# +
+  draw_plot(box.inset, x = 0.6, y = -0.045,width= 0.5, height=1, scale = 1.05)
+hist.inset
+# +
   #draw_plot_label(c("A", "B"), c(0, 0.5), c(1, 0.92), size = 15)
 
 
@@ -865,9 +917,16 @@ print(f.clust.hist, vp = vpb_)
 print(box.inset, vp = vpa_)
 
 
-
-
 test.plot <-print(f.clust.hist, vp = vpb_); print(box.inset, vp = vpa_)
+
+
+#f.clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$PLSdensity >= 0.5,], aes(PLSdensity, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
+ # geom_density(data = fia.dens.clust , aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
+  #geom_histogram(data = fia.dens.clust, aes(FIAdensity, fill = foresttype), binwidth = 18)+ scale_fill_manual(values = c('#e41a1c', '#377eb8','#4daf4a','#984ea3','#ff7f00', '#ffff33'), name = " ")+coord_flip()+xlim(0,600)+ylim(0,1050)+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.35, 0.85),legend.background = element_blank(), legend.key.size = unit(0.3,'lines'),legend.text=element_text(size=6))
+                                                                                                                                                                                                                                                                                                                       
+density.pls <- ggdensity(dens.clust[dens.clust$PLSdensity >= 0.5,], x = "PLSdensity", y = "23*..count..", size = 3, alpha = 0.6)+coord_flip()
+density.fia<- ggdensity(fia.dens.clust, x = "FIAdensity", y = "23*..count..", size = 3, alpha = 0.6)+coord_flip()
+
 
 f.clust.hist.nona <- ggplot()+ geom_density(data = dens.clust.nona[dens.clust.nona$cell %in% pls.PC1bimcell, ], aes(PLSdensity,  23*..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+
   geom_density(data = fia.dens.clust[fia.dens.clust$PC1fia >= low.pc1.bim & fia.dens.clust$PC1fia <= high.pc1.bim, ], aes(FIAdensity, 23 *..count..),trim = TRUE , color = "black", size = 1.5)+
@@ -1017,14 +1076,16 @@ three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(grou
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
 
 
+bim.class.m.f$nbimod <- factor(bim.class.m.f$nbimod, levels = c("0","1", "2", "3", "No data"))
 
 three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bim.class.m.f, aes(x=x, y=y, fill = nbimod))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red"
-  ), labels = c("0","1", "2", "3")) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "H", size = 4)
+
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>.new figures with 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
@@ -1147,7 +1208,7 @@ fia.kde.plot.pc1.gg <- ggplot(pls.df, aes(x=PC1, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "B"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
 fia.kde.plot.pc1.gg + xlab("PC1")
 
 #fia.kde.plot.pc1 <- recordPlot()
@@ -1214,7 +1275,7 @@ fia.kde.plot.ppet.gg <- ggplot(pls.df, aes(x=PC1, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "D"))+xlab("P-PET")
+fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
 fia.kde.plot.ppet.gg +xlab("P-PET")
 
 
@@ -1276,7 +1337,7 @@ fia.kde.plot.sm.gg <- ggplot(pls.df, aes(x=mean_GS_soil_m, y=FIAdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "F"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "G"))
 fia.kde.plot.sm.gg 
 
 
@@ -1413,7 +1474,7 @@ grid.arrange(pls.map.alt.color + annotate("text", x=-90000, y=1486000,label= "A"
              ncol = 2)
 dev.off()
 
-png(height = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v3b.png")
+png(heightk = 11, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_10panel_v3b.png")
 
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm")), 
           fia.map.alt.color+theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
@@ -1462,8 +1523,15 @@ dev.off()
 
 
 # figure 2 new again:
+inset2 <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw(base_size = 8)+theme(axis.title = element_blank(),axis.ticks.y= element_blank(), axis.text.y= element_blank(),legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1), panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-f.clust.hist.inset.full <- f.clust.hist.full+ scale_y_continuous(breaks=c(0,250,500,750))+theme(plot.background = element_rect(fill = "white"))+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1150, xmin = -141, xmax = 648)
+# Create the external graphical objects
+# called a "grop" in Grid terminology
+xbp_grob2 <- ggplotGrob(inset2)
+
+
+f.clust.hist.inset.full <- f.clust.hist.full+ scale_y_continuous(breaks=c(0,250,500,750))+theme(plot.background = element_rect(fill = "white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ annotation_custom(grob = xbp_grob2, ymin = 700, ymax = 1100, xmin = -140, xmax = 648)#+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = -141, xmax = 648)
+
 box <- data.frame(
   x = 0.75,
   y = 0
@@ -1474,21 +1542,23 @@ f.clust.hist.full2 <- ggdraw(f.clust.hist.full) +
             colour = "gray60", fill = "gray80")
 
 #Other way of overlaying the plots:
-box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
+box.inset <- ggplot(data = full.fia.surveys, aes(x = INVYRcd, y = FIAdensity, fill= INVYRcd, size = 0.25))+geom_boxplot(size = 0.25)+ylim(0,600)+theme_transparent()+theme(axis.title = element_blank(), axis.line = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), panel.grid.major = element_blank(), panel.background  = element_blank(), legend.position = "none")
 
 hist.inset <- ggdraw() +
-  draw_plot(f.clust.hist.full + theme(legend.justification = "bottom"), 0, 0, 1, 1) +
-  draw_plot(inset, 0.6, 0.025, 0.3, 0.975)# +
+  draw_plot(f.clust.hist.full + theme(legend.justification = "bottom")) +
+  draw_plot(box.inset, 0.6, 0.025, 0.3, 0.975)# +
 #draw_plot_label(c("A", "B"), c(0, 0.5), c(1, 0.92), size = 15)
 
 
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_6panel.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs/fig2_6panel_trans.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
           fia.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
           clust.hist.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          
           f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1) 
 dev.off()
@@ -1795,6 +1865,253 @@ three.color.bimodal.plots.f.m <- ggplot()+ geom_polygon(data = mapdata, aes(grou
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
 
 
+# >>>>>>>>>>for pc1 predicted by past:
+bimod.pc1.85.pls <- read.csv("outputs/new_bim_surface_PC1_future_8.5_pred_by_pls_0.1_mode_crit_1000.csv")
+bimod.pc1.85.pls$eco <- ifelse(bimod.pc1.85.pls$PLSdensity <= 0.5, "Prairie", 
+                               ifelse(bimod.pc1.85.pls$PLSdensity <= 47, "Savanna", "Forest"))
+#bimod.pc1.85.pls$bimclass_f_pred_pls_85 <- ifelse(bimod.pc1.85.pls$dipPint_f_pred_pls_pc1 <= 0.05 , "bimodal", "unimodal")
+bimod.pc1.85.pls$bimclass_f_pred_pls_85 <- ifelse(is.na(bimod.pc1.85.pls$bimclass_f_pred_pls_85), "out-of-sample", as.character(bimod.pc1.85.pls$bimclass_f_pred_pls_85))
+
+bimod.pc1.85.pls$bimclass_eco <- ifelse(is.na(bimod.pc1.85.pls$bimclass_f_pred_pls_85 ) | is.na(bimod.pc1.85.pls$eco), NA ,paste(bimod.pc1.85.pls$bimclass_f_pred_pls_85 , bimod.pc1.85.pls$eco))
+
+bimod.pc1.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc1.85.pls, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+pc1.bimpct.f <- round(length(bimod.pc1.85.pls[bimod.pc1.85.pls$bimclass_f_pred_pls_85%in% "bimodal",]$bimclass_f_pred_pls_85)/length(bimod.pc1.85.pls$bimclass_f_pred_pls_85)*100, digits = 2)
+
+bimod.pc1.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc1.85.pls, aes(x=x, y=y, fill =bimclass_f_pred_pls_85))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"
+  ), labels = c("bimodal", "unimodal")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", pc1.bimpct.f, "%"))
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>> for pc1 predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+bimod.pc1.85.fia <- read.csv("outputs/new_bim_surface_PC1_future_8.5_pred_by_fia_1000_mode_crit.csv")
+bimod.pc1.85.fia$eco <- ifelse(bimod.pc1.85.fia$FIAdensity <= 0.5, "Prairie", 
+                               ifelse(bimod.pc1.85.fia$FIAdensity <= 47, "Savanna", "Forest"))
+bimod.pc1.85.fia$bimclass_f_pred_fia_85 <- ifelse(bimod.pc1.85.fia$dipPint_f_pred_fia_85 <= 0.05 , "bimodal", "unimodal")
+bimod.pc1.85.fia$bimclass_f_pred_fia_85 <- ifelse(is.na(bimod.pc1.85.fia$bimclass_f_pred_fia_85), "out-of-sample", as.character(bimod.pc1.85.fia$bimclass_f_pred_fia_85))
+
+bimod.pc1.85.fia$bimclass_eco <- ifelse(is.na(bimod.pc1.85.fia$bimclass_f_pred_fia_85) | is.na(bimod.pc1.85.fia$eco), NA ,paste(bimod.pc1.85.fia$bimclass_f_pred_fia_85, bimod.pc1.85.fia$eco))
+
+bimod.pc1.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc1.85.fia, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+pc1.bimpct.f <- round(length(bimod.pc1.85.fia[bimod.pc1.85.fia$bimclass_f_pred_fia_85 %in% "bimodal",]$bimclass_f_pred_fia_85)/length(bimod.pc1.85.fia$bimclass_f_pred_fia_85)*100, digits = 2)
+
+bimod.pc1.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc1.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"= '#d73027', "unimodal"='#4575b4', "out-of-sample"="tan")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", pc1.bimpct.f, "%"))
+
+
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>> for PPET predicted by past: <<<<<<<<<<<<<<<<<<<<<<<<<
+bimod.ppet.85.pls <- read.csv("outputs/new_bim_surface_PPET_rcp85_pred_by_pls_1000_mode_crit.csv")
+bimod.ppet.85.pls$eco <- ifelse(bimod.ppet.85.pls$PLSdensity <= 0.5, "Prairie", 
+                                ifelse(bimod.ppet.85.pls$PLSdensity <= 47, "Savanna", "Forest"))
+bimod.ppet.85.pls$bimclass_f_pred_pls_ppet <- ifelse(bimod.ppet.85.pls$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
+bimod.ppet.85.pls$bimclass_f_pred_pls_ppet <- ifelse(is.na(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet), "out-of-sample", as.character(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet))
+
+
+bimod.ppet.85.pls$bimclass_eco <- ifelse(is.na(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet ) | is.na(bimod.ppet.85.pls$eco), NA ,paste(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet , bimod.ppet.85.pls$eco))
+
+bimod.ppet.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.85.pls, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+ppet.bimpct.f <- round(length(bimod.ppet.85.pls[bimod.ppet.85.pls$bimclass_f_pred_pls_ppet %in% "bimodal",]$bimclass_f_pred_pls_ppet)/length(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet)*100, digits = 2)
+
+bimod.ppet.85.pls$insample <- ifelse( bimod.ppet.85.pls$mean_ppet_GS_8.5 >= range(bimod.ppet.85.pls$GS_ppet)[1] & bimod.ppet.85.pls$mean_ppet_GS_8.5 <=  range(bimod.ppet.85.pls$GS_ppet)[2], "in-sample", "out-of-sampl")
+
+bimod.ppet.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample" = "tan"))+
+  
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", ppet.bimpct.f, "%"))
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>> for PPET predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+bimod.ppet.85.fia <- read.csv("outputs/new_bim_surface_PPET_rcp85_pred_by_fia_1000_mode_crit.csv")
+#bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet <- ifelse(is.na(bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet), "out-of-sample", bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet)
+bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet <- ifelse(is.na(bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet), "out-of-sample", as.character(bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet))
+
+bimod.ppet.85.fia$eco <- ifelse(bimod.ppet.85.fia$FIAdensity <= 0.5, "Prairie", 
+                                ifelse(bimod.ppet.85.fia$FIAdensity <= 47, "Savanna", "Forest"))
+#bimod.ppet.85.fia$bimclass_f_pred_fia_ppet <- ifelse(bimod.ppet.85.fia$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
+
+bimod.ppet.85.fia$bimclass_eco <- ifelse(is.na(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet) | is.na(bimod.ppet.85.fia$eco), NA ,paste(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet, bimod.ppet.85.fia$eco))
+bimod.ppet.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = dipPint_f_pred_fia_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+ppet.bimpct.f <- round(length(bimod.ppet.85.fia[bimod.ppet.85.fia$bimclass_f_pred_fia_ppet %in% "bimodal",]$bimclass_f_pred_fia_ppet)/length(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet)*100, digits = 2)
+
+bimod.ppet.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample" = "tan"))+
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", ppet.bimpct.f, "%"))
+
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>> for soil moisture predicted by past: <<<<<<<<<<<<<<<<<<<<<<<<<<
+bimod.sm.85.pls <- read.csv("outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
+bimod.sm.85.pls$eco <- ifelse(bimod.sm.85.pls$PLSdensity <= 0.5, "Prairie", 
+                              ifelse(bimod.sm.85.pls$PLSdensity <= 47, "Savanna", "Forest"))
+bimod.sm.85.pls$bimclass_eco <- ifelse(is.na(bimod.sm.85.pls$bimclass_f_pred_pls_85_ppet) | is.na(bimod.sm.85.pls$eco), NA ,paste(bimod.sm.85.pls$bimclass_f_pred_pls_85_ppet, bimod.sm.85.pls$eco))
+
+bimod.sm.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.sm.85.pls, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+sm.bimpct.f <- round(length(bimod.sm.85.pls[bimod.sm.85.pls$bimclass_f_pred_fia_85_soil %in% "bimodal",]$bimclass_f_pred_fia_85_soil)/length(bimod.sm.85.pls$bimclass_f_pred_fia_85_soil)*100, digits = 2)
+
+bimod.sm.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.sm.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_85_soil))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", sm.bimpct.f, "%"))
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>  for soil moisture predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<
+bimod.sm.85.fia <- read.csv("outputs/new_bim_surface_soil_m_rcp85_pred_by_fia.csv")
+bimod.sm.85.fia$eco <- ifelse(bimod.sm.85.fia$FIAdensity <= 0.5, "Prairie", 
+                              ifelse(bimod.sm.85.fia$FIAdensity <= 47, "Savanna", "Forest"))
+bimod.sm.85.fia$bimclass_eco <- ifelse(is.na(bimod.sm.85.fia$bimclass_f_pred_fia_85_soil) | is.na(bimod.sm.85.fia$eco), NA ,paste(bimod.sm.85.fia$bimclass_f_pred_fia_85_soil, bimod.sm.85.fia$eco))
+
+bimod.sm.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.sm.85.fia, aes(x=x, y=y, fill = bimclass_eco))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
+                                                                          '#c7eae5',
+                                                                          '#f6e8c3',
+                                                                          '#5ab4ac'
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+
+
+sm.bimpct.f <- round(length(bimod.sm.85.fia[bimod.sm.85.fia$bimclass_f_pred_fia_85_soil %in% "bimodal",]$bimclass_f_pred_fia_85_soil)/length(bimod.sm.85.fia$bimclass_f_pred_fia_85_soil)*100, digits = 2)
+
+bimod.sm.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.sm.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_soil))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan")) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", sm.bimpct.f, "%"))
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>> Future predictions Figures <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# now make the 3 colored maps for the future--need to deal with out of sample points for sm and ppet
+
+# now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
+bim.class.f <- merge(bimod.pc1.85.pls[,c("x", "y", "bimclass_f_pred_pls_85")], bimod.sm.85.pls[,c("x", "y", "bimclass_f_pred_pls_85_soil")], by = c("x", "y"), all = TRUE)
+colnames(bim.class.f)[4] <- "bimcalss_f_pred_pls_85_sm"
+bim.class.f <- merge(bim.class.f, bimod.ppet.85.pls[,c("x", "y", "bimclass_f_pred_pls_ppet")])
+
+bim.class.f$nbimod <- as.character(rowSums(bim.class.f[,3:5] == "bimodal", na.rm = TRUE))
+bim.class.f$nbimod <- factor(x = bim.class.f$nbimod, levels = c("0", "1", "2","3", "No data"))
+
+
+three.color.bimodal.plots.f <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.f, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "A", size = 4)
+
+
+
+one.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "1",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+two.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "2",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+three.bimpct <- round(length(bim.class.f[bim.class.f$nbimod %in% "3",]$nbimod)/length(bim.class.f$nbimod)*100, digits = 2)
+
+one.bimpct <- one.bimpct + two.bimpct + three.bimpct
+two.bimpct <-  two.bimpct + three.bimpct
+three.bimpct <-  three.bimpct
+
+# make 3 bimodal plots for future predicted by fia:
+
+bim.class.f.m <- merge(bimod.pc1.85.fia[,c("x", "y", "bimclass_f_pred_fia_85")],bimod.sm.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_soil")], by = c("x", "y"), all = TRUE)
+colnames(bim.class.f)[4] <- "bimcalss_f_pred_fia_85_sm"
+bim.class.f.m <- merge(bim.class.f.m, bimod.ppet.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_ppet")])
+
+bim.class.f.m$nbimod <- as.character(rowSums(bim.class.f.m[,3:5] == "bimodal", na.rm = TRUE))
+bim.class.f.m$nbimod <- factor(x = bim.class.f.m$nbimod, levels = c("0", "1", "2","3", "No data"))
+
+
+three.color.bimodal.plots.f.m <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.f.m, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "B", size = 4)
+
+
+
+
 one.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "1",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
 two.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "2",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
 three.bimpct <- round(length(bim.class.f.m[bim.class.f.m$nbimod %in% "3",]$nbimod)/length(bim.class.f.m$nbimod)*100, digits = 2)
@@ -1806,7 +2123,7 @@ three.bimpct <-  three.bimpct
 
 # write to png
 png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs/future_rcp8.5_3bimodal_maps.png")
-plot_grid(three.color.bimodal.plots.f, three.color.bimodal.plots.f.m,labels = "AUTO", label_y = 0.94, label_x= 0.02)
+plot_grid(three.color.bimodal.plots.f, three.color.bimodal.plots.f.m)
 dev.off()
 
 

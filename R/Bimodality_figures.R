@@ -1648,8 +1648,12 @@ bimod.pc1.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = g
 
 pc1.bimpct.f <- round(length(bimod.pc1.85.pls[bimod.pc1.85.pls$bimclass_f_pred_pls_85%in% "bimodal",]$bimclass_f_pred_pls_85)/length(bimod.pc1.85.pls$bimclass_f_pred_pls_85)*100, digits = 2)
 
+bimod.pc1.85.pls$insample <- ifelse( bimod.pc1.85.pls$PC1_cc85 >= range(bimod.pc1.85.pls$PC1, na.rm=TRUE)[1] & bimod.pc1.85.pls$PC1_cc85 <=  range(bimod.pc1.85.pls$PC1, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+bimod.pc1.85.pls$bimclass_f_pred_pls_85_spl <- ifelse( bimod.pc1.85.pls$insample %in% "in-sample", as.character(bimod.pc1.85.pls$bimclass_f_pred_pls_85), "out-of-sample")
+
+
 bimod.pc1.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.pc1.85.pls, aes(x=x, y=y, fill =bimclass_f_pred_pls_85))+
+  geom_raster(data=bimod.pc1.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_85_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"
   ), labels = c("bimodal", "unimodal")) +
@@ -1680,9 +1684,13 @@ bimod.pc1.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = g
 
 
 pc1.bimpct.f <- round(length(bimod.pc1.85.fia[bimod.pc1.85.fia$bimclass_f_pred_fia_85 %in% "bimodal",]$bimclass_f_pred_fia_85)/length(bimod.pc1.85.fia$bimclass_f_pred_fia_85)*100, digits = 2)
+#omit out of sample:
+bimod.pc1.85.fia$insample <- ifelse( bimod.pc1.85.fia$PC1_cc85 >= range(bimod.pc1.85.fia$PC1fia, na.rm=TRUE)[1] & bimod.pc1.85.fia$PC1_cc85 <=  range(bimod.pc1.85.fia$PC1fia, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+bimod.pc1.85.fia$bimclass_f_pred_fia_85_spl <- ifelse( bimod.pc1.85.fia$insample %in% "in-sample", as.character(bimod.pc1.85.fia$bimclass_f_pred_fia_85), "out-of-sample")
+
 
 bimod.pc1.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.pc1.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85))+
+  geom_raster(data=bimod.pc1.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"= '#d73027', "unimodal"='#4575b4', "out-of-sample"="tan")) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
@@ -1715,11 +1723,12 @@ bimod.ppet.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = 
 
 
 ppet.bimpct.f <- round(length(bimod.ppet.85.pls[bimod.ppet.85.pls$bimclass_f_pred_pls_ppet %in% "bimodal",]$bimclass_f_pred_pls_ppet)/length(bimod.ppet.85.pls$bimclass_f_pred_pls_ppet)*100, digits = 2)
-
-bimod.ppet.85.pls$insample <- ifelse( bimod.ppet.85.pls$mean_ppet_GS_8.5 >= range(bimod.ppet.85.pls$GS_ppet)[1] & bimod.ppet.85.pls$mean_ppet_GS_8.5 <=  range(bimod.ppet.85.pls$GS_ppet)[2], "in-sample", "out-of-sampl")
+#omit out of sample
+bimod.ppet.85.pls$insample <- ifelse( bimod.ppet.85.pls$mean_ppet_GS_8.5 >= range(bimod.ppet.85.pls$GS_ppet, na.rm=TRUE)[1] & bimod.ppet.85.pls$mean_ppet_GS_8.5 <=  range(bimod.ppet.85.pls$GS_ppet, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+bimod.ppet.85.pls$bimclass_f_pred_pls_85_ppet_spl <- ifelse( bimod.ppet.85.pls$insample %in% "in-sample", as.character(bimod.ppet.85.pls$bimclass_f_pred_pls_85_ppet), "out-of-sample")
 
 bimod.ppet.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_ppet))+
+  geom_raster(data=bimod.ppet.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_85_ppet_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample" = "tan"))+
   
@@ -1752,8 +1761,12 @@ bimod.ppet.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = 
 
 ppet.bimpct.f <- round(length(bimod.ppet.85.fia[bimod.ppet.85.fia$bimclass_f_pred_fia_ppet %in% "bimodal",]$bimclass_f_pred_fia_ppet)/length(bimod.ppet.85.fia$bimclass_f_pred_fia_ppet)*100, digits = 2)
 
+# omit out of sample
+bimod.ppet.85.fia$insample <- ifelse( bimod.ppet.85.fia$mean_ppet_GS_8.5 >= range(bimod.ppet.85.fia$GS_ppet_mod, na.rm=TRUE)[1] & bimod.ppet.85.fia$mean_ppet_GS_8.5 <=  range(bimod.ppet.85.fia$GS_ppet_mod, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet_spl <- ifelse( bimod.ppet.85.fia$insample %in% "in-sample", as.character(bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet), "out-of-sample")
+
 bimod.ppet.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_ppet))+
+  geom_raster(data=bimod.ppet.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_ppet_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample" = "tan"))+
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
@@ -1782,8 +1795,13 @@ bimod.sm.85.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = gr
 
 sm.bimpct.f <- round(length(bimod.sm.85.pls[bimod.sm.85.pls$bimclass_f_pred_fia_85_soil %in% "bimodal",]$bimclass_f_pred_fia_85_soil)/length(bimod.sm.85.pls$bimclass_f_pred_fia_85_soil)*100, digits = 2)
 
+# omit out of sample sites
+bimod.sm.85.pls$insample <- ifelse( bimod.sm.85.pls$mean_GS_soil_8.5 >= range(bimod.sm.85.pls$mean_GS_soil, na.rm=TRUE)[1] & bimod.sm.85.pls$mean_GS_soil_8.5 <=  range(bimod.sm.85.pls$mean_GS_soil, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+bimod.sm.85.pls$bimclass_f_pred_pls_85_soil_spl <- ifelse( bimod.sm.85.pls$insample %in% "in-sample", as.character(bimod.sm.85.pls$bimclass_f_pred_pls_85_soil), "out-of-sample")
+
+
 bimod.sm.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.sm.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_85_soil))+
+  geom_raster(data=bimod.sm.85.pls, aes(x=x, y=y, fill = bimclass_f_pred_pls_85_soil_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"
   )) +
@@ -1812,14 +1830,28 @@ bimod.sm.85.fia.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = gr
 
   sm.bimpct.f <- round(length(bimod.sm.85.fia[bimod.sm.85.fia$bimclass_f_pred_fia_85_soil %in% "bimodal",]$bimclass_f_pred_fia_85_soil)/length(bimod.sm.85.fia$bimclass_f_pred_fia_85_soil)*100, digits = 2)
 
+  # omit out of sample sites
+  bimod.sm.85.fia$insample <- ifelse( bimod.sm.85.fia$mean_GS_soil_8.5 >= range(bimod.sm.85.fia$mean_GS_soil_m, na.rm=TRUE)[1] & bimod.sm.85.fia$mean_GS_soil_8.5 <=  range(bimod.sm.85.fia$mean_GS_soil_m, na.rm=TRUE)[2], "in-sample", "out-of-sample")
+  bimod.sm.85.fia$bimclass_f_pred_fia_85_soil_spl <- ifelse( bimod.sm.85.fia$insample %in% "in-sample", as.character(bimod.sm.85.fia$bimclass_f_pred_fia_85_soil), "out-of-sample")
+  
+  
 bimod.sm.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.sm.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_soil))+
+  geom_raster(data=bimod.sm.85.fia, aes(x=x, y=y, fill = bimclass_f_pred_fia_85_soil_spl))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan")) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", sm.bimpct.f, "%"))
 
 
+# Plot all 3 fia and all 3 pls figures
+png(height = 16, width = 8, units = "in", res = 300, "outputs/paper_figs/future_8.5_preds_bimodal_out_of_sample.png")
+plot_grid(bimod.pc1.85.pls.map + ggtitle(" "), 
+          bimod.ppet.85.pls.map+ ggtitle(" "),
+          bimod.sm.85.pls.map+ ggtitle(" "),
+          bimod.pc1.85.fia.map+ ggtitle(" "),
+          bimod.ppet.85.fia.map + ggtitle(" "),
+          bimod.sm.85.fia.map+ ggtitle(" "), cols = 2, labels = "AUTO")
+dev.off()
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>> Future predictions Figures <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # now make the 3 colored maps for the future--need to deal with out of sample points for sm and ppet

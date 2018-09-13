@@ -214,12 +214,15 @@ interp.densp.soil <- function(soilval){
   #points <- data.frame(x=rep(soilval, 401 ), y=0:400)
   points <- expand.grid(seq(round(soilval, 2) - 0.05, round(soilval, 2) + 0.05, by = 0.001), y=0:maxy)
   colnames(points) <- c("x", "y")
+  dipP <- list()
   if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
+    dipP <- list(rep(NA,1000))
   }else{
     df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+    
+    for(i in 1:1000){
     samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
+    dipP1 <- diptest::dip.test(samp)$p.value
     pks <- amps(samp)$Peaks[,1]
     #dipP <- diptest::dip.test( df$freq)$p.value
     #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
@@ -229,19 +232,66 @@ interp.densp.soil <- function(soilval){
     
     #dipP <- diptest::dip.test( df$freq)$p.value
     #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
+    dipP[i] <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP1, 1) 
     
+    }
     #plot(density(samp))
   }
-  dipP
+  cat(".")
+  dipPdf <- do.call(rbind, dipP)
+  dipPdf
   #pks
 }
 
 
-interp.densp.soil(soilval = 0.57)
-
+dipPtest <- interp.densp.soil(soilval = 0.61)
+dftest<- data.frame(head(pls.nona$mean_GS_soil))
+dipPtest <- apply(dftest, 1, interp.densp.soil)
 
 pls.nona$dipPint_soil <- apply(data.frame(pls.nona$mean_GS_soil), 1, interp.densp.soil)
+soil.regular <- data.frame(mean_GS_soil = seq(0, 1.5, by = 0.01))
+test.soil <- apply(soil.regular, 1, interp.densp.soil)
+
+
+# function to determine prob bimodality:
+prob.bimodal <- function(x){
+  
+forest.num <- ifelse(x <= 0.05,1, 0)
+
+
+N = length(forest.num) # sample size should be 500
+nForest = sum(forest.num == 1) # number of bimodal
+nSav = sum(forest.num== 0 ) # number of unimodal
+
+theta = seq(from=1/(N+1), to=N/(N+1), length=N) # theta 
+
+### prior distribution
+
+#pTheta = pmin(theta, 1-theta) 
+pTheta = dbeta(theta, 10, 10)# beta prior with mean = .5
+pTheta = pTheta/sum(pTheta) # Normalize so sum to 1
+
+# calculate the likelihood given theta
+pDataGivenTheta = choose(N, nForest) * theta^nForest * (1-theta)^nSav
+
+
+# calculate the denominator from Bayes theorem; this is the marginal # probability of y
+pData = sum(pDataGivenTheta*pTheta)
+pThetaGivenData = pDataGivenTheta*pTheta / pData # Bayes theorem
+
+# prints out df
+#round(data.frame(theta, prior=pTheta, likelihood=pDataGivenTheta, posterior=pThetaGivenData), 3)
+
+# get the posterior mean probability of bimodality given data
+posteriorMean = sum(pThetaGivenData*theta) 
+
+posteriorMean
+}
+
+soil.regular$prob_bimodal <- apply(X = test.soil, MARGIN = 2, FUN = prob.bimodal)
+
+ggplot(soil.regular, aes( mean_GS_soil, prob_bimodal))+geom_point()
+
 #pls.df$dipPint <- as.numeric(pls.df$dipPint)
 pls.nona$bimclass_soil <- ifelse(pls.nona$dipPint_soil <= 0.05 , "bimodal", "unimodal")
 png("outputs/pls_dipP_kdeest_soil_0.1_mode_crit_1000.png")
@@ -255,7 +305,10 @@ dev.off()
 write.csv(pls.nona, "outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit_1000.csv", row.names = FALSE)
 
 
-
+p.bimod <- read.csv("outputs/posterior_prob_bimodal_pls_10bins_dipP_only_PPET_by_distn.csv")
+head(p.bimod)
+p.bimod$bimod <- ifelse(p.bimod$prob_bimodal >=0.75, "Bimodal", "Unimodal")
+ggplot(p.bimod, aes(x,y, fill = bimod))+geom_raster()
 # >>>>>>>>>>>>>>>> get bimodality for FIA data <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 H <- Hpi.diag(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)) )

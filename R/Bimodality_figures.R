@@ -292,34 +292,6 @@ bimod.sm.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 
 
-# now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
-bim.class.m <- merge(bimod.pc.pls[,c("x", "y", "bimclass")],bimod.sm.pls[,c("x", "y", "bimclass_soil")], by = c("x", "y"))
-bim.class.m <- merge(bim.class.m, bimod.ppet.pls[,c("x", "y", "bimclass_ppet", "PLSdensity")])
-
-bim.class.m$nbimod <- as.character(rowSums(bim.class.m[,3:5] == "bimodal", na.rm = TRUE))
-# define nbimod as a category:
-bim.class.m$nbimod <- factor(bim.class.m$nbimod, levels = c("0","1", "2", "3", "No data"))
-
-three.color.bimodal.plots <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bim.class.m, aes(x=x, y=y, fill = nbimod))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
-  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "D", size = 4)
-
-
-one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
-two.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "2",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
-three.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "3",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
-
-one.bimpct <- one.bimpct + two.bimpct + three.bimpct
-two.bimpct <-  two.bimpct + three.bimpct
-three.bimpct <-  three.bimpct
-# make a plot with all three maps side by site:
-png(height = 6, width = 12, units = "in", res =300, "outputs/bimodal_maps_pls_side_by_side.png")
-plot_grid(  bimod.pc.pls.map, bimod.ppet.pls.map, bimod.sm.pls.map, labels =c("PC1", "PPET", "soil moisture"), ncol = 3)
-dev.off()
 
 # B: Species clusters:
 # read in the species classifications from" Species_clustering.R"
@@ -1520,6 +1492,33 @@ pls.df$soil_bins <- cut(pls.df$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
 kde.surf.soil.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil"], bimodal.pls.soil, by = "soil_bins")
 
 
+# now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
+bim.class.m <- merge(kde.surf.pc1.pls.df[,c("x", "y", "bimclass")],kde.surf.soil.pls.df [,c("x", "y", "bimclass_soil")], by = c("x", "y"))
+bim.class.m <- merge(bim.class.m, kde.surf.ppet.pls.df[,c("x", "y", "bimclass_ppet", "PLSdensity")])
+
+bim.class.m$nbimod <- as.character(rowSums(bim.class.m[,3:5] == "bimodal", na.rm = TRUE))
+# define nbimod as a category:
+bim.class.m$nbimod <- factor(bim.class.m$nbimod, levels = c("0","1", "2", "3", "No data"))
+
+three.color.bimodal.plots <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "D", size = 4)
+
+
+one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+two.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "2",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+three.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "3",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+
+one.bimpct <- one.bimpct + two.bimpct + three.bimpct
+two.bimpct <-  two.bimpct + three.bimpct
+three.bimpct <-  three.bimpct
+
+
+
 # merge for fia
 pls.df$pc1_bins_f <- cut(pls.df$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
 kde.surf.pc1.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_f"], bimodal.fia.pc1, by = "pc1_bins_f")
@@ -1531,14 +1530,35 @@ pls.df$soil_bins_f <- cut(pls.df$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
 kde.surf.soil.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil_f"], bimodal.fia.sm, by = "soil_bins_f")
 
 
-#kde.surf.pc1.pls.df <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit_1000.csv")
-#kde.surf.ppet.pls.df <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit_1000.csv")
-#kde.surf.soilm.pls.df <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit_1000.csv")
+# FIA three color maps
+# now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
+bim.class.m.f <- merge(kde.surf.pc1.fia.df[,c("x", "y", "bimclass_f")],kde.surf.soil.fia.df [,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
+bim.class.m.f <- merge(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimclass_ppet_f", "FIAdensity")])
 
-#kde.surf.pc1.fia.df <- read.csv("outputs/new_bim_surface_PC1_fia_0.1_mode_crit_1000.csv")
-#kde.surf.ppet.fia.df <- read.csv("outputs/new_bim_surface_PPET_fia_4_mode_crit_1000.csv")
-#kde.surf.soilm.fia.df <- read.csv("outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit_1000.csv")
+bim.class.m.f$nbimod <- as.character(rowSums(bim.class.m.f[,3:5] == "bimodal", na.rm = TRUE))
+# define nbimod as a category:
+bim.class.m.f$nbimod <- factor(bim.class.m.f$nbimod, levels = c("0","1", "2", "3", "No data"))
 
+three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m.f[!is.na(bim.class.m.f$FIAdensity),], aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "D", size = 4)
+
+
+one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+two.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "2",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+three.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "3",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
+
+one.bimpct <- one.bimpct + two.bimpct + three.bimpct
+two.bimpct <-  two.bimpct + three.bimpct
+three.bimpct <-  three.bimpct
+
+
+
+# merge fia and pls bimodal dfs together:
 kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "PLSdensity",  "bimclass","pc1_bins", "pc1_mids")], kde.surf.pc1.fia.df[,c("x", "y",  "FIAdensity","bimclass_f","pc1_bins_f", "pc1_mids_f")], by = c("x", "y"), all = TRUE)
 kde.surf.ppet.df <- merge(kde.surf.ppet.pls.df[,c("x", "y",  "PLSdensity",  "bimclass_ppet","ppet_bins", "ppet_mids")], kde.surf.ppet.fia.df[,c("x", "y",  "FIAdensity","bimclass_ppet_f", "ppet_bins_f","ppet_mids_f")], by = c("x", "y"), all = TRUE)
 kde.surf.soilm.df <- merge(kde.surf.soil.pls.df[,c("x", "y",  "PLSdensity",  "bimclass_soil", "soil_bins", "soil_mids")], kde.surf.soil.fia.df[,c("x", "y",  "FIAdensity","bimclass_soil_f", "soil_bins_f","soil_mids_f")], by = c("x", "y"), all = TRUE)
@@ -1848,6 +1868,10 @@ bimod.pc1.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group
 
 pc.bimod.85.hist <- ggplot(bimod.pc1.85.pls, aes(PC1_cc85,fill = bimclass_f_pred_pls_85_spl))+geom_histogram(position = "stack", binwidth = 0.25)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(-6.4, 4.5)
 
+
+# new estimates of bimodality:
+
+bimod.pc1.85.pls$pc1_bins <- cut(bimod.pc1.85.pls$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>> for pc1 predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 bimod.pc1.85.fia <- read.csv("outputs/new_bim_surface_PC1_future_8.5_pred_by_fia_1000_mode_crit.csv")
 bimod.pc1.85.fia$eco <- ifelse(bimod.pc1.85.fia$FIAdensity <= 0.5, "Prairie", 
@@ -1886,7 +1910,7 @@ bimod.pc1.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group
 pc.bimod.85.hist.fia <- ggplot(bimod.pc1.85.fia, aes(PC1_cc85, fill = bimclass_f_pred_fia_85_spl))+geom_histogram(position = "stack",  binwidth = 0.25)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(-6.4, 4.5)
 
 
-
+bimod.pc1.85.fia$pc1_bins_f <- cut(bimod.pc1.85.fia$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
 # >>>>>>>>>>>>>>>>>>>>>> for PPET predicted by past: <<<<<<<<<<<<<<<<<<<<<<<<<
 bimod.ppet.85.pls <- read.csv("outputs/new_bim_surface_PPET_rcp85_pred_by_pls_1000_mode_crit.csv")
 bimod.ppet.85.pls$eco <- ifelse(bimod.ppet.85.pls$PLSdensity <= 0.5, "Prairie", 
@@ -1925,6 +1949,8 @@ bimod.ppet.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = grou
 
 ppet.bimod.85.hist.pls <- ggplot(bimod.ppet.85.pls, aes(mean_ppet_GS_8.5, fill = bimclass_f_pred_pls_85_ppet_spl))+geom_histogram(position = "stack", binwidth = 10)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(-170, 300)
 
+
+bimod.ppet.85.pls$ppet_bins <- cut(bimod.ppet.85.pls$mean_ppet_GS_8.5, breaks=seq(-125, 310, by = 15))
 # >>>>>>>>>>>>>>>>>>>>>>>> for PPET predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 bimod.ppet.85.fia <- read.csv("outputs/new_bim_surface_PPET_rcp85_pred_by_fia_1000_mode_crit.csv")
 #bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet <- ifelse(is.na(bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet), "out-of-sample", bimod.ppet.85.fia$bimclass_f_pred_fia_85_ppet)
@@ -1964,6 +1990,8 @@ bimod.ppet.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = grou
 
 ppet.bimod.85.hist.fia <- ggplot(bimod.ppet.85.fia, aes(mean_ppet_GS_8.5, fill = bimclass_f_pred_fia_85_ppet_spl))+geom_histogram(position = "stack", binwidth = 10)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(-170, 300)
 
+bimod.ppet.85.fia$ppet_bins_f <- cut(bimod.ppet.85.fia$mean_ppet_GS_8.5, breaks=seq(-125, 310, by = 15))
+
 # >>>>>>>>>>>>>>>>>>>>>>>>>> for soil moisture predicted by past: <<<<<<<<<<<<<<<<<<<<<<<<<<
 bimod.sm.85.pls <- read.csv("outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
 bimod.sm.85.pls$eco <- ifelse(bimod.sm.85.pls$PLSdensity <= 0.5, "Prairie", 
@@ -2000,6 +2028,8 @@ bimod.sm.85.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,
 
 sm.bimod.85.hist.pls <- ggplot(bimod.sm.85.pls, aes(mean_GS_soil_8.5, fill = bimclass_f_pred_pls_85_soil_spl))+geom_histogram(position = "stack", binwidth = 0.05)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(0,1.75)
 
+bimod.sm.85.pls$soil_bins <- cut(bimod.sm.85.pls$mean_GS_soil_8.5, breaks=seq(0, 1.8, by = 0.05))
+
 # >>>>>>>>>>>>>>>>>>>>>>  for soil moisture predicted by modern: <<<<<<<<<<<<<<<<<<<<<<<<<<<
 bimod.sm.85.fia <- read.csv("outputs/new_bim_surface_soil_m_rcp85_pred_by_fia.csv")
 bimod.sm.85.fia$eco <- ifelse(bimod.sm.85.fia$FIAdensity <= 0.5, "Prairie", 
@@ -2033,6 +2063,7 @@ bimod.sm.85.fia.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", sm.bimpct.f, "%"))+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "F", size = 4)
 
 sm.bimod.85.hist.fia <- ggplot(bimod.sm.85.fia, aes(mean_GS_soil_8.5, fill = bimclass_f_pred_fia_85_soil_spl))+geom_histogram(position = "stack", binwidth  = 0.05)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "out-of-sample"="tan"), name = "")+xlim(0,1.75)
+bimod.sm.85.fia$soil_bins_f <- cut(bimod.sm.85.fia$mean_GS_soil_8.5, breaks=seq(0, 1.8, by = 0.05))
 
 
 # Plot all 3 fia and all 3 pls figures
@@ -2094,6 +2125,16 @@ pc1.df$bimod_comps_f <- ifelse(pc1.df$bimclass_f %in% "unimodal", as.character(p
 
 pc.bimod.pls.comp <- ggplot(pc1.df[!is.na(pc1.df$bimod_comps),], aes(PC1, fill = bimod_comps))+geom_histogram(position = "stack", binwidth = 0.25)+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Oak-Hickory"='#beaed4', "Oak"='#386cb0',"N. Mixed Forest"='#ffff99',"Beech-Maple"='#bf5b17',"Aspen"='#f0027f',"Pine"='#fdc086', "Boreal/Sub-boreal"='#7fc97f'), name = " ")+xlim(-6.4, 4.5)#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS PC1")+ylim(0,1000)
 pc.bimod.fia.comp <- ggplot(pc1.df[!is.na(pc1.df$bimod_comps_f),], aes(PC1fia, fill = bimod_comps_f))+geom_histogram(position = "stack", binwidth = 0.25)+scale_fill_manual(values = c("Pine"='#fdc086', "Mixed Hardwoods"='#003c30',"Oak/Maple"='#a6cee3',"Poplar"='#f0027f', "bimodal"='#d73027', "low-sample-unimodal"="grey"), name = " ")+xlim(-6.4, 4.5)+xlab("FIA PC1")+ylim(0,1000)
+# future hists for ppet:
+# future soil predictions:
+pc1.fut.fia <- merge(unique(pc1.df[,c("pc1_mids_f", "pc1_bins_f", "bimod_struct_f", "bimclass_f")]), bimod.pc1.85.fia, by = c("pc1_bins_f"))
+pc1.fut.pls <- merge(unique(pc1.df[,c("pc1_mids", "pc1_bins", "bimod_struct", "bimclass")]), bimod.pc1.85.pls,by.x= "pc1_bins", by.y= "pc1_bins")
+
+pc1.bimod.85.hist.pls <- ggplot(pc1.fut.pls[!is.na(pc1.fut.pls$bimod_struct),], aes(pc1_mids, fill = bimod_struct))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6.4, 4.5)#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+pc1.bimod.85.hist.fia <- ggplot(pc1.fut.fia[!is.na(pc1.fut.fia$bimod_struct_f),], aes(pc1_mids_f, fill = bimod_struct_f))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6.4, 4.5)
+
+
+
 
 
 # ---------------plot histograms for ppet:
@@ -2146,6 +2187,14 @@ ppet.pval.fia <- ggplot(bimodal.fia.ppet, aes(ppet_mids_f, median.p))+geom_point
 ppet.dip.pls <- ggplot(bimodal.pls.ppet, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("DIP value")+xlim(-170, 300)
 ppet.dip.fia <- ggplot(bimodal.fia.ppet, aes(ppet_mids_f, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02)+xlab("FIA P-PET")+ylab("DIP value")+xlim(-170, 300)
 
+# future hists for ppet:
+# future soil predictions:
+ppet.fut.fia <- merge(unique(ppet.df[,c("ppet_mids_f", "ppet_bins_f", "bimod_struct_f", "bimclass_ppet_f")]), bimod.ppet.85.fia, by = c("ppet_bins_f"))
+ppet.fut.pls <- merge(unique(ppet.df[,c("ppet_mids", "ppet_bins", "bimod_struct","bimclass_ppet")]), bimod.ppet.85.pls,by.x= "ppet_bins", by.y= "ppet_bins")
+
+ppet.bimod.85.hist.pls <- ggplot(ppet.fut.pls[!is.na(ppet.fut.pls$bimod_struct),], aes(ppet_mids, fill = bimod_struct))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("RCP 8.5 P-PET")+xlim(-170, 300)#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+ppet.bimod.85.hist.fia <- ggplot(ppet.fut.fia[!is.na(ppet.fut.fia$bimod_struct_f),], aes(ppet_mids_f, fill = bimod_struct_f))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("RCP 8.5 P-PET")+xlim(-170, 300)
+
 
 # plot histograms for soil moisuture:
 sm.df <- merge(kde.surf.soilm.df[,c("x", "y","bimclass_soil", "bimclass_soil_f","soil_mids","soil_bins","bimclass_soil_f","soil_bins_f" ,"soil_mids_f")], bimod.sm.85.pls, by = c("x", "y"))
@@ -2154,6 +2203,8 @@ sm.df <- merge(sm.df, species.clust[,c("x", "y", "foresttype")], by = c("x","y")
 
 sm.df$bimclass_soil <- ifelse(is.na(sm.df$bimclass_soil), "low-sample-unimodal", as.character(sm.df$bimclass_soil))
 sm.df$bimclass_soil_f <- ifelse(is.na(sm.df$bimclass_soil_f) & ! is.na(sm.df$FIAdensity), "low-sample-unimodal", as.character(sm.df$bimclass_soil_f))
+
+
 
 sm.bimod.pls <- ggplot(sm.df[!is.na(sm.df$PLSdensity),], aes(mean_GS_soil, fill = bimclass_soil))+geom_histogram(position = "identity", binwidth = 0.05)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(0,1.75)+xlab("PLS soil moisture")+ylim(0,800)+xlim(0,1.75)
 sm.bimod.fia <- ggplot(sm.df[!is.na(sm.df$FIAdensity),], aes(mean_GS_soil_m, fill = bimclass_soil_f))+geom_histogram(position = "identity", binwidth = 0.05)+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(0,1.75)+xlab("FIA soil moisture")+ylim(0,800)+xlim(0,1.75)
@@ -2181,6 +2232,7 @@ sm.bimod.fia.struct <- ggplot(sm.df[!is.na(sm.df$bimod_struct_f),], aes(soil_mid
   scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("FIA soil moisture")+xlim(0,1.75)
 
 
+
 sm.pval.pls <- ggplot(bimodal.pls.soil, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05, linetype = "dashed")+xlab("PLS soil moisture")+ylab("P value")+xlim(0,1.75)
 sm.pval.fia <- ggplot(bimodal.fia.sm, aes(soil_mids_f, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05)+xlab("FIA soil moisture")+ylab("P value")+xlim(0,1.75)
 
@@ -2195,6 +2247,15 @@ sm.df$bimod_comps_f <- ifelse(sm.df$bimclass_soil_f %in% "unimodal", as.characte
 
 soil.bimod.pls.comp <- ggplot(sm.df[!is.na(sm.df$bimod_comps),], aes(mean_GS_soil,fill = bimod_comps))+geom_histogram(position = "stack", binwidth = 0.05)+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Oak-Hickory"='#beaed4', "Oak"='#386cb0',"N. Mixed Forest"='#ffff99',"Beech-Maple"='#bf5b17',"Aspen"='#f0027f',"Pine"='#fdc086', "Boreal/Sub-boreal"='#7fc97f'), name = " ")+xlim(0,1.75)+xlab("PLS Soil Moisture")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
 soil.bimod.fia.comp <- ggplot(sm.df[!is.na(sm.df$bimod_comps_f),], aes(mean_GS_soil_m, fill = bimod_comps_f))+geom_histogram(position = "stack", binwidth = 0.05)+scale_fill_manual(values = c("Pine"='#fdc086', "Mixed Hardwoods"='#003c30',"Oak/Maple"='#a6cee3',"Poplar"='#f0027f', "bimodal"='#d73027', "low-sample-unimodal"="grey"), name = " ")+xlab("FIA Soil Moisture")+xlim(0,1.75)
+
+
+# future soil predictions:
+sm.fut.fia <- merge(unique(sm.df[,c("soil_mids_f", "soil_bins_f", "bimod_struct_f", "bimclass_soil_f")]), bimod.sm.85.fia, by = c("soil_bins_f"))
+sm.fut.pls <- merge(unique(sm.df[,c("soil_mids", "soil_bins.x", "bimod_struct", "bimclass_soil")]), bimod.sm.85.pls,by.x= "soil_bins.x", by.y= "soil_bins")
+
+sm.bimod.85.hist.pls <- ggplot(sm.fut.pls[!is.na(sm.fut.pls$bimod_struct),], aes(soil_mids, fill = bimod_struct))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlim(0,1.75)+xlab("RCP 8.5 Soil Moisture")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+sm.bimod.85.hist.fia <- ggplot(sm.fut.fia[!is.na(sm.fut.fia$bimod_struct_f),], aes(soil_mids_f, fill = bimod_struct_f))+geom_bar()+scale_fill_manual(values = c("low-sample-unimodal"="grey", "bimodal"='#d73027', "Forest" = "#01665e", "Prairie" = "#f6e8c3", "Savanna" = "#8c510a"), name = " ")+xlab("RCP 8.5 Soil Moisture")+xlim(0,1.75)
+
 
 
 # output all to file:
@@ -2354,8 +2415,8 @@ plot_grid(
   pc1.dip.fia+ xlab("FIA PC1")+ylim(0,0.1),
   pc1.pval.pls+ xlab("PLS PC1")+ylim(0,1),
   pc1.pval.fia+ xlab("FIA PC1")+ylim(0,1),
-  pc.bimod.85.hist+ ggtitle("RCP-8.5")+ylim(0,1000),
-  pc.bimod.85.hist.fia+ ggtitle("RCP-8.5")+ylim(0,1000), ncol = 2, align = "v", axis = "lr"
+  pc1.bimod.85.hist.pls+ ggtitle("RCP-8.5")+ylim(0,1000),
+  pc1.bimod.85.hist.fia+ ggtitle("RCP-8.5")+ylim(0,1000), ncol = 2, align = "v", axis = "lr"
 )
 dev.off()
 
@@ -2391,9 +2452,9 @@ dev.off()
 # now make the 3 colored maps for the future--need to deal with out of sample points for sm and ppet
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
-bim.class.f <- merge(bimod.pc1.85.pls[,c("x", "y", "bimclass_f_pred_pls_85")], bimod.sm.85.pls[,c("x", "y", "bimclass_f_pred_pls_85_soil")], by = c("x", "y"), all = TRUE)
-colnames(bim.class.f)[4] <- "bimcalss_f_pred_pls_85_sm"
-bim.class.f <- merge(bim.class.f, bimod.ppet.85.pls[,c("x", "y", "bimclass_f_pred_pls_ppet")])
+bim.class.f <- merge(pc1.fut.pls[,c("x", "y", "bimclass")],sm.fut.pls[,c("x", "y", "bimclass_soil")], by = c("x", "y"), all = TRUE)
+colnames(bim.class.f)[4] <- "bimclass_f_pred_pls_85_sm"
+bim.class.f <- merge(bim.class.f, ppet.fut.pls[,c("x", "y", "bimclass_ppet")])
 
 bim.class.f$nbimod <- as.character(rowSums(bim.class.f[,3:5] == "bimodal", na.rm = TRUE))
 
@@ -2416,9 +2477,9 @@ three.bimpct <-  three.bimpct
 
 # make 3 bimodal plots for future predicted by fia:
 
-bim.class.f.m <- merge(bimod.pc1.85.fia[,c("x", "y", "bimclass_f_pred_fia_85")],bimod.sm.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_soil")], by = c("x", "y"), all = TRUE)
+bim.class.f.m <- merge(pc1.fut.fia[,c("x", "y", "bimclass_f")],sm.fut.fia[,c("x", "y", "bimclass_soil_f")], by = c("x", "y"), all = TRUE)
 colnames(bim.class.f)[4] <- "bimcalss_f_pred_fia_85_sm"
-bim.class.f.m <- merge(bim.class.f.m, bimod.ppet.85.fia[,c("x", "y", "bimclass_f_pred_fia_85_ppet")])
+bim.class.f.m <- merge(bim.class.f.m, ppet.fut.fia[,c("x", "y", "bimclass_ppet_f")])
 
 bim.class.f.m$nbimod <- as.character(rowSums(bim.class.f.m[,3:5] == "bimodal", na.rm = TRUE))
 

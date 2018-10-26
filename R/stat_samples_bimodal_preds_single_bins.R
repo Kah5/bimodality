@@ -291,12 +291,6 @@ ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(data = pval
 
 saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
 
-pls.soil <- merge(pvalues, pls.df, by = c("soil_bins", "soil_mids"))
-
-pls.soil$bimodal.dip <- ifelse(as.numeric(pls.soil$median.p) <= 0.05, "bimodal", "unimodal")
-ggplot(pls.soil, aes(x, y, fill = bimodal.dip))+geom_raster()
-ggplot(pls.soil, aes(x, y, fill = soil_bins))+geom_raster()
-
 
 # ----------NOTE: FIA density sampling not updated as of 10.26.18
 

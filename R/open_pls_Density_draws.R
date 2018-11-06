@@ -2,11 +2,12 @@
 
 library(sp)
 library(raster)
-library(ncdf4)
+library(ncdf4) 
 library(reshape2)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+
 pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc")
 
 # data structure: x = 146, y = 180, sample = 250 MCMC samples
@@ -37,14 +38,59 @@ total.m$y <- as.numeric(total.m$y)
 # write the extracted total density values to a csv:
 write.csv(total.m, "data/extracted_total_PLS_density_draws.csv", row.names = FALSE)
 
+# get a summary of density draws by grid cell: mean, & 95% CI
 dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
+# get rid of the NA cells:
+dens.summary <- dens.summary[!is.na(dens.summary$mean_dens),]
 
+# just plot the raw data:
 ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
 
+# make a prettier map of density:
 
-# read in old estimates of density + climate data:
+dens.summary$density_discrete <- ifelse(dens.summary$mean_dens <= 0.5, "Prairie", 
+                                ifelse(dens.summary$mean_dens <= 47, "Savanna",
+                                       ifelse(dens.summary$mean_dens > 47 & dens.summary$mean_dens <= 100, "47-100",
+                                              ifelse(dens.summary$mean_dens > 100 & dens.summary$mean_dens <= 200, "100-200", 
+                                                     ifelse(dens.summary$mean_dens > 200 & dens.summary$mean_dens <= 300, "200-300", 
+                                                            ifelse(dens.summary$mean_dens > 300 & dens.summary$mean_dens <= 400, "300-400",
+                                                                   ifelse(dens.summary$mean_dens > 400 & dens.summary$mean_dens <= 500, "400-500",
+                                                                          ifelse(dens.summary$mean_dens > 500 , "500+", "No data"))))))))
+
+dens.summary$density_discrete<- factor(dens.summary$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+
+
+
+
+pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.summary, aes(x=x, y=y, fill = density_discrete))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c('#dfc27d',
+                               '#8c510a',
+                               '#d9f0a3',
+                               '#addd8e',
+                               '#78c679',
+                               '#41ab5d',
+                               '#238443',
+                               '#005a32',"darkgrey"), name ="Tree density", na.value = 'darkgrey', drop = F) +
+  
+  theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
+
+
+# save map to png
+png(height = 4, width = 3, units = "in", res = 300,"/outputs/paper_figs_unc/PLS_smooth_dens_summary_map_full_alt_colors.png")
+pls.map.alt.color
+dev.off()
+
+
+
+# read in old estimates of density + climate data to see how well it matches the previous grid cell estimates:
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
 head(dens.summary)

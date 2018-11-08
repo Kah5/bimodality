@@ -18,18 +18,19 @@ dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
 # read in draws of total PLS density:
 total.m <- read.csv("data/extracted_total_PLS_density_draws.csv")
 
-dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+dens.summary <- total.m %>% group_by(x, y) %>% dplyr::summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                                media_dens = median(value, na.rm=TRUE),
                                                          ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
                                                          ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
 
-ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+ggplot(dens.summary, aes(x,y, fill =  media_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
 
 dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
 
 dens <- dens[!is.na(dens$mean_dens), ]
 
-ggplot(dens, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
-
+ggplot(dens[dens$mean_dens <= 0.5,], aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+write.csv(dens, "outputs/density_full_unc.csv", row.names = FALSE)
 # -------------------figure 1 A: Map of pls bimodality
 
 # need to set up state outlines:
@@ -78,6 +79,8 @@ dens$density_discrete <- ifelse(dens$mean_dens <= 0.5, "Prairie",
 dens$density_discrete<- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
 
+
+
 pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=dens, aes(x=x, y=y, fill = density_discrete))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -101,6 +104,55 @@ png(height = 4, width = 3, units = "in", res = 300,"/Users/kah/Documents/bimodal
 pls.map.alt.color+ggtitle("PLS mean density smoothed")
 dev.off()
 
+# plot median density
+
+dens$density_discrete_median <- ifelse(dens$media_dens <= 0.5, "Prairie", 
+                                ifelse(dens$media_dens <= 47, "Savanna",
+                                       ifelse(dens$media_dens > 47 & dens$media_dens <= 100, "47-100",
+                                              ifelse(dens$media_dens > 100 & dens$media_dens <= 200, "100-200", 
+                                                     ifelse(dens$media_dens > 200 & dens$media_dens <= 300, "200-300", 
+                                                            ifelse(dens$media_dens > 300 & dens$media_dens <= 400, "300-400",
+                                                                   ifelse(dens$media_dens > 400 & dens$media_dens <= 500, "400-500",
+                                                                          ifelse(dens$media_dens > 500 , "500+", "No data"))))))))
+
+dens$density_discrete_median<- factor(dens$density_discrete_median, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+
+dens$density_discrete_low <- ifelse(dens$ci.low_dens <= 0.5, "Prairie", 
+                                       ifelse(dens$ci.low_dens <= 47, "Savanna",
+                                              ifelse(dens$ci.low_dens > 47 & dens$ci.low_dens <= 100, "47-100",
+                                                     ifelse(dens$ci.low_dens > 100 & dens$ci.low_dens <= 200, "100-200", 
+                                                            ifelse(dens$ci.low_dens > 200 & dens$ci.low_dens <= 300, "200-300", 
+                                                                   ifelse(dens$ci.low_dens > 300 & dens$ci.low_dens <= 400, "300-400",
+                                                                          ifelse(dens$ci.low_dens > 400 & dens$ci.low_dens <= 500, "400-500",
+                                                                                 ifelse(dens$ci.low_dens > 500 , "500+", "No data"))))))))
+
+dens$density_discrete_low <- factor(dens$density_discrete_low, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+
+
+
+
+pls.map.alt.color.low <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens, aes(x=x, y=y, fill =density_discrete_low))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c('#dfc27d',
+                               '#8c510a',
+                               '#d9f0a3',
+                               '#addd8e',
+                               '#78c679',
+                               '#41ab5d',
+                               '#238443',
+                               '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = F) +
+  
+  theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
+
+
+png(height = 4, width = 3, units = "in", res = 300,"/Users/kah/Documents/bimodality/outputs/paper_figs_unc/PLS_smooth_density_map_full_alt_colors.png")
+pls.map.alt.color+ggtitle("PLS mean density smoothed")
+dev.off()
 
 
 ggplot()+geom_errorbar(data= dens, aes(ymin = ci.low_dens, ymax = ci.high_dens), color = "grey")+
@@ -145,105 +197,155 @@ ggplot()+geom_histogram(data = dens, aes(mean_dens), fill = "red")+geom_histogra
 
 
 # map bimodal based on PC1:
+out.df <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_PC1_stat.rds")
+pvalues <- out.df  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                              median.p = median(pvalue, na.rm = TRUE),
+                                                              ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                              ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                              mean.d = mean(dip, na.rm = TRUE),
+                                                              median.d = median(dip, na.rm = TRUE),
+                                                              ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                              ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
-bimod.pc.pls <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit_1000.csv")
-bimod.pc.pls$eco <- ifelse(bimod.pc.pls$PLSdensity <= 0.5, "Prairie", 
-                           ifelse(bimod.pc.pls$PLSdensity <= 47, "Savanna", "Forest"))
-bimod.pc.pls$bimclass_eco <- ifelse(is.na(bimod.pc.pls$bimclass),NA ,paste(bimod.pc.pls$bimclass, bimod.pc.pls$eco))
-bimod.pc.pls$bimclass <- ifelse(is.na(bimod.pc.pls$bimclass), "low sample", as.character(bimod.pc.pls$bimclass)) # make NA low samples
 
-bimod.pc.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.pc.pls, aes(x=x, y=y, fill = bimclass_eco))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
-                                                                          '#c7eae5',
-                                                                          '#f6e8c3',
-                                                                          '#5ab4ac'
-  )) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+dens$pc1_bins <- cut(dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 
-pc1.bimpct <- round(length(bimod.pc.pls[bimod.pc.pls$bimclass %in% "bimodal",]$bimclass)/length(bimod.pc.pls$bimclass)*100, digits = 2)
+# also make density bins:
+dens$dens.bins <- cut(bimod.pc.pls$mean_dens, breaks=seq(0, 775, by = 25))
+ordered.bins <- data.frame(dens.bins = unique(cut(dens[order(dens$mean_dens),]$mean_dens, breaks=seq(0, 775, by = 25))),
+                           mids = seq(0, 775, by = 25))
 
+
+hist.summary<- dens %>% group_by(dens.bins) %>% dplyr::summarise(mean = count(mean_dens),
+                                                    ci.high = count(ci.high_dens), 
+                                                  ci.low =count(ci.low_dens))
+
+
+ordered.cuts <- data.frame(pc1_bins = unique(cut(pls.df[order(pls.df$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
+pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
+bimod.pc.pls <- left_join(dens, pvalues, by = c("pc1_bins"))
+
+
+# merge with the envt + pc data
+
+bimod.pc.pls$bimclass <- ifelse(bimod.pc.pls$mean.p <= 0.05, "bimodal", "unimodal")
 
 bimod.pc.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.pc.pls, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", pc1.bimpct, "%"))
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
+
+
+pc1.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
+plot_grid(pc1.dip.pls, pc1.pval.pls)
+dev.off()
 
 # pased on P-PET:
 
-bimod.ppet.pls <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit_1000.csv")
-bimod.ppet.pls$eco <- ifelse(bimod.ppet.pls$PLSdensity <= 0.5, "Prairie", 
-                             ifelse(bimod.ppet.pls$PLSdensity <= 47, "Savanna", "Forest"))
-bimod.ppet.pls$bimclass_eco <- ifelse(is.na(bimod.ppet.pls$bimclass_ppet),NA ,paste(bimod.ppet.pls$bimclass_ppet, bimod.ppet.pls$eco))
-
-bimod.ppet.pls$bimclass_ppet <- ifelse(is.na(bimod.ppet.pls$bimclass_ppet), "low sample", as.character(bimod.ppet.pls$bimclass_ppet)) # make NA low samples
-
-
-bimod.ppet.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.pls, aes(x=x, y=y, fill = bimclass_eco))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
-                                                                          '#c7eae5',
-                                                                          '#f6e8c3',
-                                                                          '#5ab4ac'
-  )) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
-ppet.bimpct <- round(length(bimod.ppet.pls[bimod.ppet.pls$bimclass_ppet %in% "bimodal",]$bimclass_ppet)/length(bimod.ppet.pls$bimclass_ppet)*100, digits = 2)
+out.df <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_PPET_stat.rds")
+pvalues <- out.df  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
+dens$ppet_bins <- cut(dens$GS_ppet, breaks=seq(-170, 205, by = 15))
+
+ordered.cuts <- data.frame(ppet_bins = unique(cut(pls.df[order(pls.df$GS_ppet),]$GS_ppet, breaks=seq(-170, 205, by = 15))),
+                           mids = seq(-167.5, 205, by = 15))
+pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
+
+bimod.ppet.pls <- left_join(dens, pvalues, by = c("ppet_bins"))
+
+
+# merge with the envt + pc data
+
+bimod.ppet.pls$bimclass_ppet <- ifelse(bimod.ppet.pls$mean.p <= 0.05, "bimodal", "unimodal")
 bimod.ppet.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.ppet.pls, aes(x=x, y=y, fill = bimclass_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal" = '#d73027', "unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal" = '#d73027', "unimodal" = '#4575b4', "low sample" = "tan"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", ppet.bimpct, "%"))
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
-ggplot(bimod.ppet.pls, aes(GS_ppet, PLSdensity, color = bimclass_ppet))+geom_point()
+
+ppet.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("DIP value")
+ppet.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("P value")
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
+plot_grid(ppet.dip.pls, ppet.pval.pls)
+dev.off()
 
 # based on soil moisture estimates:
-bimod.sm.pls <- read.csv("outputs/new_bim_surface_soil_moist_pls_0.1_mode_crit_1000.csv")
-bimod.sm.pls$eco <- ifelse(bimod.sm.pls$PLSdensity <= 0.5, "Prairie", 
-                           ifelse(bimod.sm.pls$PLSdensity <= 47, "Savanna", "Forest"))
-bimod.sm.pls$bimclass_eco <- ifelse(is.na(bimod.sm.pls$bimclass_soil),NA ,paste(bimod.sm.pls$bimclass_soil, bimod.sm.pls$eco))
+out.df <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
 
-bimod.sm.pls$bimclass_soil <- ifelse(is.na(bimod.sm.pls$bimclass_soil), "low sample", as.character(bimod.sm.pls$bimclass_soil)) # make NA low samples
-
-
-
-bimod.sm.pls.eco.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.sm.pls, aes(x=x, y=y, fill = bimclass_eco))+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title=" ")+ scale_fill_manual(values= c('#01665e','#d8b365','#8c510a',
-                                                                          '#c7eae5',
-                                                                          '#f6e8c3',
-                                                                          '#5ab4ac'
-  )) +
-  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+pvalues <- out.df  %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                median.p = median(pvalue, na.rm = TRUE),
+                                                                ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                mean.d = mean(dip, na.rm = TRUE),
+                                                                median.d = median(dip, na.rm = TRUE),
+                                                                ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
-sm.bimpct <- round(length(bimod.sm.pls[bimod.sm.pls$bimclass_soil %in% "bimodal",]$bimclass_soil)/length(bimod.sm.pls$bimclass_soil)*100, digits = 2)
+dens$soil_bins <- cut(dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
+
+ordered.cuts <- data.frame(soil_bins = levels(unique(cut(pls.df[order(pls.df$mean_GS_soil),]$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05)))),
+                           mids = seq(0.025, 1.8, by = 0.05))
+pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
+
+bimod.sm.pls <- left_join(dens, pvalues, by = c("soil_bins"))
+
+
+# merge with the envt + pc data
+
+bimod.sm.pls$bimclass_soil <- ifelse(bimod.sm.pls$mean.p <= 0.05, "bimodal", "unimodal")
+
 
 
 bimod.sm.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.sm.pls, aes(x=x, y=y, fill = bimclass_soil))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal" = '#4575b4', "low sample" = "tan"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle(paste("bimodal region =", sm.bimpct, "%"))
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
+
+soil.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("DIP value")
+soil.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("P value")
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
+plot_grid(soil.dip.pls, soil.pval.pls)
+dev.off()
+
+
+png(height = 10, width = 10, units = "in", res = 300, "outputs/paper_figs_unc/bimodal_maps_with_pvalues.png")
+plot_grid(bimod.pc.pls.map, bimod.ppet.pls.map, bimod.sm.pls.map,
+          pc1_unc, ppet_unc, soil_unc,
+          pc1.dip.pls+ylim(0,0.1), ppet.dip.pls+ylim(0,0.1), soil.dip.pls+ylim(0,0.1),
+          pc1.pval.pls, ppet.pval.pls, soil.pval.pls, 
+          ncol = 3, rel_heights = c(1,1,0.5, 0.5))
+dev.off()
 
 # B: Species clusters:
 # read in the species classifications from" Species_clustering.R"

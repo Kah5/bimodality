@@ -3,6 +3,8 @@
 
 library(tidyr)
 library(dplyr)
+library(raster)
+version <- "1.7-5"
 setwd("/Users/kah/Documents/bimodality")
 #precipitation, temperature, and temperuater are all extracted/calculated in R/crc03_Extract_Prism_historical.R.R
 #outputs/pr_monthly_Prism_1985-1925_full.csv
@@ -52,7 +54,7 @@ P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
 climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
 
 
-ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
+ggplot(P.PET, aes(x, y, fill=GS_ppet))+geom_raster()
 
 write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
 
@@ -65,22 +67,23 @@ colnames(P.PET.mod) <- c("X", "x", "y", "Mar_ppet", "Apr_ppet", "May_ppet",
                          "Jun_ppet", "Jul_ppet", "Aug_ppet", "Sep_ppet", "Oct_ppet","Nov_ppet", "GS_ppet_mod")
 
 
-climate.data <- merge(climate.data, P.PET.mod[,c("x", "y", "GS_ppet_mod")], by = c("x", "y"))
+climate.data <- merge(climate.data, P.PET.mod[,c("x", "y", "GS_ppet_mod")], by = c("x", "y"), all.x = TRUE)
 ggplot(climate.data, aes(x, y, fill=GS_ppet_mod))+geom_raster()
+ggplot(climate.data, aes(x, y, fill=pasttmean))+geom_raster()
 
 ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 # merge with soil moisture balance (calucated from P, PET and AWC):
 moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
-climate.data <- merge(moist_bal[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
+climate.data <- merge( moist_bal[,c("x", "y", "Mean_GS")],climate.data,  by = c("x", "y"), all.y = TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil"
-ggplot(moist_bal, aes(x,y, fill = Mean_GS)) + geom_raster()
+ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
 
 # merge with modern soil moisture balance (calucated from P, PET and AWC)
 moist_bal.m <- read.csv('outputs/soil.moisture_1999_2015_with_mean.csv')
 #moist_bal.m <- read.csv("outputs/soil.moisture_end_of_mo_1985_2015.csv")
-#ggplot(moist_bal, aes(x,y, fill = X2015_06)) + geom_raster()
-climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")], climate.data, by = c("x", "y"))
+#ggplot(moist_bal.m, aes(x,y, fill = Mean_07)) + geom_raster()
+climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")],climate.data,   by = c("x", "y"), all.y =TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil_m"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
@@ -131,27 +134,46 @@ climate.data$ksat <- raster::extract(ksat8km.alb, climate.data[,c('x', 'y')])
 climate.data$CEC <- raster::extract(CEC8km.alb, climate.data[,c('x','y')])
 climate.data$CaCO3 <- raster::extract(CaCO38km.alb, climate.data[,c('x','y')])
 
+write.csv(climate.data, "outputs/climate.data.for.soil.moisture.csv")
 
 # -----------------------Merge climate and vegetation data----------------------------------------------
-#pls <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv")) # pls density data
 pls <- readRDS("data/cell_dens.RDS") # pls density data from PLS_products repo
 head(pls)
-#pls <- data.frame(pls)
-colnames(pls) <- c("cell", "PLSdensity", "x", "y", "PLSdensity_adj")
-pls <- pls[!is.na(pls$PLSdensity),]
+
+colnames(pls) <- c("cell", "PLSdensity", "ncells","PLSdensitysd","x", "y")
+
+# read in Chris' total density + unc estimates:
+total.m <- read.csv("data/extracted_total_PLS_density_draws.csv")
+
+dens.summary <- total.m %>% group_by(x, y) %>% dplyr::summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
+                                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
+
+ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+
+# merge together the old and the new estimates:
+dens <- merge(pls, dens.summary, by = c("x", "y"), all.y = TRUE)
+
+# get rid of masked cells
+dens <- dens[!is.na(dens$mean_dens),]
+
+ggplot(dens, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+
+pls <- dens[,c("x", "y", "cell","PLSdensity", "PLSdensitysd", "mean_dens", "ci.low_dens", "ci.high_dens")]
 fia <- read.csv(paste0("data/midwest_pls_fia_density_alb",version,".csv")) # fia density data
 
-pls.clim <- merge(pls, climate.data, by = c("x", "y"), all.x = TRUE)
-fia.clim <- merge(fia, climate.data, by = c("x", "y"), all.x = TRUE)
+pls.clim <- merge(pls, climate.data, by = c("x", "y"), all.y = TRUE)
+fia.clim <- merge(fia, climate.data, by = c("x", "y"), all.y = TRUE)
 
 ggplot(pls.clim, aes(x,y, fill = sandpct))+geom_raster()
+ggplot(pls.clim, aes(x,y, fill = mean_dens))+geom_raster()
 
-ggplot(pls.clim, aes(mean_GS_soil, PLSdensity, color = sandpct))+geom_point(size = 0.5)+ylim(0,650)
+ggplot(pls.clim, aes(mean_GS_soil, mean_dens, color = sandpct))+geom_point(size = 0.5)+ylim(0,650)
 
 # ---------------------- Principal Component Analysis of Environmental Data ----------------------------
 
 #------------------------PCA of environmental variables-------------------------------
-
+# need to run this when we have the mean_GS_soil data updated:
 dens.rm <- na.exclude(pls.clim[,c("x","y", "cell",'MAP1910', "MAP2011", "moderndeltaP", 
                                   "pastdeltaP", "modtmean", "pasttmean",
                                   "moddeltaT", "deltaT", "sandpct", "awc", "CEC", "CaCO3", "mean_GS_soil")])
@@ -250,7 +272,6 @@ cc <- scale(dens.rm[,c("MAP2011", "moderndeltaP",
 # rename so that it is the same column names as PLS--for prediction purposes
 colnames(cc) <- c('MAP1910',   
                   "pastdeltaP", "pasttmean",
-                  "deltaT", "sandpct", "awc", "CEC", "CaCO3")
 
 newscores <- predict(res, newdata=cc) # predict new scores based on the PLS pca 
 

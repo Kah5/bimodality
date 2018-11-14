@@ -40,6 +40,7 @@ write.csv(total.m, "data/extracted_total_PLS_density_draws.csv", row.names = FAL
 
 # get a summary of density draws by grid cell: mean, & 95% CI
 dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                         median_dens = median(value, na.rm=TRUE),
                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
 # get rid of the NA cells:
@@ -212,6 +213,7 @@ write.csv(total.m, "data/extracted_total_FIA_density_draws.csv", row.names = FAL
 
 # get a summary of density draws by grid cell: mean, & 95% CI
 dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens_fia = mean(value, na.rm=TRUE),
+                                                         median_dens_fia = median(value, na.rm=TRUE),
                                                          ci.low_dens_fia = quantile(value, 0.025, na.rm=TRUE), 
                                                          ci.high_dens_fia = quantile(value, 0.975, na.rm=TRUE))
 # get rid of the NA cells:
@@ -342,4 +344,26 @@ fia.data.stat.diff <- ggplot(dens, aes(x, y, fill = diff_discrete_fia)) + geom_r
 
 png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/fia_data_minus_mean_stat_fia.png")
 fia.data.stat.diff
+dev.off()
+
+
+# read in total draws for PLS and FIA and make a histogram:
+
+total.fia <- read.csv("data/extracted_total_FIA_density_draws.csv")
+total.pls <- read.csv("data/extracted_total_PLS_density_draws.csv")
+
+png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/FIA_PLS_hist_all_draws.png")
+ggplot()+geom_histogram(data = total.fia, aes(value),binwidth = 15, fill= "red", alpha = 0.75)+geom_histogram(data = total.pls, aes(value), binwidth = 15,fill= "blue", alpha = 0.75)
+dev.off()
+
+
+# same plot but with mean densities:
+
+png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/FIA_PLS_hist_mean_draws.png")
+ggplot()+geom_histogram(data = dens, aes(mean_dens),binwidth = 15, fill= "red", alpha = 0.75)+geom_histogram(data = dens, aes(mean_dens_fia), binwidth = 15,fill= "blue", alpha = 0.75)
+dev.off()
+
+
+png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/FIA_PLS_hist_median_draws.png")
+ggplot()+geom_histogram(data = dens, aes(median_dens),binwidth = 15, fill= "red", alpha = 0.75)+geom_histogram(data = dens, aes(median_dens_fia), binwidth = 15,fill= "blue", alpha = 0.75)
 dev.off()

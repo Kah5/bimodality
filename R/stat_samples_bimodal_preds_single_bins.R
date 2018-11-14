@@ -292,226 +292,167 @@ ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(data = pval
 saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
 
 
-# ----------NOTE: FIA density sampling not updated as of 10.26.18
 
 
 # >>>>>>>>>>>>>>>> get bimodality for FIA data <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-H <- Hpi.diag(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
+pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
+# read in draws of total PLS density:
+total.m <- read.csv("data/extracted_total_FIA_density_draws.csv")
+
+dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
+                                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
+
+ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+
+dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
+
+dens <- dens[!is.na(dens$mean_dens), ]
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["16%"])[[1]])
-contour_95 <- data.frame(contour_95)
+# add cell numbers + climate to the total.m dataset
+fia.df <- left_join(dens[,c("x", "y", "cell", "PC1fia", "GS_ppet_mod","mean_GS_soil_m" )], total.m, by = c("x", "y"))
 
-# get points to evaluate:
 
-# new bimodality estimates for PPET:
+library("MASS")
+library(ggplot2)
+library(modes)
 
-pls.nona <- pls.nona[!is.na(pls.nona$PC1fia),]
-pls.nona$pc1_bins <- cut(pls.nona$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+
+#<<<<<<<<<<<<<<<<<<<<<<<< estimate PDF of data using kde >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+fia.df$PC1fiabins <- cut(fia.df$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+ordered.cuts <- data.frame(PC1fiabins = unique(cut(fia.df[order(fia.df$PC1fia),]$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
+
+fia.df <- fia.df[!is.na(fia.df$PC1fia),]
+fia.df$PC1fia_bins <- cut(fia.df$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
 
 # get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pls.nona[order(pls.nona$PC1fia),]$pc1_bins)), c(","))
+first <- strsplit(as.character(unique(fia.df[order(fia.df$PC1fia),]$PC1fia_bins)), c(","))
 firsts <- unlist(first) 
 x <- 1:length(firsts)
 firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
 mids <- substring(firsts, first = 2,last = 6)
 
-ordered.cuts <- data.frame(pc1_bins = unique(pls.nona[order(pls.nona$PC1fia),]$pc1_bins),
-                           pc1_mids = as.numeric(mids)+0.025)
-
-pls.nona <- merge(ordered.cuts, pls.nona, by = "pc1_bins")
-#ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soilbins),]
+ordered.cuts <- data.frame(PC1fia_bins = unique(fia.df[order(fia.df$PC1fia),]$PC1fia_bins),
+                           PC1fia_mids = as.numeric(substring(firsts, first = 2,last = 6))+.75)
 
 
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$PC1fia_bins),]
+fia.df <- merge(ordered.cuts, fia.df, by = 'PC1fia_bins')
+
+# binning sampling from statistical estimates:
 
 
-interp.densp.bins <- function(pc1bin){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  #closest <- contour_95[which.min(abs(contour_95$x - pc1bin)),]
-  #maxy <- ceiling(closest$y) # get the closest y value and round up
+sample.densp.bins <- function(PC1fiabin){
   
-  
-  points <- expand.grid(unique(pls.nona[pls.nona$pc1_bins %in% pc1bin,]$PC1fia), y=0:400)
-  #points <- expand.grid(, y=0:maxy)
-  
-  colnames(points) <- c("x", "y")
   dipP <- list()
-  for(i in 1:100){
-    if(max(kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-      
-      P <- NA
-      dipstat <- NA
-      
-    }else{
-      
-      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona$PC1fia, pls.nona$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-      samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-      dipfull <- diptest::dip.test(samp)
-      dipfull
-      P <- dipfull$p.value
-      dipstat <- dipfull$statistic
-      pks <- amps(samp)$Peaks[,1]
-      
-      #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-      P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, 1) 
-      
-      #plot(density(samp))
-    }
+  df <- data.frame(points = fia.df[fia.df$PC1fia_bins %in% PC1fiabin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
     dipP[[i]] <- data.frame(pvalue = P, 
                             dip = dipstat, 
-                            pc1_bins = pc1bin)
+                            PC1fia_bins = PC1fiabin )
   }
   dipP2 <- do.call(rbind, dipP)
   dipP2
 }
 
 
-dipandp <-interp.densp.bins(pc1bin = "(3.25,3.5]")
+dipandp <- sample.densp.bins(PC1fiabin = "(-2.5,-2.25]")
+test.df <- do.call(rbind, dipandp)
 
-dipandp %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                     median.p = median(pvalue, na.rm = TRUE),
-                                                     ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                     ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                     mean.d = mean(dip, na.rm = TRUE),
-                                                     median.d = median(dip, na.rm = TRUE),
-                                                     ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                     ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-
-
-out <- apply(data.frame(ordered.cuts$pc1_bins), 1, interp.densp.bins)
+out <- apply(data.frame(ordered.cuts$PC1fia_bins), 1, sample.densp.bins)
 out.df <- as.data.frame(do.call(rbind, out))
 
-pvalues <- out.df %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                               median.p = median(pvalue, na.rm = TRUE),
-                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                               mean.d = mean(dip, na.rm = TRUE),
-                                                               median.d = median(dip, na.rm = TRUE),
-                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+pvalues <- out.df %>% group_by(PC1fia_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                              median.p = median(pvalue, na.rm = TRUE),
+                                                              ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                              ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                              mean.d = mean(dip, na.rm = TRUE),
+                                                              median.d = median(dip, na.rm = TRUE),
+                                                              ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                              ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
-pvalues <- merge(pvalues, ordered.cuts, by = "pc1_bins")
-ggplot(pvalues, aes(pc1_mids, median.d))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.d, ymax=ci.high.d), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
-ggplot(pvalues, aes(pc1_mids, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05, linetype = "dashed")
 
-#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
+ggplot(pvalues, aes(PC1fia_bins, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.d, ymax=ci.high.d), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
+#ggplot(pvalues, aes(PC1fia_mids, pvalue))+geom_point()
 
-saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_FIA_pc1_bins_kde_sample.rds")
-
-fia.pc1 <- merge(pvalues, pls.nona, by = c("pc1_bins", "pc1_mids"))
-
-fia.pc1$bimodal.dip <- ifelse(as.numeric(fia.pc1$median.p) <= 0.05, "bimodal", "unimodal")
-ggplot(fia.pc1, aes(x, y, fill = bimodal.dip))+geom_raster()
-ggplot(fia.pc1, aes(x, y, fill = pc1_bins))+geom_raster()
-
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PC1fia_stat.rds")
 
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>do the same for P-PET on the modern landscape:
-H <- Hpi.diag(x=na.omit(cbind(pls.nona$GS_ppet_mod, pls.nona$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.nona$GS_ppet_mod, pls.nona$FIAdensity)), H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,40,35,45,50,60,75,80,85,95))
-#points(na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
 
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
+# new bimodality estimates for PPET:
+
+fia.df <- fia.df[!is.na(fia.df$GS_ppet_mod),]
+fia.df$ppet_bins <- cut(fia.df$GS_ppet_mod, breaks=seq(-170, 205, by = 15))
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-pls.nona <- pls.nona[!is.na(pls.nona$GS_ppet_mod),]
-pls.nona$ppet_bins <- cut(pls.nona$GS_ppet_mod, breaks=seq(-125, 310, by = 15))
-
-
+ordered.cuts <- data.frame(PPETbins = levels(unique(fia.df$ppet_bins)),
+                           mids = seq(-162.5, 205, by = 15))
 
 # get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pls.nona[order(pls.nona$ppet_bins),]$ppet_bins)), c(","))
+first <- strsplit(as.character(unique(fia.df[order(fia.df$GS_ppet_mod),]$ppet_bins)), c(","))
 firsts <- unlist(first) 
 x <- 1:length(firsts)
 firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- as.numeric(substring(firsts, first = 2,last = 6))
+mids <- substring(firsts, first = 2,last = 6)
 
-ordered.cuts <- data.frame(ppet_bins = unique(pls.nona[order(pls.nona$ppet_bins),]$ppet_bins),
-                           ppet_mids = mids + 7.5)
+ordered.cuts <- data.frame(ppet_bins = unique(fia.df[order(fia.df$GS_ppet_mod),]$ppet_bins),
+                           ppet_mids = as.numeric(mids)+7.5)
 
 
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
-pls.nona <- merge(ordered.cuts, pls.nona, by = 'ppet_bins')
+fia.df <- merge(ordered.cuts, fia.df, by = 'ppet_bins')
 
 # binning sampling from KDE estimates:
-interp.ppet.bins <- function(pc1bin){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - mean(pls.nona[pls.nona$ppet_bins %in% pc1bin,]$ppet_mids))),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
+
+sample.ppet.bins <- function(pc1bin){
   
-  
-  points <- expand.grid(unique(pls.nona[pls.nona$ppet_bins %in% pc1bin,]$GS_ppet_mod), y=0:maxy)
-  #points <- expand.grid(, y=0:maxy)
-  
-  colnames(points) <- c("x", "y")
   dipP <- list()
-  for(i in 1:100){
-    if(max(kde(x=na.omit(cbind(pls.nona$GS_ppet_mod, pls.nona$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-      
-      P <- NA
-      dipstat <- NA
-      
-    }else{
-      
-      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona$GS_ppet_mod, pls.nona$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-      samp <- sample(x=df[df$freq > 0,]$points, prob = df[df$freq > 0,]$freq, size = 1000, replace = TRUE)
-      #samp <- sample(x=pls.nona[pls.nona$ppet_bins %in% pc1bin,]$PLSdensity, size = 1000, replace = TRUE)
-      
-      dipfull <- diptest::dip.test(samp)
-      dipfull
-      P <- dipfull$p.value
-      dipstat <- dipfull$statistic
-      pks <- amps(samp)$Peaks[,1] 
-      
-      #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-      if(P <=0.05){
-      P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, 1) 
-      }#dipstat <- ifelse(length(pks) >= 2 & max(pks) >= 100, dipstat, NA) 
-      
-      #plot(density(samp))
-    }
+  df <- data.frame(points = fia.df[fia.df$ppet_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
     dipP[[i]] <- data.frame(pvalue = P, 
                             dip = dipstat, 
-                            ppet_bins = pc1bin)
+                            ppet_bins = pc1bin )
   }
   dipP2 <- do.call(rbind, dipP)
   dipP2
 }
-
-dipandp <- interp.ppet.bins(pc1bin = "(205,220]")
+dipandp <- sample.ppet.bins(pc1bin = "(-170,-155]")
 summary(dipandp)
-dipandp %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                               median.p = median(pvalue, na.rm = TRUE),
-                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                               mean.d = mean(dip, na.rm = TRUE),
-                                                               median.d = median(dip, na.rm = TRUE),
-                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+#test.df <- do.call(rbind, dipandp)
 
-out <- apply(data.frame(unique(ordered.cuts$ppet_bins)), 1, interp.ppet.bins)
+out <- apply(data.frame(ordered.cuts$ppet_bins), 1, sample.ppet.bins)
 out.df <- as.data.frame(do.call(rbind, out))
 
 pvalues <- out.df %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
@@ -523,75 +464,59 @@ pvalues <- out.df %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pva
                                                                ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
                                                                ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
-pvalues <- merge(pvalues, ordered.cuts, by = c("ppet_bins", "ppet_mids"))
-ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05, linetype = "dashed")
 
 ggplot(pvalues, aes(ppet_bins, mean.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0.1)+theme_bw()+geom_hline(yintercept = 0.05)
 
 #ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
 
-saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_FIA_PPET_kde.rds")
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_fia_PPET_stat.rds")
 
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>do the same for GS_soil:
-pls.nona <- pls.nona[!is.na(pls.nona$FIAdensity),]
-H <- Hpi.diag(x=na.omit(cbind(pls.nona$mean_GS_soil_m, pls.nona$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.nona$mean_GS_soil_m, pls.nona$FIAdensity)), H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,40,35,45,50,60,75,80,85,95))
-#points(na.omit(cbind(pls.nona$PC1, pls.nona$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
+# new bimodality estimates for PPET:
 
-
-
-pls.nona <- pls.nona[!is.na(pls.nona$mean_GS_soil_m),]
-pls.nona$soil_bins <- cut(pls.nona$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
+fia.df <- fia.df[!is.na(fia.df$mean_GS_soil_m),]
+fia.df$soil_bins <- cut(fia.df$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
 
 # get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pls.nona[order(pls.nona$mean_GS_soil_m),]$soil_bins)), c(","))
+first <- strsplit(as.character(unique(fia.df$soil_bins)), c(","))
 firsts <- unlist(first) 
 x <- 1:length(firsts)
 firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
 mids <- substring(firsts, first = 2,last = 6)
 
-ordered.cuts <- data.frame(soil_bins = unique(pls.nona[order(pls.nona$mean_GS_soil_m),]$soil_bins),
+ordered.cuts <- data.frame(soil_bins = unique(fia.df$soil_bins),
                            soil_mids = as.numeric(substring(firsts, first = 2,last = 6))+0.025)
 
-pls.nona <- merge(ordered.cuts, pls.nona, by = "soil_bins")
+fia.df <- merge(ordered.cuts, fia.df, by = "soil_bins")
 #ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soilbins),]
 
 # binning sampling from KDE estimates:
 interp.soil.bins <- function(pc1bin){
   
   # find the closest PC1 value in the contour_95 df:
-  closest <- contour_95[which.min(abs(contour_95$x - mean(pls.nona[pls.nona$soil_bins %in% pc1bin,]$soil_mids))) & contour_95$y >= 0,]
+  closest <- contour_95[which.min(abs(contour_95$x - mean(fia.df[fia.df$soil_bins %in% pc1bin,]$soil_mids))) & contour_95$y >= 0,]
   maxy <- ceiling(closest$y) # get the closest y value and round up
   
   
-  points <- expand.grid(unique(pls.nona[pls.nona$soil_bins %in% pc1bin,]$mean_GS_soil_m), y=0:maxy)
+  points <- expand.grid(unique(fia.df[fia.df$soil_bins %in% pc1bin,]$mean_GS_soil_m), y=0:maxy)
   
   colnames(points) <- c("x", "y")
   dipP <- list()
   for(i in 1:100){
-    if(max(kde(x=na.omit(cbind(pls.nona$mean_GS_soil_m, pls.nona$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+    if(max(kde(x=na.omit(cbind(fia.df$mean_GS_soil_m, fia.df$fiadensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
       
       P <- NA
       dipstat <- NA
       
     }else{
       
-      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona$mean_GS_soil_m, pls.nona$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(fia.df$mean_GS_soil_m, fia.df$fiadensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
       samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-      #samp <- sample(x=pls.nona[pls.nona$soil_bins %in% pc1bin,]$FIAdensity, size = 1000, replace = TRUE)
+      #samp <- sample(x=fia.df[fia.df$soil_bins %in% pc1bin,]$fiadensity, size = 1000, replace = TRUE)
       dipfull <- diptest::dip.test(samp)
       dipfull
       P <- dipfull$p.value
@@ -611,19 +536,36 @@ interp.soil.bins <- function(pc1bin){
   dipP2
 }
 
-dipandp <- interp.soil.bins(pc1bin = "(0.8,0.85]")
-dipandp %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                     median.p = median(pvalue, na.rm = TRUE),
-                                                     ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                     ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                     mean.d = mean(dip, na.rm = TRUE),
-                                                     median.d = median(dip, na.rm = TRUE),
-                                                     ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                     ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+sample.soil.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = fia.df[fia.df$soil_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            soil_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
 
 
+dipandp <- sample.soil.bins(pc1bin = "(0.8,0.85]")
 
-out <- apply(data.frame(ordered.cuts$soil_bins), 1, interp.soil.bins)
+
+out <- apply(data.frame(ordered.cuts$soil_bins), 1, sample.soil.bins)
 out.df <- as.data.frame(do.call(rbind, out))
 
 pvalues <- out.df %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
@@ -641,7 +583,7 @@ ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(data = pval
 
 #ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
 
-saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_FIA_soil_15bins_kde_sample.rds")
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_fia_soil_15bins_kde_stat.rds")
 
 fia.soil <- merge(pvalues, pls.nona, by = c("soil_bins", "soil_mids"))
 
@@ -650,593 +592,448 @@ ggplot(fia.soil, aes(x, y, fill = bimodal.dip))+geom_raster()
 ggplot(fia.soil, aes(x, y, fill = soil_bins))+geom_raster()
 
 
-
+# future not uptdated as of 11.12.18
 # >>>>>>>>>>>>> Predict future based on pls relationship with climate <<<<<<<<<<<<<<<<<<<<<<<<<<
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
 future <- future.pr
-future.pr<- pls.df <- future.pr[!is.na(future.pr$PLSdensity) & future.pr$PLSdensity <= 550,]
-H <- Hpi.diag(x=na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)) )
-fhat <- kde(x=na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
+pls.total.m <- read.csv("data/extracted_total_PLS_density_draws.csv")
+# merge future pr & 
+future.pr <- pls.df <- left_join(future[,c("x", "y", "cell", "PC1","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )], pls.total.m, by = c("x", "y"))
 
 
+ordered.cuts <- data.frame(pc1_bins = levels(cut(future.pr[order(future.pr$PC1_cc85),]$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
 
-# need to evaluate diptest over the density values where we have 95% probability of data:
+future.pr <- future.pr[!is.na(future.pr$PC1_cc85),]
+future.pr$pc1_bins_cc85 <- cut(future.pr$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
 
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
-  points <- expand.grid(seq(round(pc1val, 2) - 0.05, round(pc1val, 2) + 0.05, by = 0.1), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    
-    dipP <- NA
-    
-  }else{
-    
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    samp2 <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
-interp.densp(pc1val = -1.54)
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$pc1_bins),]
+future.pr <- merge(ordered.cuts, future.pr, by.x = 'pc1_bins', by.y ="pc1_bins_cc85")
 
-future$dipPint_f_pred_pls <- NA
-future <- future[!is.na(future$PC1_cc85),]
+future.pr <- future.pr[!is.na(future.pr$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+pls.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_PLS_PC1_stat.rds")
+
+pvalues <- pls.stat  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
 
-# apply interp function over the whole dataset
 
-future$dipPint_f_pred_pls_85 <- apply(data.frame(future$PC1_cc85), 1, interp.densp)
+pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
+bimod.pc.pls <- left_join(future.pr, pvalues, by = "pc1_bins" )
+
+
+# merge with the envt + pc data
+
+bimod.pc.pls$bimclass <- ifelse(bimod.pc.pls$mean.p <= 0.05, "bimodal", "unimodal")
+
+bimod.pc.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc.pls, aes(x=x, y=y, fill = bimclass))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
+
+
+
+pc1.dip.pls.8.5 <- ggplot(pvalues, aes(pc1_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.pls.8.5 <- ggplot(pvalues, aes(pc1_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_pc1_ccesm_8.5.png")
+plot_grid(pc1.dip.pls, pc1.pval.pls)
+dev.off()
+
+
 
 future$bimclass_f_pred_pls_85 <- ifelse(future$dipPint_f_pred_pls_85 <= 0.05 , "bimodal", "unimodal")
-png("outputs/rcp85_dipP_kdeest_pred_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_85))+geom_raster()
+png("outputs/rcp85_dipP_pred_by_pls_0.1_map.png")
+ggplot(bimod.pc.pls, aes(x,y, fill = mean.p))+geom_raster()
 dev.off()
 
-png("outputs/rcp85_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85))+geom_raster()
+png("outputs/rcp85_bimodal_pred_by_pls_0.1_map.png")
+ggplot(bimod.pc.pls, aes(x,y, fill = bimclass))+geom_raster()
 dev.off()
 
-# -----------------------for 6.0
-future$dipPint_f_pred_pls_60 <- apply(data.frame(future$PC1_cc60), 1, interp.densp)
 
-future$bimclass_f_pred_pls_60 <- ifelse(future$dipPint_f_pred_pls_60 <= 0.05 , "bimodal", "unimodal")
-png("outputs/rcp60_dipP_kdeest_pred_by_pls0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_60))+geom_raster()
+# now do the same for P-PET 
+
+future.pr$ppet_bins <- cut(future.pr$mean_ppet_GS, breaks=seq(-170, 205, by = 15))
+
+
+ordered.cuts <- data.frame(ppet_bins = levels(future.pr$ppet_bins),
+                           ppet_mids = seq(-162.5, 205, by = 15))
+
+future.pr <- future.pr[!is.na(future.pr$mean_ppet_GS),]
+#future.pr$pc1_bins_cc85 <- cut(future.pr$mean_ppet_GS, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
+future.pr <- merge(ordered.cuts, future.pr, by= "ppet_bins")
+
+future.pr <- future.pr[!is.na(future.pr$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+ppet.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_PLS_PPET_stat.rds")
+
+pvalues <- ppet.stat  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                 median.p = median(pvalue, na.rm = TRUE),
+                                                                 ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                 ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                 mean.d = mean(dip, na.rm = TRUE),
+                                                                 median.d = median(dip, na.rm = TRUE),
+                                                                 ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                 ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+
+
+pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
+bimod.ppet.pls <- left_join(future.pr, pvalues, by = "ppet_bins" )
+
+
+# merge with the envt + pc data
+
+bimod.ppet.pls$bimclass_ppet <- ifelse(bimod.ppet.pls$mean.p <= 0.05, "bimodal", "unimodal")
+
+bimod.ppet.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.pls, aes(x=x, y=y, fill = bimclass_ppet))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
+
+
+
+ppet.dip.pls.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+ppet.pval.pls.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet_ccesm_8.5.png")
+plot_grid(ppet.dip.pls.8.5, ppet.pval.pls.8.5)
 dev.off()
 
-png("outputs/rcp60_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_60))+geom_raster()
+
+
+png("outputs/rcp85_dipP_pred_by_pls_0.1_map_ppet.png")
+ggplot(bimod.ppet.pls, aes(x,y, fill = mean.p))+geom_raster()
 dev.off()
 
-# ---------------------------for 45
-future$dipPint_f_pred_pls_45 <- apply(data.frame(future$PC1_cc45), 1, interp.densp)
-
-future$bimclass_f_pred_pls_45 <- ifelse(future$dipPint_f_pred_pls_45 <= 0.05 , "bimodal", "unimodal")
-png("outputs/rcp45_dipP_kdeest_pred_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_45))+geom_raster()
+png("outputs/rcp85_bimodal_pred_by_pls_0.1_map_ppet.png")
+ggplot(bimod.ppet.pls, aes(x,y, fill = bimclass))+geom_raster()
 dev.off()
 
-png("outputs/rcp45_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_45))+geom_raster()
+# get future soil moisture estimates:
+
+
+# now do the same for P-PET and soil moisture
+
+future.pr$soil_bins <- cut(future.pr$mean_GS_soil_8.5,  breaks=seq(0, 1.8, by = 0.05))
+
+
+ordered.cuts <- data.frame(soil_bins = levels(future.pr$soil_bins),
+                           soil_mids = seq(0.025, 1.8, by = 0.05))
+
+future.pr <- future.pr[!is.na(future.pr$mean_GS_soil_8.5),]
+#future.pr$pc1_bins_cc85 <- cut(future.pr$mean_GS_soil_8.5, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soil_bins),]
+future.pr <- merge(ordered.cuts, future.pr, by= "soil_bins")
+
+future.pr <- future.pr[!is.na(future.pr$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+soil.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
+
+pvalues <- soil.stat  %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                   median.p = median(pvalue, na.rm = TRUE),
+                                                                   ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                   ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                   mean.d = mean(dip, na.rm = TRUE),
+                                                                   median.d = median(dip, na.rm = TRUE),
+                                                                   ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                   ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+
+
+pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
+bimod.soil.pls <- left_join(future.pr, pvalues, by = "soil_bins" )
+
+
+# merge with the envt + pc data
+
+bimod.soil.pls$bimclass_soil <- ifelse(bimod.soil.pls$mean.p <= 0.05, "bimodal", "unimodal")
+
+bimod.soil.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.soil.pls, aes(x=x, y=y, fill = bimclass_soil))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
+
+
+
+soil.dip.pls.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+soil.pval.pls.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_soil_ccesm_8.5.png")
+plot_grid(soil.dip.pls.8.5, soil.pval.pls.8.5)
 dev.off()
 
-#----------------------- for 2.6;
-future$dipPint_f_pred_pls_26 <- apply(data.frame(future.pr$PC1_cc26), 1, interp.densp)
 
-future$bimclass_f_pred_pls_26 <- ifelse(future.pr$dipPint_f_pred_pls_26 <= 0.05 , "bimodal", "unimodal")
-png("outputs/rcp26_dipP_kdeest_pred_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_26))+geom_raster()
+
+png("outputs/rcp85_dipP_pred_by_pls_0.1_map_soil.png")
+ggplot(bimod.soil.pls, aes(x,y, fill = mean.p))+geom_raster()
 dev.off()
 
-png("outputs/rcp26_bimodal_kdeest_by_pls_0.1_mode_crit_1000.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_26))+geom_raster()
+png("outputs/rcp85_bimodal_pred_by_pls_0.1_map_soil.png")
+ggplot(bimod.soil.pls, aes(x,y, fill = bimclass_soil))+geom_raster()
 dev.off()
 
-write.csv(future,"outputs/new_bim_surface_PC1_future_8.5_pred_by_pls_0.1_mode_crit_1000.csv", row.names = FALSE)
+
+
 
 ########################################################################
 # make predictions for the future from FIA relationship to climate
 #
 future.pr <- read.csv("outputs/Future_PCA.csv")
 future <- future.pr
-H <- Hpi.diag(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(future.pr$PC1fia, future.pr$FIAdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["5%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-# get points to evaluate:
+fia.total.m <- read.csv("data/extracted_total_FIA_density_draws.csv")
+# merge future pr & 
+future.fia <- fia.df <- left_join(future[,c("x", "y", "cell", "PC1fia","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )], fia.total.m, by = c("x", "y"))
 
 
-# need to evaluate diptest over the density values where we have 95% probability of data:
+ordered.cuts <- data.frame(pc1_bins = levels(cut(future.fia[order(future.fia$PC1_cc85),]$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
+
+future.fia <- future.fia[!is.na(future.fia$PC1_cc85),]
+future.fia$pc1_bins_cc85 <- cut(future.fia$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$pc1_bins),]
+future.fia <- merge(ordered.cuts, future.fia, by.x = 'pc1_bins', by.y ="pc1_bins_cc85")
+
+future.fia <- future.fia[!is.na(future.fia$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+fia.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_PLS_PC1fia_stat.rds")
+colnames(fia.stat) <- c("pvalue", "dip", "pc1_bins")
+pvalues <- fia.stat  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                 median.p = median(pvalue, na.rm = TRUE),
+                                                                 ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                 ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                 mean.d = mean(dip, na.rm = TRUE),
+                                                                 median.d = median(dip, na.rm = TRUE),
+                                                                 ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                 ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
 
-interp.densp <- function(pc1val){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - pc1val)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(pc1val, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(pc1val, 401 ), y=0:400)
-  points <- expand.grid(seq(round(pc1val, 2) - 0.07, round(pc1val, 2) + 0.07, by = 0.005), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    
-    dipP <- NA
-    
-  }else{
-    
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$PC1fia, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp, simulate.p.value = TRUE, B = 500)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100, dipP, 1) # only take bimodal places where we can identify the modes and that have one forest mode
-    
-    # draw from a second distribution--if it is actally bimodal, the second distribution is likely to also show bimodality
-    # however, if the sampled population is bimodal by chance, then drawing from a second distribution will prevent this:
-    samp2 <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-  }
-  dipP
-  #pks
-}
 
-interp.densp(pc1val = -1.567)
+pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
+bimod.pc.fia <- left_join(future.fia, pvalues, by = "pc1_bins" )
 
-future$dipPint_f_pred_fia_85 <- NA
-future <- future[!is.na(future$PC1_cc85),]
 
-#future
+# merge with the envt + pc data
 
-future$dipPint_f_pred_fia_85 <- apply(data.frame(future$PC1_cc85), 1, interp.densp)
+bimod.pc.fia$bimclass <- ifelse(bimod.pc.fia$mean.p <= 0.05, "bimodal", "unimodal")
 
-future$bimclass_f_pred_fia_85 <- ifelse(future$dipPint_f_pred_fia_85 <= 0.05 , "bimodal", "unimodal")
-
-write.csv(future, "outputs/new_bim_surface_PC1_future_8.5_pred_by_fia_1000_mode_crit.csv", row.names = FALSE)
-
-ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85))+geom_raster()
-
-future.1 <- read.csv( "outputs/new_bim_surface_PC1_future_scenarios_pred_by_pls.csv")
-future.test <- merge(future.1, future[,c("x", "y","cell", "bimclass_f_pred_fia_85", "dipPint_f_pred_fia_85")], by = c("x", "y", "cell"), all = TRUE)
-#future <- future.test
-
-bimod.pc.fia.85.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=future.test, aes(x=x, y=y, fill = bimclass_f_pred_fia_85))+
+bimod.pc.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.pc.fia, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c( '#4575b4','#d73027'
-  ), labels = c("unimodal", "bimodal")) +
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
-bimod.pc.pls.85.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=future.test, aes(x=x, y=y, fill = bimclass_f_pred_pls_85))+
+
+pc1.dip.fia.8.5 <- ggplot(pvalues, aes(pc1_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.fia.8.5 <- ggplot(pvalues, aes(pc1_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_pc1_ccesm_8.5.png")
+plot_grid(pc1.dip.fia.8.5, pc1.pval.fia.8.5)
+dev.off()
+
+
+
+png("outputs/rcp85_dipP_pred_by_fia_0.1_map.png")
+ggplot(bimod.pc.fia, aes(x,y, fill = mean.p))+geom_raster()
+dev.off()
+
+png("outputs/rcp85_bimodal_pred_by_fia_0.1_map.png")
+ggplot(bimod.pc.fia, aes(x,y, fill = bimclass))+geom_raster()
+dev.off()
+
+
+# now do the same for P-PET 
+
+future.fia$ppet_bins <- cut(future.fia$mean_ppet_GS, breaks=seq(-170, 205, by = 15))
+
+
+ordered.cuts <- data.frame(ppet_bins = levels(future.fia$ppet_bins),
+                           ppet_mids = seq(-162.5, 205, by = 15))
+
+future.fia <- future.fia[!is.na(future.fia$mean_ppet_GS),]
+#future.fia$pc1_bins_cc85 <- cut(future.fia$mean_ppet_GS, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
+future.fia <- merge(ordered.cuts, future.fia, by= "ppet_bins")
+
+future.fia <- future.fia[!is.na(future.fia$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+ppet.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_FIA_PPET_stat.rds")
+
+pvalues <- ppet.stat  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                   median.p = median(pvalue, na.rm = TRUE),
+                                                                   ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                   ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                   mean.d = mean(dip, na.rm = TRUE),
+                                                                   median.d = median(dip, na.rm = TRUE),
+                                                                   ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                   ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+
+
+pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
+bimod.ppet.fia <- left_join(future.fia, pvalues, by = "ppet_bins" )
+
+
+# merge with the envt + pc data
+
+bimod.ppet.fia$bimclass_ppet <- ifelse(bimod.ppet.fia$mean.p <= 0.05, "bimodal", "unimodal")
+
+bimod.ppet.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.ppet.fia, aes(x=x, y=y, fill = bimclass_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing", title="Prob(forest)")+ scale_fill_manual(values= c( '#4575b4','#d73027'
-  ), labels = c("unimodal", "bimodal")) +
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
-                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
-png(height = 4, width = 6, units = 'in', res = 300, "outputs/paper_figs/fig3_preds_kde_surfaces.png")
-grid.arrange(bimod.pc.pls.85.map, bimod.pc.fia.85.map, ncol = 2)
+
+
+ppet.dip.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+ppet.pval.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_ppet_ccesm_8.5.png")
+plot_grid(ppet.dip.fia.8.5, ppet.pval.fia.8.5)
 dev.off()
 
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on future P-PET <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# get future climates:
-future.pr <- read.csv("outputs/Future_PCA.csv")
-future <- future.pr
-pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
-
-
-pls.nona <- pls.df[!is.na(pls.df$PLSdensity) & pls.df$PLSdensity <= 550,]
-
-colnames(future.pr)[58] <- 'mean_ppet_GS_8.5'
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
-future <- future.pr
-#future.pr <- future.pr[!is.na(future.pr$PLSdensity) & future.pr$PLSdensity <= 550,]
-H <- Hpi.diag(x=na.omit(cbind(future.pr$GS_ppet, future.pr$PLSdensity)) )
-fhat <- kde(x=na.omit(cbind(future.pr$GS_ppet, future.pr$PLSdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
-
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["5%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-# get points to evaluate:
-
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-
-interp.densp.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(ppetval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(ppetval, 2) - 4, round(ppetval, 2) + 4, by = 0.5), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$GS_ppet, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    samp2 <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
-
-interp.densp.ppet(-17)
-
-future$dipPint_f_pred_pls_ppet <- NA
-future <- future[!is.na(future$mean_ppet_GS_8.5),]
-
-
-
-future$dipPint_f_pred_pls_ppet <- apply(data.frame(future$mean_ppet_GS_8.5), 1, interp.densp.ppet)
-future$bimclass_f_pred_pls_85_ppet <- NA
-future$bimclass_f_pred_pls_85_ppet <- ifelse(future$dipPint_f_pred_pls_ppet <= 0.05 , "bimodal", "unimodal")
-
-png("outputs/rcp85_dipP_kdeest_pred_by_pls_ppet_1000_mode_crit.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_ppet))+geom_raster()
+png("outputs/rcp85_dipP_pred_by_fia_0.1_map_ppet.png")
+ggplot(bimod.ppet.fia, aes(x,y, fill = mean.p))+geom_raster()
 dev.off()
 
-png("outputs/rcp85_bimodal_kdeest_by_pls_ppet_1000_mode_crit.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85_ppet))+geom_raster()
+png("outputs/rcp85_bimodal_pred_by_fia_0.1_map_ppet.png")
+ggplot(bimod.ppet.fia, aes(x,y, fill = bimclass))+geom_raster()
 dev.off()
 
-write.csv(future, "outputs/new_bim_surface_PPET_rcp85_pred_by_pls_1000_mode_crit.csv")
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on future P-PET <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# get future climates:
-future.pr <- read.csv("outputs/Future_PCA.csv")
-colnames(future.pr)[58] <- 'mean_ppet_GS_8.5'
-
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
-future <- future.pr
-
-pls.nona.f <- future.pr[!is.na(future.pr$FIAdensity) & future.pr$FIAdensity <= 550,]
-H <- Hpi.diag(x=na.omit(cbind(pls.nona.f$GS_ppet_mod, pls.nona.f$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(pls.nona.f$GS_ppet_mod, pls.nona.f$FIAdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(pls.nona.f$PC1, pls.nona.f$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
+# get future soil moisture estimates:
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["5%"])[[1]])
-contour_95 <- data.frame(contour_95)
+# now do the same for P-PET and soil moisture
 
-# get points to evaluate:
+future.fia$soil_bins <- cut(future.fia$mean_GS_soil_8.5,  breaks=seq(0, 1.8, by = 0.05))
 
 
-# need to evaluate diptest over the density values where we have 95% probability of data:
+ordered.cuts <- data.frame(soil_bins = levels(future.fia$soil_bins),
+                           soil_mids = seq(0.025, 1.8, by = 0.05))
+
+future.fia <- future.fia[!is.na(future.fia$mean_GS_soil_8.5),]
+#future.fia$pc1_bins_cc85 <- cut(future.fia$mean_GS_soil_8.5, breaks=seq(-5.5, 4.5, by = 0.25))
 
 
 
-interp.densp.ppet <- function(ppetval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - ppetval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(ppetval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(ppetval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(ppetval, 2) - 4, round(ppetval, 2) + 4, by = 0.5), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.nona.f$GS_ppet_mod, pls.nona.f$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.nona.f$GS_ppet_mod, pls.nona.f$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    samp2 <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    #plot(density(samp))
-  }
-  dipP
-  #pks
-}
-interp.densp.ppet(-17)
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soil_bins),]
+future.fia <- merge(ordered.cuts, future.fia, by= "soil_bins")
 
-future$dipPint_f_pred_fia_ppet <- NA
-future$bimclass_f_pred_fia_85_ppet <- NA
-future <- future[!is.na(future$mean_ppet_GS_8.5),]
+future.fia <- future.fia[!is.na(future.fia$value),]
+
+
+# read in the estimates of p values and dip stats to merge with future climate bins
+soil.stat <- readRDS( "outputs/bimodal_bins_p_value_dipP_FIA_soil_15bins_kde_stat.rds")
+
+pvalues <- soil.stat  %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                   median.p = median(pvalue, na.rm = TRUE),
+                                                                   ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                   ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                   mean.d = mean(dip, na.rm = TRUE),
+                                                                   median.d = median(dip, na.rm = TRUE),
+                                                                   ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                   ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
 
 
+pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
+bimod.soil.fia <- left_join(future.fia, pvalues, by = "soil_bins" )
 
-future$dipPint_f_pred_fia_ppet <- apply(data.frame(future$mean_ppet_GS_8.5), 1, interp.densp.ppet)
 
-future$bimclass_f_pred_fia_85_ppet <- ifelse(future$dipPint_f_pred_fia_ppet <= 0.05 , "bimodal", "unimodal")
-# all of the future is out of sample, so we will just call it unimodal for now, but we dont know
+# merge with the envt + pc data
 
-#future$bimclass_f_pred_fia_85_ppet <- "unimodal"
-png("outputs/rcp85_dipP_kdeest_pred_by_fia_ppet_1000_mode_crit.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_fia_ppet ))+geom_raster()
+bimod.soil.fia$bimclass_soil <- ifelse(bimod.soil.fia$mean.p <= 0.05, "bimodal", "unimodal")
+
+bimod.soil.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bimod.soil.fia, aes(x=x, y=y, fill = bimclass_soil))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  )) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
+
+
+
+soil.dip.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+soil.pval.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+
+
+png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_soil_ccesm_8.5.png")
+plot_grid(soil.dip.fia.8.5, soil.pval.fia.8.5)
 dev.off()
 
-png("outputs/rcp85_bimodal_kdeest_by_fia_ppet_1000_mode_crit.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85_ppet))+geom_raster()
+
+
+png("outputs/rcp85_dipP_pred_by_fia_0.1_map_soil.png")
+ggplot(bimod.soil.fia, aes(x,y, fill = mean.p))+geom_raster()
 dev.off()
 
-write.csv(future, "outputs/new_bim_surface_PPET_rcp85_pred_by_fia_1000_mode_crit.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-# >>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on future soil moisture modeled <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# get future climates:
-future.pr <- read.csv("outputs/Future_PCA.csv")
-#colnames(future.pr)[56] <- 'mean_GS_soil_8.5'
-colnames(future.pr)[56:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin", "mean_GS_ppet_8.5")
-
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
-future <- future.pr
-#future.pr <- future.pr[!is.na(future.pr$PLSdensity) & future.pr$PLSdensity <= 550,]
-H <- Hpi.diag(x=na.omit(cbind(future.pr$mean_GS_soil, future.pr$PLSdensity)) )
-fhat <- kde(x=na.omit(cbind(future.pr$mean_GS_soil, future.pr$PLSdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
-
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-# get points to evaluate:
-
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-
-
-interp.densp.soil <- function(soilval){
-  
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(soilval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(soilval, 2) - 0.05, round(soilval, 2) + 0.05, by = 0.001), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    samp2 <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    #plot(density(samp))
-  }
-  dipP
-  
-}
-
-interp.densp.soil( soilval = 0.01 )
-
-future$dipPint_f_pred_pls_soil <- NA
-future$bimclass_f_pred_pls_85_soil <- NA
-future <- future[!is.na(future$mean_GS_soil_8.5),]
-
-
-
-future$dipPint_f_pred_pls_soil <- apply(data.frame(future$mean_GS_soil_8.5), 1, interp.densp.soil)
-
-future$bimclass_f_pred_pls_85_soil <- ifelse(future$dipPint_f_pred_pls_soil <= 0.05 , "bimodal", "unimodal")
-future$bimclass_f_pred_pls_85_soil <- ifelse(is.na(future$bimclass_f_pred_pls_85_soil), "out-of-sample", future$bimclass_f_pred_pls_85_soil)
-
-png("outputs/rcp85_dipP_kdeest_pred_by_pls_ppet.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_pls_soil))+geom_raster()
+png("outputs/rcp85_bimodal_pred_by_fia_0.1_map_soil.png")
+ggplot(bimod.soil.fia, aes(x,y, fill = bimclass_soil))+geom_raster()
 dev.off()
 
-png("outputs/rcp85_bimodal_kdeest_by_pls_ppet.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_pls_85_soil))+geom_raster()
-dev.off()
-
-write.csv(future, "outputs/new_bim_surface_soil_m_rcp85_pred_by_pls.csv")
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bimodality based on fia soil moisture <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# get future climates:
-future.pr <- read.csv("outputs/Future_PCA.csv")
-colnames(future.pr)[56:58] <- c("mean_GS_soil_8.5", "mean_GS_soil_8.5_post_spin", "mean_GS_ppet_8.5")
-future.pr <- merge(future.pr[! names(future.pr) %in% c("GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], pls.nona[,c("x", "y", "GS_ppet" ,"GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m")], by = c("x", "y"), all = TRUE)
-future <- future.pr
-
-future.pr <- future.pr[!is.na(future.pr$FIAdensity) & future.pr$FIAdensity <= 550,]
-H <- Hpi.diag(x=na.omit(cbind(future.pr$mean_GS_soil_m, future.pr$FIAdensity)) )
-fhat <- kde(x=na.omit(cbind(future.pr$mean_GS_soil_m, future.pr$FIAdensity)), #H=H, 
-            compute.cont = TRUE )
-plot(fhat, display="filled.contour2", cont=c(1,5,25,50,60,75,80,85,95))
-#points(na.omit(cbind(future.pr$PC1, future.pr$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-#plot(fhat, display = "persp", xlab = "PC1fia", ylab = "FIAdensity")
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
 
 
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["5%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-# get points to evaluate:
-
-
-# need to evaluate diptest over the density values where we have 95% probability of data:
-
-
-
-interp.densp.soil <- function(soilval){
-  # find the closest PC1 value in the contour_95 df:
-  contour_95 <- contour_95[contour_95$y >=0,]
-  closest <- contour_95[which.min(abs(contour_95$x - soilval)),]
-  maxy <- ceiling(closest$y) # get the closest y value and round up
-  #points <- data.frame(x=rep(soilval, maxy+1 ), y=0:maxy) # points all at the pc1 value, and along a grid of density
-  #points <- data.frame(x=rep(soilval, 401 ), y=0:400)
-  points <- expand.grid(seq(round(soilval, 2) - 0.05, round(soilval, 2) + 0.05, by = 0.001), y=0:maxy)
-  colnames(points) <- c("x", "y")
-  if(max(kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
-    dipP <- NA
-  }else{
-    df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.df$mean_GS_soil_m, pls.df$FIAdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
-    samp <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP <- diptest::dip.test(samp)$p.value
-    pks <- amps(samp)$Peaks[,1]
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    samp2 <- sample(x=df$points, prob = df$freq, size = 10000, replace = TRUE)
-    dipP2 <- diptest::dip.test(samp2)$p.value
-    pks2 <- amps(samp2)$Peaks[,1]
-    
-    #dipP <- diptest::dip.test( df$freq)$p.value
-    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
-    dipP <- ifelse(length(pks) >= 2 & max(pks) >= 100 & dipP2 <= 0.05, dipP, 1) 
-    
-    
-  }
-  dipP
-  
-}
-
-interp.densp.soil(soilval = 0.25)
-
-future$dipPint_f_pred_fia_soil_8.5 <- NA
-future$bimclass_f_pred_fia_soil_8.5 <- NA
-future <- future[!is.na(future$mean_GS_soil_8.5),]
-
-
-
-
-
-future$dipPint_f_pred_fia_soil_8.5 <- apply(data.frame(future$mean_GS_soil_8.5), 1, interp.densp.soil)
-
-future$bimclass_f_pred_fia_85_soil <- ifelse(future$dipPint_f_pred_fia_soil_8.5 <= 0.05 , "bimodal", "unimodal")
-future$bimclass_f_pred_fia_85_soil <- ifelse(is.na(future$bimclass_f_pred_fia_85_soil), "out-of-sample", future$bimclass_f_pred_fia_85_soil)
-
-png("outputs/rcp85_dipP_kdeest_pred_by_fia_soil_8.5.png")
-ggplot(future, aes(x,y, fill = dipPint_f_pred_fia_soil_8.5 ))+geom_raster()
-dev.off()
-
-png("outputs/rcp85_bimodal_kdeest_by_fia_soil_8.5.png")
-ggplot(future, aes(x,y, fill = bimclass_f_pred_fia_85_soil))+geom_raster()
-dev.off()
-
-write.csv(future, "outputs/new_bim_surface_soil_m_rcp85_pred_by_fia.csv")
-
+# >>>>>>>>>>>>>>>>> make plots of future bimodality or not <<<<<<<<<<<<<<<<<<<

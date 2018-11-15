@@ -649,8 +649,8 @@ bimod.pc.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group
 
 
 
-pc1.dip.pls.8.5 <- ggplot(pvalues, aes(pc1_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.pls.8.5 <- ggplot(pvalues, aes(pc1_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pc1.dip.pls.8.5 <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.pls.8.5 <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_pc1_ccesm_8.5.png")
@@ -872,8 +872,8 @@ bimod.pc.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group
 
 
 
-pc1.dip.fia.8.5 <- ggplot(pvalues, aes(pc1_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.fia.8.5 <- ggplot(pvalues, aes(pc1_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pc1.dip.fia.8.5 <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.fia.8.5 <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_pc1_ccesm_8.5.png")
@@ -943,8 +943,8 @@ bimod.ppet.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = gro
 
 
 
-ppet.dip.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-ppet.pval.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+ppet.dip.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("DIP value")+xlim(-150, 300)
+ppet.pval.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("P value")+xlim(-150, 300)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_ppet_ccesm_8.5.png")
@@ -1016,8 +1016,8 @@ bimod.soil.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = gro
 
 
 
-soil.dip.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-soil.pval.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+soil.dip.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(0, 1.75)
+soil.pval.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(0, 1.75)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_soil_ccesm_8.5.png")
@@ -1037,3 +1037,29 @@ dev.off()
 
 
 # >>>>>>>>>>>>>>>>> make plots of future bimodality or not <<<<<<<<<<<<<<<<<<<
+
+
+
+sm.bimod.85.hist.pls <- ggplot(bimod.soil.pls, aes(soil_mids.y, fill = bimclass_soil))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(0,1.75)+xlab("RCP 8.5 Soil Moisture")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+sm.bimod.85.hist.fia <- ggplot(bimod.soil.fia, aes(soil_mids.y, fill = bimclass_soil))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 Soil Moisture")+xlim(0,1.75)
+
+ppet.bimod.85.hist.pls <- ggplot(bimod.ppet.pls, aes(ppet_mids.y, fill = bimclass_ppet))+geom_bar(position = position_dodge2())+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-150,300)+xlab("RCP 8.5 P-PET")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+ppet.bimod.85.hist.fia <- ggplot(bimod.ppet.fia, aes(ppet_mids.y, fill = bimclass_ppet))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 P-PET")+xlim(-150,300)
+
+pc1.bimod.85.hist.pls <- ggplot(bimod.pc.pls, aes(mids.y, fill = bimclass))+geom_bar(position = position_dodge2())+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-6,6)+xlab("RCP 8.5 PC1")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+pc1.bimod.85.hist.fia <- ggplot(bimod.pc.fia, aes(mids.y, fill = bimclass))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6,6)
+
+png(height = 12, width = 8, units = "in", res = 300, "outputs/paper_figs_unc/future_climate_bimodal_plots.png" )
+plot_grid(pc1.pval.pls.8.5, 
+          pc1.pval.fia.8.5,
+          pc1.bimod.85.hist.pls, 
+          pc1.bimod.85.hist.fia, 
+          ppet.pval.pls.8.5,
+          ppet.pval.fia.8.5,
+          ppet.bimod.85.hist.pls, 
+          ppet.bimod.85.hist.fia,
+          soil.pval.pls.8.5, 
+          soil.pval.fia.8.5,
+          sm.bimod.85.hist.pls, 
+          sm.bimod.85.hist.fia, ncol = 2, align = "hv", rel_heights = c(0.5,1,0.5,1,0.5,1))
+dev.off()

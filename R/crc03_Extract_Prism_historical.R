@@ -185,8 +185,8 @@ proj4string(avgs) <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=
 avgs.alb <- projectRaster(avgs, crs='+init=epsg:3175')
 
 # spec.table is a spatial points df, convert to regular df:
-spec.table <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv"))
-
+#spec.table <- read.csv(paste0("data/midwest_pls_full_density_alb",version,".csv"))
+spec.table <- read.csv("outputs/density_full_unc.csv")
 coordinates(spec.table) <- ~x + y
 
 # project the grid to lat long
@@ -252,12 +252,14 @@ write.csv(P.PET, "outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
 setwd(paste0(workingdir,'PRISM_tmean_stable_4kmM2_189501_198012_bil/'))
 
 #read in the grid again
-spec.table <- read.csv(paste0(workingdir,'midwest_pls_full_density_alb',version,'.csv'))
+spec.table <- read.csv("data/density_full_unc.csv")
 coordinates(spec.table) <- ~x + y
 
 # project the grid to lat long
 proj4string(spec.table) <- '+init=epsg:3175'
-#spec.lat <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+spec.table.ll <- spTransform(spec.table, crs('+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0' ))
+
+spec.table <- as.data.frame(spec.table)
 
 years <- 1895:1905
 yrs <- "1895-1905"
@@ -281,9 +283,10 @@ y$CellID <- seq(1:nrow(y))
 
 my.list <- list()
 # this for loop calculates thornthwaite PET for each month in each grid cell
-#for(i in 1:length(y$y)){
 source("/afs/crc.nd.edu/user/k/kheilman/bimodality/R/Thornthwaite_PET.R")
-system.time(for(i in 1:1000){
+
+system.time(for(i in 1:length(y$y)){
+#system.time(for(i in 1:1000){
   
   ynew <- t(y[i,3:135])
   lat <- y[i,]$y
@@ -324,14 +327,14 @@ colnames(PET.means) <- c("lat", "long", "CellID", "jan", "feb", "mar", "apr", "m
 # get the precipitation data in the same format:
 saveRDS(full.PET, paste0(workingdir, "full.PET.rds"))
 saveRDS(PET.means, paste0(workingdir, "PET.means.rds"))
-
+#full.PET <- readRDS("/Users/kah/Documents/bimodality/data/full.PET.rds")
 #full.PET <- readRDS("data/full.PET.rds")
 full.PET <- full.PET[,c( "month","PET_tho", "lat","long")]
 full <- dcast(full.PET, lat + long ~ month, mean, value.var = 'PET_tho', na.rm = TRUE)
 
-full$Mean <- rowMeans(full[,4:15], na.rm=TRUE)
+full$Mean <- rowMeans(full[,3:12], na.rm=TRUE)
 
-colnames(full) <- c('lat','long',"Var",'Jan', 'Feb', 'Mar', "Apr", "May", 
+colnames(full) <- c('lat','long','Jan', 'Feb', 'Mar', "Apr", "May", 
                     'Jun', "Jul", "Aug", "Sep", "Oct", "Nov","Dec",'Mean')
 
 full2 <- full

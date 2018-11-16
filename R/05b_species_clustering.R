@@ -10,6 +10,9 @@ library(sp)
 library(raster)
 library(rgdal)
 
+# library needed for pam
+library(cluster)
+
 # load PLS data from 04_combine_umw_pls_fia.R
 full.spec <- read.csv('data/outputs/plss_pct_density_composition_v1.6.csv')
 full.spec <- full.spec[!is.na(full.spec$cell),]
@@ -20,7 +23,7 @@ summary(comps)
 
 # we want to cluster the data based on % species composition: based on tree density, not the counts
 # using clusters similar to simons mediod clustering scheme: 
-library(cluster)
+
 
 
 comps <- comps[!is.na(comps$Oak),]
@@ -28,8 +31,11 @@ set.seed(11)
 
 ggplot(comps, aes(x,y, fill = Oak))+geom_raster()
 
-# use Pam for the k-mediods clustering algorithm. These take ~30 seconds to a minute each
-classes.3 <- pam(comps[,4:ncol(comps)], k = 3, diss = FALSE, keep.diss = TRUE)
+# we need to run a series of cluster analyses with 1:n number of clusters and then determine the # of clusters that best explains the data
+
+# use Pam function for the k-mediods clustering algorithm. These take ~30 seconds to a minute complete each
+
+classes.3 <- pam(comps[,4:ncol(comps)], k = 3, diss = FALSE, keep.diss = TRUE) 
 classes.4 <- pam(comps[,4:ncol(comps)], k = 4, diss = FALSE)
 classes.5 <- pam(comps[,4:ncol(comps)], k = 5, diss = FALSE,  keep.diss = TRUE)
 classes.6 <- pam(comps[,4:ncol(comps)], k = 6, diss = FALSE, keep.diss = TRUE)
@@ -41,14 +47,14 @@ diss.6 <- as.matrix(classes.6$diss)
 
 # Use Avg. Silhouette width to evaluate the clusters:  
 
-# SIlhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
+# Silhouette width close to 1 indicates the cluster clusters very well with itself. Silhoutte widith that is negative or low indicates low clustering with itself
 summary(classes.9) # Avg. Silhouette width = 0.2798578
-pls.8class.summ<- summary(classes.8) # Avg. Silhouette width = 0.2885791
-pls.7class.summ<-summary(classes.7) # Avg. Silhouette width =  0.2842867
-pls.6class.summ<-summary(classes.6) # Avg. Silhouette width = 0.2643707# lower than 9 classes, but the minimum width is 0.2 for all classes
-pls.5class.summ<-summary(classes.5) # Avg. Silhouette width = 0.2335565
-pls.4class.summ<-summary(classes.4) # Avg. Silhouette width = 0.1824538
-pls.3class.summ<-summary(classes.3) # Avg. Silhouette width = 0.2234054
+pls.8class.summ <- summary(classes.8) # Avg. Silhouette width = 0.2885791
+pls.7class.summ <- summary(classes.7) # Avg. Silhouette width =  0.2842867
+pls.6class.summ <- summary(classes.6) # Avg. Silhouette width = 0.2643707# lower than 9 classes, but the minimum width is 0.2 for all classes
+pls.5class.summ <- summary(classes.5) # Avg. Silhouette width = 0.2335565
+pls.4class.summ <- summary(classes.4) # Avg. Silhouette width = 0.1824538
+pls.3class.summ <- summary(classes.3) # Avg. Silhouette width = 0.2234054
 
 # these sihouette widths are low, but this is likely due to the large amount of data and noise in composition
 #plot(classes.5)

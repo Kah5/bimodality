@@ -592,7 +592,7 @@ ggplot(fia.soil, aes(x, y, fill = bimodal.dip))+geom_raster()
 ggplot(fia.soil, aes(x, y, fill = soil_bins))+geom_raster()
 
 
-# future not uptdated as of 11.12.18
+
 # >>>>>>>>>>>>> Predict future based on pls relationship with climate <<<<<<<<<<<<<<<<<<<<<<<<<<
 # get future climates:
 future.pr <- read.csv("outputs/Future_PCA.csv")
@@ -1063,3 +1063,594 @@ plot_grid(pc1.pval.pls.8.5,
           sm.bimod.85.hist.pls, 
           sm.bimod.85.hist.fia, ncol = 2, align = "hv", rel_heights = c(0.5,1,0.5,1,0.5,1))
 dev.off()
+
+
+
+# ------------------- Bimodality for PLS while masking out cells with no FIA data -----------------
+# >>>>>>>>>>>>>>>> get bimodality for PLS data <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
+# read in draws of total PLS density:
+total.m <- read.csv("data/extracted_total_PLS_density_draws.csv")
+
+dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
+                                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
+
+ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+
+dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
+
+dens <- dens[!is.na(dens$mean_dens), ]
+
+
+# add cell numbers + climate to the total.m dataset
+pls.df <- left_join(dens[,c("x", "y", "cell","FIAdensity", "PC1", "GS_ppet","mean_GS_soil" )], total.m, by = c("x", "y"))
+
+pls.clip <- pls.df[!is.na(pls.df$FIAdensity),]
+
+library("MASS")
+library(ggplot2)
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<< estimate PDF of data using kde >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+pls.clip$PC1bins <- cut(pls.clip$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+ordered.cuts <- data.frame(PC1bins = levels(cut(pls.clip[order(pls.clip$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
+
+pls.clip <- pls.clip[!is.na(pls.clip$PC1),]
+pls.clip$pc1_bins <- cut(pls.clip$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(pls.clip[order(pls.clip$PC1),]$pc1_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(pc1_bins = unique(pls.clip[order(pls.clip$PC1),]$pc1_bins),
+                           pc1_mids = as.numeric(substring(firsts, first = 2,last = 6))+.75)
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$pc1_bins),]
+pls.clip <- merge(ordered.cuts, pls.clip, by = 'pc1_bins')
+
+# binning sampling from statistical estimates:
+
+
+sample.densp.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = pls.clip[pls.clip$pc1_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            pc1_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+dipandp <- sample.densp.bins(pc1bin = "(-2.5,-2.25]")
+test.df <- do.call(rbind, dipandp)
+
+out <- apply(data.frame(ordered.cuts$pc1_bins), 1, sample.densp.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                              median.p = median(pvalue, na.rm = TRUE),
+                                                              ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                              ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                              mean.d = mean(dip, na.rm = TRUE),
+                                                              median.d = median(dip, na.rm = TRUE),
+                                                              ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                              ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+ggplot(pvalues, aes(pc1_bins, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
+#ggplot(pvalues, aes(pc1_mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PC1_stat.clip.rds")
+
+# this would sample a value for each grid cell of PLS, 
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>do the same for P-PET:
+
+
+# new bimodality estimates for PPET:
+
+pls.clip <- pls.clip[!is.na(pls.clip$GS_ppet),]
+pls.clip$ppet_bins <- cut(pls.clip$GS_ppet, breaks=seq(-170, 205, by = 15))
+
+
+ordered.cuts <- data.frame(PPETbins = unique(pls.clip$ppet_bins),
+                           mids = seq(-162.5, 205, by = 15))
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(pls.clip[order(pls.clip$GS_ppet),]$ppet_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(ppet_bins = unique(pls.clip[order(pls.clip$GS_ppet),]$ppet_bins),
+                           ppet_mids = as.numeric(mids)+7.5)
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
+pls.clip <- merge(ordered.cuts, pls.clip, by = 'ppet_bins')
+
+# binning sampling from KDE estimates:
+
+sample.ppet.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = pls.clip[pls.clip$ppet_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            ppet_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+dipandp <- sample.ppet.bins(pc1bin = "(-170,-155]")
+summary(dipandp)
+#test.df <- do.call(rbind, dipandp)
+
+out <- apply(data.frame(ordered.cuts$ppet_bins), 1, sample.ppet.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+ggplot(pvalues, aes(ppet_bins, mean.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0.1)+theme_bw()+geom_hline(yintercept = 0.05)
+
+#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PPET_stat.clip.rds")
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>do the same for GS_soil:
+
+
+# new bimodality estimates for PPET:
+
+pls.clip <- pls.clip[!is.na(pls.clip$mean_GS_soil),]
+pls.clip$soil_bins <- cut(pls.clip$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(pls.clip$soil_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(soil_bins = unique(pls.clip$soil_bins),
+                           soil_mids = as.numeric(substring(firsts, first = 2,last = 6))+0.025)
+
+pls.clip <- merge(ordered.cuts, pls.clip, by = "soil_bins")
+#ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soilbins),]
+
+# binning sampling from KDE estimates:
+interp.soil.bins <- function(pc1bin){
+  
+  # find the closest PC1 value in the contour_95 df:
+  closest <- contour_95[which.min(abs(contour_95$x - mean(pls.clip[pls.clip$soil_bins %in% pc1bin,]$soil_mids))) & contour_95$y >= 0,]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  
+  
+  points <- expand.grid(unique(pls.clip[pls.clip$soil_bins %in% pc1bin,]$mean_GS_soil), y=0:maxy)
+  
+  colnames(points) <- c("x", "y")
+  dipP <- list()
+  for(i in 1:100){
+    if(max(kde(x=na.omit(cbind(pls.clip$mean_GS_soil, pls.clip$PLSdensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+      
+      P <- NA
+      dipstat <- NA
+      
+    }else{
+      
+      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(pls.clip$mean_GS_soil, pls.clip$PLSdensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+      samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
+      #samp <- sample(x=pls.clip[pls.clip$soil_bins %in% pc1bin,]$PLSdensity, size = 1000, replace = TRUE)
+      dipfull <- diptest::dip.test(samp)
+      dipfull
+      P <- dipfull$p.value
+      dipstat <- dipfull$statistic
+      pks <- amps(samp)$Peaks[,1]
+      
+      #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+      P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, 1) 
+      
+      #plot(density(samp))
+    }
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            soil_bins = pc1bin)
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+sample.soil.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = pls.clip[pls.clip$soil_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            soil_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+dipandp <- sample.soil.bins(pc1bin = "(0.8,0.85]")
+
+
+out <- apply(data.frame(ordered.cuts$soil_bins), 1, sample.soil.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+pvalues <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
+ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.d, ymax=ci.high.d), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
+ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05, linetype = "dashed")
+
+#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.clip.rds")
+
+
+
+# ------------------- Bimodality for FIA while masking out cells with no FIA data -----------------
+# >>>>>>>>>>>>>>>> get bimodality for FIA data <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+pls.df <- read.csv("data/PLS_FIA_density_climate_full.csv")
+# read in draws of total PLS density:
+total.m <- read.csv("data/extracted_total_FIA_density_draws.csv")
+
+dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+                                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
+                                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
+
+ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+
+dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
+
+dens <- dens[!is.na(dens$mean_dens), ]
+
+
+# add cell numbers + climate to the total.m dataset
+fia.df <- left_join(dens[,c("x", "y", "cell", "FIAdensity","PC1fia", "GS_ppet_mod","mean_GS_soil_m" )], total.m, by = c("x", "y"))
+fia.clip <- fia.df[!is.na(fia.df$FIAdensity), ]
+
+library("MASS")
+library(ggplot2)
+library(modes)
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<< estimate PDF of data using kde >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+fia.clip$PC1fiabins <- cut(fia.clip$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+ordered.cuts <- data.frame(PC1fiabins = unique(cut(fia.clip[order(fia.clip$PC1fia),]$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))),
+                           mids = seq(-5.375, 4.5, by = 0.25))
+
+fia.clip <- fia.clip[!is.na(fia.clip$PC1fia),]
+fia.clip$PC1fia_bins <- cut(fia.clip$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+
+
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(fia.clip[order(fia.clip$PC1fia),]$PC1fia_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(PC1fia_bins = unique(fia.clip[order(fia.clip$PC1fia),]$PC1fia_bins),
+                           PC1fia_mids = as.numeric(substring(firsts, first = 2,last = 6))+.75)
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$PC1fia_bins),]
+fia.clip <- merge(ordered.cuts, fia.clip, by = 'PC1fia_bins')
+
+# binning sampling from statistical estimates:
+
+
+sample.densp.bins <- function(PC1fiabin){
+  
+  dipP <- list()
+  df <- data.frame(points = fia.clip[fia.clip$PC1fia_bins %in% PC1fiabin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            PC1fia_bins = PC1fiabin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+dipandp <- sample.densp.bins(PC1fiabin = "(-2.5,-2.25]")
+test.df <- do.call(rbind, dipandp)
+
+out <- apply(data.frame(ordered.cuts$PC1fia_bins), 1, sample.densp.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(PC1fia_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                                 median.p = median(pvalue, na.rm = TRUE),
+                                                                 ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                                 ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                                 mean.d = mean(dip, na.rm = TRUE),
+                                                                 median.d = median(dip, na.rm = TRUE),
+                                                                 ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                                 ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+ggplot(pvalues, aes(PC1fia_bins, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.d, ymax=ci.high.d), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
+#ggplot(pvalues, aes(PC1fia_mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PC1fia.stat.clip.rds")
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>do the same for P-PET on the modern landscape:
+
+# new bimodality estimates for PPET:
+
+fia.clip <- fia.clip[!is.na(fia.clip$GS_ppet_mod),]
+fia.clip$ppet_bins <- cut(fia.clip$GS_ppet_mod, breaks=seq(-170, 205, by = 15))
+
+
+ordered.cuts <- data.frame(PPETbins = levels(unique(fia.clip$ppet_bins)),
+                           mids = seq(-162.5, 205, by = 15))
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(fia.clip[order(fia.clip$GS_ppet_mod),]$ppet_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(ppet_bins = unique(fia.clip[order(fia.clip$GS_ppet_mod),]$ppet_bins),
+                           ppet_mids = as.numeric(mids)+7.5)
+
+
+ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
+fia.clip <- merge(ordered.cuts, fia.clip, by = 'ppet_bins')
+
+# binning sampling from KDE estimates:
+
+sample.ppet.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = fia.clip[fia.clip$ppet_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            ppet_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+dipandp <- sample.ppet.bins(pc1bin = "(-170,-155]")
+summary(dipandp)
+#test.df <- do.call(rbind, dipandp)
+
+#out <- apply(data.frame(ordered.cuts$ppet_bins), 1, sample.ppet.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+
+ggplot(pvalues, aes(ppet_bins, mean.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0.1)+theme_bw()+geom_hline(yintercept = 0.05)
+
+#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_fia_PPET_stat.clip.rds")
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>do the same for GS_soil:
+
+
+# new bimodality estimates for PPET:
+
+fia.clip <- fia.clip[!is.na(fia.clip$mean_GS_soil_m),]
+fia.clip$soil_bins <- cut(fia.clip$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
+
+# get matching bins and mid point values for plotting
+first <- strsplit(as.character(unique(fia.clip$soil_bins)), c(","))
+firsts <- unlist(first) 
+x <- 1:length(firsts)
+firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
+mids <- substring(firsts, first = 2,last = 6)
+
+ordered.cuts <- data.frame(soil_bins = unique(fia.clip$soil_bins),
+                           soil_mids = as.numeric(substring(firsts, first = 2,last = 6))+0.025)
+
+fia.clip <- merge(ordered.cuts, fia.clip, by = "soil_bins")
+#ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soilbins),]
+
+# binning sampling from KDE estimates:
+interp.soil.bins <- function(pc1bin){
+  
+  # find the closest PC1 value in the contour_95 df:
+  closest <- contour_95[which.min(abs(contour_95$x - mean(fia.clip[fia.clip$soil_bins %in% pc1bin,]$soil_mids))) & contour_95$y >= 0,]
+  maxy <- ceiling(closest$y) # get the closest y value and round up
+  
+  
+  points <- expand.grid(unique(fia.clip[fia.clip$soil_bins %in% pc1bin,]$mean_GS_soil_m), y=0:maxy)
+  
+  colnames(points) <- c("x", "y")
+  dipP <- list()
+  for(i in 1:100){
+    if(max(kde(x=na.omit(cbind(fia.clip$mean_GS_soil_m, fia.clip$fiadensity)), H=H, compute.cont = TRUE, eval.points = points[,c("x", "y")])$estimate) < unique(contour_95$level)){ # this value is the 95% contour level
+      
+      P <- NA
+      dipstat <- NA
+      
+    }else{
+      
+      df <- data.frame(points = points$y, freq = kde(x=na.omit(cbind(fia.clip$mean_GS_soil_m, fia.clip$fiadensity)), H=H,compute.cont = TRUE, eval.points = points)$estimate)
+      samp <- sample(x=df$points, prob = df$freq, size = 1000, replace = TRUE)
+      #samp <- sample(x=fia.clip[fia.clip$soil_bins %in% pc1bin,]$fiadensity, size = 1000, replace = TRUE)
+      dipfull <- diptest::dip.test(samp)
+      dipfull
+      P <- dipfull$p.value
+      dipstat <- dipfull$statistic
+      pks <- amps(samp)$Peaks[,1]
+      
+      #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+      P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, 1) 
+      
+      #plot(density(samp))
+    }
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            soil_bins = pc1bin)
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+sample.soil.bins <- function(pc1bin){
+  
+  dipP <- list()
+  df <- data.frame(points = fia.clip[fia.clip$soil_bins %in% pc1bin, ]$value)
+  for(i in 1:1000){
+    samp <- sample(x=df$points, size = 1000, replace = TRUE)
+    dipfull <- diptest::dip.test(samp)
+    P <- dipfull$p.value
+    dipstat <- dipfull$statistic
+    pks <- amps(samp)$Peaks[,1]
+    
+    #dipP <- diptest::dip.test(df$freq, simulate.p.value = TRUE, B = 50)$p.value
+    P <- ifelse(length(pks) >= 2 & max(pks) >= 100, P, NA) 
+    
+    #plot(density(samp))
+    
+    dipP[[i]] <- data.frame(pvalue = P, 
+                            dip = dipstat, 
+                            soil_bins = pc1bin )
+  }
+  dipP2 <- do.call(rbind, dipP)
+  dipP2
+}
+
+
+#dipandp <- sample.soil.bins(pc1bin = "(0.8,0.85]")
+
+
+out <- apply(data.frame(ordered.cuts$soil_bins), 1, sample.soil.bins)
+out.df <- as.data.frame(do.call(rbind, out))
+
+pvalues <- out.df %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
+                                                               median.p = median(pvalue, na.rm = TRUE),
+                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
+                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
+                                                               mean.d = mean(dip, na.rm = TRUE),
+                                                               median.d = median(dip, na.rm = TRUE),
+                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+
+pvalues <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
+ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.d, ymax=ci.high.d), color = "red", alpha = 0.5, width = 0.1)+theme_bw()
+ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.05, linetype = "dashed")
+
+#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
+
+saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_fia_soil_15bins_kde_stat.clip.rds")
+

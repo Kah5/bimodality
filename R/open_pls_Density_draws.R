@@ -8,7 +8,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 
-pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc")
+pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc") # data found here https://paleon.geography.wisc.edu/doku.php/data_and_products;settlement_vegetation_density
 
 # data structure: x = 146, y = 180, sample = 250 MCMC samples
 # has x, y, sample for each taxa and for Total density

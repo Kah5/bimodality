@@ -193,6 +193,47 @@ dev.off()
 
 ggplot()+geom_histogram(data = dens, aes(mean_dens), fill = "red")+geom_histogram(data= dens, aes(ci.high_dens), aes = 2, color = "grey")+geom_histogram(data= dens, aes(ci.low_dens), alpha = 0.2, fill = "blue")
 
+# ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------
+
+clust_plot8 <- read.csv("outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.csv")
+
+# merge the clusters and pls density data: 
+clust_8 <- merge(clust_plot8, dens, by = c("x", "y"))
+
+# need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
+clust_8
+library(plyr)
+clust_8$foresttype <- revalue(clust_8$speciescluster, c("Oak/Poplar/Ash"="Aspen", "Oak/Maple/Elm/Ash"="Elm/Oak/Maple", "Oak" = "Oak", 
+                                                       "Hemlock/Beech/Cedar/Birch/Maple" = "N. Mixed Forest", "Oak/Hickory" = "Oak-Hickory",
+                                                       "Pine/Poplar" = "Pine", "Spruce/Cedar/Tamarack/Poplar" = "Boreal/Sub-boreal", "Beech/Maple/Hemlock" = "Beech-Maple"))
+
+clust_8$orderedforesttype<- factor(clust_8$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory", "Beech-Maple"))
+
+pls.clust <- ggplot(clust_8, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+pls.clust
+# merge clust_plot8 and dens.pr
+
+dens.clust <- merge(dens, clust_8[,c("x" ,"y", "speciescluster", "foresttype")], by = c("x", "y"), all.x = TRUE)
+dens.clust$foresttype_ordered <- factor(dens.clust$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen",  "Elm/Oak/Maple","Oak-Hickory","Beech-Maple","N. Mixed Forest", "Oak")))
+dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
+dens.clust <- dens.clust[!duplicated(dens.clust),]
+
+myColors <- c( '#386cb0','#ffff99','#bf5b18','#beaed4','#33a02c','#fdc088','#f0028f','#8fc98f')
+names(myColors) <- levels(dens.clust$foresttype_ordered)
+
+clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.full
+
+# ----------------------- Figure 1D total PLS density histgram colored by species composition-----------------
 
 
 # <<<<<<<<<<<<<<< map bimodality evaluated on samples from  esimates: >>>>>>>>>>>>>>>>>>>>>>>>>>>>

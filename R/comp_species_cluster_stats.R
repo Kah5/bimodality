@@ -380,7 +380,7 @@ classes.8.smooth.dens$silinfo$clus.avg.widths # get the average silohette width 
 clust_plot8 <- data.frame(plscomp, speciescluster = rem_class)
 
 # map out the clusters with pretty colors & save to a file:
-png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.dens.png")
+png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/eight_cluster_map_pls_stat_smooth.dens.png")
 pls.clust8 <- ggplot(clust_plot8, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c( '#fdc088','#388cb0', '#beaed4',"#33a02c",'#8fc98f','#f0028f', '#ffff99','#bf5b18'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),

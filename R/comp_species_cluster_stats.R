@@ -333,69 +333,66 @@ ggplot(plscomp, aes(x,y, fill = Spruce))+geom_raster()
 #----------------------k-mediods cluster analysis---------------------------------
 
 # now run pam with 7 classes again:
-classes.7.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 7, diss = FALSE, keep.diss = TRUE)
-classes.6.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 6, diss = FALSE, keep.diss = FALSE)
-classes.8.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 8, diss = FALSE, keep.diss = FALSE)
+classes.7.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 7, diss = FALSE, keep.diss = TRUE)
+classes.6.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 6, diss = FALSE, keep.diss = FALSE)
+classes.8.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 8, diss = FALSE, keep.diss = FALSE)
 
 
-pls.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width = 0.3454994 lower than 9 classes, but the minimum width is 0.2 for all classes
-pls.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.5534339
-pls.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.2234054
+pls.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width = 0.2903842 lower than 9 classes, but the minimum width is 0.2 for all classes
+pls.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2780922
+pls.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.3057238
 
 # in general 7 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
+# for this data, it seems that 8 classes may be the best cluster
 
+# --------------- Now lets look at a map of the k=8 clusters ----------------------
 
-# --------------- Now lets look at a map of the k=7 clusters ----------------------
-
-# k = 7 mediods: 
+# k = 8 mediods: 
 # get mediods to make the cluster definitions
-mediods7 <- rownames(plscomp) [classes.7.smooth.dens$id.med]
+mediods8 <- rownames(plscomp) [classes.8.smooth.dens$id.med]
 plscomp$cell <- rownames(plscomp)
-index <- plscomp[plscomp$cell %in% mediods7,]
+index <- plscomp[plscomp$cell %in% mediods8,]
 
 # look at the rows that have the mediods
-df7 <- plscomp[plscomp$cell %in% mediods7,] 
+df8 <- plscomp[plscomp$cell %in% mediods8,] 
 data.frame(index)
 
-old_classes <- classes.7.smooth.dens
+old_classes <- classes.8.smooth.dens
 
 # I assigned names to mediod classes based on the highest species % in each mediod:
-df7
+df8
 rem_class <- factor(old_classes$clustering,
                     # relabel the clusters from numbers to custom names
                     labels=c(
                       'Oak/Poplar/Ash', # 1
-                      "Elm/Maple/Hickory/Oak/Beech", # 2
-                      "Oak", # 3
-                      'Tamarack/Spruce/Birch/Pine/Poplar',# mediod 4
-                      
-                      'Pine/Tamarack/Poplar',# mediod 5
-                      
-                      
-                      
+                      "Oak", # 2
+                      "Oak/Maple/Elm/Ash", # 3
+                      'Oak/Hickory',# mediod 4
+                      'Spruce/Cedar/Tamarack/Poplar',# mediod 5
+                      "Pine/Poplar",
                       'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
                       "Beech/Maple/Hemlock"
-                      # mediod7 # not as much birch
+                      # mediod8 # not as much birch
                       
                     ))
 
-classes.7.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
-clust_plot7 <- data.frame(plscomp, speciescluster = rem_class)
+classes.8.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot8 <- data.frame(plscomp, speciescluster = rem_class)
 
 # map out the clusters with pretty colors & save to a file:
-png(width = 7, height = 7, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.dens.png")
-pls.clust7 <- ggplot(clust_plot7, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
-  scale_fill_manual(values = c('#fdc087','#beaed4', '#387cb0','#7fc97f','#f0027f','#ffff99','#bf5b17'))+
+png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.dens.png")
+pls.clust8 <- ggplot(clust_plot8, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c( '#fdc088','#388cb0', '#beaed4',"#33a02c",'#8fc98f','#f0028f', '#ffff99','#bf5b18'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.7,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("PLS species clusters")
-pls.clust7 
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.8,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("PLS species clusters")
+pls.clust8 
 dev.off()
 
 
 # save as csv for future 
-write.csv(clust_plot, "outputs/seven_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+write.csv(clust_plot8, "outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
 
 
 #----------------------- FIA old code ---------------

@@ -23,6 +23,7 @@ density.full <- comps <- full.spec
 summary(comps)
 
 
+
 #-----------------------Part 2: clustering with C.P. statistical estimates----------------------------
 
 #----------------------k-mediods cluster analysis---------------------------------
@@ -178,6 +179,7 @@ comp.stat.mw <- comp.wide[is.na(comp.wide$Chestnut),]
 ggplot(comp.stat.mw, aes(x,y, fill = Oak))+geom_raster()
 
 
+
 #----------------------k-mediods cluster analysis---------------------------------
 
 # now run pam with 7 classes again:
@@ -186,11 +188,12 @@ classes.6.smooth <- pam(comp.stat.mw[,4:ncol(comp.stat.mw)], k = 6, diss = FALSE
 classes.8.smooth <- pam(comp.stat.mw[,4:ncol(comp.stat.mw)], k = 8, diss = FALSE, keep.diss = FALSE)
 
 
-pls.7class.smooth <- summary(classes.7.smooth) # Avg. Silhouette width = 0.2643707# lower than 9 classes, but the minimum width is 0.2 for all classes
-pls.6class.smooth <- summary(classes.6.smooth) # Avg. Silhouette width = 0.1824538
+pls.7class.smooth <- summary(classes.7.smooth) # Avg. Silhouette width = 0.3454994 lower than 9 classes, but the minimum width is 0.2 for all classes
+pls.6class.smooth <- summary(classes.6.smooth) # Avg. Silhouette width = 0.5534339
 pls.8class.smooth <- summary(classes.8.smooth) # Avg. Silhouette width = 0.2234054
 
-# in general 7 clusters seems to be the best for the full midwest data, but you may have a different # 
+# in general 7 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
+
 
 # --------------- Now lets look at a map of the k=7 clusters ----------------------
 
@@ -211,44 +214,188 @@ df7
 rem_class <- factor(old_classes$clustering,
                     # relabel the clusters from numbers to custom names
                     labels=c(
-                             'Oak/Poplar/Ash', # 1
-                             "Elm/Maple/Hickory/Oak/Beech", # 2
-                             "Oak", # 3
-                             'Tamarack/Spruce/Birch/Pine/Poplar',# mediod 4
-                             
-                             'Pine/Tamarack/Poplar',# mediod 5
-                             
-                             
-                             
-                             'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
-                             "Beech/Maple/Hemlock"
-                             # mediod6 # not as much birch
-                             
+                      'Oak/Poplar/Ash', # 1
+                      "Elm/Maple/Hickory/Oak/Beech", # 2
+                      "Oak", # 3
+                      'Tamarack/Spruce/Birch/Pine/Poplar',# mediod 4
+                      
+                      'Pine/Tamarack/Poplar',# mediod 5
+                      
+                      
+                      
+                      'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
+                      "Beech/Maple/Hemlock"
+                      # mediod7 # not as much birch
+                      
                     ))
 
 classes.7.smooth$silinfo$clus.avg.widths # get the average silohette width for each cluster
 clust_plot7 <- data.frame(comp.stat.mw, speciescluster = rem_class)
 
 # map out the clusters with pretty colors & save to a file:
-png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.png")
+png(width = 7, height = 7, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.png")
 pls.clust7 <- ggplot(clust_plot7, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
-  scale_fill_manual(values = c('#fdc086','#beaed4', '#386cb0','#7fc97f','#f0027f','#ffff99','#bf5b17'))+
+  scale_fill_manual(values = c('#fdc087','#beaed4', '#387cb0','#7fc97f','#f0027f','#ffff99','#bf5b17'))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
-                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.6,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("PLS species clusters")
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.7,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("PLS species clusters")
 pls.clust7 
 dev.off()
 
 
 # save as csv for future 
-write.csv(clust_plot7, "outputs/seven_clust_pls_dissimilarity_stat_smooth.csv", row.names = FALSE)
+write.csv(clust_plot, "outputs/seven_clust_pls_dissimilarity_stat_smooth.csv", row.names = FALSE)
 
 
+# right now code below does not properly work because all density for taxa is displayed as the same
+#------------------------------Composition estimated as a function of total density---------------
+# open the density draws:
+pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc")
+
+# data structure: x = 146, y = 180, sample = 250 MCMC samples
+# has x, y, sample for each taxa and for Total density
+
+x <- ncvar_get(pls.nc, "x")
+y <- ncvar_get(pls.nc, "y")
+n <- ncvar_get(pls.nc, "sample")
+
+total.array <- ncvar_get(pls.nc, "Total") # store the data in a 3-dimensional array
+#nc_close(pls.nc) # close the file
+
+dim(total.array)# an x by y by sample array
+rownames(total.array) <- x # assign column and row names to the array
+colnames(total.array) <- y
+
+# melt arry into a dataframe
+total.m <- melt(total.array, varnames=c("x","y","sample"), as.is = TRUE)
+# convert x + y to numerics
+total.m$x <- as.numeric(total.m$x)
+total.m$y <- as.numeric(total.m$y)
+
+# list the names of taxa:
+Taxa <- names(pls.nc$var)
+nTaxa <- pls.nc$nvars #get the # of taxa
+
+# this for loop extracts the density draws from each taxa and puts into one giant dataframe
+for(i in 1:nTaxa){
+  
+  total.array <- ncvar_get(pls.nc, Taxa[i]) # store the data in a 3-dimensional array
+  rownames(total.array) <- x # assign column and row names to the array
+  colnames(total.array) <- y
+  # melt the array into a dataframe
+  total.m <- melt(total.array, varnames=c("x","y","sample"), as.is = TRUE)
+  colnames(total.m) <- c("x", "y", "sample", Taxa[i]) # rename the columns
+  total.m$x <- as.numeric(total.m$x)
+  total.m$y <- as.numeric(total.m$y)
+  
+  # create a new dataframe & add the extracted samples to it
+  if(i == 1){ pls.df <- total.m }else{
+    pls.df[,3+i] <- total.m[,Taxa[i]] 
+    colnames(pls.df)[3+i] <- Taxa[i]}
+  
+}
+
+nc_close(pls.nc) # close the ncdf file
+
+# there are alot of NA grid cells for all taxathat we need to remove:
+pls.df <- pls.df[!is.na(pls.df$Oak),]
+
+# now pls.df has 250 samples for each gridcell, so lets summarize the mean plsosition draw for each species:
+pls.long <- melt(pls.df, id.vars = c("x", "y", "sample")) # convert from wide format to long
+# get the mean composition value from all the draws for each spects
+pls.stat <- pls.long %>% group_by(x, y, variable) %>% summarise(mean = mean(value, na.rm=TRUE))
+
+# make it wide again:
+plsdens.wide <- spread(pls.stat, variable, mean)
+
+ggplot(plsdens.wide, aes(x, y, fill = Dogwood))+geom_raster()
+
+# save this:
+write.csv(plsdens.wide, "data/mean_density_statistical_pls_summary.csv", row.names = FALSE)
+
+ordered.df <- plsdens.wide[ , order(names(plsdens.wide))]
+
+#orderd.df <- ordered.df <- select(c(x,y))
+
+ordered.df <- ordered.df %>% dplyr::select(y, everything())
+ordered.df <- ordered.df %>% dplyr::select(x, everything())
+plsdens.wide <- ordered.df %>% dplyr::select( -Total, everything())
+plsdens.wide <- data.frame(plsdens.wide)
+
+# come up with a better solution:
+plsdens.wide$calc.total <- rowSums(plsdens.wide[,3:(ncol(plsdens.wide)-1)]) 
+plsdens.wide [,3:(ncol(plsdens.wide)-2)] <- plsdens.wide [,3:(ncol(plsdens.wide)-2)]/plsdens.wide[,ncol(plsdens.wide)] # calculate the proportion of the total density that each species takes up
+plscomp  <- plsdens.wide [,1:(ncol(plsdens.wide)-2)]
+ggplot(plscomp, aes(x,y, fill = Spruce))+geom_raster()
 
 
+#----------------------k-mediods cluster analysis---------------------------------
+
+# now run pam with 7 classes again:
+classes.7.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 7, diss = FALSE, keep.diss = TRUE)
+classes.6.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 6, diss = FALSE, keep.diss = FALSE)
+classes.8.smooth.dens <- pam(plscomp[,4:ncol(plscomp)], k = 8, diss = FALSE, keep.diss = FALSE)
 
 
+pls.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width = 0.3454994 lower than 9 classes, but the minimum width is 0.2 for all classes
+pls.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.5534339
+pls.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.2234054
+
+# in general 7 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
+
+
+# --------------- Now lets look at a map of the k=7 clusters ----------------------
+
+# k = 7 mediods: 
+# get mediods to make the cluster definitions
+mediods7 <- rownames(plscomp) [classes.7.smooth.dens$id.med]
+plscomp$cell <- rownames(plscomp)
+index <- plscomp[plscomp$cell %in% mediods7,]
+
+# look at the rows that have the mediods
+df7 <- plscomp[plscomp$cell %in% mediods7,] 
+data.frame(index)
+
+old_classes <- classes.7.smooth.dens
+
+# I assigned names to mediod classes based on the highest species % in each mediod:
+df7
+rem_class <- factor(old_classes$clustering,
+                    # relabel the clusters from numbers to custom names
+                    labels=c(
+                      'Oak/Poplar/Ash', # 1
+                      "Elm/Maple/Hickory/Oak/Beech", # 2
+                      "Oak", # 3
+                      'Tamarack/Spruce/Birch/Pine/Poplar',# mediod 4
+                      
+                      'Pine/Tamarack/Poplar',# mediod 5
+                      
+                      
+                      
+                      'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
+                      "Beech/Maple/Hemlock"
+                      # mediod7 # not as much birch
+                      
+                    ))
+
+classes.7.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot7 <- data.frame(plscomp, speciescluster = rem_class)
+
+# map out the clusters with pretty colors & save to a file:
+png(width = 7, height = 7, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls_stat_smooth.dens.png")
+pls.clust7 <- ggplot(clust_plot7, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#fdc087','#beaed4', '#387cb0','#7fc97f','#f0027f','#ffff99','#bf5b17'))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.7,'lines'),legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+ggtitle("PLS species clusters")
+pls.clust7 
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot, "outputs/seven_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
 
 
 #----------------------- FIA old code ---------------

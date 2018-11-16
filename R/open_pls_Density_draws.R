@@ -15,7 +15,7 @@ pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc")
 # same structure for the pls.point.nc
 # not sure exactly how these differ:
 
-pls.point.nc <- nc_open(filename = "data/PLS_density_western_point_v0.999.nc")
+#pls.point.nc <- nc_open(filename = "data/PLS_density_western_point_v0.999.nc")
 
 
 x <- ncvar_get(pls.nc, "x")
@@ -46,10 +46,10 @@ dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value,
 # get rid of the NA cells:
 dens.summary <- dens.summary[!is.na(dens.summary$mean_dens),]
 
-# just plot the raw data:
+# just plot a basic map tree density:
 ggplot(dens.summary, aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
 
-# make a prettier map of density:
+# make a prettier map of density with a discrete scale:
 
 dens.summary$density_discrete <- ifelse(dens.summary$mean_dens <= 0.5, "Prairie", 
                                 ifelse(dens.summary$mean_dens <= 47, "Savanna",

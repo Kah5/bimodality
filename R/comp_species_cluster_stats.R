@@ -99,6 +99,18 @@ rem_class <- factor(old_classes$clustering,
 classes.7$silinfo$clus.avg.widths # get the average silohette width for each cluster
 clust_plot7 <- data.frame(comps, speciescluster = rem_class)
                        
+
+
+# need to set up state outlines:
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  'minnesota', 'wisconsin', 'michigan', "illinois",  'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata <- data.frame(mapdata)
+
+
 # map out the clusters with pretty colors & save to a file:
 png(width = 6, height = 6, units= 'in',res=300,"outputs/paper_figs/seven_cluster_map_pls.png")
 pls.clust7 <- ggplot(clust_plot7, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
@@ -393,6 +405,174 @@ dev.off()
 
 # save as csv for future 
 write.csv(clust_plot8, "outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+#------------------------FIA clustering using statistical density estimates---------------------------
+
+# right now code below does not properly work because all density for taxa is displayed as the same
+#------------------------------Composition estimated as a function of total density---------------
+# open the density draws:
+fia.nc <- nc_open(filename = "data/FIA_density_v0.999.nc")
+
+# data structure: x = 146, y = 180, sample = 250 MCMC samples
+# has x, y, sample for each taxa and for Total density
+
+x <- ncvar_get(fia.nc, "x")
+y <- ncvar_get(fia.nc, "y")
+n <- ncvar_get(fia.nc, "sample")
+
+total.array <- ncvar_get(fia.nc, "Total") # store the data in a 3-dimensional array
+#nc_close(fia.nc) # close the file
+
+dim(total.array)# an x by y by sample array
+rownames(total.array) <- x # assign column and row names to the array
+colnames(total.array) <- y
+
+# melt arry into a dataframe
+total.m <- melt(total.array, varnames=c("x","y","sample"), as.is = TRUE)
+# convert x + y to numerics
+total.m$x <- as.numeric(total.m$x)
+total.m$y <- as.numeric(total.m$y)
+
+# list the names of taxa:
+Taxa <- names(fia.nc$var)
+nTaxa <- fia.nc$nvars #get the # of taxa
+
+# this for loop extracts the density draws from each taxa and puts into one giant dataframe
+for(i in 1:nTaxa){
+  
+  total.array <- ncvar_get(fia.nc, Taxa[i]) # store the data in a 3-dimensional array
+  rownames(total.array) <- x # assign column and row names to the array
+  colnames(total.array) <- y
+  # melt the array into a dataframe
+  total.m <- melt(total.array, varnames=c("x","y","sample"), as.is = TRUE)
+  colnames(total.m) <- c("x", "y", "sample", Taxa[i]) # rename the columns
+  total.m$x <- as.numeric(total.m$x)
+  total.m$y <- as.numeric(total.m$y)
+  
+  # create a new dataframe & add the extracted samples to it
+  if(i == 1){ fia.df <- total.m }else{
+    fia.df[,3+i] <- total.m[,Taxa[i]] 
+    colnames(fia.df)[3+i] <- Taxa[i]}
+  
+}
+
+nc_close(fia.nc) # close the ncdf file
+
+# there are alot of NA grid cells for all taxathat we need to remove:
+fia.df <- fia.df[!is.na(fia.df$Oak),]
+
+# now fia.df has 250 samples for each gridcell, so lets summarize the mean fiaosition draw for each species:
+fia.long <- melt(fia.df, id.vars = c("x", "y", "sample")) # convert from wide format to long
+# get the mean composition value from all the draws for each spects
+fia.stat <- fia.long %>% group_by(x, y, variable) %>% summarise(mean = mean(value, na.rm=TRUE))
+
+# make it wide again:
+fiadens.wide <- spread(fia.stat, variable, mean)
+
+ggplot(fiadens.wide, aes(x, y, fill = Spruce))+geom_raster()
+
+# save this:
+write.csv(fiadens.wide, "data/mean_density_statistical_fia_summary.csv", row.names = FALSE)
+
+ordered.df <- fiadens.wide[ , order(names(fiadens.wide))]
+
+#orderd.df <- ordered.df <- select(c(x,y))
+
+ordered.df <- ordered.df %>% dplyr::select(y, everything())
+ordered.df <- ordered.df %>% dplyr::select(x, everything())
+fiadens.wide <- ordered.df %>% dplyr::select( -Total, everything())
+fiadens.wide <- data.frame(fiadens.wide)
+
+# come up with a better solution:
+fiadens.wide$calc.total <- rowSums(fiadens.wide[,3:(ncol(fiadens.wide)-1)]) 
+fiadens.wide [,3:(ncol(fiadens.wide)-2)] <- fiadens.wide [,3:(ncol(fiadens.wide)-2)]/fiadens.wide[,ncol(fiadens.wide)] # calculate the proportion of the total density that each species takes up
+fiacomp  <- fiadens.wide [,1:(ncol(fiadens.wide)-2)]
+ggplot(fiacomp, aes(x,y, fill = Other.hardwood))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+# get only the grid cells also in PLS range:
+
+fiacomp <- merge(fiacomp, plscomp[,c("x", "y")], by = c("x", "y"))
+ggplot(fiacomp, aes(x,y, fill = Beech))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+
+#----------------------k-mediods cluster analysis---------------------------------
+
+# now run pam with 7 classes again:
+classes.3.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 3, diss = FALSE, keep.diss = FALSE)
+classes.4.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 4, diss = FALSE, keep.diss = FALSE)
+classes.5.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 5, diss = FALSE, keep.diss = FALSE)
+classes.6.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 6, diss = FALSE, keep.diss = FALSE)
+classes.7.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 7, diss = FALSE, keep.diss = FALSE)
+classes.8.smooth.dens <- pam(fiacomp[,3:ncol(fiacomp)], k = 8, diss = FALSE, keep.diss = FALSE)
+
+
+fia.3class.smooth.dens <- summary(classes.3.smooth.dens) # avg width = 0.1834982
+fia.4class.smooth.dens <- summary(classes.4.smooth.dens) # avg width = 0.2192253
+fia.5class.smooth.dens <- summary(classes.5.smooth.dens) # avg width = 0.234389 # highest avg
+fia.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2250767
+fia.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width =  0.2230915 lower than 9 classes, but the minimum width is 0.2 for all classes
+fia.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width =0.2065625
+
+# in general 7 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
+# for this data, it seems that 8 classes may be the best cluster
+
+# --------------- Now lets look at a map of the k=8 clusters ----------------------
+
+# k = 5 mediods: 
+# get mediods to make the cluster definitions
+mediods5 <- rownames(fiacomp) [classes.5.smooth.dens$id.med]
+fiacomp$cell <- rownames(fiacomp)
+index <- fiacomp[fiacomp$cell %in% mediods5,]
+
+# look at the rows that have the mediods
+df5 <- fiacomp[fiacomp$cell %in% mediods5,] 
+data.frame(index)
+
+old_classes <- classes.5.smooth.dens
+
+# I assigned names to mediod classes based on the highest species % in each mediod:
+df5
+rem_class <- factor(old_classes$clustering,
+                    # relabel the clusters from numbers to custom names
+                    labels=c(
+                      'Maple/Oak/Poplar/Ash', # 1
+                      "Poplar/Pine/Cedar/Spruce", # 2
+                      "Oak/Maple/Elm/Poplar/Ash", # 3
+                      'Oak/Maple/Other/Hickory',# mediod 4
+                      'Maple/Pine/Cedar/Spruce'# mediod 5
+                      
+                      # mediod5 # not as much birch
+                      
+                    ))
+
+classes.5.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot5 <- data.frame(fiacomp, speciescluster = rem_class)
+
+ggplot(clust_plot5, aes(x = x, y=y, fill=speciescluster))+geom_raster()
+
+# map out the clusters with pretty colors & save to a file:
+png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/five_cluster_map_fia_stat_smooth.dens.png")
+fia.clust5 <- ggplot(clust_plot5, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#f0027f'  ,'#fdc086','#a6cee3',"#beaed4",'#003c30'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.8,'lines'),
+                                                                                                              legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()
+fia.clust5
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+# the smoothed estimates are very smooth......
+
+
+
+# what happens if we do the same thing, but with the raw data estimates:
+#------------------------FIA with smooth composition & masked cells where we don't have data----------------
+
 
 
 #----------------------- FIA old code ---------------

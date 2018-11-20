@@ -572,6 +572,89 @@ write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.cs
 
 # what happens if we do the same thing, but with the raw data estimates:
 #------------------------FIA with smooth composition & masked cells where we don't have data----------------
+# read in old fia density data:
+dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
+dens.fia.cells <- dens.pr[!is.na(dens.pr$FIAdensity),]
+fiacomp.msk <- merge(dens.fia.cells[,c("x", "y")], fiacomp, by = c("x", "y"))
+ggplot(fiacomp.msk, aes(x,y, fill = Oak))+geom_raster() # check to make sure it msked out cells where we have no FIA plots
+
+fiacomp.msk <- fiacomp.msk[,-ncol(fiacomp.msk)]
+# lets do the cluster analysis on this and see what the best clustering is:
+
+# now run pam with 7 classes again:
+classes.3.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 3, diss = FALSE, keep.diss = FALSE)
+classes.4.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 4, diss = FALSE, keep.diss = FALSE)
+classes.5.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 5, diss = FALSE, keep.diss = FALSE)
+classes.6.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 6, diss = FALSE, keep.diss = FALSE)
+classes.7.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 7, diss = FALSE, keep.diss = FALSE)
+classes.8.smooth.dens.msk <- pam(fiacomp.msk[,3:ncol(fiacomp.msk)], k = 8, diss = FALSE, keep.diss = FALSE)
+
+
+fia.3class.smooth.dens.msk <- summary(classes.3.smooth.dens.msk) # avg width = 0.2973809
+fia.4class.smooth.dens.msk <- summary(classes.4.smooth.dens.msk) # avg width = 0.2864922
+fia.5class.smooth.dens.msk <- summary(classes.5.smooth.dens.msk) # avg width =  0.2490878 # highest avg
+fia.6class.smooth.dens.msk <- summary(classes.6.smooth.dens.msk) # Avg. Silhouette width = 0.2394792
+fia.7class.smooth.dens.msk <- summary(classes.7.smooth.dens.msk) # Avg. Silhouette width = 0.2428703 lower than 9 classes, but the minimum width is 0.2 for all classes
+fia.8class.smooth.dens.msk <- summary(classes.8.smooth.dens.msk) # Avg. Silhouette width = 0.236274
+
+# in general 3-4 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
+# for this data, it seems that 4 classes may be the best cluster bc/ they match previous clustesr
+
+
+
+# --------------- Now lets look at a map of the k=4 clusters ----------------------
+
+# k = 4 mediods: 
+# get mediods to make the cluster definitions
+mediods4 <- rownames(fiacomp.msk) [classes.4.smooth.dens.msk$id.med]
+fiacomp.msk$cell <- rownames(fiacomp.msk)
+
+# look at the rows that have the mediods
+df4 <- fiacomp.msk[fiacomp.msk$cell %in% mediods4,] 
+
+
+old_classes <- classes.4.smooth.dens.msk
+
+# I assigned names to mediod classes based on the highest species % in each mediod:
+df4
+rem_class <- factor(old_classes$clustering,
+                    # relabel the clusters from numbers to custom names
+                    labels=c(
+                      'Oak/Maple/Ash/Pine/Poplar', # 1
+                      "Poplar/Maple/Cedar/Fir", # 2
+                      "Maple/Poplar", # 3
+                      'Pine/Maple/Poplar'# mediod 4
+                      
+                      
+                      # mediod4 # not as much birch
+                      
+                    ))
+
+classes.4.smooth.dens.msk$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot4 <- data.frame(fiacomp.msk, speciescluster = rem_class)
+
+ggplot(clust_plot4, aes(x = x, y=y, fill=speciescluster))+geom_raster()
+
+# map out the clusters with pretty colors & save to a file:
+png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/four_cluster_map_fia_stat_smooth.dens.msk.png")
+fia.clust4 <- ggplot(clust_plot4, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c( '#a6cee3','#fdc086','#003c30','#f0027f' ), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.8,'lines'),
+                                                                                                              legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()
+fia.clust4
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot4, "outputs/four_clust_fia_dissimilarity_stat_smooth.dens.msk.csv", row.names = FALSE)
+
+
+
+
+
 
 
 

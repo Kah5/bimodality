@@ -41,11 +41,11 @@ climate.data <- list(mod.precip[,c('x', 'y', 'pr30yr')], past.precip[,c('x', 'y'
      past.tmean[,c('x', 'y', 'Mean', 'deltaT')], mod.tmean.mo[,c('x', 'y', 'moddeltaT')]) %>% Reduce(function(dtf1,dtf2) left_join(dtf1,dtf2,by=c("x", "y")), .)
 colnames(climate.data) <- c("x", "y",  "MAP2011", "MAP1910","moderndeltaP", "pastdeltaP", "modtmean", "pasttmean", "deltaT", "moddeltaT")
 
-ggplot(climate.data, aes(x, y, color=MAP1910))+geom_point()
+ggplot(climate.data, aes(x, y, color=pastdeltaP))+geom_point()
 
 
 
-
+summary(climate.data)
 
 # read in the P-PET data (generated from crc03_Extract_Prism_Historical.R)
 #newf<- file.choose()
@@ -54,7 +54,7 @@ P.PET <- read.csv("outputs/P.PET_prism_1895_1925_Mar_Nov.csv")
 climate.data <- merge(climate.data, P.PET[,c("x", "y", "GS_ppet")], by = c("x", "y"))
 
 
-ggplot(P.PET, aes(x, y, fill=GS_ppet))+geom_raster()
+ggplot(climate.data, aes(x, y, fill=GS_ppet))+geom_raster()
 
 write.csv(climate.data, paste0("data/midwest_climate_past_present_alb",version,".csv"))
 
@@ -74,7 +74,7 @@ ggplot(climate.data, aes(x, y, fill=pasttmean))+geom_raster()
 ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 # merge with soil moisture balance (calucated from P, PET and AWC):
-moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
+moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean_v2.csv')
 climate.data <- merge( moist_bal[,c("x", "y", "Mean_GS")],climate.data,  by = c("x", "y"), all.y = TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
@@ -82,7 +82,7 @@ ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
 # merge with modern soil moisture balance (calucated from P, PET and AWC)
 moist_bal.m <- read.csv('outputs/soil.moisture_1999_2015_with_mean.csv')
 #moist_bal.m <- read.csv("outputs/soil.moisture_end_of_mo_1985_2015.csv")
-#ggplot(moist_bal.m, aes(x,y, fill = Mean_07)) + geom_raster()
+ggplot(moist_bal.m, aes(x,y, fill = Mean_07)) + geom_raster()
 climate.data <- merge(moist_bal.m[,c("x", "y", "Mean_GS")],climate.data,   by = c("x", "y"), all.y =TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil_m"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()

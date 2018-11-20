@@ -290,26 +290,23 @@ pvalues <- out.df  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pva
 
 dens$pc1_bins <- cut(dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 
-# also make density bins:
-dens$dens.bins <- cut(bimod.pc.pls$mean_dens, breaks=seq(0, 775, by = 25))
-ordered.bins <- data.frame(dens.bins = unique(cut(dens[order(dens$mean_dens),]$mean_dens, breaks=seq(0, 775, by = 25))),
-                           mids = seq(0, 775, by = 25))
-
-
-hist.summary<- dens %>% group_by(dens.bins) %>% dplyr::summarise(mean = count(mean_dens),
-                                                    ci.high = count(ci.high_dens), 
-                                                  ci.low =count(ci.low_dens))
-
-
-ordered.cuts <- data.frame(pc1_bins = unique(cut(pls.df[order(pls.df$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
+ordered.cuts <- data.frame(pc1_bins = levels(cut(pls.df[order(pls.df$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
                            mids = seq(-5.375, 4.5, by = 0.25))
 pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
 bimod.pc.pls <- left_join(dens, pvalues, by = c("pc1_bins"))
 
+# if there are too few grid cells (<50), then we won't evaluature the bimodality
+
+bin.counts <- bimod.pc.pls %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
+bimod.pc.pls <- merge(bimod.pc.pls, bin.counts, by = "pc1_bins")
 
 # merge with the envt + pc data
+bimod.pc.pls$bimclass_lowsamp <- ifelse(bimod.pc.pls$ncells_pc1 <= 50, "low-sample", "okay")
+bimod.pc.pls$bimclass <- ifelse(bimod.pc.pls$mean.p <= 0.05 & bimod.pc.pls$bimclass_lowsamp %in% "okay", "bimodal", "unimodal")
 
-bimod.pc.pls$bimclass <- ifelse(bimod.pc.pls$mean.p <= 0.05, "bimodal", "unimodal")
+
+
+# merge with the envt + pc data
 
 bimod.pc.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.pc.pls, aes(x=x, y=y, fill = bimclass))+
@@ -319,10 +316,12 @@ bimod.pc.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
+pvalues <- merge(pvalues, bin.counts, by = "pc1_bins")
+pvalues$lowsamp <- ifelse(pvalues$ncells_pc1 <= 50, "low-sample", "okay")
 
 
-pc1.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pc1.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
@@ -350,10 +349,17 @@ pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
 
 bimod.ppet.pls <- left_join(dens, pvalues, by = c("ppet_bins"))
 
+bin.counts <- bimod.ppet.pls %>% group_by(ppet_bins) %>% dplyr::summarise(ncells_ppet = length(mean.p))
+bimod.ppet.pls <- merge(bimod.ppet.pls, bin.counts, by = "ppet_bins")
+
+# merge with the envt + ppet data
+bimod.ppet.pls$bimclass_lowsamp <- ifelse(bimod.ppet.pls$ncells_ppet <= 50, "low-sample", "okay")
+bimod.ppet.pls$bimclass_ppet <- ifelse(bimod.ppet.pls$mean.p <= 0.05 & bimod.ppet.pls$bimclass_lowsamp %in% "okay", "bimodal", "unimodal")
+
+
 
 # merge with the envt + pc data
 
-bimod.ppet.pls$bimclass_ppet <- ifelse(bimod.ppet.pls$mean.p <= 0.05, "bimodal", "unimodal")
 bimod.ppet.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.ppet.pls, aes(x=x, y=y, fill = bimclass_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -363,9 +369,13 @@ bimod.ppet.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
+pvalues <- merge(pvalues, bin.counts, by = "ppet_bins")
+pvalues$lowsamp <- ifelse(pvalues$ncells_ppet <= 50, "low-sample", "okay")
 
-ppet.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("DIP value")
-ppet.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("P value")
+
+# plot p values and dip values by bin
+ppet.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("DIP value")
+ppet.pval.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("P value")
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
 plot_grid(ppet.dip.pls, ppet.pval.pls)
@@ -393,9 +403,13 @@ pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
 bimod.sm.pls <- left_join(dens, pvalues, by = c("soil_bins"))
 
 
-# merge with the envt + pc data
+bin.counts <- bimod.sm.pls %>% group_by(soil_bins) %>% dplyr::summarise(ncells_soil = length(mean.p))
+bimod.sm.pls <- merge(bimod.sm.pls, bin.counts, by = "soil_bins")
 
-bimod.sm.pls$bimclass_soil <- ifelse(bimod.sm.pls$mean.p <= 0.05, "bimodal", "unimodal")
+# merge with the envt + soil data
+bimod.sm.pls$bimclass_lowsamp <- ifelse(bimod.sm.pls$ncells_soil <= 50, "low-sample", "okay")
+bimod.sm.pls$bimclass_soil <- ifelse(bimod.sm.pls$mean.p <= 0.05 & bimod.sm.pls$bimclass_lowsamp %in% "okay", "bimodal", "unimodal")
+
 
 
 
@@ -408,10 +422,13 @@ bimod.sm.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
+# plot out the p and dip values by bin class:
+pvalues <- merge(pvalues, bin.counts, by = "soil_bins")
+pvalues$lowsamp <- ifelse(pvalues$ncells_soil <= 50, "low-sample", "okay")
 
 
-soil.dip.pls <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("DIP value")
-soil.pval.pls <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("P value")
+soil.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("DIP value")
+soil.pval.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("P value")
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet.png")
@@ -720,7 +737,7 @@ f.clust.hist.inset.full <- clust.hist.fia.full+ scale_y_continuous(breaks=c(0,25
 f.clust.hist.inset.full <- clust.hist.fia.full+ scale_y_continuous(breaks=c(0,1000,2000,3000, 4000), limits = c(0,6100))+theme(plot.background = element_rect(fill = "white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ annotation_custom(grob = xbp_grob2, ymin = 4500, ymax = 6600, xmin = -140, xmax = 648)#+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = -141, xmax = 648)
 
 
-
+dev.off()
 
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
@@ -865,7 +882,8 @@ pvalues <- out.df  %>% group_by(PC1fia_bins) %>% dplyr::summarise(mean.p = mean(
                                                                mean.d = mean(dip, na.rm = TRUE),
                                                                median.d = median(dip, na.rm = TRUE),
                                                                ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE)) 
+                                                               
 
 
 dens$PC1fia_bins <- cut(dens$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
@@ -879,9 +897,13 @@ pvalues <- left_join(ordered.cuts, pvalues, by = "PC1fia_bins")
 bimod.pc.FIA <- left_join(dens, pvalues, by = c("PC1fia_bins"))
 
 
-# merge with the envt + pc data
+# if there are too few grid cells (<50), then we won't evaluature the bimodality
+bin.counts <- bimod.pc.FIA %>% group_by(PC1fia_bins) %>% dplyr::summarise(ncells_f_pc1 = length(mean.p))
+bimod.pc.FIA <- merge(bimod.pc.FIA, bin.counts, by = "PC1fia_bins")
 
-bimod.pc.FIA$bimclass <- ifelse(bimod.pc.FIA$mean.p <= 0.05, "bimodal", "unimodal")
+# merge with the envt + pc data
+bimod.pc.FIA$bimclass_lowsamp <- ifelse(bimod.pc.FIA$ncells_f_pc1 <= 50, "low-sample", "okay")
+bimod.pc.FIA$bimclass <- ifelse(bimod.pc.FIA$mean.p <= 0.05 & bimod.pc.FIA$bimclass_lowsamp %in% "okay", "bimodal", "unimodal")
 
 bimod.pc.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.pc.FIA, aes(x=x, y=y, fill = bimclass))+
@@ -893,8 +915,11 @@ bimod.pc.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 
 
-pc1.dip.FIA <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.FIA <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pvalues <- merge(pvalues, bin.counts, by = "PC1fia_bins")
+pvalues$lowsamp <- ifelse(pvalues$ncells_f_pc1 <= 50, "low-sample", "okay")
+
+pc1.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/FIA_dip_pvalues_unc_pc1.png")
@@ -914,18 +939,24 @@ pvalues <- out.df  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pv
                                                                 ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 
 
-dens$ppet_binsfia <- cut(dens$GS_ppet_mod, breaks=seq(-170, 205, by = 15))
+dens$ppet_binsfia <- cut(dens$GS_ppet_mod, breaks=seq(-170, 310, by = 15))
 
-ordered.cuts <- data.frame(ppet_bins = unique(cut(FIA.df[order(FIA.df$GS_ppet_mod),]$GS_ppet, breaks=seq(-170, 205, by = 15))),
-                           mids = seq(-167.5, 205, by = 15))
+ordered.cuts <- data.frame(ppet_bins = levels(cut(FIA.df[order(FIA.df$GS_ppet_mod),]$GS_ppet, breaks=seq(-170, 310, by = 15))),
+                           ppet_mids = seq(-167.5, 310, by = 15))
 pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
 
 bimod.ppet.FIA <- merge(dens, pvalues, by.x = c("ppet_binsfia"), by.y = c("ppet_bins"))
+# if there are too few grid cells (<50), then we won't evaluature the bimodality
+bin.counts <- bimod.ppet.FIA %>% group_by(ppet_binsfia) %>% dplyr::summarise(ncells_f_ppet = length(mean.p))
+bimod.ppet.FIA <- merge(bimod.ppet.FIA, bin.counts, by = "ppet_binsfia")
+
+# merge with the envt + pc data
+bimod.ppet.FIA$bimclass_ppet_lowsamp <- ifelse(bimod.ppet.FIA$ncells_f_ppet <= 50, "low-sample", "okay")
+bimod.ppet.FIA$bimclass_ppet <- ifelse(bimod.ppet.FIA$mean.p <= 0.05 &bimod.ppet.FIA$bimclass_ppet_lowsamp %in% "okay", "bimodal", "unimodal")
 
 
 # merge with the envt + pc data
 
-bimod.ppet.FIA$bimclass_ppet <- ifelse(bimod.ppet.FIA$mean.p <= 0.05, "bimodal", "unimodal")
 bimod.ppet.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
   geom_raster(data=bimod.ppet.FIA, aes(x=x, y=y, fill = bimclass_ppet))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
@@ -935,9 +966,12 @@ bimod.ppet.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
+pvalues <- merge(pvalues, bin.counts, by.x = "ppet_bins", by.y = "ppet_binsfia")
+pvalues$lowsamp <- ifelse(pvalues$ncells_f_ppet <= 50, "low-sample", "okay")
 
-ppet.dip.FIA <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("DIP value")
-ppet.pval.FIA <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("P value")
+ppet.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("DIP value")+xlim(-200, 310)
+ppet.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("P value")+xlim(-200, 310)
+
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/FIA_dip_pvalues_unc_ppet.png")
 plot_grid(ppet.dip.FIA, ppet.pval.FIA)
@@ -962,17 +996,23 @@ ordered.cuts <- data.frame(soil_bins = levels(unique(cut(FIA.df[order(FIA.df$mea
                            mids = seq(0.025, 1.8, by = 0.05))
 pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
 
-bimod.sm.FIA <- merge(dens, pvalues, by.x = "soil_binsfia", by.y = c("soil_bins"))
+bimod.sm.FIA <- merge(dens, pvalues, by.x = "soil_binsfia", by.y = c("soil_bins"), all.x = TRUE)
 
+# if there are too few grid cells (<50), then we won't evaluature the bimodality
+bin.counts <- bimod.sm.FIA %>% group_by(soil_binsfia) %>% dplyr::summarise(ncells_f_soil = length(mean.p))
+bimod.sm.FIA <- merge(bimod.sm.FIA, bin.counts, by.x = "soil_binsfia")
+
+# merge with the envt + pc data
+bimod.sm.FIA$bimclass_soil_lowsamp <- ifelse(bimod.sm.FIA$ncells_f_soil <= 200, "low-sample", "okay")
+bimod.sm.FIA$bimclass_soil_f <- ifelse(bimod.sm.FIA$mean.p <= 0.05 & bimod.sm.FIA$bimclass_soil_lowsamp %in% "okay", "bimodal", "unimodal")
+
+ggplot(bimod.sm.FIA, aes(x,y, fill = soil_binsfia))+geom_raster()
 
 # merge with the envt + pc data
 
-bimod.sm.FIA$bimclass_soil <- ifelse(bimod.sm.FIA$mean.p <= 0.05, "bimodal", "unimodal")
-
-
 
 bimod.sm.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.sm.FIA, aes(x=x, y=y, fill = bimclass_soil))+
+  geom_raster(data=bimod.sm.FIA, aes(x=x, y=y, fill = bimclass_soil_f))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
   labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027', "unimodal" = '#4575b4', "low sample" = "tan"
   )) +
@@ -980,10 +1020,14 @@ bimod.sm.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
+# omit stats for low sample areas"
+pvalues <- merge(pvalues, bin.counts, by.x = "soil_bins", by.y = "soil_binsfia")
+pvalues$lowsamp <- ifelse(pvalues$ncells_f_soil <= 50, "low-sample", "okay")
 
 
-soil.dip.FIA <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("DIP value")
-soil.pval.FIA <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("P value")
+
+soil.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, mean.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("DIP value")
+soil.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, mean.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("P value")
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/FIA_dip_pvalues_unc_ppet.png")
@@ -1062,72 +1106,19 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
 contour_95 <- data.frame(contour_95)
 
 
-#bimodal.pls.pc1 <- read.csv("outputs/new_bim_surface_PC1_pls_0.1_mode_crit_1000.csv")
-bimodal.pls.pc1 <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_PC1_stat.rds")
-#bimodal.pls.pc1$dip <- ifelse(bimodal.pls.pc1$pvalue == 1, NA, bimodal.pls.pc1$dip)
-#bimodal.pls.pc1$pvalue <- ifelse(bimodal.pls.pc1$pvalue == 1, NA, bimodal.pls.pc1$pvalue)
 
 
-pvalues <- bimodal.pls.pc1 %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                              median.p = median(pvalue, na.rm = TRUE),
-                                                              ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                              ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                              mean.d = mean(dip, na.rm = TRUE),
-                                                              median.d = median(dip, na.rm = TRUE),
-                                                              ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                              ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
+# get bimod.pc.pls from previous code
+pc1.bim.line <- bimod.pc.pls[,c("pc1_bins", "mids","ncells_pc1", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass")]
+#pc1.bim.line <- bimod.ppet.pls[,c("ppet_bins", "mids","ncells_ppet", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_ppet")]
+pc1.bim.line <- pc1.bim.line[!duplicated(pc1.bim.line),]
+pc1.bim.line$y <- -41
 
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-# get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pvalues$pc1_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(pc1_bins = unique(unique(pvalues$pc1_bins)),
-                           pc1_mids = as.numeric(mids)+0.125)
-
-
-
-
-
-bimodal.pls.pc1 <- merge(pvalues, ordered.cuts, by = "pc1_bins")
-bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$median.p <= 0.05, "bimodal", "unimodal")
-pc1.bim.line <- data.frame(PC1 = unique(bimodal.pls.pc1[bimodal.pls.pc1$bimclass %in% "bimodal",]$pc1_mids), y = -37, bimodal = "bimodal")
-pls.kde.plot.pc1 <- recordPlot()
-ggplot(bimodal.pls.pc1, aes(PC1, fill = bimclass))+geom_histogram()
 
 library(base2grob)
-pls.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
 
-
-# make the plot with GGPLOT:
-pls.kde.plot.pc1.gg <- ggplot(pls.df, aes(x=PC1, y=PLSdensity) ) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
-  
-  
-pls.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$PC1 , pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+ text(-5.5, 500, "A"))
+pls.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$mids , pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+ text(-5.5, 500, "A"))
 pls.kde.plot.pc1.gg
-
-plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue") + text(-6,500, "A")
-
-ylow2redscale <- c('#ffffcc',
-    '#ffeda0',
-    '#fed976',
-    '#feb24c',
-    '#fd8d3c',
-    '#fc4e2a',
-    '#e31a1c',
-    '#bd0026',
-    '#800026')
-
 
 
 # for P-PET:
@@ -1147,47 +1138,13 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
 contour_95 <- data.frame(contour_95)
 
 
-
-#bimodal.pls.ppet <- read.csv("outputs/new_bim_surface_PPET_pls_4_mode_crit_1000.csv")
-bimodal.pls.ppet <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_PPET_stat.rds")
-#bimodal.pls.ppet$dip <- ifelse(bimodal.pls.ppet$pvalue == 1, NA, bimodal.pls.ppet$dip)
-#bimodal.pls.ppet$pvalue <- ifelse(bimodal.pls.ppet$pvalue == 1, NA, bimodal.pls.ppet$pvalue)
-
-pvalues <- bimodal.pls.ppet %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                               median.p = median(pvalue, na.rm = TRUE),
-                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                               mean.d = mean(dip, na.rm = TRUE),
-                                                               median.d = median(dip, na.rm = TRUE),
-                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-first <- strsplit(as.character(unique(pvalues$ppet_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(ppet_bins = pvalues$ppet_bins,
-                           ppet_mids = as.numeric(mids)+7.5)
-
-
-bimodal.pls.ppet <- merge(pvalues, ordered.cuts, by = "ppet_bins")
-bimodal.pls.ppet$bimclass_ppet <- ifelse(bimodal.pls.ppet$median.p <= 0.05, "bimodal", "unimodal")
-
-
-ppet.bim.line <- data.frame(PPET = unique(bimodal.pls.ppet[bimodal.pls.ppet$bimclass_ppet %in% "bimodal",]$ppet_mids), y = -37, bimodal = "bimodal")
-
+# get bimod.pc.pls from previous code
+ppet.bim.line <- bimod.ppet.pls[,c("ppet_bins", "mids","ncells_ppet", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_ppet")]
+ppet.bim.line <- ppet.bim.line[!duplicated(ppet.bim.line),]
+ppet.bim.line$y <- -41
 
 # ggplotify the kde plots here:
-pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 1,  pch = 15,col = "darkblue") + text(-170,500, "B"))
+pls.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = ppet.bim.line[ppet.bim.line$bimclass_ppet %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") + text(-170,500, "B"))
 pls.kde.plot.ppet.gg
 
 
@@ -1199,53 +1156,19 @@ fhat <- kde(x=na.omit(cbind(pls.df$mean_GS_soil, pls.df$mean_dens)), #H=H,
 
 plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density", ylim = c(-40,550))
 #points(na.omit(cbind(pls.df$PC1, pls.df$mean_dens)), cex=0.3, pch=16)
-abline(h = -40, col = "purple", lwd = 10)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-pls.kde.plot.sm <- recordPlot()
-pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0, 1.5)))
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["10%"])[[1]])
 contour_95 <- data.frame(contour_95)
 
-
-
-bimodal.pls.soil<- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
-# if pvalues == 1, then we dont evaluate over it
-
-pvalues <- bimodal.pls.soil %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                               median.p = median(pvalue, na.rm = TRUE),
-                                                               ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                               ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                               mean.d = mean(dip, na.rm = TRUE),
-                                                               median.d = median(dip, na.rm = TRUE),
-                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-first <- strsplit(as.character(unique(pvalues$soil_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(soil_bins = unique(pvalues$soil_bins),
-                           soil_mids = as.numeric(mids)+0.025)
-
-bimodal.pls.soil <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
-bimodal.pls.soil$bimclass_soil <- ifelse(bimodal.pls.soil$median.p <= 0.05, "bimodal", "unimodal")
-
-sm.bim.line <- data.frame(SM = unique(bimodal.pls.soil[bimodal.pls.soil$bimclass_soil %in% "bimodal",]$soil_mids), y = -37, bimodal = "bimodal")
+# get bimod.pc.pls from previous code
+soil.bim.line <- bimod.soil.pls[,c("soil_bins", "mids","ncells_soil", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_soil")]
+soil.bim.line <- soil.bim.line[!duplicated(soil.bim.line),]
+soil.bim.line$y <- -41
+sm.bim.line <- soil.bim.line
 
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 1,  pch = 15,col = "darkblue") + text(-0.05,500, "C"))
+pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimclass_soil %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") + text(-0.05,500, "C"))
 pls.kde.plot.sm.gg
 
 
@@ -1274,66 +1197,15 @@ contour_95 <- data.frame(contour_95)
 
 
 
-
-#bimodal.fia.pc1 <- read.csv("outputs/new_bim_surface_PC1_fia_0.1_mode_crit_1000.csv")
-bimodal.fia.pc1 <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_PC1fia_stat.rds")
-
-
-pvalues <- bimodal.fia.pc1 %>% group_by(PC1fia_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                                       median.p = median(pvalue, na.rm = TRUE),
-                                                                       ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                                       ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                                       mean.d = mean(dip, na.rm = TRUE),
-                                                                       median.d = median(dip, na.rm = TRUE),
-                                                                       ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                                       ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-
-# get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pvalues$PC1fia_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(pc1_bins_f = unique(unique(pvalues$PC1fia_bins)),
-                           pc1_mids_f = as.numeric(mids)+0.125)
+# get bimodal classifications from previos DF
+pc1.f.bim.line <- bimod.pc.FIA[, c("PC1fia_bins","mids","ncells_f_pc1", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass") ]
+pc1.f.bim.line <- pc1.f.bim.line[!duplicated(pc1.f.bim.line),]
+pc1.f.bim.line$y <- -41
 
 
 
-colnames(pvalues)[1] <- "pc1_bins_f"
 
-bimodal.fia.pc1 <- merge(pvalues, ordered.cuts, by = "pc1_bins_f")
-bimodal.fia.pc1$bimclass_f <- ifelse(bimodal.fia.pc1$median.p <= 0.05, "bimodal", "unimodal")
-
-pc1.f.bim.line <- data.frame(PC1 = ifelse(is.null(nrow(unique(bimodal.fia.pc1[bimodal.fia.pc1$bimclass_f %in% "bimodal",]$mids))),NA, 
-                                          unique(bimodal.fia.pc1[bimodal.fia.pc1$bimclass_f %in% "bimodal",]$mids)), y = -37, bimodal = "bimodal")
-
-
-#pc1.f.bim.line <- data.frame(PC1 = seq(from = -6, to =6, by = 0.05), pval = NA, bimodal = NA)
-#pc1.f.bim.line$pval <- apply(data.frame(pc1.f.bim.line$PC1), MARGIN= 1, FUN=interp.densp)
-#pc1.f.bim.line$bimodal <- ifelse(pc1.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
-#pc1.f.bim.line$y <- -37
-#fia.kde.plot.pc1 <- recordPlot()
-library(base2grob)
-fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis=1.5
-                                         )+ text(-6,500, "B"))
-
-#plot_grid(pls.kde.plot.pc1.grob, three.color.bimodal.plots, ncol = 2)
-
-# make the plot with GGPLOT:
-fia.kde.plot.pc1.gg <- ggplot(pls.df, aes(x=PC1, y=mean_dens_fia) ) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
-
-
-fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimclass %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
 fia.kde.plot.pc1.gg + xlab("PC1")
 
 
@@ -1353,64 +1225,13 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
 contour_95 <- data.frame(contour_95)
 
 
-
-bimodal.fia.ppet <- readRDS("outputs/bimodal_bins_p_value_dipP_fia_PPET_stat.rds")
-
-
-pvalues <- bimodal.fia.ppet %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                                       median.p = median(pvalue, na.rm = TRUE),
-                                                                       ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                                       ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                                       mean.d = mean(dip, na.rm = TRUE),
-                                                                       median.d = median(dip, na.rm = TRUE),
-                                                                       ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                                       ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-# get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pvalues$ppet_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(ppet_bins_f = unique(unique(pvalues$ppet_bins)),
-                           ppet_mids_f = as.numeric(mids)+7.5)
+# get bimodal classifications from previos DF
+ppet.f.bim.line <- bimod.ppet.FIA[, c("ppet_binsfia","ppet_mids","ncells_f_ppet", "mean.p", "mean.d", "bimclass_ppet_lowsamp", "bimclass_ppet") ]
+ppet.f.bim.line <- ppet.f.bim.line[!duplicated(ppet.f.bim.line),]
+ppet.f.bim.line$y <- -41
 
 
-colnames(pvalues)[1] <- "ppet_bins_f"
-
-
-
-bimodal.fia.ppet <- merge(pvalues, ordered.cuts, by = "ppet_bins_f")
-bimodal.fia.ppet$bimclass_ppet_f <- ifelse(bimodal.fia.ppet$median.p <= 0.05, "bimodal", "unimodal")
-
-roundUpNice <- function(x, nice=c(1,2,4,5,6,8,10)) {
-  if(length(x) != 1) stop("'x' must be of length 1")
-  10^floor(log10(x)) * nice[[which(x <= 10^floor(log10(x)) * nice)[[1]]]]
-}
-
-ppet.f.bim.line <- data.frame(PPET = ifelse(is.null(nrow(unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet_f %in% "bimodal",]$GS_ppet_mod))),NA, 
-                                            unique(bimodal.fia.ppet[bimodal.fia.ppet$bimclass_ppet_f %in% "bimodal",]$GS_ppet_mod)), y = -37, bimodal = "bimodal")
-
-
-fia.kde.plot.pc1 <- recordPlot()
-library(base2grob)
-fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PPET", ylab = NA, ylim = c(-40,550)))
-
-
-# make the plot with GGPLOT:
-fia.kde.plot.ppet.gg <- ggplot(pls.df, aes(x=PC1, y=mean_dens_fia) ) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
-
-
-fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimodal %in% "bimodal",], y~PPET, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
+fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimclass %in% "bimodal",], y~ppet_mids, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
 fia.kde.plot.ppet.gg +xlab("P-PET")
 
 
@@ -1431,66 +1252,13 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
 contour_95 <- data.frame(contour_95)
 
 
-
-#sm.f.bim.line <- data.frame(SM = seq(from = 0, to = 1.5, by = 0.05), pval = NA, bimodal = NA)
-#sm.f.bim.line$pval <- apply(data.frame(sm.f.bim.line$SM), MARGIN= 1, FUN=interp.densp)
-#sm.f.bim.line$bimodal <- ifelse(sm.f.bim.line$pval <= 0.05, "bimodal", "unimodal")
-#sm.f.bim.line$y <- -37
-
-#bimodal.fia.sm <- read.csv("outputs/new_bim_surface_soil_moist_fia_0.01_mode_crit.csv")
-bimodal.fia.sm <- readRDS("outputs/bimodal_bins_p_value_dipP_fia_soil_15bins_kde_stat.rds")
-
-
-pvalues <- bimodal.fia.sm %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
-                                                                         median.p = median(pvalue, na.rm = TRUE),
-                                                                         ci.low.p = quantile(pvalue, 0.025, na.rm = TRUE),
-                                                                         ci.high.p = quantile(pvalue, 0.975, na.rm = TRUE),
-                                                                         mean.d = mean(dip, na.rm = TRUE),
-                                                                         median.d = median(dip, na.rm = TRUE),
-                                                                         ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
-                                                                         ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
-
-# for pvalues assigned to 1 b/c modes were not above and below 100, assign NA
-pvalues$median.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.d)
-pvalues$ci.low.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.low.d)
-pvalues$ci.high.d <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$ci.high.d)
-
-pvalues$median.p <- ifelse(pvalues$median.p == 1 & pvalues$ci.high.p == 1 & pvalues$ci.low.p == 1, NA, pvalues$median.p)
-
-# get matching bins and mid point values for plotting
-first <- strsplit(as.character(unique(pvalues$soil_bins)), c(","))
-firsts <- unlist(first) 
-x <- 1:length(firsts)
-firsts <- firsts[x[!1:length(firsts) %% 2 == 0]]# get only odds
-mids <- substring(firsts, first = 2,last = 6)
-
-ordered.cuts <- data.frame(soil_bins_f = unique(unique(pvalues$soil_bins)),
-                           soil_mids_f = as.numeric(mids)+0.025)
-
-colnames(pvalues)[1] <- "soil_bins_f"
-
-
-
-bimodal.fia.sm <- merge(pvalues, ordered.cuts, by = "soil_bins_f")
-bimodal.fia.sm$bimclass_soil_f <- ifelse(bimodal.fia.sm$median.p <= 0.05, "bimodal", "unimodal")
-
-sm.f.bim.line <- data.frame(SM = ifelse(is.null(nrow(unique(bimodal.fia.sm[bimodal.fia.sm$bimclass_soil_f %in% "bimodal",]$mean_GS_soil_m))),NA, 
-                                        unique(bimodal.fia.sm[bimodal.fia.sm$bimclass_soil_f %in% "bimodal",]$mean_GS_soil_m)), y = -37, bimodal = "bimodal")
-
-
-
-fia.kde.plot.pc1 <- recordPlot()
-library(base2grob)
-fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550)))
-
-#plot_grid(pls.kde.plot.pc1.grob, three.color.bimodal.plots, ncol = 2)
+# get bimodal classifications from previos DF
+sm.f.bim.line <- bimod.sm.FIA[, c("soil_binsfia","mids","ncells_f_soil", "mean.p", "mean.d", "bimclass_soil_lowsamp", "bimclass_soil_f") ]
+sm.f.bim.line <- sm.f.bim.line[!duplicated(sm.f.bim.line),]
+sm.f.bim.line$y <- -41
 
 # make the plot with GGPLOT:
-fia.kde.plot.sm.gg <- ggplot(pls.df, aes(x=mean_GS_soil_m, y=mean_dens_fia) ) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
-
-
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "G"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "G"))
 fia.kde.plot.sm.gg 
 
 
@@ -1500,13 +1268,13 @@ fia.kde.plot.sm.gg
 library(ggplotify)
 
 pls.df$pc1_bins <- cut(pls.df$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
-kde.surf.pc1.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass"], bimodal.pls.pc1, by = "pc1_bins")
+kde.surf.pc1.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass"], pc1.bim.line[,!colnames(pc1.bim.line) %in% "y"], by = "pc1_bins")
 
-pls.df$ppet_bins <- cut(pls.df$GS_ppet, breaks=seq(-170, 205, by = 15))
-kde.surf.ppet.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_ppet"], bimodal.pls.ppet, by = "ppet_bins")
+pls.df$ppet_bins <- cut(pls.df$GS_ppet, breaks=seq(-170, 310, by = 15))
+kde.surf.ppet.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_ppet"], ppet.bim.line[,!colnames(ppet.bim.line) %in% "y"], by = "ppet_bins")
 
 pls.df$soil_bins <- cut(pls.df$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
-kde.surf.soil.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil"], bimodal.pls.soil, by = "soil_bins")
+kde.surf.soil.pls.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil"], sm.bim.line[,!colnames(sm.bim.line) %in% "y"], by = "soil_bins")
 
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
@@ -1530,27 +1298,24 @@ one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/len
 two.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "2",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
 three.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "3",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
 
-one.bimpct <- one.bimpct + two.bimpct + three.bimpct
-two.bimpct <-  two.bimpct + three.bimpct
-three.bimpct <-  three.bimpct
 
 
 
 # merge for fia
 pls.df$pc1_bins_f <- cut(pls.df$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
-kde.surf.pc1.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_f"], bimodal.fia.pc1, by = "pc1_bins_f")
+kde.surf.pc1.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_f"], pc1.f.bim.line[,!colnames( pc1.f.bim.line) %in% "y"], by.x = "pc1_bins_f", by.y = "PC1fia_bins")
 
-pls.df$ppet_bins_f <- cut(pls.df$GS_ppet_mod, breaks=seq(-125, 310, by = 15))
-kde.surf.ppet.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_ppet_f"], bimodal.fia.ppet, by = "ppet_bins_f")
+pls.df$ppet_bins_f <- cut(pls.df$GS_ppet_mod, breaks=seq(-170, 310, by = 15))
+kde.surf.ppet.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_ppet_f"], ppet.f.bim.line[,!colnames(ppet.f.bim.line) %in% "y"], by.x = "ppet_bins_f", by.y = "ppet_binsfia")
 
 pls.df$soil_bins_f <- cut(pls.df$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
-kde.surf.soil.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil_f"], bimodal.fia.sm, by = "soil_bins_f")
+kde.surf.soil.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil_f"], sm.f.bim.line[,!colnames(sm.f.bim.line) %in% "y"], by.x = "soil_bins_f", by.y = "soil_binsfia")
 
 
 # FIA three color maps
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
-bim.class.m.f <- merge(kde.surf.pc1.fia.df[,c("x", "y", "bimclass_f")],kde.surf.soil.fia.df [,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
-bim.class.m.f <- merge(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimclass_ppet_f", "mean_dens_fia")])
+bim.class.m.f <- merge(kde.surf.pc1.fia.df[,c("x", "y", "bimclass")], kde.surf.soil.fia.df [,c("x", "y", "bimclass_soil_f")], by = c("x", "y"), all.x = TRUE)
+bim.class.m.f <- merge(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimclass_ppet", "mean_dens_fia")], all.x = TRUE)
 
 bim.class.m.f$nbimod <- as.character(rowSums(bim.class.m.f[,3:5] == "bimodal", na.rm = TRUE))
 # define nbimod as a category:
@@ -1578,9 +1343,14 @@ three.bimpct <-  three.bimpct
 
 
 # merge fia and pls bimodal dfs together:
-kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "mean_dens",  "bimclass","pc1_bins", "pc1_mids")], kde.surf.pc1.fia.df[,c("x", "y",  "mean_dens_fia","bimclass_f","pc1_bins_f", "pc1_mids_f")], by = c("x", "y"), all = TRUE)
-kde.surf.ppet.df <- merge(kde.surf.ppet.pls.df[,c("x", "y",  "mean_dens",  "bimclass_ppet","ppet_bins", "ppet_mids")], kde.surf.ppet.fia.df[,c("x", "y",  "mean_dens_fia","bimclass_ppet_f", "ppet_bins_f","ppet_mids_f")], by = c("x", "y"), all = TRUE)
-kde.surf.soilm.df <- merge(kde.surf.soil.pls.df[,c("x", "y",  "mean_dens",  "bimclass_soil", "soil_bins", "soil_mids")], kde.surf.soil.fia.df[,c("x", "y",  "mean_dens_fia","bimclass_soil_f", "soil_bins_f","soil_mids_f")], by = c("x", "y"), all = TRUE)
+kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "mean_dens",  "bimclass","pc1_bins", "mids")], kde.surf.pc1.fia.df[,c("x", "y",  "mean_dens_fia","bimclass","pc1_bins", "mids")], by = c("x", "y"), all = TRUE)
+# rename:
+colnames(kde.surf.pc1.df) <- c("x" , "y" , "mean_dens",  "bimclass", "pc1_bins", "mids" , "mean_dens_fia", "bimclass_f", "pc1_bins_f",  "mids_f" )     
+kde.surf.ppet.df <- merge(kde.surf.ppet.pls.df[,c("x", "y",  "mean_dens",  "bimclass_ppet","ppet_bins", "mids")], kde.surf.ppet.fia.df[,c("x", "y",  "mean_dens_fia","bimclass_ppet", "ppet_bins","ppet_mids")], by = c("x", "y"), all = TRUE)
+colnames(kde.surf.ppet.df) <- c("x" , "y" , "mean_dens",  "bimclass_ppet", "ppet_bins", "mids" , "mean_dens_fia", "bimclass_ppet_f", "ppet_bins_f",  "mids_f" )     
+
+kde.surf.soilm.df <- merge(kde.surf.soil.pls.df[,c("x", "y",  "mean_dens",  "bimclass_soil", "soil_bins", "mids")], kde.surf.soil.fia.df[,c("x", "y",  "mean_dens_fia","bimclass_soil_f", "soil_bins_f","mids")], by = c("x", "y"), all = TRUE)
+colnames(kde.surf.soilm.df) <- c("x" , "y" , "mean_dens",  "bimclass_soil", "soil_bins", "mids" , "mean_dens_fia", "bimclass_soil_f", "soil_bins_f",  "mids_f" )     
 
 
 
@@ -1732,7 +1502,16 @@ ordered.cuts <- data.frame(pc1_bins = unique(unique(pvalues$pc1_bins)),
 
 
 bimodal.pls.pc1 <- merge(pvalues, ordered.cuts, by = "pc1_bins")
-bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$median.p <= 0.05, "bimodal", "unimodal")
+bimodal.pls.pc1 <- merge(bimodal.pls.pc1, pls.dens)
+# add in code to calculate # of cells:
+bin.counts <- pls.dens %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
+bimodal.pls.pc1 <- merge(bimodal.pls.pc1, bin.counts, by = "pc1_bins")
+
+# merge with the envt + pc data
+bimodal.pls.pc1$bimclass_lowsamp <- ifelse(bimodal.pls.pc1$ncells_pc1 <= 50, "low-sample", "okay")
+bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$mean.p <= 0.05 , "bimodal", "unimodal")
+
+#bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$median.p <= 0.05, "bimodal", "unimodal")
 pc1.bim.line <- data.frame(PC1 = unique(bimodal.pls.pc1[bimodal.pls.pc1$bimclass %in% "bimodal",]$pc1_mids), y = -37, bimodal = "bimodal")
 
 library(base2grob)

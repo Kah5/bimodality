@@ -1506,19 +1506,20 @@ mids <- substring(firsts, first = 2,last = 6)
 ordered.cuts <- data.frame(pc1_bins = unique(unique(pvalues$pc1_bins)),
                            pc1_mids = as.numeric(mids)+0.125)
 
+#add bins to pls.dens
+pls.dens$pc1_bins <- cut(pls.dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 
-
-
-
+# join pvalues to bins:
 bimodal.pls.pc1 <- merge(pvalues, ordered.cuts, by = "pc1_bins")
-bimodal.pls.pc1 <- merge(bimodal.pls.pc1, pls.dens)
+bimodal.pls.pc1 <- left_join(bimodal.pls.pc1, pls.dens, by = "pc1_bins")
+
 # add in code to calculate # of cells:
-bin.counts <- pls.dens %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
+bin.counts <- bimodal.pls.pc1 %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
 bimodal.pls.pc1 <- merge(bimodal.pls.pc1, bin.counts, by = "pc1_bins")
 
 # merge with the envt + pc data
-bimodal.pls.pc1$bimclass_lowsamp <- ifelse(bimodal.pls.pc1$ncells_pc1 <= 50, "low-sample", "okay")
-bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$mean.p <= 0.05 , "bimodal", "unimodal")
+bimodal.pls.pc1$bimclass_lowsamp <- ifelse(bimodal.pls.pc1$ncells_pc1 <= 12500, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
+bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$mean.p <= 0.05 & bimodal.pls.pc1$bimclass_lowsamp %in% "okay"  , "bimodal", "unimodal")
 
 #bimodal.pls.pc1$bimclass <- ifelse(bimodal.pls.pc1$median.p <= 0.05, "bimodal", "unimodal")
 pc1.bim.line <- data.frame(PC1 = unique(bimodal.pls.pc1[bimodal.pls.pc1$bimclass %in% "bimodal",]$pc1_mids), y = -37, bimodal = "bimodal")
@@ -1597,10 +1598,19 @@ mids <- substring(firsts, first = 2,last = 6)
 
 ordered.cuts <- data.frame(ppet_bins = pvalues$ppet_bins,
                            ppet_mids = as.numeric(mids)+7.5)
-
+# make ppet_bins
+pls.dens$ppet_bins <- cut(pls.dens$GS_ppet, breaks=seq(-170, 310, by = 15))
 
 bimodal.pls.ppet <- merge(pvalues, ordered.cuts, by = "ppet_bins")
-bimodal.pls.ppet$bimclass_ppet <- ifelse(bimodal.pls.ppet$median.p <= 0.05, "bimodal", "unimodal")
+bimodal.pls.ppet <- left_join(bimodal.pls.ppet, pls.dens, by = "ppet_bins")
+#bimodal.pls.ppet$bimclass_ppet <- ifelse(bimodal.pls.ppet$median.p <= 0.05, "bimodal", "unimodal")
+# add in code to calculate # of cells:
+bin.counts <- bimodal.pls.ppet %>% group_by(ppet_bins) %>% dplyr::summarise(ncells_ppet = length(mean.p))
+bimodal.pls.ppet <- merge(bimodal.pls.ppet, bin.counts, by = "ppet_bins")
+
+# merge with the envt + pc data
+bimodal.pls.ppet$bimclass_lowsamp <- ifelse(bimodal.pls.ppet$ncells_ppet <= 12500, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
+bimodal.pls.ppet$bimclass_ppet <- ifelse(bimodal.pls.ppet$mean.p <= 0.05 & bimodal.pls.ppet$bimclass_lowsamp %in% "okay"  , "bimodal", "unimodal")
 
 
 ppet.bim.line <- data.frame(PPET = unique(bimodal.pls.ppet[bimodal.pls.ppet$bimclass_ppet %in% "bimodal",]$ppet_mids), y = -37, bimodal = "bimodal")
@@ -1629,7 +1639,7 @@ contour_95 <- data.frame(contour_95)
 
 
 
-bimodal.pls.soil<- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
+bimodal.pls.soil <- readRDS("outputs/bimodal_bins_p_value_dipP_PLS_soil_15bins_kde_stat.rds")
 # if pvalues == 1, then we dont evaluate over it
 
 pvalues <- bimodal.pls.soil %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pvalue, na.rm = TRUE),
@@ -1657,9 +1667,18 @@ mids <- substring(firsts, first = 2,last = 6)
 
 ordered.cuts <- data.frame(soil_bins = unique(pvalues$soil_bins),
                            soil_mids = as.numeric(mids)+0.025)
+pls.dens$soil_bins <- cut(pls.dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
 
 bimodal.pls.soil <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
-bimodal.pls.soil$bimclass_soil <- ifelse(bimodal.pls.soil$median.p <= 0.05, "bimodal", "unimodal")
+bimodal.pls.soil <- left_join(bimodal.pls.soil, pls.dens, by = "soil_bins")
+
+bin.counts <- bimodal.pls.soil %>% group_by(soil_bins) %>% dplyr::summarise(ncells_soil = length(mean.p))
+bimodal.pls.soil <- merge(bimodal.pls.soil, bin.counts, by = "soil_bins")
+
+# merge with the envt + pc data
+bimodal.pls.soil$bimclass_lowsamp <- ifelse(bimodal.pls.soil$ncells_soil <= 15000, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
+bimodal.pls.soil$bimclass_soil <- ifelse(bimodal.pls.soil$mean.p <= 0.05 & bimodal.pls.soil$bimclass_lowsamp %in% "okay"  , "bimodal", "unimodal")
+
 
 sm.bim.line <- data.frame(SM = unique(bimodal.pls.soil[bimodal.pls.soil$bimclass_soil %in% "bimodal",]$soil_mids), y = -37, bimodal = "bimodal")
 

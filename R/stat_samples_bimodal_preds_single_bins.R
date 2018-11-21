@@ -109,11 +109,11 @@ saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PC1_stat.rds")
 # new bimodality estimates for PPET:
 
 pls.df <- pls.df[!is.na(pls.df$GS_ppet),]
-pls.df$ppet_bins <- cut(pls.df$GS_ppet, breaks=seq(-170, 205, by = 15))
+pls.df$ppet_bins <- cut(pls.df$GS_ppet, breaks=seq(-170, 310, by = 15))
 
 
-ordered.cuts <- data.frame(PPETbins = unique(pls.df$ppet_bins),
-                           mids = seq(-162.5, 205, by = 15))
+ordered.cuts <- data.frame(PPETbins = levels(pls.df$ppet_bins),
+                           mids = seq(-162.5, 310, by = 15))
 
 # get matching bins and mid point values for plotting
 first <- strsplit(as.character(unique(pls.df[order(pls.df$GS_ppet),]$ppet_bins)), c(","))
@@ -403,11 +403,11 @@ saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_PLS_PC1fia_stat.rds")
 # new bimodality estimates for PPET:
 
 fia.df <- fia.df[!is.na(fia.df$GS_ppet_mod),]
-fia.df$ppet_bins <- cut(fia.df$GS_ppet_mod, breaks=seq(-170, 205, by = 15))
+fia.df$ppet_bins <- cut(fia.df$GS_ppet_mod, breaks=seq(-170, 310, by = 15))
 
 
 ordered.cuts <- data.frame(PPETbins = levels(unique(fia.df$ppet_bins)),
-                           mids = seq(-162.5, 205, by = 15))
+                           mids = seq(-162.5, 310, by = 15))
 
 # get matching bins and mid point values for plotting
 first <- strsplit(as.character(unique(fia.df[order(fia.df$GS_ppet_mod),]$ppet_bins)), c(","))
@@ -448,8 +448,8 @@ sample.ppet.bins <- function(pc1bin){
   dipP2 <- do.call(rbind, dipP)
   dipP2
 }
-dipandp <- sample.ppet.bins(pc1bin = "(-170,-155]")
-summary(dipandp)
+#dipandp <- sample.ppet.bins(pc1bin = "(-170,-155]")
+#summary(dipandp)
 #test.df <- do.call(rbind, dipandp)
 
 out <- apply(data.frame(ordered.cuts$ppet_bins), 1, sample.ppet.bins)
@@ -467,7 +467,6 @@ pvalues <- out.df %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pva
 
 ggplot(pvalues, aes(ppet_bins, mean.p))+geom_point()+geom_errorbar(data = pvalues, aes(ymin=ci.low.p, ymax=ci.high.p), color = "red", alpha = 0.5, width = 0.1)+theme_bw()+geom_hline(yintercept = 0.05)
 
-#ggplot(ordered.cuts, aes(mids, pvalue))+geom_point()
 
 saveRDS(out.df, "outputs/bimodal_bins_p_value_dipP_fia_PPET_stat.rds")
 
@@ -601,7 +600,7 @@ future <- future.pr
 
 pls.total.m <- read.csv("data/extracted_total_PLS_density_draws.csv")
 # merge future pr & 
-future.pr <- pls.df <- left_join(future[,c("x", "y", "cell", "PC1","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )], pls.total.m, by = c("x", "y"))
+future.pr <- future[,c("x", "y", "cell", "PC1","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )]
 
 
 ordered.cuts <- data.frame(pc1_bins = levels(cut(future.pr[order(future.pr$PC1_cc85),]$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))),
@@ -613,7 +612,6 @@ future.pr$pc1_bins_cc85 <- cut(future.pr$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$pc1_bins),]
 future.pr <- merge(ordered.cuts, future.pr, by.x = 'pc1_bins', by.y ="pc1_bins_cc85")
 
-future.pr <- future.pr[!is.na(future.pr$value),]
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -636,21 +634,29 @@ bimod.pc.pls <- left_join(future.pr, pvalues, by = "pc1_bins" )
 
 
 # merge with the envt + pc data
+# get # of grid cells in each of these groups
+pls.bins.pc1 <- read.csv("outputs/n_cells_in_pc1_pls_bins.csv")
 
-bimod.pc.pls$bimclass <- ifelse(bimod.pc.pls$mean.p <= 0.05, "bimodal", "unimodal")
+bimod.pc1.pls.8.5 <- merge(future.pr, pls.bins.pc1, by = "pc1_bins", all.x = TRUE)
+# merge with the envt + pc1 data
+bimod.pc1.pls.8.5$bimclass <- ifelse(bimod.pc1.pls.8.5$mean.p <= 0.05 & bimod.pc1.pls.8.5$lowsamp %in% "okay", "bimodal", 
+                                      ifelse(bimod.pc1.pls.8.5$lowsamp %in% "low-sample","low sample",
+                                             ifelse(is.na(bimod.pc1.pls.8.5$lowsamp),"out-of-sample","unimodal")))
+
+
 
 bimod.pc.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.pc.pls, aes(x=x, y=y, fill = bimclass))+
+  geom_raster(data=bimod.pc1.pls.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan", "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
-pc1.dip.pls.8.5 <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.pls.8.5 <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pc1.dip.pls.8.5 <- ggplot(pls.bins.pc1[pls.bins.pc1$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.pls.8.5 <- ggplot(pls.bins.pc1[pls.bins.pc1$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_pc1_ccesm_8.5.png")
@@ -671,11 +677,11 @@ dev.off()
 
 # now do the same for P-PET 
 
-future.pr$ppet_bins <- cut(future.pr$mean_ppet_GS, breaks=seq(-170, 205, by = 15))
+future.pr$ppet_bins <- cut(future.pr$mean_ppet_GS, breaks=seq(-170, 310, by = 15))
 
 
 ordered.cuts <- data.frame(ppet_bins = levels(future.pr$ppet_bins),
-                           ppet_mids = seq(-162.5, 205, by = 15))
+                           ppet_mids = seq(-162.5, 310, by = 15))
 
 future.pr <- future.pr[!is.na(future.pr$mean_ppet_GS),]
 #future.pr$pc1_bins_cc85 <- cut(future.pr$mean_ppet_GS, breaks=seq(-5.5, 4.5, by = 0.25))
@@ -685,7 +691,6 @@ future.pr <- future.pr[!is.na(future.pr$mean_ppet_GS),]
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
 future.pr <- merge(ordered.cuts, future.pr, by= "ppet_bins")
 
-future.pr <- future.pr[!is.na(future.pr$value),]
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -708,21 +713,27 @@ bimod.ppet.pls <- left_join(future.pr, pvalues, by = "ppet_bins" )
 
 
 # merge with the envt + pc data
+pls.bins.ppet <- read.csv("outputs/n_cells_in_ppet_pls_bins.csv")
 
-bimod.ppet.pls$bimclass_ppet <- ifelse(bimod.ppet.pls$mean.p <= 0.05, "bimodal", "unimodal")
+bimod.ppet.pls.8.5 <- merge(future.pr, pls.bins.ppet, by = "ppet_bins", all.x = TRUE)
+# merge with the envt + ppet data
+bimod.ppet.pls.8.5$bimclass <- ifelse(bimod.ppet.pls.8.5$mean.p <= 0.05 & bimod.ppet.pls.8.5$lowsamp %in% "okay", "bimodal", 
+                                     ifelse(bimod.ppet.pls.8.5$lowsamp %in% "low-sample","low sample",
+                                            ifelse(is.na(bimod.ppet.pls.8.5$lowsamp),"out-of-sample","unimodal")))
+
 
 bimod.ppet.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.pls, aes(x=x, y=y, fill = bimclass_ppet))+
+  geom_raster(data=bimod.ppet.pls.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan", "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
-ppet.dip.pls.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-ppet.pval.pls.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+ppet.dip.pls.8.5 <- ggplot(pls.bins.ppet[pls.bins.ppet$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PPET")+ylab("DIP value")
+ppet.pval.pls.8.5 <- ggplot(pls.bins.ppet[pls.bins.ppet$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PPET")+ylab("P value")
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_ppet_ccesm_8.5.png")
@@ -742,7 +753,7 @@ dev.off()
 # get future soil moisture estimates:
 
 
-# now do the same for P-PET and soil moisture
+# now do the same for soil moisture
 
 future.pr$soil_bins <- cut(future.pr$mean_GS_soil_8.5,  breaks=seq(0, 1.8, by = 0.05))
 
@@ -758,7 +769,7 @@ future.pr <- future.pr[!is.na(future.pr$mean_GS_soil_8.5),]
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soil_bins),]
 future.pr <- merge(ordered.cuts, future.pr, by= "soil_bins")
 
-future.pr <- future.pr[!is.na(future.pr$value),]
+
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -781,13 +792,19 @@ bimod.soil.pls <- left_join(future.pr, pvalues, by = "soil_bins" )
 
 
 # merge with the envt + pc data
+pls.bins.soil <- read.csv("outputs/n_cells_in_soil_pls_bins.csv")
 
-bimod.soil.pls$bimclass_soil <- ifelse(bimod.soil.pls$mean.p <= 0.05, "bimodal", "unimodal")
+bimod.soil.pls.8.5 <- merge(future.pr, pls.bins.soil, by = "soil_bins", all.x = TRUE)
+# merge with the envt + soil data
+bimod.soil.pls.8.5$bimclass <- ifelse(bimod.soil.pls.8.5$mean.p <= 0.05 & bimod.soil.pls.8.5$lowsamp %in% "okay", "bimodal", 
+                                      ifelse(bimod.soil.pls.8.5$lowsamp %in% "low-sample","low sample",
+                                             ifelse(is.na(bimod.soil.pls.8.5$lowsamp),"out-of-sample","unimodal")))
+
 
 bimod.soil.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.soil.pls, aes(x=x, y=y, fill = bimclass_soil))+
+  geom_raster(data=bimod.soil.pls.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan", "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
@@ -824,19 +841,18 @@ future <- future.pr
 
 fia.total.m <- read.csv("data/extracted_total_FIA_density_draws.csv")
 # merge future pr & 
-future.fia <- fia.df <- left_join(future[,c("x", "y", "cell", "PC1fia","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )], fia.total.m, by = c("x", "y"))
+future.fia <- future[,c("x", "y", "cell", "PC1fia","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )]#fia.df <- left_join(future[,c("x", "y", "cell", "PC1fia","PC1_cc85", "mean_ppet_GS","mean_GS_soil_8.5" )], fia.total.m, by = c("x", "y"))
 
 
 ordered.cuts <- data.frame(pc1_bins = levels(cut(future.fia[order(future.fia$PC1_cc85),]$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))),
                            mids = seq(-5.375, 4.5, by = 0.25))
-
+# remove na values and split into bins:
 future.fia <- future.fia[!is.na(future.fia$PC1_cc85),]
-future.fia$pc1_bins_cc85 <- cut(future.fia$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
+future.fia$pc1_bins <- cut(future.fia$PC1_cc85, breaks=seq(-5.5, 4.5, by = 0.25))
 
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$pc1_bins),]
-future.fia <- merge(ordered.cuts, future.fia, by.x = 'pc1_bins', by.y ="pc1_bins_cc85")
+future.fia <- merge(future.fia, ordered.cuts, by ="pc1_bins")
 
-future.fia <- future.fia[!is.na(future.fia$value),]
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -857,23 +873,32 @@ pvalues <- fia.stat  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(p
 pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
 bimod.pc.fia <- left_join(future.fia, pvalues, by = "pc1_bins" )
 
+# get # of grid cells in each of these groups
+fia.bins.pc1 <- read.csv("outputs/n_cells_in_pc1_fia_bins.csv")
 
+bimod.pc.fia.8.5 <- merge(future.fia, fia.bins.pc1, by.x = "pc1_bins", by.y = "PC1fia_bins", all.x =TRUE)
 # merge with the envt + pc data
+#bimod.pc.fia.8.5$bimclass <- ifelse(bimod.pc.fia.8.5$mean.p <= 0.05 & bimod.pc.fia.8.5$lowsamp %in% "okay", "bimodal", "unimodal")
 
-bimod.pc.fia$bimclass <- ifelse(bimod.pc.fia$mean.p <= 0.05, "bimodal", "unimodal")
+# merge with the envt + ppet data
+bimod.pc.fia.8.5$bimclass <- ifelse(bimod.pc.fia.8.5$mean.p <= 0.05 & bimod.pc.fia.8.5$lowsamp %in% "okay", "bimodal", 
+                                      ifelse(bimod.pc.fia.8.5$lowsamp %in% "low-sample","low sample",
+                                             ifelse(is.na(bimod.pc.fia.8.5$lowsamp),"out-of-sample","unimodal")))
+
+
 
 bimod.pc.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.pc.fia, aes(x=x, y=y, fill = bimclass))+
+  geom_raster(data=bimod.pc.fia.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan", "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
-pc1.dip.fia.8.5 <- ggplot(pvalues, aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-pc1.pval.fia.8.5 <- ggplot(pvalues, aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
+pc1.dip.fia.8.5 <- ggplot(fia.bins.pc1[fia.bins.pc1$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
+pc1.pval.fia.8.5 <- ggplot(fia.bins.pc1[fia.bins.pc1$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_pc1_ccesm_8.5.png")
@@ -893,11 +918,11 @@ dev.off()
 
 # now do the same for P-PET 
 
-future.fia$ppet_bins <- cut(future.fia$mean_ppet_GS, breaks=seq(-170, 205, by = 15))
+future.fia$ppet_bins <- cut(future.fia$mean_ppet_GS, breaks=seq(-170, 310, by = 15))
 
 
 ordered.cuts <- data.frame(ppet_bins = levels(future.fia$ppet_bins),
-                           ppet_mids = seq(-162.5, 205, by = 15))
+                           ppet_mids = seq(-162.5, 310, by = 15))
 
 future.fia <- future.fia[!is.na(future.fia$mean_ppet_GS),]
 #future.fia$pc1_bins_cc85 <- cut(future.fia$mean_ppet_GS, breaks=seq(-5.5, 4.5, by = 0.25))
@@ -907,7 +932,6 @@ future.fia <- future.fia[!is.na(future.fia$mean_ppet_GS),]
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$ppet_bins),]
 future.fia <- merge(ordered.cuts, future.fia, by= "ppet_bins")
 
-future.fia <- future.fia[!is.na(future.fia$value),]
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -928,23 +952,31 @@ pvalues <- ppet.stat  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean
 pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
 bimod.ppet.fia <- left_join(future.fia, pvalues, by = "ppet_bins" )
 
+# get # of grid cells in each of these groups
+fia.bins.ppet <- read.csv("outputs/n_cells_in_ppet_fia_bins.csv")
+
+bimod.ppet.fia.8.5 <- merge(future.fia, fia.bins.ppet, by= "ppet_bins", all.x = TRUE)
+# merge with the envt + pc data
+bimod.ppet.fia.8.5$bimclass <- ifelse(bimod.ppet.fia.8.5$mean.p <= 0.05 & bimod.ppet.fia.8.5$lowsamp %in% "okay", "bimodal", "unimodal")
 
 # merge with the envt + pc data
+bimod.ppet.fia.8.5$bimclass <- ifelse(bimod.ppet.fia.8.5$mean.p <= 0.05 & bimod.ppet.fia.8.5$lowsamp %in% "okay", "bimodal", 
+                                    ifelse(bimod.ppet.fia.8.5$lowsamp %in% "low-sample","low sample",
+                                           ifelse(is.na(bimod.ppet.fia.8.5$lowsamp),"out-of-sample","unimodal")))
 
-bimod.ppet.fia$bimclass_ppet <- ifelse(bimod.ppet.fia$mean.p <= 0.05, "bimodal", "unimodal")
 
 bimod.ppet.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.ppet.fia, aes(x=x, y=y, fill = bimclass_ppet))+
+  geom_raster(data=bimod.ppet.fia.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan" , "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
-ppet.dip.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("DIP value")+xlim(-150, 300)
-ppet.pval.fia.8.5 <- ggplot(pvalues, aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("P value")+xlim(-150, 300)
+ppet.dip.fia.8.5 <- ggplot(fia.bins.ppet[fia.bins.ppet$lowsamp %in% "okay",], aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("DIP value")+xlim(-150, 300)
+ppet.pval.fia.8.5 <- ggplot(fia.bins.ppet[fia.bins.ppet$lowsamp %in% "okay",], aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia P-PET")+ylab("P value")+xlim(-150, 300)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_ppet_ccesm_8.5.png")
@@ -980,7 +1012,6 @@ future.fia <- future.fia[!is.na(future.fia$mean_GS_soil_8.5),]
 ordered.cuts <- ordered.cuts[!is.na(ordered.cuts$soil_bins),]
 future.fia <- merge(ordered.cuts, future.fia, by= "soil_bins")
 
-future.fia <- future.fia[!is.na(future.fia$value),]
 
 
 # read in the estimates of p values and dip stats to merge with future climate bins
@@ -1002,22 +1033,28 @@ pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
 bimod.soil.fia <- left_join(future.fia, pvalues, by = "soil_bins" )
 
 
-# merge with the envt + pc data
+# get # of grid cells in each of these groups
+fia.bins.soil <- read.csv("outputs/n_cells_in_soil_fia_bins.csv")
 
-bimod.soil.fia$bimclass_soil <- ifelse(bimod.soil.fia$mean.p <= 0.05, "bimodal", "unimodal")
+bimod.soil.fia.8.5 <- merge(future.fia, fia.bins.soil, by = "soil_bins", all.x = TRUE)
+# merge with the envt + soil data
+bimod.soil.fia.8.5$bimclass <- ifelse(bimod.soil.fia.8.5$mean.p <= 0.05 & bimod.soil.fia.8.5$lowsamp %in% "okay", "bimodal", 
+                                      ifelse(bimod.soil.fia.8.5$lowsamp %in% "low-sample","low sample",
+                                             ifelse(is.na(bimod.soil.fia.8.5$lowsamp),"out-of-sample","unimodal")))
+
 
 bimod.soil.fia.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
-  geom_raster(data=bimod.soil.fia, aes(x=x, y=y, fill = bimclass_soil))+
+  geom_raster(data=bimod.soil.fia.8.5, aes(x=x, y=y, fill = bimclass))+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
-  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan"
+  labs(x="easting", y="northing")+ scale_fill_manual(values= c("bimodal"='#d73027',"unimodal" = '#4575b4', "low sample" = "tan", "out-of-sample" = "pink"
   )) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.13),legend.background = element_rect(fill=alpha('transparent', 0)),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")
 
 
 
-soil.dip.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(0, 1.75)
-soil.pval.fia.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(0, 1.75)
+soil.dip.fia.8.5 <- ggplot(fia.bins.soil[fia.bins.soil$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("DIP value")+xlim(0, 1.75)
+soil.pval.fia.8.5 <- ggplot(fia.bins.soil[fia.bins.soil$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("fia PC1")+ylab("P value")+xlim(0, 1.75)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/fia_dip_pvalues_unc_soil_ccesm_8.5.png")
@@ -1040,14 +1077,14 @@ dev.off()
 
 
 
-sm.bimod.85.hist.pls <- ggplot(bimod.soil.pls, aes(soil_mids.y, fill = bimclass_soil))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(0,1.75)+xlab("RCP 8.5 Soil Moisture")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
-sm.bimod.85.hist.fia <- ggplot(bimod.soil.fia, aes(soil_mids.y, fill = bimclass_soil))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 Soil Moisture")+xlim(0,1.75)
+sm.bimod.85.hist.pls <- ggplot(bimod.soil.pls.8.5, aes(soil_mids, fill = bimclass))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(0,1.75)+xlab("RCP 8.5 Soil Moisture")+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+sm.bimod.85.hist.fia <- ggplot(bimod.soil.fia.8.5, aes(soil_mids, fill = bimclass))+geom_bar(position = position_dodge2(), width = 0.75 )+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 Soil Moisture")+xlim(0,1.75)+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))
 
-ppet.bimod.85.hist.pls <- ggplot(bimod.ppet.pls, aes(ppet_mids.y, fill = bimclass_ppet))+geom_bar(position = position_dodge2())+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-150,300)+xlab("RCP 8.5 P-PET")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
-ppet.bimod.85.hist.fia <- ggplot(bimod.ppet.fia, aes(ppet_mids.y, fill = bimclass_ppet))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 P-PET")+xlim(-150,300)
+ppet.bimod.85.hist.pls <- ggplot(bimod.ppet.pls.8.5, aes(ppet_mids, fill = bimclass))+geom_bar(position = position_dodge2())+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-150,300)+xlab("RCP 8.5 P-PET")+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+ppet.bimod.85.hist.fia <- ggplot(bimod.ppet.fia.8.5, aes(ppet_mids.x, fill = bimclass))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 P-PET")+xlim(-150,300)+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))
 
-pc1.bimod.85.hist.pls <- ggplot(bimod.pc.pls, aes(mids.y, fill = bimclass))+geom_bar(position = position_dodge2())+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-6,6)+xlab("RCP 8.5 PC1")#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
-pc1.bimod.85.hist.fia <- ggplot(bimod.pc.fia, aes(mids.y, fill = bimclass))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low-sample-unimodal"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6,6)
+pc1.bimod.85.hist.pls <- ggplot(bimod.pc1.pls.8.5, aes(mids.x, fill = bimclass))+geom_bar(position = position_dodge2(), width = 10)+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlim(-6,6)+xlab("RCP 8.5 PC1")+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))#+scale_fill_manual(values= c("bimodal"='#d73027', "unimodal"='#4575b4', "low-sample-unimodal"="grey"), name = "")+xlim(-6.4, 4.5)+xlab("PLS sm")+ylim(0,1000)
+pc1.bimod.85.hist.fia <- ggplot(bimod.pc.fia.8.5, aes(mids.x, fill = bimclass))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6,6)+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))
 
 png(height = 12, width = 8, units = "in", res = 300, "outputs/paper_figs_unc/future_climate_bimodal_plots.png" )
 plot_grid(pc1.pval.pls.8.5, 

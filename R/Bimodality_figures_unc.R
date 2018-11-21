@@ -290,7 +290,7 @@ pvalues <- out.df  %>% group_by(pc1_bins) %>% dplyr::summarise(mean.p = mean(pva
 
 dens$pc1_bins <- cut(dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 
-ordered.cuts <- data.frame(pc1_bins = levels(cut(pls.df[order(pls.df$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
+ordered.cuts <- data.frame(pc1_bins = levels(cut(dens[order(dens$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
                            mids = seq(-5.375, 4.5, by = 0.25))
 pvalues <- left_join(ordered.cuts, pvalues, by = "pc1_bins")
 bimod.pc.pls <- left_join(dens, pvalues, by = c("pc1_bins"))
@@ -298,6 +298,7 @@ bimod.pc.pls <- left_join(dens, pvalues, by = c("pc1_bins"))
 # if there are too few grid cells (<50), then we won't evaluature the bimodality
 
 bin.counts <- bimod.pc.pls %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
+
 bimod.pc.pls <- merge(bimod.pc.pls, bin.counts, by = "pc1_bins")
 
 # merge with the envt + pc data
@@ -318,6 +319,7 @@ bimod.pc.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 
 pvalues <- merge(pvalues, bin.counts, by = "pc1_bins")
 pvalues$lowsamp <- ifelse(pvalues$ncells_pc1 <= 50, "low-sample", "okay")
+write.csv(pvalues,"outputs/n_cells_in_pc1_pls_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
 
 
 pc1.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
@@ -343,7 +345,7 @@ pvalues <- out.df  %>% group_by(ppet_bins) %>% dplyr::summarise(mean.p = mean(pv
 
 dens$ppet_bins <- cut(dens$GS_ppet, breaks=seq(-170, 205, by = 15))
 
-ordered.cuts <- data.frame(ppet_bins = unique(cut(pls.df[order(pls.df$GS_ppet),]$GS_ppet, breaks=seq(-170, 205, by = 15))),
+ordered.cuts <- data.frame(ppet_bins = unique(cut(dens[order(dens$GS_ppet),]$GS_ppet, breaks=seq(-170, 205, by = 15))),
                            mids = seq(-167.5, 205, by = 15))
 pvalues <- left_join(ordered.cuts, pvalues, by = "ppet_bins")
 
@@ -372,6 +374,7 @@ bimod.ppet.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
 pvalues <- merge(pvalues, bin.counts, by = "ppet_bins")
 pvalues$lowsamp <- ifelse(pvalues$ncells_ppet <= 50, "low-sample", "okay")
 
+write.csv(pvalues,"outputs/n_cells_in_ppet_pls_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
 
 # plot p values and dip values by bin
 ppet.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS P-PET")+ylab("DIP value")
@@ -396,7 +399,7 @@ pvalues <- out.df  %>% group_by(soil_bins) %>% dplyr::summarise(mean.p = mean(pv
 
 dens$soil_bins <- cut(dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
 
-ordered.cuts <- data.frame(soil_bins = levels(unique(cut(pls.df[order(pls.df$mean_GS_soil),]$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05)))),
+ordered.cuts <- data.frame(soil_bins = levels(unique(cut(dens[order(dens$mean_GS_soil),]$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05)))),
                            mids = seq(0.025, 1.8, by = 0.05))
 pvalues <- left_join(ordered.cuts, pvalues, by = "soil_bins")
 
@@ -426,6 +429,7 @@ bimod.sm.pls.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 pvalues <- merge(pvalues, bin.counts, by = "soil_bins")
 pvalues$lowsamp <- ifelse(pvalues$ncells_soil <= 50, "low-sample", "okay")
 
+write.csv(pvalues,"outputs/n_cells_in_soil_pls_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
 
 soil.dip.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("DIP value")
 soil.pval.pls <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS Soil moisture")+ylab("P value")
@@ -918,6 +922,9 @@ bimod.pc.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 pvalues <- merge(pvalues, bin.counts, by = "PC1fia_bins")
 pvalues$lowsamp <- ifelse(pvalues$ncells_f_pc1 <= 50, "low-sample", "okay")
 
+write.csv(pvalues,"outputs/n_cells_in_pc1_fia_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
+
+
 pc1.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
 pc1.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA PC1")+ylab("P value")+xlim(-6.4, 4.5)
 
@@ -968,6 +975,8 @@ bimod.ppet.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x
 
 pvalues <- merge(pvalues, bin.counts, by.x = "ppet_bins", by.y = "ppet_binsfia")
 pvalues$lowsamp <- ifelse(pvalues$ncells_f_ppet <= 50, "low-sample", "okay")
+
+write.csv(pvalues,"outputs/n_cells_in_ppet_fia_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
 
 ppet.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(ppet_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("DIP value")+xlim(-200, 310)
 ppet.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(ppet_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA P-PET")+ylab("P value")+xlim(-200, 310)
@@ -1024,7 +1033,7 @@ bimod.sm.FIA.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=l
 pvalues <- merge(pvalues, bin.counts, by.x = "soil_bins", by.y = "soil_binsfia")
 pvalues$lowsamp <- ifelse(pvalues$ncells_f_soil <= 50, "low-sample", "okay")
 
-
+write.csv(pvalues,"outputs/n_cells_in_soil_fia_bins.csv", row.names = FALSE)# save bin.counts to use in predicting the future:
 
 soil.dip.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, mean.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("DIP value")
 soil.pval.FIA <- ggplot(pvalues[ pvalues$lowsamp %in% "okay",], aes(mids, mean.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("FIA Soil moisture")+ylab("P value")

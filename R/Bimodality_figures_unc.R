@@ -724,13 +724,52 @@ full.fia.surveys$INV_place <- ifelse(full.fia.surveys$INVYRcd %in% "2000s", 1000
                                      ifelse(full.fia.surveys$INVYRcd %in% "1990s", 900,
                                             ifelse(full.fia.surveys$INVYRcd %in% "1980s", 800, NA )))
 
+# -----------------------make arrow figure for increasing/decreasing between pls and FIA----------
+
+# find the # of grid cells that decreased between pls and fia:
+dens.clust$dens.clust.bins <- cut(dens.clust$mean_dens, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
+dens.msk <- dens.clust[!is.na(dens.clust$mean_dens_fia),]
+dens.msk$fiaminuspls <- dens.msk$mean_dens_fia - dens.msk$mean_dens
+ncell.change <- dens.msk %>% group_by(dens.clust.bins) %>% summarise(n_inc = sum(fiaminuspls > 5),
+                                                     n_dec = sum(fiaminuspls < -5),
+                                                     n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
+ncell.change$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
+ncell.change$xval.nochange <- "2"
+ncell.change$xval.inc <- "1"
+ncell.change$xval.dec <- "3"
+
+ncell.change[ncell.change == 0] <- NA # change 0 ncells to NA
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc),
+                                                            arrow = arrow(length = unit(0.17,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change, aes(xval.nochange, start.bin+25, size = n_nochange), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin, xend = xval.dec, yend = start.bin+20, size = n_dec), arrow = arrow(length = unit(0.17,"cm")), color = "#b2182b")+
+  scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                              "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
+  
+# cant get ncell.change.plot to align with clust.hist.full
+
+png(height = 6, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_align_arrows.png")
+plot_grid(clust.hist.full, ncell.change.plot, align = "h", axis = "tblr")
+dev.off()
 
 
+# figure 2 new again:
+inset1 <- ncell.change.plot
+
+# Create the external graphical objects
+# called a "grop" in Grid terminology
+xbp_grob1 <- ggplotGrob(inset1)
+
+clust.hist.inset.full <- clust.hist.full+ylim(0,4500)+ scale_y_continuous(breaks=c(0,1000,2000), limits = c(0,6100))+theme(plot.background = element_rect(fill = "white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ annotation_custom(grob = xbp_grob1, ymin = 3500, ymax = 6620, xmin = -200, xmax = 655)#+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = -141, xmax = 648)
 
 #-----------------------put together figure 1---------------------------
 
 # figure 2 new again:
-inset2 <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw(base_size = 8)+theme(axis.title = element_blank(),axis.ticks.y= element_blank(), axis.text.y= element_blank(),legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1), panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+inset2 <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw(base_size = 8)+theme(axis.title = element_blank(),axis.ticks.y= element_blank(), axis.text.y= element_blank(),legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1), panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 # Create the external graphical objects
 # called a "grop" in Grid terminology
@@ -743,12 +782,12 @@ f.clust.hist.inset.full <- clust.hist.fia.full+ scale_y_continuous(breaks=c(0,10
 
 dev.off()
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
-          clust.hist.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          clust.hist.inset.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
           f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 

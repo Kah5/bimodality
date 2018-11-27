@@ -78,7 +78,7 @@ dens$density_discrete <- ifelse(dens$mean_dens <= 0.5, "Prairie",
                                                                       ifelse(dens$mean_dens > 400 & dens$mean_dens <= 500, "400-500",
                                                                              ifelse(dens$mean_dens > 500 , "500+", "No data"))))))))
 
-dens$density_discrete<- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+dens$density_discrete <- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
 
 
@@ -266,10 +266,90 @@ clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full
 
+
+clust.hist.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 clust.hist.full.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.msk
+
+# ------------------make the same figures but with combined pls and fia clusters-----------------
+# ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------
+
+clust_plot10 <- read.csv("outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv")
+clust_plot_pls <- clust_plot10[clust_plot10$period %in% "PLS",]
+# merge the clusters and pls density data: 
+clust_10 <- merge(clust_plot_pls, dens, by = c("x", "y"))
+
+# need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
+head(clust_10)
+library(plyr)
+clust_10$foresttype <- revalue(clust_10$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
+                                                          "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
+                                                          "Oak-PLS" = "Oak", 
+                                                          "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
+                                                          "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
+                                                          "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                          "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                          "Beech/Maple/Pine-PLS" = "Beech-Maple",
+                                                          "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
+                                                          "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
+
+clust_10$orderedforesttype <- factor(clust_10$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Maple Mixed Forest", "Oak-Mixed"))
+
+# create a stable coloring scheme:
+compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928",  "#004529",  '#fdc086')
+names(compColors) <- levels(clust_10$orderedforesttype)
+
+
+pls.clust.both <- ggplot(clust_10, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = compColors, name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 10)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                            axis.title.x=element_blank(),
+                                                                                                                            axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+pls.clust.both
+
+# merge clust_plot10 and dens.pr
+
+pls.clust.both.msk <- ggplot(clust_10[!is.na(clust_10$FIAdensity),], aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = compColors, name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 10)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+pls.clust.both.msk
+
+# ----------------------- Figure 1D total PLS density histgram colored by species composition-----------------
+dens.clust <- merge(dens, clust_10[,c("x" ,"y", "speciescluster", "foresttype")], by = c("x", "y"), all.x = TRUE)
+dens.clust$foresttype_ordered <- factor(dens.clust$foresttype, levels = rev(c("Aspen", "Maple Mixed Forest", "Oak-Mixed","Oak/Maple/Ash","Oak-Hickory","Pine","Oak",  "Boreal/Sub-boreal", "N. Mixed Forest",  "Beech-Maple")))
+dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
+dens.clust <- dens.clust[!duplicated(dens.clust),]
+
+#myColors <- rev(c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928", '#fdc086',  "#004529"))
+#names(myColors) <- levels(dens.clust$foresttype_ordered)
+
+clust.hist.full.both <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 10)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.105),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.full.both
+
+
+clust.hist.full.both.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.095, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+clust.hist.full.both.no.aspect.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,2050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.095, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.full.both.no.aspect.msk
 
 # --------------------------------Figure 1 FIA maps & Hists ---------------------------------------
 # first lets pull in the full species clustesrs
@@ -677,9 +757,9 @@ fia.clust
 
 # ----------------------- Figure 1D total FIA density histgram colored by species composition-----------------
 dens.clust <- merge(dens, clust_5[,c("x" ,"y", "speciescluster")], by = c("x", "y"), all.x = TRUE)
-#dens.clust$foresttype_ordered <- factor(dens.clust$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen",  "Elm/Oak/Maple","Oak-Hickory","Beech-Maple","N. Mixed Forest", "Oak")))
-#dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
 dens.clust <- dens.clust[!duplicated(dens.clust),]
+
+
 
 myColors <- c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086')
 #names(myColors) <- levels(dens.clust$foresttype_ordered)
@@ -690,6 +770,120 @@ clust.hist.fia.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full
+
+
+# # ----------------------- FIA histogram of smoothed, unmasked density by species classes----------------------------
+clust_plot5 <- read.csv("outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv")
+
+# merge the clusters and pls density data: 
+clust_5 <- merge(clust_plot5 , dens, by = c("x", "y"))
+
+# need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
+clust_5
+library(plyr)
+#clust_8$foresttype <- revalue(clust_5$speciescluster, c("Maple/Oak/Poplar/Ash"="Maple/Oak/Other", "Poplar/Pine/Cedar/Spruce"="Poplar", 
+#                                                       "Oak/Maple/Elm/Poplar/Ash" = "Oak/Maple/Hickory", "Oak/Maple/Other/Hickory"
+#                                                      "Pine/Poplar" = "Pine", "Spruce/Cedar/Tamarack/Poplar" = "Boreal/Sub-boreal", "Beech/Maple/Hemlock" = "Beech-Maple"))
+
+#clust_8$orderedforesttype<- factor(clust_8$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory", "Beech-Maple"))
+
+fia.clust <- ggplot(clust_5, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+fia.clust
+# merge clust_plot5 and dens.pr
+
+
+
+# ----------------------- 10 species comp total FIA density histgram colored by species composition-----------------
+clust_plot10 <- read.csv("outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv")
+clust_plot_fia <- clust_plot10[clust_plot10$period %in% "FIA",]
+# merge the clusters and pls density data: 
+clust_10_fia <- merge(clust_plot_fia, dens, by = c("x", "y"))
+
+# need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
+head(clust_10_fia)
+library(plyr)
+clust_10_fia$foresttype <- revalue(clust_10_fia$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
+                                                          "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
+                                                          "Oak-PLS" = "Oak", 
+                                                          "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
+                                                          "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
+                                                          "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                          "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                          "Beech/Maple/Pine-PLS" = "Beech-Maple",
+                                                          "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
+                                                          "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
+
+clust_10_fia$orderedforesttype <- factor(clust_10_fia$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Oak-Mixed", "Maple Mixed Forest"))
+
+# create a stable coloring scheme:
+compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928", '#fdc086',  "#004529")
+names(compColors) <- levels(clust_10_fia$orderedforesttype)
+
+
+#dens.clust10 <- merge(dens, clust_5[,c("x" ,"y", "speciescluster")], by = c("x", "y"), all.x = TRUE)
+#dens.clust$foresttype_ordered <- factor(dens.clust$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen",  "Elm/Oak/Maple","Oak-Hickory","Beech-Maple","N. Mixed Forest", "Oak")))
+#dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
+clust_10_fia <- clust_10_fia[!duplicated(clust_10_fia),]
+
+#myColors <- c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086')
+#names(myColors) <- levels(dens.clust$foresttype_ordered)
+
+clust.hist.fia.full.both.no.aspect <- ggplot()+ geom_density(data = clust_10_fia[clust_10_fia$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_density(data = clust_10_fia[clust_10_fia$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
+  geom_histogram(data = clust_10_fia[clust_10_fia$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 7)+theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.1, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.fia.full.both.no.aspect
+
+# plot out the map:
+
+fia.clust.both <- ggplot(clust_10_fia, aes(x = x, y=y, fill = orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = compColors, name = " ", drop = F)+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.22),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+fia.clust.both
+
+
+# now mask out cells without fia plots:
+clust_10_fia_msk <- clust_10_fia_msk[!is.na(clust_10_fia_msk$FIAdensity),]
+clust.hist.fia.full.both.msk <- ggplot()+ geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
+  geom_histogram(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.fia.full.both.msk
+
+
+clust_10_fia_msk <- clust_10_fia_msk[!is.na(clust_10_fia_msk$FIAdensity),]
+clust.hist.fia.full.both.no.aspect.msk <- ggplot()+ geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
+  geom_histogram(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.fia.full.both.no.aspect.msk
+
+# plot out the map:
+
+fia.clust.both.msk <- ggplot(clust_10_fia_msk, aes(x = x, y=y, fill = orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = compColors, name = " ", drop = F)+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+fia.clust.both.msk
 
 
 # now get previous FIA surveys:
@@ -734,26 +928,27 @@ ncell.change <- dens.msk %>% group_by(dens.clust.bins) %>% summarise(n_inc = sum
                                                      n_dec = sum(fiaminuspls < -5),
                                                      n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
 
+ncell.change[ncell.change == 0] <- NA # change 0 ncells to NA
+
 ncell.change$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
 ncell.change$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
 ncell.change$xval.nochange <- "2"
 ncell.change$xval.inc <- "1"
 ncell.change$xval.dec <- "3"
 
-ncell.change[ncell.change == 0] <- NA # change 0 ncells to NA
 
 # make a general plot with arrows for increasing and decreasing:
-ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc),
-                                                            arrow = arrow(length = unit(0.17,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.change, aes(xval.nochange, start.bin+25, size = n_nochange), color = "#636363")+
-  geom_segment(aes(x = xval.dec, y = end.bin, xend = xval.dec, yend = start.bin+20, size = n_dec), arrow = arrow(length = unit(0.17,"cm")), color = "#b2182b")+
+ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc*0.5),
+                                                            arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change, aes(xval.nochange, start.bin+20, size = n_nochange), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec*0.5), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
                               "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
   
 # cant get ncell.change.plot to align with clust.hist.full
 
 png(height = 6, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_align_arrows.png")
-plot_grid(clust.hist.full, ncell.change.plot, align = "h", axis = "tblr")
+plot_grid(clust.hist.full.no.aspect, ncell.change.plot, align = "hv", rel_widths = c(1,0.5))
 dev.off()
 
 
@@ -793,6 +988,43 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1) 
 dev.off()
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset.png")
+plot_grid(
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+          
+plot_grid(pls.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+
+plot_grid( clust.hist.full.both.no.aspect + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+           ncell.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+          clust.hist.fia.full.both.no.aspect+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
+          inset2,
+          ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+          
+ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+
+# make figure 1 but with grid cells with no fia plots masked out
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk.png")
+plot_grid(
+  plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+            fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+             ncell.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+             clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
+             inset2,
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
 
 
 # ------------------------------Plot figure 1, but with FIA values masked out-------------------------

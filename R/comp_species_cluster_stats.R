@@ -568,6 +568,206 @@ write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.cs
 
 # the smoothed estimates are very smooth......
 
+#-------------------------------Run clusters with both FIA and pls composition together--------------
+
+# read in pls and fia:
+plsdens.wide <- read.csv( "data/mean_density_statistical_pls_summary.csv")
+fiadens.wide <- read.csv( "data/mean_density_statistical_fia_summary.csv")
+
+addtofia <- colnames(plsdens.wide)[!colnames(plsdens.wide) %in% colnames(fiadens.wide)]
+addtopls <- colnames(fiadens.wide)[!colnames(fiadens.wide) %in% colnames(plsdens.wide)]
+
+plsdens.wide[,addtopls] <- 0
+fiadens.wide[,addtofia] <- 0
+
+
+ordered.df <- plsdens.wide[ , order(names(plsdens.wide))]
+
+#orderd.df <- ordered.df <- select(c(x,y))
+
+ordered.df <- ordered.df %>% dplyr::select(y, everything())
+ordered.df <- ordered.df %>% dplyr::select(x, everything())
+plsdens.wide <- ordered.df %>% dplyr::select( -Total, everything())
+plsdens.wide <- data.frame(plsdens.wide)
+
+# come up with a better solution:
+plsdens.wide$calc.total <- rowSums(plsdens.wide[,3:(ncol(plsdens.wide)-1)]) 
+plsdens.wide [,3:(ncol(plsdens.wide)-2)] <- plsdens.wide [,3:(ncol(plsdens.wide)-2)]/plsdens.wide[,ncol(plsdens.wide)] # calculate the proportion of the total density that each species takes up
+plscomp  <- plsdens.wide [,1:(ncol(plsdens.wide)-2)]
+ggplot(plscomp, aes(x,y, fill = Other.hardwood))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+
+
+
+
+
+ordered.df <- fiadens.wide[ , order(names(fiadens.wide))]
+
+#orderd.df <- ordered.df <- select(c(x,y))
+
+ordered.df <- ordered.df %>% dplyr::select(y, everything())
+ordered.df <- ordered.df %>% dplyr::select(x, everything())
+fiadens.wide <- ordered.df %>% dplyr::select( -Total, everything())
+fiadens.wide <- data.frame(fiadens.wide)
+
+# come up with a better solution:
+fiadens.wide$calc.total <- rowSums(fiadens.wide[,3:(ncol(fiadens.wide)-1)]) 
+fiadens.wide [,3:(ncol(fiadens.wide)-2)] <- fiadens.wide [,3:(ncol(fiadens.wide)-2)]/fiadens.wide[,ncol(fiadens.wide)] # calculate the proportion of the total density that each species takes up
+fiacomp  <- fiadens.wide [,1:(ncol(fiadens.wide)-2)]
+ggplot(fiacomp, aes(x,y, fill = Other.hardwood))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+# get only the grid cells also in PLS range:
+
+fiacomp <- merge(fiacomp, plscomp[,c("x", "y")], by = c("x", "y"))
+ggplot(fiacomp, aes(x,y, fill = Other.hardwood))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+# now compbine the two dfs:
+colnames(fiacomp)
+colnames(plscomp)
+
+fiacomp$period <- "FIA"
+plscomp$period <- "PLS"
+
+both.comps <- rbind(plscomp, fiacomp)
+
+# now run pam with 7 classes again:
+classes.9.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 9, diss = FALSE, keep.diss = FALSE)
+classes.10.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 10, diss = FALSE, keep.diss = FALSE)
+classes.5.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 5, diss = FALSE, keep.diss = FALSE)
+classes.6.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 6, diss = FALSE, keep.diss = FALSE)
+classes.7.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 7, diss = FALSE, keep.diss = FALSE)
+classes.8.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 8, diss = FALSE, keep.diss = FALSE)
+classes.11.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 11, diss = FALSE, keep.diss = FALSE)
+classes.12.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 12, diss = FALSE, keep.diss = FALSE)
+
+
+both.9class.smooth.dens <- summary(classes.9.smooth.dens) # avg width = 0.2273168
+both.10class.smooth.dens <- summary(classes.10.smooth.dens) # avg width = 0.2371311
+both.11class.smooth.dens <- summary(classes.11.smooth.dens) # avg width = 0.2262053
+both.12class.smooth.dens <- summary(classes.12.smooth.dens) # avg width = 0.2240107
+
+both.5class.smooth.dens <- summary(classes.5.smooth.dens) # avg width = 0.199837 # highest avg
+both.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2069075
+both.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width =  0.2276273 lower than 9 classes, but the minimum width is 0.2 for all classes
+both.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.2427202
+
+#------------------------looks like 8 classes fits the data best:
+
+
+# k = 8 mediods: 
+# get mediods to make the cluster definitions
+mediods8 <- rownames(both.comps) [classes.8.smooth.dens$id.med]
+both.comps$cell <- rownames(both.comps)
+index <- both.comps[both.comps$cell %in% mediods8,]
+
+# look at the rows that have the mediods
+df8 <- both.comps[both.comps$cell %in% mediods8,] 
+data.frame(index)
+
+old_classes <- classes.8.smooth.dens
+
+# I assigned names to mediod classes based on the highest species % in each mediod:
+df8
+rem_class <- factor(old_classes$clustering,
+                    # relabel the clusters from numbers to custom names
+                    labels=c(
+                      'Poplar/Oak-FIA', # 1
+                      "Oak/Maple/Ash/Poplar-FIA", # 2
+                      "Oak-PLS", # 3
+                      "Oak/Maple/Other/Hickory-FIA", #4
+                      "Pine/Tamarack/Fir/Hemlock-PLS", # 5
+                      
+                      "Poplar/Pine/Maple/Cedar/Spruce-FIA", # 6
+                      "Maple/Poplar/Cedar-FIA", # 7
+                      
+                      'Beech/Maple-PLS'# mediod 8
+                      
+                      # mediod5 # not as much birch
+                      
+                    ))
+
+classes.8.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot8 <- data.frame(both.comps, speciescluster = rem_class)
+
+ggplot(clust_plot8, aes(x = x, y=y, fill=speciescluster))+geom_raster()+facet_wrap(~period)
+
+# map out the clusters with pretty colors & save to a file:
+png(width = 8, height = 8, units= 'in',res=300,"outputs/paper_figs/8_cluster_map_fia_pls_stat_smooth.dens.png")
+all.clust8 <- ggplot(clust_plot8, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#f0027f'  ,'#fdc086','#a6cee3',"#beaed4",'#003c30',"#666666", "#e6ab02", "#d95f02"), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.8,'lines'),
+                                                                                                              legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+facet_wrap(~period)
+all.clust8
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+#------------------------looks like 10 classes fits the data pretty well-------------
+# choose ten if you are maximizing both the average and minimum silhoutte width:
+# look at the predictions for 10 clusters because it has both high min silohette width and high avg sihloette width:
+
+
+# k = 10 mediods: 
+# get mediods to make the cluster definitions
+mediods10 <- rownames(both.comps) [classes.10.smooth.dens$id.med]
+both.comps$cell <- rownames(both.comps)
+index <- both.comps[both.comps$cell %in% mediods10,]
+
+# look at the rows that have the mediods
+df10 <- both.comps[both.comps$cell %in% mediods10,] 
+data.frame(index)
+
+old_classes <- classes.10.smooth.dens
+
+# I assigned names to mediod classes based on the highest species % in each mediod:
+df10
+rem_class <- factor(old_classes$clustering,
+                    # relabel the clusters from numbers to custom names
+                    labels=c(
+                      'Poplar/Oak-FIA', # 1
+                      "Oak/Maple/Ash/Poplar-FIA", # 2
+                      "Oak-PLS", # 3
+                      "Oak/Hickory/Elm/Maple-FIA", #4
+                      "Oak/Maple/Other/Hickory-FIA", # 5
+                      "Poplar/Pine/Tamarack/Fir-PLS", # 6
+                      
+                      "Pine/Maple/Poplar/Oak/Ash-FIA", # 7
+                      'Maple/Cedar/Poplar-FIA',# 8
+                      "Hemlock/Cedar/Maple-PLS", # 9
+                      "Beech/Maple/Pine-PLS"
+                     
+                      
+                      # mediod5 # not as much birch
+                      
+                    ))
+
+classes.10.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+clust_plot10 <- data.frame(both.comps, speciescluster = rem_class)
+
+ggplot(clust_plot10, aes(x = x, y=y, fill=speciescluster))+geom_raster()+facet_wrap(~period)
+
+# map out the clusters with pretty colors & save to a file:
+png(width = 10, height = 10, units= 'in',res=300,"outputs/paper_figs/10_cluster_map_fia_pls_stat_smooth.dens.png")
+all.clust10 <- ggplot(clust_plot10, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+  scale_fill_manual(values = c('#ff7f00'  ,'#fdc086','#386cb0',"#beaed4",'#a6cee3',"#7fc97f", "#f0027f", "#004529", "#ffff99", "#b15928"), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                              axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                              axis.title.x=element_blank(),
+                                                                                                              axis.title.y=element_blank(),legend.key.size = unit(0.10,'lines'),
+                                                                                                              legend.title=element_text(size=10),legend.position = "bottom",legend.direction = "vertical",legend.background = element_rect(fill=alpha('transparent', 0)))+xlab("easting") + ylab("northing") +coord_equal()+facet_wrap(~period)
+all.clust10
+dev.off()
+
+
+# save as csv for future 
+write.csv(clust_plot10, "outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+
 
 
 # what happens if we do the same thing, but with the raw data estimates:

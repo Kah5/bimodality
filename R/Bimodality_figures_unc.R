@@ -13,6 +13,7 @@ library(dplyr)
 library(tidyr)
 library(ks)
 library(ggplotify)
+library(dplyr)
 
 # read in old PLS density + climate data:
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
@@ -856,7 +857,7 @@ fia.clust.both
 
 
 # now mask out cells without fia plots:
-clust_10_fia_msk <- clust_10_fia_msk[!is.na(clust_10_fia_msk$FIAdensity),]
+clust_10_fia_msk <- clust_10_fia[!is.na(clust_10_fia$FIAdensity),]
 clust.hist.fia.full.both.msk <- ggplot()+ geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
   geom_histogram(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
@@ -898,12 +899,153 @@ past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
 modern.fia <- dens.clust[,c("x", "y", "cell", "mean_dens_fia")]
 modern.fia$INVYRcd <- "2000s"
 colnames(modern.fia) <- c("x", "y", "cell", "FIAdensity", "INVYRcd")
+modern.fia$INVYR <- 2000
 
-full.fia.surveys <- rbind(modern.fia, past.survey[,c("x", "y", "cell", "FIAdensity", "INVYRcd")])
+full.fia.surveys <- rbind(modern.fia, past.survey[,c("x", "y", "cell", "FIAdensity", "INVYRcd", "INVYR")])
 
 full.fia.surveys$INVYRcd <- factor(full.fia.surveys$INVYRcd, c("1980s", "1990s", "2000s"))
 # D: Histogram colored by species cluster:
 # make a histogram of denisty betwen -2.5 and 1 colored by species cluster:
+rownames(full.fia.surveys) <- 1:length(full.fia.surveys$x)
+mean.fia.surveys <- full.fia.surveys %>% group_by(x,y,cell, INVYRcd) %>% dplyr::summarise(Density = mean(FIAdensity, na.rm = TRUE))
+
+fia.surveys.wide <- mean.fia.surveys %>% group_by(x,y, cell) %>% spread(key = INVYRcd, value = Density)
+
+fia.surveys.wide$pct_inc_1980_1990 <- fia.surveys.wide$`1990s` - fia.surveys.wide$`1980s`
+fia.surveys.wide$pct_inc_1990_2000 <- fia.surveys.wide$`2000s` - fia.surveys.wide$`1990s`
+fia.surveys.wide$pct_inc_1980_2000 <- fia.surveys.wide$`2000s` - fia.surveys.wide$`1980s`
+
+fia.surveys.wide$dens.bins.1980 <- cut(fia.surveys.wide$`1980s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
+fia.surveys.wide$dens.bins.1990 <- cut(fia.surveys.wide$`1990s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
+fia.surveys.wide$dens.bins.2000 <- cut(fia.surveys.wide$`2000s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
+
+
+# get numbe cells changing between 1980 and 1990:
+ncell.change.1980.1990 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% summarise(n_inc = sum(pct_inc_1980_1990 > 5, na.rm = TRUE),
+                                                                     n_dec = sum(pct_inc_1980_1990 < -5, na.rm = TRUE),
+                                                                     n_nochange = sum(pct_inc_1980_1990 >= -5 & pct_inc_1980_1990 <= 5 , na.rm = TRUE))
+
+ncell.change.1980.1990[ncell.change.1980.1990 == 0] <- NA # change 0 ncells to NA
+
+ncell.change.1980.1990$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
+ncell.change.1980.1990$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1980.1990$xval.nochange <- "2"
+ncell.change.1980.1990$xval.inc <- "1"
+ncell.change.1980.1990$xval.dec <- "3"
+
+# pct change plots
+ncell.pct.change.1980.1990 <- ncell.change.1980.1990
+ncell.pct.change.1980.1990$total_cells <- rowSums(ncell.pct.change.1980.1990[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.1980.1990$pct_inc <- (ncell.pct.change.1980.1990$n_inc/ncell.pct.change.1980.1990$total_cells)*100
+ncell.pct.change.1980.1990$pct_dec <- (ncell.pct.change.1980.1990$n_dec/ncell.pct.change.1980.1990$total_cells)*100
+ncell.pct.change.1980.1990$pct_nochange <- (ncell.pct.change.1980.1990$n_nochange/ncell.pct.change.1980.1990$total_cells)*100
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.pct.change.1980.1990.plot <- ggplot(ncell.pct.change.1980.1990, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = pct_inc/2),
+                                                                                         arrow = arrow(length = unit(0.1,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.1980.1990, aes(xval.nochange, start.bin+20, size = pct_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.1,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title.x  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +ylab("Tree Density") +ggtitle("% of grid cells changing density \n between 1980's and 1990's")
+
+
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.change.1980.1990.plot <- ggplot(ncell.change.1980.1990, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc/2),
+                                                                                 arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.1980.1990, aes(xval.nochange, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
+
+
+
+# get number of cells changing between 1990 to 2000:
+ncell.change.1990.2000 <- fia.surveys.wide %>% group_by(dens.bins.1990) %>% summarise(n_inc = sum(pct_inc_1990_2000 > 5, na.rm = TRUE),
+                                                                                      n_dec = sum(pct_inc_1990_2000 < -5, na.rm = TRUE),
+                                                                                      n_nochange = sum(pct_inc_1990_2000 >= -5 & pct_inc_1990_2000 <= 5 , na.rm = TRUE))
+
+ncell.change.1990.2000[ncell.change.1990.2000 == 0] <- NA # change 0 ncells to NA
+
+ncell.change.1990.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
+ncell.change.1990.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1990.2000$xval.nochange <- "2"
+ncell.change.1990.2000$xval.inc <- "1"
+ncell.change.1990.2000$xval.dec <- "3"
+
+ncell.pct.change.1990.2000 <- ncell.change.1990.2000
+ncell.pct.change.1990.2000$total_cells <- rowSums(ncell.pct.change.1990.2000[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.1990.2000$pct_inc <- (ncell.pct.change.1990.2000$n_inc/ncell.pct.change.1990.2000$total_cells)*100
+ncell.pct.change.1990.2000$pct_dec <- (ncell.pct.change.1990.2000$n_dec/ncell.pct.change.1990.2000$total_cells)*100
+ncell.pct.change.1990.2000$pct_nochange <- (ncell.pct.change.1990.2000$n_nochange/ncell.pct.change.1990.2000$total_cells)*100
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.pct.change.1990.2000.plot <- ggplot(ncell.pct.change.1990.2000, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = pct_inc/2),
+                                                                                                             arrow = arrow(length = unit(0.1,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.1990.2000, aes(xval.nochange, start.bin+20, size = pct_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.1,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title.x  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +ylab("Tree Density") +ggtitle("% of grid cells changing density \n between 1990's and 2000's")
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.change.1990.2000.plot <- ggplot(ncell.change.1990.2000, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc/2),
+                                                                                                     arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.1990.2000, aes(xval.nochange, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
+
+
+
+
+# get number of cells changing between 2000 to 2000:
+ncell.change.1980.2000 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% summarise(n_inc = sum(pct_inc_1980_2000 > 5, na.rm = TRUE),
+                                                                                      n_dec = sum(pct_inc_1980_2000 < -5, na.rm = TRUE),
+                                                                                      n_nochange = sum(pct_inc_1980_2000 >= -5 & pct_inc_1980_2000 <= 5 , na.rm = TRUE))
+
+ncell.change.1980.2000[ncell.change.1980.2000 == 0] <- NA # change 0 ncells to NA
+
+ncell.change.1980.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
+ncell.change.1980.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1980.2000$xval.nochange <- "2"
+ncell.change.1980.2000$xval.inc <- "1"
+ncell.change.1980.2000$xval.dec <- "3"
+
+ncell.pct.change.1980.2000 <- ncell.change.1980.2000
+ncell.pct.change.1980.2000$total_cells <- rowSums(ncell.pct.change.1980.2000[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.1980.2000$pct_inc <- (ncell.pct.change.1980.2000$n_inc/ncell.pct.change.1980.2000$total_cells)*100
+ncell.pct.change.1980.2000$pct_dec <- (ncell.pct.change.1980.2000$n_dec/ncell.pct.change.1980.2000$total_cells)*100
+ncell.pct.change.1980.2000$pct_nochange <- (ncell.pct.change.1980.2000$n_nochange/ncell.pct.change.1980.2000$total_cells)*100
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.pct.change.1980.2000.plot <- ggplot(ncell.pct.change.1980.2000, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = pct_inc/2),
+                                                                                                             arrow = arrow(length = unit(0.1,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.1980.2000, aes(xval.nochange, start.bin+20, size = pct_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.1,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title.x  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +ylab("Tree Density") +ggtitle("% of grid cells changing density \n between 1980's and 2000's")
+
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.change.1980.2000.plot <- ggplot(ncell.change.1980.2000, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc/2),
+                                                                                                     arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.1980.2000, aes(xval.nochange, start.bin+20, size = n_nochange), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
+
+
+
+
 
 
 library(ggpubr)
@@ -938,11 +1080,11 @@ ncell.change$xval.dec <- "3"
 
 
 # make a general plot with arrows for increasing and decreasing:
-ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc*0.5),
+ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc/2),
                                                             arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.change, aes(xval.nochange, start.bin+20, size = n_nochange), color = "#636363")+
-  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec*0.5), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
-  scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+  geom_point(data = ncell.change, aes(xval.nochange, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-20, xend = xval.dec, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
                               "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
   
 # cant get ncell.change.plot to align with clust.hist.full
@@ -950,6 +1092,25 @@ ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment
 png(height = 6, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_align_arrows.png")
 plot_grid(clust.hist.full.no.aspect, ncell.change.plot, align = "hv", rel_widths = c(1,0.5))
 dev.off()
+
+#--------------------Make arrow figure but with % of grid cells not the total # of grid cells:------
+# find the # of grid cells that decreased between pls and fia:
+ncell.pct.change <- ncell.change
+ncell.pct.change$total_cells <- rowSums(ncell.pct.change[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change$pct_inc <- (ncell.pct.change$n_inc/ncell.pct.change$total_cells)*100
+ncell.pct.change$pct_dec <- (ncell.pct.change$n_dec/ncell.pct.change$total_cells)*100
+ncell.pct.change$pct_nochange <- (ncell.pct.change$n_nochange/ncell.pct.change$total_cells)*100
+
+
+# make a general plot with arrows for increasing and decreasing:
+ncell.pct.change.plot <- ggplot(ncell.pct.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-25, size = pct_inc/2),
+                                                                                 arrow = arrow(length = unit(1.5,"mm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change, aes(xval.nochange, start.bin+25, size = pct_nochange/2), color = "#636363")+
+  geom_segment(aes(x = xval.dec, y = end.bin-25, xend = xval.dec, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(1.5,"mm")), color = "#b2182b")+
+  scale_size(range = c(0, 2))+scale_x_discrete(labels=c("2" = "No Change", "1" = "Increasing",
+                            "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
+
 
 
 # figure 2 new again:
@@ -1007,6 +1168,40 @@ ncol = 1, align = "h", axis="tb", scale = 1)
 dev.off()
 
 
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct.png")
+plot_grid(
+  plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+            fia.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.both.no.aspect + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+             ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+             clust.hist.fia.full.both.no.aspect+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
+             inset2,
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct_nolabels.png")
+plot_grid(
+  plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), 
+            FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) , ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)),
+            fia.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) , ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.both.no.aspect + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)),
+             ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+             clust.hist.fia.full.both.no.aspect+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)),
+             inset2,
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
 # make figure 1 but with grid cells with no fia plots masked out
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk.png")
 plot_grid(
@@ -1024,6 +1219,55 @@ plot_grid(
   
   ncol = 1, align = "h", axis="tb", scale = 1) 
 dev.off()
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change.png")
+plot_grid(
+  plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+            fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+             ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+             clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
+             inset2,
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+
+png(height = 8.4, width = 4, units = 'in', res = 400, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_nolabels.png")
+plot_grid(
+  plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), 
+            FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) , ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) ,
+            fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.both.no.aspect.msk +ylim(0,1000)+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)),
+             ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+             clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) ,
+             inset2,
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+
+# plot of the modern fia surveys next to pls and FIA histograms:
+png(height = 5, width = 18, units = 'in', res = 300, "outputs/paper_figs_unc/pct_change_all_time_periods.png")
+plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+           ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
+           clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
+           ncell.pct.change.1980.1990.plot, 
+           ncell.pct.change.1990.2000.plot,
+           ncell.pct.change.1980.2000.plot,
+           ncol = 6, align = "h", axis = "tb", rel_widths = c(0.75,0.5,0.75, 0.5, 0.5, 0.5))
+dev.off()
+
+
 
 
 
@@ -1442,13 +1686,13 @@ contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
 contour_95 <- data.frame(contour_95)
 
 # get bimod.pc.pls from previous code
-soil.bim.line <- bimod.soil.pls[,c("soil_bins", "mids","ncells_soil", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_soil")]
+soil.bim.line <- bimod.sm.pls[,c("soil_bins", "mids","ncells_soil", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_soil")]
 soil.bim.line <- soil.bim.line[!duplicated(soil.bim.line),]
 soil.bim.line$y <- -41
 sm.bim.line <- soil.bim.line
 
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimclass_soil %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") + text(-0.05,500, "C"))
+pls.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimclass_soil %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") + text(0.1,500, "C"))
 pls.kde.plot.sm.gg
 
 
@@ -1538,7 +1782,7 @@ sm.f.bim.line <- sm.f.bim.line[!duplicated(sm.f.bim.line),]
 sm.f.bim.line$y <- -41
 
 # make the plot with GGPLOT:
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(-0.05,500, "G"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(0.1,500, "G"))
 fia.kde.plot.sm.gg 
 
 
@@ -1781,12 +2025,12 @@ ordered.cuts <- data.frame(pc1_bins = unique(unique(pvalues$pc1_bins)),
 pls.dens$pc1_bins <- cut(pls.dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 
 # join pvalues to bins:
-bimodal.pls.pc1 <- merge(pvalues, ordered.cuts, by = "pc1_bins")
-bimodal.pls.pc1 <- left_join(bimodal.pls.pc1, pls.dens, by = "pc1_bins")
+bimodal.pls.pc1.vals <- merge(pvalues, ordered.cuts, by = "pc1_bins")
+bimodal.pls.pc1 <- left_join( pls.dens, bimodal.pls.pc1.vals, by = "pc1_bins")
 
 # add in code to calculate # of cells:
 bin.counts <- bimodal.pls.pc1 %>% group_by(pc1_bins) %>% dplyr::summarise(ncells_pc1 = length(mean.p))
-bimodal.pls.pc1 <- merge(bimodal.pls.pc1, bin.counts, by = "pc1_bins")
+bimodal.pls.pc1 <- left_join(bimodal.pls.pc1, bin.counts, by = "pc1_bins")
 
 # merge with the envt + pc data
 bimodal.pls.pc1$bimclass_lowsamp <- ifelse(bimodal.pls.pc1$ncells_pc1 <= 12500, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
@@ -1805,7 +2049,7 @@ pls.kde.plot.pc1.gg.full <- ggplot(pls.dens, aes(x=PC1, y=PLSdensity) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-pls.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$PC1 , pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+ text(-5.5, 500, "A"))
+pls.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$PC1 , pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+ text(-4, 500, "A"))
 pls.kde.plot.pc1.gg.full
 
 plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7 ) + points(data = pc1.bim.line[pc1.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "darkblue") + text(-6,500, "A")
@@ -1831,7 +2075,7 @@ plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,8
 #points(na.omit(cbind(pls.dens$PC1, pls.dens$pls)), cex=0.3, pch=16)
 plot(fhat, display="slice", cont=c(85), add = TRUE)
 pls.kde.plot.ppet <- recordPlot()
-pls.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550), xlim = c(-200, 300)))
+pls.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550), xlim = c(-180, 300)))
 
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
@@ -1872,12 +2116,12 @@ ordered.cuts <- data.frame(ppet_bins = pvalues$ppet_bins,
 # make ppet_bins
 pls.dens$ppet_bins <- cut(pls.dens$GS_ppet, breaks=seq(-170, 310, by = 15))
 
-bimodal.pls.ppet <- merge(pvalues, ordered.cuts, by = "ppet_bins")
-bimodal.pls.ppet <- left_join(bimodal.pls.ppet, pls.dens, by = "ppet_bins")
+bimodal.pls.ppet.vals <- merge(pvalues, ordered.cuts, by = "ppet_bins")
+bimodal.pls.ppet <- left_join( pls.dens, bimodal.pls.ppet.vals,by = "ppet_bins")
 #bimodal.pls.ppet$bimclass_ppet <- ifelse(bimodal.pls.ppet$median.p <= 0.05, "bimodal", "unimodal")
 # add in code to calculate # of cells:
 bin.counts <- bimodal.pls.ppet %>% group_by(ppet_bins) %>% dplyr::summarise(ncells_ppet = length(mean.p))
-bimodal.pls.ppet <- merge(bimodal.pls.ppet, bin.counts, by = "ppet_bins")
+bimodal.pls.ppet <- left_join(bimodal.pls.ppet, bin.counts, by = "ppet_bins")
 
 # merge with the envt + pc data
 bimodal.pls.ppet$bimclass_lowsamp <- ifelse(bimodal.pls.ppet$ncells_ppet <= 12500, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
@@ -1902,7 +2146,7 @@ plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,7
 
 plot(fhat, display="slice", cont=c(85), add = TRUE)
 pls.kde.plot.sm <- recordPlot()
-pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0, 1.5)))
+pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0.5, 1.5)))
 
 contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
                                       z=estimate, levels=cont["10%"])[[1]])
@@ -1940,11 +2184,11 @@ ordered.cuts <- data.frame(soil_bins = unique(pvalues$soil_bins),
                            soil_mids = as.numeric(mids)+0.025)
 pls.dens$soil_bins <- cut(pls.dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
 
-bimodal.pls.soil <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
-bimodal.pls.soil <- left_join(bimodal.pls.soil, pls.dens, by = "soil_bins")
+bimodal.pls.soil.vals <- merge(pvalues, ordered.cuts, by.x = "soil_bins")
+bimodal.pls.soil <- left_join(bimodal.pls.soil.vals, pls.dens, by = "soil_bins")
 
 bin.counts <- bimodal.pls.soil %>% group_by(soil_bins) %>% dplyr::summarise(ncells_soil = length(mean.p))
-bimodal.pls.soil <- merge(bimodal.pls.soil, bin.counts, by = "soil_bins")
+bimodal.pls.soil <- left_join(bimodal.pls.soil, bin.counts, by = "soil_bins")
 
 # merge with the envt + pc data
 bimodal.pls.soil$bimclass_lowsamp <- ifelse(bimodal.pls.soil$ncells_soil <= 15000, "low-sample", "okay") # min num sampes == 12500 because 50grid cells X 250 samples
@@ -1954,7 +2198,7 @@ bimodal.pls.soil$bimclass_soil <- ifelse(bimodal.pls.soil$mean.p <= 0.05 & bimod
 sm.bim.line <- data.frame(SM = unique(bimodal.pls.soil[bimodal.pls.soil$bimclass_soil %in% "bimodal",]$soil_mids), y = -37, bimodal = "bimodal")
 
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 1,  pch = 15,col = "darkblue") + text(-0.05,500, "C"))
+pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), cex.axis = 0.7) + points(data = sm.bim.line[sm.bim.line$bimodal %in% "bimodal",], y~SM, cex = 1,  pch = 15,col = "darkblue") + text(0.2,500, "C"))
 pls.kde.plot.sm.gg.full
 
 
@@ -2041,7 +2285,7 @@ fia.kde.plot.pc1.gg <- ggplot(fia.dens, aes(x=PC1, y=fia) ) +
   stat_density_2d(aes(fill = ..level..), geom = "polygon")+ scale_fill_distiller(palette= c("YlOrRd"), direction=1 )+ylab("Tree Density")+theme(legend.position = "none")
 
 
-fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimodal %in% "bimodal",], y~PC1, cex = 0.9,  pch = 15,col = "red")+ text(-4,500, "E"))+ xlab("P-PET")
 fia.kde.plot.pc1.gg.full + xlab("PC1")
 
 
@@ -2190,7 +2434,7 @@ fia.kde.plot.pc1.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c
 
 
 
-fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(0.2,500, "G"))
+fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), xlim = c(0,1.75), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimodal %in% "bimodal",], y~SM, cex = 0.8,  pch = 15,col = "red")+ text(0.2,500, "G"))
 fia.kde.plot.sm.gg.full 
 
 
@@ -2200,15 +2444,16 @@ fia.kde.plot.sm.gg.full
 library(ggplotify)
 
 pls.dens$pc1_bins <- cut(pls.dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
-kde.surf.pc1.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass"], bimodal.pls.pc1, by = "pc1_bins")
-
+#kde.surf.pc1.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass"], bimodal.pls.pc1, by = "pc1_bins")
+kde.surf.pc1.pls.dens <- bimodal.pls.pc1
 
 pls.dens$ppet_bins <- cut(pls.dens$GS_ppet, breaks=seq(-170, 205, by = 15))
-kde.surf.ppet.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass_ppet"], bimodal.pls.ppet, by = "ppet_bins")
+#kde.surf.ppet.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass_ppet"], bimodal.pls.ppet, by = "ppet_bins")
+kde.surf.ppet.pls.dens <- bimodal.pls.ppet
 
 pls.dens$soil_bins <- cut(pls.dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
-kde.surf.soil.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass_soil"], bimodal.pls.soil, by = "soil_bins")
-
+#kde.surf.soil.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass_soil"], bimodal.pls.soil, by = "soil_bins")
+kde.surf.soil.pls.dens <- bimodal.pls.soil
 
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
 #bim.class.m.dens <- left_join(kde.surf.pc1.pls.dens[,c("x", "y", "bimclass")],kde.surf.soil.pls.dens [,c("x", "y", "bimclass_soil")], by = c("x", "y"))
@@ -2240,18 +2485,20 @@ kde.surf.soil.pls.dens <- left_join(pls.dens[,!colnames(pls.dens) %in% "bimclass
 # left_join for fia
 fia.dens$pc1_bins_f <- cut(fia.dens$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
 kde.surf.pc1.fia.dens <- left_join(fia.dens[,!colnames(fia.dens) %in% "bimclass_f"], bimodal.fia.pc1, by = "pc1_bins_f")
+#kde.surf.pc1.fia.dens <- bimodal.fia.pc1
 
 fia.dens$ppet_bins_f <- cut(fia.dens$GS_ppet_mod, breaks=seq(-125, 310, by = 15))
 kde.surf.ppet.fia.dens <- left_join(fia.dens[,!colnames(fia.dens) %in% "bimclass_ppet_f"], bimodal.fia.ppet, by = "ppet_bins_f")
+#kde.surf.ppet.fia.dens <- bimodal.fia.ppet
 
 fia.dens$soil_bins_f <- cut(fia.dens$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
 kde.surf.soil.fia.dens <- left_join(fia.dens[,!colnames(fia.dens) %in% "bimclass_soil_f"], bimodal.fia.sm, by = "soil_bins_f")
-
+#kde.surf.soil.fia.dens <- bimodal.fia.sm
 
 # FIA three color maps
 # now left_join all of these together to make a map of 1, 2, 3, bimodal metrics:
-#bim.class.m.f <- left_join(kde.surf.pc1.fia.df[,c("x", "y", "bimclass_f")],kde.surf.soil.fia.df [,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
-#bim.class.m.f <- left_join(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimclass_ppet_f", "mean_dens_fia")])
+#bim.class.m.f <- left_join(kde.surf.pc1.fia.dens[,c("x", "y", "bimclass_f")], kde.surf.soil.fia.dens [,c("x", "y", "bimclass_soil_f")], by = c("x", "y"))
+#bim.class.m.f <- left_join(bim.class.m.f, kde.surf.ppet.fia.dens[,c("x", "y", "bimclass_ppet_f", "mean_dens_fia")])
 
 #bim.class.m.f$nbimod <- as.character(rowSums(bim.class.m.f[,3:5] == "bimodal", na.rm = TRUE))
 # define nbimod as a category:
@@ -2323,7 +2570,7 @@ pls.pc1.density.df <- data.frame(y = density(kde.surf.pc1.pls.dens[kde.surf.pc1.
 
 fia.pc1.density.df <- data.frame(y = density(na.omit(kde.surf.pc1.fia.dens[kde.surf.pc1.fia.dens$pc1_bins_f %in% pc1.bimodal.bins,]$fia))$y, 
                                  x = density(na.omit(kde.surf.pc1.fia.dens[kde.surf.pc1.fia.dens$pc1_bins_f %in% pc1.bimodal.bins,]$fia))$x)
-flipped.pc1.hist.gg <- as.ggplot(~plot(fia.pc1.density.df[fia.pc1.density.df$x < 550 ,], type = "l", col = "red", ylim = c(-41, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.df[pls.pc1.density.df$x < 550,], type = "l", col = "blue"))
+flipped.pc1.hist.gg.full <- as.ggplot(~plot(fia.pc1.density.df[fia.pc1.density.df$x < 550 ,], type = "l", col = "red", ylim = c(-41, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.df[pls.pc1.density.df$x < 550,], type = "l", col = "blue"))
 
 library(gtable)
 g1 <- ggplotGrob(pls.kde.plot.pc1.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))

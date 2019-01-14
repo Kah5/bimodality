@@ -1,4 +1,8 @@
 library(nimble)
+library(ggplot2)
+library(dplyr)
+library(ggridges)
+
 pls <- read.csv("outputs/density_full_unc.csv")
 
 msk2 <- caTools::sample.split( pls, SplitRatio = 3/4, group = NULL )
@@ -94,13 +98,16 @@ constants <- list(
 
 model <- nimbleModel(mixturemod, constants = constants, data = data) #, inits = inits)#, dimensions = dimensions )
 
+
+
 n_thin <- 5
 n_mcmc <- 5000
 n_burn <- 5000
 
 spec <- configureMCMC(
   model, 
-  thin = n_thin
+  thin = n_thin, 
+  enableWAIC = TRUE
 )
 
 spec$addMonitors('p')
@@ -110,6 +117,8 @@ Rmcmc <- buildMCMC(spec)
 Cmodel <- compileNimble(model)
 Cmcmc <- compileNimble(Rmcmc, project = model)
 Cmcmc$run(n_mcmc + n_burn)
+Cmcmc$calculateWAIC(nburnin = 100) # calculate WAIC for mixture model
+
 
 samples.fit <- as.matrix(Cmcmc$mvSamples)[(n_burn/n_thin+1):((n_mcmc+n_burn)/n_thin), ]
 
@@ -165,6 +174,8 @@ for(i in 1:nrow(samples.fit)){
 
 
 str(apply(z, 2, mean))# probablity of being in large cluster
+
+
 
 
 pls.nona$prob <- apply(z, 2, mean)
@@ -1248,8 +1259,8 @@ constants <- list(
 model <- nimbleModel(mixturemod, constants = constants, data = data) #, inits = inits)#, dimensions = dimensions )
 
 n_thin <- 5
-n_mcmc <- 10000
-n_burn <- 10000
+n_mcmc <- 5000
+n_burn <- 5000
 
 spec <- configureMCMC(
   model, 
@@ -1359,7 +1370,8 @@ dev.off()
 # for pls, lets plot points of the mean tree density in each mode & plot the point with equal probability of low and high modes:
 mid.summary.soil <- fia.nona %>% group_by(mode, mean_GS_soil_m_bins, mids) %>% summarise(mean = mean(mean_dens_fia),
                                                                                        ci.low = quantile(mean_dens_fia,0.025),
-                                                                                       ci.high = quantile(mean_dens_fia, 0.975))
+                                                                                       ci.high = quantile(mean_dens_fia, 0.975),
+                                                                                       ncell = length(mean_dens_fia))
 
 ggplot(mid.summary.soil, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)
 
@@ -1386,14 +1398,14 @@ library(cowplot)
 
 mode.legend <- get_legend(hysteresis.soil.fia)
 
-png(height = 12, width = 12, units = "in", res = 300, "outputs/mixture_model/hysteresis_allvars_summary.png")
-plot_grid(plot_grid(hysteresis.pc1.pls+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()), 
-          hysteresis.pc1.fia+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()), 
-          hysteresis.ppet.pls+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(-200, 200), 
-          hysteresis.ppet.fia+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(-200, 200), 
-          hysteresis.soil.pls+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(0,2), 
-          hysteresis.soil.fia+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(0,2), ncol = 2, align = "hv"),
-          mode.legend,ncol = 2, rel_widths = c(1, 0.25))
+png(height = 12, width = 12, units = "in", res = 300, "outputs/mixture_model/hysteresis_allvars_summary_new.png")
+plot_grid(plot_grid(hysteresis.pc1.pls+ylim(0,400)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()), 
+          hysteresis.pc1.fia+ylim(0,500)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()), 
+          hysteresis.ppet.pls+ylim(0,500)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(-200, 200), 
+          hysteresis.ppet.fia+ylim(0,500)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(-200, 200), 
+          hysteresis.soil.pls+ylim(0,500)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(0,2), 
+          hysteresis.soil.fia+ylim(0,500)+theme_bw(base_size = 18)+theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank())+xlim(0,2), ncol = 2, align = "hv"),
+          mode.legend,ncol = 2, rel_widths = c(1, 0.25), labels = "AUTO")
 dev.off()
 
 

@@ -74,7 +74,8 @@ ggplot(climate.data, aes(x, y, fill=pasttmean))+geom_raster()
 ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 # merge with soil moisture balance (calucated from P, PET and AWC):
-moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean_v2.csv')
+#moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean2.csv')
+moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
 climate.data <- merge( moist_bal[,c("x", "y", "Mean_GS")],climate.data,  by = c("x", "y"), all.y = TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
@@ -272,6 +273,7 @@ cc <- scale(dens.rm[,c("MAP2011", "moderndeltaP",
 # rename so that it is the same column names as PLS--for prediction purposes
 colnames(cc) <- c('MAP1910',   
                   "pastdeltaP", "pasttmean",
+                  "deltaT", "sandpct", "awc", "CEC", "CaCO3")
 
 newscores <- predict(res, newdata=cc) # predict new scores based on the PLS pca 
 
@@ -432,6 +434,29 @@ ppet.future <- read.csv("outputs/cmip5_rcp8.5_ppet_long.csv")
 ggplot(ppet.future, aes(x,y, fill = mean_ppet_GS))+geom_raster()
 future.pr2 <- merge(future.pr2, ppet.future[,c("x", "y", "mean_ppet_GS")], all = TRUE)
 ggplot(future.pr2, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+
+
+# read in the other rcps:
+ppet.2.6 <- read.csv("outputs/cmip5_rcp2.6_ppet_long.csv")
+ggplot(ppet.2.6, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+colnames(ppet.2.6)[497] <- c("mean_ppet_GS_2.6")
+future.pr2 <- merge(future.pr2, ppet.2.6[,c("x", "y", "mean_ppet_GS_2.6")], all = TRUE)
+ggplot(future.pr2, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+
+ppet.4.5 <- read.csv("outputs/cmip5_rcp4.5_ppet_long.csv")
+ggplot(ppet.4.5, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+colnames(ppet.4.5)[497] <- c("mean_ppet_GS_4.5")
+future.pr2 <- merge(future.pr2, ppet.4.5[,c("x", "y", "mean_ppet_GS_4.5")], all = TRUE)
+ggplot(future.pr2, aes(x,y, fill = mean_ppet_GS_4.5))+geom_raster()
+
+ppet.6.0 <- read.csv("outputs/cmip5_rcp6.0_ppet_long.csv")
+ggplot(ppet.6.0, aes(x,y, fill = mean_ppet_GS))+geom_raster()
+colnames(ppet.6.0)[497] <- c("mean_ppet_GS_6.0")
+future.pr2 <- merge(future.pr2, ppet.6.0[,c("x", "y", "mean_ppet_GS_6.0")], all = TRUE)
+ggplot(future.pr2, aes(x,y, fill = mean_ppet_GS_4.5))+geom_raster()
+
+
+
 write.csv(future.pr2, "outputs/Future_PCA.csv",row.names = FALSE)
 
 

@@ -61,20 +61,20 @@ unimodal.open.region <- nstates[nstates$nstates == 1 & nstates$mids_ppet < 0,] %
 
 pls.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(GS_ppet))+xlim(-175, 300)+xlab("PLS growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(GS_ppet), binwidth = 10)+xlim(-175, 300)+xlab("PLS growing season P-PET")+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
   annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
   
 fia.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(GS_ppet_mod))+xlim(-175, 300)+xlab("FIA growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(GS_ppet_mod), binwidth = 10)+xlim(-175, 300)+xlab("FIA growing season P-PET")+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
   annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
 
 
 fut.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(mean_ppet_GS))+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS), binwidth = 10)+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
   geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
@@ -83,7 +83,7 @@ fut.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin
 
 fut.ppet2.6.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(mean_ppet_GS_2.6))+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_2.6), binwidth = 10)+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET")+
   geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
@@ -91,7 +91,7 @@ fut.ppet2.6.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(x
 
 fut.ppet4.5.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(mean_ppet_GS_4.5))+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_4.5), binwidth = 10)+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET")+
   geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
@@ -99,18 +99,108 @@ fut.ppet4.5.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(x
 
 fut.ppet6.0.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = dens.pr, aes(mean_ppet_GS_6.0))+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_6.0), binwidth = 10)+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET")+
   geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
   annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
 
 
-       
+
+# plot the 2028-2050 ppet:
+
+fut.ppet.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_8.5_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET (2028 - 2058)")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+
+fut.ppet2.6.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_2.6_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET (2028 - 2058)")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+fut.ppet4.5.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_4.5_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET (2028 - 2059)")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+fut.ppet6.0.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = dens.pr, aes(mean_ppet_GS_6.0_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET (2028 - 2059)")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+
+
 png(height = 14, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/future_ppet_with_extra_states_bimodal_shading.png")
 plot_grid(pls.ppet.rect, fia.ppet.rect,fut.ppet2.6.rect, fut.ppet4.5.rect, fut.ppet6.0.rect,  fut.ppet.rect, ncol = 1, align = "hv")
 dev.off()    
 
+# combine the two time periods on one graph:
+rcp26 <- dens.pr %>% select(x,y, mean_ppet_GS_2.6, mean_ppet_GS_2.6_2028_2058) %>% rename( `2059-2099` = mean_ppet_GS_2.6, 
+                                                                                           `2028-2058` = mean_ppet_GS_2.6_2028_2058) %>% gather(key = period, value = GS_ppet_fut, -c(x,y))
+rcp45 <- dens.pr %>% select(x,y, mean_ppet_GS_4.5, mean_ppet_GS_4.5_2028_2058)%>% rename( `2059-2099` = mean_ppet_GS_4.5, 
+                                                                                          `2028-2058` = mean_ppet_GS_4.5_2028_2058) %>% gather(key = period, value = GS_ppet_fut, -c(x,y))
+rcp60 <- dens.pr %>% select(x,y, mean_ppet_GS_6.0, mean_ppet_GS_6.0_2028_2058)%>% rename( `2059-2099` = mean_ppet_GS_6.0, 
+                                                                                          `2028-2058` = mean_ppet_GS_6.0_2028_2058) %>% gather(key = period, value = GS_ppet_fut, -c(x,y))
+rcp85 <- dens.pr %>% select(x,y, mean_ppet_GS, mean_ppet_GS_8.5_2028_2058)%>% rename( `2059-2099` = mean_ppet_GS, 
+                                                                                      `2028-2058` = mean_ppet_GS_8.5_2028_2058) %>% gather(key = period, value = GS_ppet_fut, -c(x,y))
+
+
+# now plot out with different fill colors for the two time periods:
+fut.ppet.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = rcp85, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET (2028 - 2058)")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+
+fut.ppet2.6.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = rcp26, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET ")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+fut.ppet4.5.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = rcp45, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET ")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+fut.ppet6.0.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = rcp60, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  theme(legend.position  = c(0.705, 0.53))+
+  annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+
+
+png(height = 16, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/future_ppet_with_extra_states_bimodal_shading_both_time_periods.png")
+plot_grid(pls.ppet.rect, fia.ppet.rect,fut.ppet2.6.rect.both, fut.ppet4.5.rect.both, fut.ppet6.0.rect.both,  fut.ppet.rect.both, ncol = 1, align = "hv", labels = "AUTO")
+dev.off()   
+
+png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/future_ppet_with_extra_states_bimodal_shading_both_time_periods_8.5.png")
+plot_grid(pls.ppet.rect, fia.ppet.rect, fut.ppet.rect.both, ncol = 1, align = "hv", labels = "AUTO")
+dev.off()  
 
 # now map out the places that are bimodal vs. 
 # kh note: need to decide if we should call < 50 grid cells represented to be "out-of-sample"

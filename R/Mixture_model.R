@@ -236,7 +236,7 @@ mid.summary.lowprob.pc1 <- pls.nona %>% group_by(prob > 0.49 & prob < 0.51 , pc1
                                                                                                                                 ci.low = quantile(mean_dens,0.025),
                                                                                                                                 ci.high = quantile(mean_dens, 0.975),
                                                                                                            ncell = length(mean_dens))
-mid.summary.lowprob.pc1<- mid.summary.lowprob.pc1[mid.summary.lowprob.pc1$ncell > 1,]
+mid.summary.lowprob.pc1<- mid.summary.lowprob.pc1[mid.summary.lowprob.pc1$ncell >=1 ,]
 
 hysteresis.pc1.pls <- ggplot(mid.summary.pc1, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob.pc1[mid.summary.lowprob.pc1$`prob > 0.49 & prob < 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
@@ -697,13 +697,13 @@ mid.summary.ppet <- pls.nona %>% group_by(mode, GS_ppet_bins, mids_ppet) %>% sum
                                                                                     ci.low = quantile(mean_dens,0.025),
                                                                                     ci.high = quantile(mean_dens, 0.975))
 
-mid.summary.lowprob <- pls.nona %>% group_by(prob_ppet >= 0.4999 & prob_ppet <= 0.5099 , GS_ppet_bins, mids_ppet) %>% summarise(mean = mean(mean_dens),
+mid.summary.lowprob <- pls.nona %>% group_by(prob_ppet >= 0.499 & prob_ppet <= 0.509 , GS_ppet_bins, mids_ppet) %>% summarise(mean = mean(mean_dens),
                                                                                        ci.low = quantile(mean_dens,0.025),
                                                                                        ci.high = quantile(mean_dens, 0.975))
 
 
 hysteresis.ppet.pls <- ggplot(mid.summary.ppet, aes(mids_ppet, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.4999 & prob_ppet <= 0.5099` %in% T,], aes(mids_ppet, mean), color = "black", linetype = "dashed",se = FALSE)+
+  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.499 & prob_ppet <= 0.509` %in% T,], aes(mids_ppet, mean), color = "black", linetype = "dashed",se = FALSE)+
   ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
 
 png(height = 6, width = 6, units = "in", res = 300, "outputs/mixture_model/hysteresis_ppet_pls.png")

@@ -162,7 +162,7 @@ rcp85 <- dens.pr %>% select(x,y, mean_ppet_GS, mean_ppet_GS_8.5_2028_2058)%>% re
 # now plot out with different fill colors for the two time periods:
 fut.ppet.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
-  geom_histogram(data = rcp85, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET (2028 - 2058)")+
+  geom_histogram(data = rcp85, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
   geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+

@@ -811,8 +811,8 @@ bimod.soil.pls.fut.map <- ggplot()+ geom_polygon(data = mapdata, aes(group = gro
 
 
 
-soil.dip.pls.8.5 <- ggplot(pvalues, aes(soil_mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(-6.4, 4.5)
-soil.pval.pls.8.5 <- ggplot(pvalues, aes(soil_mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(-6.4, 4.5)
+soil.dip.pls.8.5 <- ggplot(pls.bins.soil[pls.bins.soil$lowsamp %in% "okay",], aes(mids, median.d))+geom_point()+geom_errorbar(aes(ymin=ci.low.d, ymax=ci.high.d), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("DIP value")+xlim(0, 1.75)
+soil.pval.pls.8.5 <- ggplot(pls.bins.soil[pls.bins.soil$lowsamp %in% "okay",], aes(mids, median.p))+geom_point()+geom_errorbar(aes(ymin=ci.low.p, ymax=ci.high.p), color = "purple", alpha = 0.5, width = 0)+theme_bw()+geom_hline(yintercept = 0.02, linetype = "dashed")+xlab("PLS PC1")+ylab("P value")+xlim(0, 1.75)
 
 
 png(height = 6, width = 6, units = "in",res = 300,"outputs/paper_figs_unc/pls_dip_pvalues_unc_soil_ccesm_8.5.png")
@@ -1087,18 +1087,19 @@ pc1.bimod.85.hist.pls <- ggplot(bimod.pc1.pls.8.5, aes(mids.x, fill = bimclass))
 pc1.bimod.85.hist.fia <- ggplot(bimod.pc.fia.8.5, aes(mids.x, fill = bimclass))+geom_bar(position = position_dodge2() )+scale_fill_manual(values = c("low sample"="grey","out-of-sample"="darkgrey", "bimodal"='#d73027', "unimodal" = "#01665e"), name = " ")+xlab("RCP 8.5 PC1")+xlim(-6,6)+ theme(legend.key.size = unit(0.25,'lines'), legend.position = c(0.7, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)))
 
 png(height = 12, width = 8, units = "in", res = 300, "outputs/paper_figs_unc/future_climate_bimodal_plots.png" )
-plot_grid(pc1.pval.pls.8.5, 
-          pc1.pval.fia.8.5,
+plot_grid(
           pc1.bimod.85.hist.pls, 
           pc1.bimod.85.hist.fia, 
-          ppet.pval.pls.8.5,
-          ppet.pval.fia.8.5,
+          pc1.dip.pls.8.5+xlim(-6,6)+ylim(0,0.08), 
+          pc1.dip.fia.8.5+xlim(-6,6)+ylim(0,0.08),
           ppet.bimod.85.hist.pls, 
           ppet.bimod.85.hist.fia,
-          soil.pval.pls.8.5, 
-          soil.pval.fia.8.5,
+          ppet.dip.pls.8.5+xlim(-150,300)+ylim(0,0.08),
+          ppet.dip.fia.8.5+xlim(-150,300)+ylim(0,0.08),
           sm.bimod.85.hist.pls, 
-          sm.bimod.85.hist.fia, ncol = 2, align = "hv", rel_heights = c(0.5,1,0.5,1,0.5,1))
+          sm.bimod.85.hist.fia,
+          soil.dip.pls.8.5+xlim(0,1.75)+ylim(0,0.08)+xlab("PLS GS soil"), 
+          soil.dip.fia.8.5+xlim(0,1.75)+ylim(0,0.08)+xlab("FIA GS soil"),ncol = 2, align = "hv", rel_heights = c(1,0.5,1,0.5,1, 0.5), labels = "AUTO")
 dev.off()
 
 

@@ -1137,19 +1137,19 @@ dev.off()
 
 
 # for pls, lets plot points of the mean tree density in each mode & plot the point with equal probability of low and high modes:
-mid.summary.soil <- pls.nona %>% group_by(mode, mean_GS_soil_bins, mids) %>% summarise(mean = mean(mean_dens),
+mid.summary.soil <- pls.nona %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
                                                                 ci.low = quantile(mean_dens,0.025),
                                                                 ci.high = quantile(mean_dens, 0.975))
 
-ggplot(mid.summary.soil, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)
+ggplot(mid.summary.soil, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)
 
 
-mid.summary.lowprob <- pls.nona %>% group_by(prob_soil >= 0.4999 & prob_soil <= 0.5099 , mean_GS_soil_bins, mids) %>% summarise(mean = mean(mean_dens),
+mid.summary.lowprob <- pls.nona %>% group_by(prob_soil >= 0.4999 & prob_soil <= 0.5099 , mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
                                                                                                                                 ci.low = quantile(mean_dens,0.025),
                                                                                                                                 ci.high = quantile(mean_dens, 0.975))
 
 
-hysteresis.soil.pls <- ggplot(mid.summary.soil, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
+hysteresis.soil.pls <- ggplot(data = mid.summary.soil, aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.4999 & prob_soil <= 0.5099` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
   ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
 

@@ -76,8 +76,20 @@ ggplot(climate.data, aes(GS_ppet, GS_ppet_mod))+geom_point()
 
 # merge with soil moisture balance (calucated from P, PET and AWC):
 
-#moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean2.csv')
+#moist_bal <- read.csv('outputs/soil.moisture_1895_1905_with_mean.csv')
+#moist_bal <- read.csv('outputs/soil.moisture_1')
 moist_bal <- read.csv('outputs/soil.moisture_1895_1935_with_mean_full_nov_20.csv')
+#moist_bal <- moist_bal %>% dplyr::select(X1895_1:X1911_12, x, y)
+
+#GS_index <- colnames(moist_bal) %like% "_06" | colnames(moist_bal) %like% "_07"| colnames(moist_bal) %like% "_08" | colnames(moist_bal) %like% "_09"
+#moist_bal$Mean_GS <- rowMeans(moist_bal[,GS_index], na.rm = TRUE)
+
+#ggplot(moist_bal, aes(x,y, fill = X1895_01))+geom_raster()+scale_fill_continuous(limits= c(0, 3))
+#ggplot(moist_bal.2, aes(x,y, fill = X1934_09))+geom_raster()+scale_fill_continuous(limits= c(0, 3))
+
+#ggplot(moist_bal, aes(X1934_06))+geom_histogram() +ylim(0,10000)
+#ggplot(moist_bal.2, aes(X1934_06))+geom_histogram()+ylim(0,10000)
+
 climate.data <- merge( moist_bal[,c("x", "y", "Mean_GS")],climate.data,  by = c("x", "y"), all.y = TRUE)
 colnames(climate.data)[3] <- "mean_GS_soil"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
@@ -93,6 +105,9 @@ colnames(climate.data)[3] <- "mean_GS_soil_m"
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil_m)) + geom_raster()
 ggplot(climate.data, aes(x,y, fill = mean_GS_soil)) + geom_raster()
 
+ggplot(climate.data, aes(mean_GS_soil))+geom_histogram()
+ggplot(moist_bal, aes(Mean_GS))+geom_histogram()
+ggplot(climate.data, aes(mean_GS_soil_m))+geom_histogram()
 #----------------------------- Read in Soils Data -------------------------------
 
 #read in soils data--soils data from gssurgo database, aggregated in ArcGIS

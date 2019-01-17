@@ -2427,7 +2427,7 @@ pls.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", con
                                    text(-5.5, 500, "A"))
 
 pls.kde.plot.pc1.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5),cex.axis = 0.7 ) + points(merged.pc1[merged.pc1$bimodal %in% "bimodal",]$mids , merged.pc1[merged.pc1$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+
-                                         lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+  text(-5.5, 500, "A"))
+                                         lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+  text(-5, 500, "A"))
 
 pls.kde.plot.pc1.gg.lines.full
 
@@ -2741,11 +2741,11 @@ plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 
 lines(smoothingSpline.Equal, col = "brown", lty = 2)
 
 
-pls.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.8),cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
+pls.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6),cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
                                         lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen") + text(0.1,500, "C"))
 pls.kde.plot.sm.gg.lines.full
 # ggplotify the kde plots here:
-pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.8), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+ text(0.2,500, "C"))
+pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+ text(0.15,500, "C"))
 pls.kde.plot.sm.gg.full
 
 
@@ -2887,7 +2887,7 @@ fia.kde.plot.pc1.gg.lines <- as.ggplot(~plot(fhat, display="filled.contour2", co
                                          lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(-5.5,500, "E"))+ xlab("P-PET")
 fia.kde.plot.pc1.gg.lines + xlab("PC1")
 
-fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  xlim = c(-6, 5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-4,500, "E"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  xlim = c(-6, 5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5,500, "E"))+ xlab("PC1")
 fia.kde.plot.pc1.gg.full + xlab("PC1")
 
 
@@ -3133,11 +3133,11 @@ lines(smoothingSpline.Equal, col = "brown", lty = 2)
 
 
 # make the plot with GGPLOT:
-fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), xlim = c(0, 1.8), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(0.1,500, "G"))
+fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(0.1,500, "G"))
 fia.kde.plot.sm.gg.full 
 
-fia.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(0, 1.8), yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                        lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(0.1,500, "G"))+ xlab("Soil Moisture")
+fia.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+                                        lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(0.15,500, "G"))+ xlab("Soil Moisture")
 fia.kde.plot.sm.gg.lines.full + xlab("Soil Moisture")
 
 

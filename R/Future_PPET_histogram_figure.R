@@ -63,47 +63,47 @@ pls.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(GS_ppet), binwidth = 10)+xlim(-175, 300)+xlab("PLS growing season P-PET")+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
   
 fia.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(GS_ppet_mod), binwidth = 10)+xlim(-175, 300)+xlab("FIA growing season P-PET")+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 fut.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS), binwidth = 10)+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 fut.ppet2.6.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_2.6), binwidth = 10)+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet4.5.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_4.5), binwidth = 10)+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet6.0.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_6.0), binwidth = 10)+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 
@@ -112,35 +112,35 @@ fut.ppet6.0.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(x
 fut.ppet.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_8.5_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET (2028 - 2058)")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 fut.ppet2.6.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_2.6_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET (2028 - 2058)")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet4.5.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_4.5_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET (2028 - 2059)")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet6.0.rect.2028 <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_ppet_GS_6.0_2028_2058), binwidth = 10)+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET (2028 - 2059)")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 
@@ -163,35 +163,35 @@ rcp85 <- dens.pr %>% select(x,y, mean_ppet_GS, mean_ppet_GS_8.5_2028_2058)%>% re
 fut.ppet.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = rcp85, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 fut.ppet2.6.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = rcp26, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 2.6 future growing season P-PET ")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet4.5.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = rcp45, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 4.5 future growing season P-PET ")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 fut.ppet6.0.rect.both <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
   geom_histogram(data = rcp60, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#cccccc", "#525252"))+xlim(-175, 300)+xlab("RCP 6.0 future growing season P-PET")+
-  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+
+  geom_vline(data = state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,], aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"))+
   theme(legend.position  = c(0.705, 0.53))+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
-  annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
+  annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
 
 
 png(height = 16, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/future_ppet_with_extra_states_bimodal_shading_both_time_periods.png")

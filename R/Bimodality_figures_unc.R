@@ -1211,6 +1211,29 @@ plot_grid(
   ncol = 1, align = "h", axis="tb", scale = 1) 
 dev.off()
 
+
+# horizonatal figure 1:
+
+png(height = 6, width = 10, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_two_row_trans_arrow_inset_pct.png")
+plot_grid(
+  plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            pls.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+            FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "C", size = 3),
+            fia.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 4, align = "h", axis = "tb", rel_widths = c(1,1, 1, 1)),
+  
+ 
+  plot_grid( clust.hist.full.both.no.aspect + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=100,label= "E", size = 3)+ xlab("Tree Density (stems/ha)"),
+             ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ) + annotate("text", x=1, y=600,label= "F", size = 3),
+             clust.hist.fia.full.both.no.aspect+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5), axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y = element_blank()) + annotate("text", x=600, y=400,label= "G", size = 3),
+             ncell.pct.change.1980.1990.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5), axis.ticks.y = element_blank(), axis.text.y = element_blank(), title = element_blank() ) + annotate("text", x=1, y=600,label= "H", size = 3),
+             ncell.pct.change.1990.2000.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) , axis.ticks.y = element_blank(), axis.text.y = element_blank(),title = element_blank()) + annotate("text", x=1, y=600,label= "I", size = 3),
+             inset2+ annotate("text", x=1, y=600,label= "J", size = 3),
+             ncol = 6, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5, 0.5, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct_nolabels.png")
 plot_grid(
   plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), 

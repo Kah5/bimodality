@@ -1125,8 +1125,69 @@ ncell.pct.change.ppet$pct_nochange <- (ncell.pct.change.ppet$n_nochange/ncell.pc
 pct.inc.ppet <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = pct_inc),
                                                                   arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
   geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(ppet_bins, start.bin+20, size = pct_nochange), color = "#636363")+
-  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
 
+
+
+#------------ do the ncell pct change for PC1:
+# test example with all arrows over top, but lets do it 
+ncell.change.pc1 <- dens.msk %>% group_by(dens.clust.bins, pc1_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                                            n_dec = sum(fiaminuspls < -5),
+                                                                                            n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.pc1 <- merge(ncell.change.pc1, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+#ggplot(ncell.change.pc1, aes(pc1_bins, dens.clust.bins, color=n_dec))+geom_point()
+ncell.change.pc1[ncell.change.pc1 == 0] <- NA 
+ggplot(ncell.change.pc1, aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = n_inc/2),
+                                                                  arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.pc1, aes(pc1_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+ncell.pct.change.pc1 <- ncell.change.pc1
+
+ncell.pct.change.pc1$total_cells <- rowSums(ncell.pct.change.pc1[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.pc1$pct_inc <- (ncell.pct.change.pc1$n_inc/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_dec <- (ncell.pct.change.pc1$n_dec/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.change.pc1$total_cells)*100
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.pc1 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = pct_inc),
+                                                                                                                           arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(pc1_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
+
+
+
+#------------ do the ncell pct change for soil:
+# test example with all arrows over top, but lets do it 
+ncell.change.soil <- dens.msk %>% group_by(dens.clust.bins, soil_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                                          n_dec = sum(fiaminuspls < -5),
+                                                                                          n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.soil <- merge(ncell.change.soil, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+#ggplot(ncell.change.soil, aes(soil_bins, dens.clust.bins, color=n_dec))+geom_point()
+ncell.change.soil[ncell.change.soil == 0] <- NA 
+ggplot(ncell.change.soil, aes(soil_bins, start.bin))+geom_segment(aes(xend = soil_bins, yend = end.bin-20, size = n_inc/2),
+                                                                arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.soil, aes(soil_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+ncell.pct.change.soil <- ncell.change.soil
+
+ncell.pct.change.soil$total_cells <- rowSums(ncell.pct.change.soil[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.soil$pct_inc <- (ncell.pct.change.soil$n_inc/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_dec <- (ncell.pct.change.soil$n_dec/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pct.change.soil$total_cells)*100
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.soil <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(soil_bins, start.bin))+geom_segment(aes(xend = soil_bins, yend = end.bin-20, size = pct_inc),
+                                                                                                                       arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(soil_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
 
 
 

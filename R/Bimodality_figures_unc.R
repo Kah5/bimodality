@@ -1098,6 +1098,38 @@ ncell.change$xval.inc <- "1"
 ncell.change$xval.dec <- "3"
 
 
+
+# test example with all arrows over top, but lets do it 
+ncell.change.ppet <- dens.msk %>% group_by(dens.clust.bins, ppet_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                            n_dec = sum(fiaminuspls < -5),
+                                                                            n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+#ggplot(ncell.change.ppet, aes(ppet_bins, dens.clust.bins, color=n_dec))+geom_point()
+ncell.change.ppet[ncell.change.ppet == 0] <- NA 
+ggplot(ncell.change.ppet, aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = n_inc/2),
+                                                            arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.ppet, aes(ppet_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+ncell.pct.change.ppet <- ncell.change.ppet
+
+ncell.pct.change.ppet$total_cells <- rowSums(ncell.pct.change.ppet[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.ppet$pct_inc <- (ncell.pct.change.ppet$n_inc/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_dec <- (ncell.pct.change.ppet$n_dec/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_nochange <- (ncell.pct.change.ppet$n_nochange/ncell.pct.change.ppet$total_cells)*100
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.ppet <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = pct_inc),
+                                                                  arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(ppet_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+
+
 # make a general plot with arrows for increasing and decreasing:
 ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment(aes(xend = xval.inc, yend = end.bin-20, size = n_inc/2),
                                                             arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+

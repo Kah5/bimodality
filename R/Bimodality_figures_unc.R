@@ -2052,7 +2052,8 @@ pls.kde.plot.sm.gg
 
 
 soil.pls.mix <- read.csv( "outputs/mixture_model/pls_soil_mixture_mode_estimates.csv")
-mid.summary.soil <- soil.pls.mix %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
+mid.summary.soil <- soil.pls.mix %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = median(mean_dens),
+                                                                                                  meadian = median(mean_dens),
                                                                                                   ci.low = quantile(mean_dens,0.025),
                                                                                                   ci.high = quantile(mean_dens, 0.975), 
                                                                                                   ncell = length(mean_dens) )
@@ -2078,12 +2079,6 @@ ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = m
 
 
 
-hysteresis.soil.pls.quants <- ggplot(data = data.frame(mid.summary.soil), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.20, ymax = ci.80, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
 
 
 hysteresis.soil.pls.quants <- ggplot(data = data.frame(mid.summary.soil.quants), aes(mids, ci.50, color = mode))+geom_line()+geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2184,27 +2179,54 @@ mid.summary.pc1 <- pc1.fia.mix %>% group_by(mode, pc1_bins_fia, mids) %>% dplyr:
                                                                                                   ci.high = quantile(mean_dens_fia, 0.975), 
                                                                                            ncell = length(mean_dens_fia))
 
-mid.summary.pc1.quants <- pc1.fia.mix  %>% group_by(mode,  pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                          ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                          ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                                          ci.80 = quantile(mean_dens_fia, 0.8),
-                                                                                                          ci.20 = quantile(mean_dens_fia, 0.2),
-                                                                                                          ci.70 = quantile(mean_dens_fia, 0.7),
-                                                                                                          ci.30 = quantile(mean_dens_fia, 0.3),
-                                                                                                          ci.60 = quantile(mean_dens_fia, 0.6),
-                                                                                                          ci.40 = quantile(mean_dens_fia, 0.4),
-                                                                                                          ncell = length(mean_dens_fia))
+mid.summary.pc1.quants.one <- pc1.fia.mix  %>% group_by( pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+                                                                                                    ci.low = quantile(mean_dens_fia,0.025),
+                                                                                                    ci.high = quantile(mean_dens_fia, 0.975),
+                                                                                                    ci.90 = quantile(mean_dens_fia,0.9),
+                                                                                                    ci.10 = quantile(mean_dens_fia, 0.1),
+                                                                                                    ci.80 = quantile(mean_dens_fia, 0.8),
+                                                                                                    ci.20 = quantile(mean_dens_fia, 0.2),
+                                                                                                    ci.70 = quantile(mean_dens_fia, 0.7),
+                                                                                                    ci.30 = quantile(mean_dens_fia, 0.3),
+                                                                                                    ci.60 = quantile(mean_dens_fia, 0.6),
+                                                                                                    ci.40 = quantile(mean_dens_fia, 0.4),
+                                                                                                    ci.50 = quantile(mean_dens_fia, 0.5),
+                                                                                                    ncell = length(mean_dens_fia))
 
 
 
 ncell <- mid.summary.pc1 %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
 
-hysteresis.pc1.fia.quants <- ggplot(data = data.frame(mid.summary.pc1), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.20, ymax = ci.80, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+hysteresis.pc1.fia.quants <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, mean), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.30, ymax = ci.70), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
+  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())+ylim(0,600)
+
+
+
+hysteresis.pc1.fia.quants <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+
+hysteresis.pc1.fia.smooths <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+
+hysteresis.pc1.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season pc1 moisture")+theme(panel.grid.major = element_blank())
+
+
 
 
 low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
@@ -2304,18 +2326,67 @@ mid.summary.ppet <- ppet.fia.mix %>% group_by(mode, GS_ppet_mod_bins, mids) %>% 
                                                                                            ci.high = quantile(mean_dens_fia, 0.975), 
                                                                                            ncell = length(mean_dens_fia))
 
+mid.summary.ppet.quants <- ppet.fia.mix  %>% group_by(mode,  GS_ppet_mod_bins, mids) %>% summarise(mean = mean(mean_dens_fia),
+                                                                                                  ci.low = quantile(mean_dens_fia,0.025),
+                                                                                                  ci.high = quantile(mean_dens_fia, 0.975),
+                                                                                                  ci.90 = quantile(mean_dens_fia,0.9),
+                                                                                                  ci.10 = quantile(mean_dens_fia, 0.1),
+                                                                                                  ci.80 = quantile(mean_dens_fia, 0.8),
+                                                                                                  ci.20 = quantile(mean_dens_fia, 0.2),
+                                                                                                  ci.70 = quantile(mean_dens_fia, 0.7),
+                                                                                                  ci.30 = quantile(mean_dens_fia, 0.3),
+                                                                                                  ci.60 = quantile(mean_dens_fia, 0.6),
+                                                                                                  ci.40 = quantile(mean_dens_fia, 0.4),
+                                                                                                  ci.50 = quantile(mean_dens_fia, 0.5),
+                                                                                                  ncell = length(mean_dens_fia))
 
 
-mid.summary.ppet.quants <- ppet.fia.mix  %>% group_by(mode,  GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                    ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                    ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                                    ci.80 = quantile(mean_dens_fia, 0.8),
-                                                                                                    ci.20 = quantile(mean_dens_fia, 0.2),
-                                                                                                    ci.70 = quantile(mean_dens_fia, 0.7),
-                                                                                                    ci.30 = quantile(mean_dens_fia, 0.3),
-                                                                                                    ci.60 = quantile(mean_dens_fia, 0.6),
-                                                                                                    ci.40 = quantile(mean_dens_fia, 0.4),
-                                                                                                    ncell = length(mean_dens_fia))
+mid.summary.ppet.quants.one <- ppet.fia.mix  %>% group_by(GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+                                                                                                   ci.low = quantile(mean_dens_fia,0.025),
+                                                                                                   ci.high = quantile(mean_dens_fia, 0.975),
+                                                                                                   ci.90 = quantile(mean_dens_fia,0.9),
+                                                                                                   ci.10 = quantile(mean_dens_fia, 0.1),
+                                                                                                   ci.80 = quantile(mean_dens_fia, 0.8),
+                                                                                                   ci.20 = quantile(mean_dens_fia, 0.2),
+                                                                                                   ci.70 = quantile(mean_dens_fia, 0.7),
+                                                                                                   ci.30 = quantile(mean_dens_fia, 0.3),
+                                                                                                   ci.60 = quantile(mean_dens_fia, 0.6),
+                                                                                                   ci.40 = quantile(mean_dens_fia, 0.4),
+                                                                                                   ci.50 = quantile(mean_dens_fia, 0.5),
+                                                                                                   ncell = length(mean_dens_fia))
+
+
+
+
+hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, mean), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.30, ymax = ci.70), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())+ylim(0,600)
+
+
+
+hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+
+hysteresis.ppet.fia.smooths <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+
+hysteresis.ppet.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+
 
 
 hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2326,8 +2397,8 @@ hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet), aes(mi
   ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
 
 
-low_ci <- mid.summary.ppet %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.ppet %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+low_ci <- mid.summary.ppet %>% dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+high_ci <- mid.summary.ppet %>% dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
 colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
 colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 
@@ -2443,12 +2514,61 @@ mid.summary.soil.quants <- soil.fia.mix  %>% group_by(mode, mean_GS_soil_m_bins,
                                                                                                           ncell = length(mean_dens_fia))
 
 
-hysteresis.soil.fia.quants <- ggplot(data = data.frame(mid.summary.soil), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
+mid.summary.soil.quants.one <- soil.fia.mix  %>% group_by(mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+                                                                                                       ci.low = quantile(mean_dens_fia,0.025),
+                                                                                                       ci.high = quantile(mean_dens_fia, 0.975),
+                                                                                                       ci.90 = quantile(mean_dens_fia,0.9),
+                                                                                                       ci.10 = quantile(mean_dens_fia, 0.1),
+                                                                                                       ci.80 = quantile(mean_dens_fia, 0.8),
+                                                                                                       ci.20 = quantile(mean_dens_fia, 0.2),
+                                                                                                       ci.70 = quantile(mean_dens_fia, 0.7),
+                                                                                                       ci.30 = quantile(mean_dens_fia, 0.3),
+                                                                                                       ci.60 = quantile(mean_dens_fia, 0.6),
+                                                                                                       ci.40 = quantile(mean_dens_fia, 0.4),
+                                                                                                       ci.50 = quantile(mean_dens_fia, 0.5),
+                                                                                                       ncell = length(mean_dens_fia))
+
+
+
+
+hysteresis.soil.fia.quants <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, mean), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.30, ymax = ci.70), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())+ylim(0,600)
+
+
+
+hysteresis.soil.fia.quants <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+
+hysteresis.soil.fia.smooths <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.20, ymax = ci.80), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+
+hysteresis.soil.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
+  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+
+
+
+hysteresis.soil.fia.quants.two <- ggplot(data = data.frame(mid.summary.soil), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.20, ymax = ci.80, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+
 
 
 low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
@@ -2520,9 +2640,41 @@ fia.kde.plot.sm.gg.lines.hys + xlab("Soil Moisture")
 
 
 
+# plot out and save the hysteresis figures:
+legend <- get_legend(hysteresis.pc1.pls.quants)
 
+png(height = 8, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/hysteresis_fia_pls_quants.png")
+plot_grid(
+  plot_grid(hysteresis.pc1.pls.quants + theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+          hysteresis.pc1.fia.quants+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+          hysteresis.ppet.pls.quants+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+          hysteresis.ppet.fia.quants+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+          hysteresis.soil.pls.quants+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+          hysteresis.soil.fia.quants+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500), ncol = 2, align = "hv", labels = c("A", "D", "B", "E", "C", "F"), label_x = 0.19, label_y = 0.98),
+legend, rel_widths = c(1, 0.25))
+dev.off()
 
+png(height = 8, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/hysteresis_fia_pls_smooths.png")
+plot_grid(
+  plot_grid(hysteresis.pc1.pls.smooths + theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+            hysteresis.pc1.fia.smooths+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+            hysteresis.ppet.pls.smooths+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+            hysteresis.ppet.fia.smooths+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+            hysteresis.soil.pls.smooths+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500),
+            hysteresis.soil.fia.smooths+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,500), ncol = 2, align = "hv", labels = c("A", "D", "B", "E", "C", "F"), label_x = 0.19, label_y = 0.98),
+  legend, rel_widths = c(1, 0.25))
+dev.off()
 
+png(height = 8, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/hysteresis_fia_pls_smooth_95ci.png")
+plot_grid(
+  plot_grid(hysteresis.pc1.pls.smooth.95ci + theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800),
+            hysteresis.pc1.fia.smooth.95ci+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800),
+            hysteresis.ppet.pls.smooth.95ci+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800),
+            hysteresis.ppet.fia.smooth.95ci+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800),
+            hysteresis.soil.pls.smooth.95ci+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800),
+            hysteresis.soil.fia.smooth.95ci+ theme(legend.position = "none", panel.grid = element_blank())+ylim(0,800), ncol = 2, align = "hv", labels = c("A", "D", "B", "E", "C", "F"), label_x = 0.19, label_y = 0.98),
+  legend, rel_widths = c(1, 0.25))
+dev.off()
 
 
 # need to merge together all of the bimodal/unimodal tags

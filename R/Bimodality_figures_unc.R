@@ -2267,7 +2267,7 @@ plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 
 lines(smoothingSpline.Equal, col = "brown", lty = 2)
 
 
-fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimclass %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
+fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7))+ text(-5.5,500, "E")+  xlab("P-PET")
 fia.kde.plot.pc1.gg + xlab("PC1")
 
 fia.kde.plot.pc1.gg.lines <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
@@ -2389,13 +2389,6 @@ hysteresis.ppet.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.ppet.qua
 
 
 
-hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.20, ymax = ci.80, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
-
 
 low_ci <- mid.summary.ppet %>% dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
 high_ci <- mid.summary.ppet %>% dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
@@ -2435,7 +2428,7 @@ lines(smoothingSpline.Equal, col = "brown", lty = 2)
 
 
 
-fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) + points(data = ppet.f.bim.line[ppet.f.bim.line$bimclass %in% "bimodal",], y~ppet_mids, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
+fia.kde.plot.ppet.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7) +  text(-170,500, "F"))+xlab("P-PET")
 fia.kde.plot.ppet.gg +xlab("P-PET")
 
 
@@ -2606,10 +2599,10 @@ lines(smoothingSpline.Equal, col = "brown", lty = 2)
 
 
 # make the plot with GGPLOT:
-fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + points(data = sm.f.bim.line[sm.f.bim.line$bimclass_soil_f %in% "bimodal",], y~mids, cex = 0.8,  pch = 15,col = "red")+ text(0.1,500, "G"))
+fia.kde.plot.sm.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), yaxt="n",  cex.axis=0.9) + text(0.1,500, "G"))
 fia.kde.plot.sm.gg 
 
-fia.kde.plot.sm.gg.lines <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+fia.kde.plot.sm.gg.lines <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) +
                                           lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(0.1,500, "G"))+ xlab("Soil Moisture")
 fia.kde.plot.sm.gg.lines + xlab("Soil Moisture")
 
@@ -2706,6 +2699,14 @@ three.color.bimodal.plots <- ggplot()+ geom_polygon(data = mapdata, aes(group = 
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "D", size = 4)
 
+three.color.bimodal.plots.nolabs <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+   scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))
+
 
 one.bimpct <- round((length(bim.class.m[bim.class.m$nbimod %in% c("1","2", "3"),]$nbimod)/length(bim.class.m$nbimod))*100, digits = 2)
 two.bimpct <- round((length(bim.class.m[bim.class.m$nbimod %in% c("2","3"),]$nbimod)/length(bim.class.m$nbimod))*100, digits = 2)
@@ -2741,6 +2742,16 @@ three.color.bimodal.plots.fia <- ggplot()+ geom_polygon(data = mapdata, aes(grou
   ), labels = c("0","1", "2", "3", "No data"), drop = F) +
   coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
                                               panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = " ")+ggtitle("")+ annotate("text", x=-90000, y=1486000,label= "H", size = 4)
+
+
+# make with no annotation:
+three.color.bimodal.plots.fia.nolabs <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=bim.class.m.f, aes(x=x, y=y, fill = nbimod))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+   scale_fill_manual(values= c("white",'yellow', 'blue',"red","darkgrey"
+  ), labels = c("0","1", "2", "3", "No data"), drop = F) +
+  coord_equal()+theme_bw(base_size = 8)+theme(axis.text = element_blank(),axis.title = element_blank(), axis.ticks=element_blank(),legend.key.size = unit(0.25,'lines'), legend.position = c(0.205, 0.23),legend.background = element_rect(fill=alpha('transparent', 0 )),legend.key = element_rect(colour = 'black',  size = 0.5, linetype='solid'),
+                                              panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) 
 
 
 one.bimpct <- round(length(bim.class.m[bim.class.m$nbimod %in% "1",]$nbimod)/length(bim.class.m$nbimod)*100, digits = 2)
@@ -2922,6 +2933,16 @@ dev.off()
 png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_lines_hys.png")
 fig3 <- grid.arrange(g, grow2, grow3,grow4, ncol = 1)
 fig3
+dev.off()
+
+# -----make this same figure but with hysteresis plots instead of the yellow and red density plots
+
+png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median.png")
+
+plot_grid(hysteresis.pc1.pls.quants + ylim(0, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.ppet.pls.quants+xlim(-150, 220) + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(0, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.soil.pls.quants + ylim(0, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(0, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          three.color.bimodal.plots.nolabs +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs + theme(plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
 dev.off()
 
 

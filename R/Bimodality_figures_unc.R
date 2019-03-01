@@ -1821,7 +1821,7 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins", "mids"))
 merged.pc1 <- merge(merged.pc1, ncell, by = c("pc1_bins", "mids"))
 
-merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Savanna` > 50 & merged.pc1$`Forest` > 50,"bimodal", "NS")
+merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Savanna` +  merged.pc1$`Forest` > 50,"bimodal", "NS")
 
 merged.pc1[is.na(merged.pc1$bimodal), ]$bimodal <- "One mode"
 merged.pc1$y <- -41
@@ -1839,6 +1839,9 @@ hysteresis.pc1.pls.quants <- ggplot(data = data.frame(mid.summary.pc1.quants), a
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
   ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+
+hysteresis.pc1.pls.quants.bimodal <- hysteresis.pc1.pls.quants + geom_point(data = data.frame(merged.pc1[merged.pc1$bimodal %in% "bimodal",]), aes( x = mids, y = -25), color = "#386cb0", shape = 15)
+
 
 hysteresis.pc1.pls.smooths <- ggplot(data = data.frame(mid.summary.pc1.quants), aes(mids, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.10, ymax = ci.90, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -1992,10 +1995,13 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_bins", "mids_ppet"))
 merged.ppet <- merge(merged.ppet, ncell, by = c("GS_ppet_bins", "mids_ppet"))
 
-merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` > 50 & merged.ppet$`Forest` > 50,"bimodal", "NS")
+merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` +  merged.ppet$`Forest` > 50,"bimodal", "NS")
 
 merged.ppet[is.na(merged.ppet$bimodal), ]$bimodal <- "One mode"
 merged.ppet$y <- -41
+
+hysteresis.ppet.pls.quants.bimodal <- hysteresis.ppet.pls.quants + geom_point(data = data.frame(merged.ppet[merged.ppet$bimodal %in% "bimodal",]), aes( x = mids_ppet, y = -25), color = "#386cb0", shape = 15, size = 2.25)
+
 
 # get summary to make lines
 mid.summary.lowprob <- ppet.pls.mix %>% group_by(prob_ppet >= 0.499 & prob_ppet <= 0.509, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
@@ -2111,7 +2117,7 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_bins", "mids"))
 merged.soil <- merge(merged.soil, ncell, by = c("mean_GS_soil_bins", "mids"))
 
-merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Savanna` > 50 & merged.soil$`Forest` > 50,"bimodal", "NS")
+merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Savanna` + merged.soil$`Forest` > 50,"bimodal", "NS")
 merged.soil[is.na(merged.soil$bimodal), ]$bimodal <- "One mode"
 merged.soil$y <- -41
 
@@ -2120,6 +2126,7 @@ mid.summary.lowprob <- soil.pls.mix %>% group_by(prob_soil >= 0.49 &  prob_soil 
                                                                                                                                        ci.high = quantile(mean_dens, 0.975))
 
 
+hysteresis.soil.pls.quants.bimodal <- hysteresis.soil.pls.quants + geom_point(data = data.frame(merged.soil[merged.soil$bimodal %in% "bimodal",]), aes( x = mids, y = -25), color = "#386cb0", shape = 15, size = 2.25)
 
 
 smoothingSpline.Forest = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Forest" , ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Forest" , ]$mean, spar=.75)
@@ -2939,10 +2946,12 @@ dev.off()
 
 png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median.png")
 
-plot_grid(hysteresis.pc1.pls.quants + ylim(0, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.ppet.pls.quants+xlim(-150, 220) + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(0, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.soil.pls.quants + ylim(0, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(0, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          three.color.bimodal.plots.nolabs +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs + theme(plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+plot_grid(hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+
+
 dev.off()
 
 
@@ -3745,6 +3754,17 @@ fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
 fig3
 dev.off()
 
+
+
+# -----make this same figure but with hysteresis plots instead of the yellow and red density plots
+
+png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_full.png")
+
+plot_grid(hysteresis.pc1.pls.quants + ylim(0, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.ppet.pls.quants+xlim(-150, 220) + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(0, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          hysteresis.soil.pls.quants + ylim(0, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(0, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+          three.color.bimodal.plots.nolabs +  theme(legend.title=element_blank(),panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs + theme(legend.title=element_blank(), plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+dev.off()
 
 
 # >>>>>>>>>>>>>>>>>>>>> Plot figure 3 with grid cells without FIA plots masked out of FIA <<<<<<<<<<<<<<<<<<<<<<<<<

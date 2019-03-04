@@ -38,6 +38,7 @@ mid.summary.lowprob <- pls.nona %>% group_by(prob_ppet >= 0.4999 & prob_ppet <= 
 
 # find the range where there are two modes:
 # for each mids_ppet, if there is a "Forest" and a "Savanna" column, then we call it bimodal:
+
 bins.summary.ppet <- pls.nona %>% group_by(mode, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
                                                                                   ci.low = quantile(mean_dens,0.025),
                                                                                   ci.high = quantile(mean_dens, 0.975))
@@ -58,6 +59,34 @@ unimodal.open.region <- nstates[nstates$nstates == 1 & nstates$mids_ppet < 0,] %
                                                                                     xmax = max(mids_ppet)+15, 
                                                                                     ymin = 0, ymax = 5000)
 
+############get FIA unimodal
+# lets make the plot but with past bimodal shaded:
+
+# get 
+fia.nona <- read.csv( "outputs/mixture_model/fia_ppet_mixture_mode_estimates.csv")
+bins.summary.ppet.fia <- fia.nona %>% group_by(mode, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+                                                                                                ci.low = quantile(mean_dens_fia,0.025),
+                                                                                                ci.high = quantile(mean_dens_fia, 0.975), 
+                                                                                                ncell = n())
+
+test <- bins.summary.ppet.fia  %>% group_by(GS_ppet_mod_bins) %>% spread(key = mode, value = 1)
+test$Savanna <- test$`Low Density Forest`
+test$Savanna <- ifelse(!is.na(test$Savanna), 1, 0)
+test$Forest <- ifelse(!is.na(test$Forest), 1, 0)
+nstates <- test %>% group_by(GS_ppet_mod_bins, mids) %>% dplyr::summarise(nstates = sum(Forest, Savanna), 
+                                                                          ncell_tot = sum(ncell ))
+
+# 
+# ggplot(nstates, aes(mids, nstates))+geom_point()
+# bimodal.region <- nstates[nstates$nstates > 1,] %>% group_by(nstates) %>% dplyr::summarise(min = min(mids), 
+#                                                                                            xmax = max(mids), 
+#                                                                                            ymin = 0, ymax = 5000)
+# 
+# 
+unimodal.fia.region <- nstates[nstates$ncell_tot >= 50, ] %>% group_by(nstates) %>% dplyr::summarise(min = min(mids), 
+                                                                                                                         xmax = max(mids)+15, 
+                                                                                                                           ymin = 0, ymax = 5000) %>% filter(nstates == 1)
+
 
 pls.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
@@ -70,6 +99,40 @@ fia.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin
   geom_histogram(data = dens.pr, aes(GS_ppet_mod), binwidth = 10)+xlim(-175, 300)+xlab("FIA growing season P-PET")+
   annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
   annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
+
+# plot p-pet range + bars below the figures:
+
+full.GS <- dens.pr[,c("x", "y","GS_ppet", "GS_ppet_mod")]
+colnames(full.GS) <- c("x", "y", "Past", "Modern")
+full.GS.m <- reshape2::melt(full.GS, id.vars= c("x", "y"))
+
+pls.fia.ppet.bars <- ggplot() + geom_histogram(data = full.GS.m, aes(value, fill = variable), position = "identity", binwidth = 10, alpha = 0.45)+scale_fill_manual(values = c("Past" = "#003c30", "Modern" = "#80cdc1"))+theme_bw(base_size = 12)+
+  theme(panel.grid = element_blank(),legend.title = element_blank(), legend.position = c(0.1, 0.9))+xlab("P - PET")
+
+
+
+pls.ppet.bars.below <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax =xmax,ymin = ymin, ymax = 400), fill = "#003c30", alpha = 0.85, color = "black")+
+  geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax, ymin = ymin, ymax = 400), fill = "#8c510a", alpha = 0.95, color = "black")+
+  annotate(geom = "text", x = 40, y = 200, label = "Bimodal Past", color = "black")+
+  annotate(geom = "text", x = -130, y = 200, label = "Open", color = "black")+theme_nothing()+xlim(-175, 300)
+
+fia.ppet.bars <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  #geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = dens.pr, aes(GS_ppet_mod), binwidth = 10)+xlim(-175, 300)+xlab("FIA growing season P-PET")#+
+  #annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  #annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
+
+
+fia.ppet.bars.below <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax =xmax,ymin = ymin, ymax = 400), fill = "red", alpha = 0.5, color = "black")+
+  geom_rect(data = data.frame(unimodal.fia.region) , aes(xmin = min + 5, xmax = xmax, ymin = ymin, ymax = 400), fill = "#80cdc1", alpha = 0.95, color = "black")+
+  annotate(geom = "text", x = 65, y = 200, label = "Unimodal Forest Modern", color = "black")+
+  #annotate(geom = "text", x = -130, y = 200, label = "Savanna", color = "black")+
+  theme_nothing()+xlim(-175, 300) +
+  geom_segment(data=state.summaries[state.summaries$mean < 0 & state.summaries$mean > -115,], aes(x = mean, xend=mean,y = 0, yend=400, color = state), size = 1.5)+scale_color_manual(values = c("yellow", "black", "blue"))
+
+png(height = 8, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_bar_fut.png")
+plot_grid(pls.ppet.bars, pls.ppet.bars.below, fia.ppet.bars, fia.ppet.bars.below,align = "v", ncol = 1, rel_heights = c(1,0.15, 1, 0.15))
+dev.off()
 
 
 fut.ppet.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
@@ -201,6 +264,27 @@ dev.off()
 png(height = 10, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/future_ppet_with_extra_states_bimodal_shading_both_time_periods_8.5.png")
 plot_grid(pls.ppet.rect, fia.ppet.rect, fut.ppet.rect.both, ncol = 1, align = "hv", labels = "AUTO")
 dev.off()  
+
+state.summaries.three <- state.summaries[state.summaries$mean < 0 & state.summaries$mean > -110,]
+state.summaries.three$state <- factor(state.summaries.three$state, levels = c("oklahoma", "kansas", "nebraska"))
+
+# future plot without the boxes behind
+fut.ppet.8.5.both <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
+  #geom_rect(data = data.frame(unimodal.open.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "tan", alpha = 0.5, color = "black")+
+  geom_histogram(data = rcp85, aes(GS_ppet_fut, fill = period), binwidth = 10)+scale_fill_manual(values = c("#bdbdbd", "#525252"), name = "future period")+xlim(-175, 300)+xlab("RCP 8.5 future growing season P-PET")+
+  geom_vline(data = state.summaries.three, aes(xintercept = mean, color = state), linetype = "dashed")+scale_color_manual(values = c("yellow", "black", "blue"), name = "modern state")+theme_bw(base_size = 12)+
+  theme(legend.position  = c(0.805, 0.53), panel.grid = element_blank())#+
+  #annotate(geom = "text", x = 50, y = 4500, label = "Bimodal", color = "black")+
+  #annotate(geom = "text", x = -130, y = 4500, label = "Savanna", color = "black")
+
+
+
+png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/Future_rcp_8.5_bar_bimodal_combined.png")
+plot_grid(pls.fia.ppet.bars + xlab("Growing Season P - PET")+ylab("# of grid cells"), pls.ppet.bars.below, fia.ppet.bars.below, fut.ppet.8.5.both+ylab("# of grid cells"), align = "v", ncol = 1, rel_heights = c(1, 0.15, 0.15, 1), 
+          labels = c("A", "B", " ", "C"))
+dev.off()
+
+
 
 # now map out the places that are bimodal vs. 
 # kh note: need to decide if we should call < 50 grid cells represented to be "out-of-sample"

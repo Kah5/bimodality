@@ -239,6 +239,7 @@ clust_8$foresttype <- revalue(clust_8$speciescluster, c("Oak/Poplar/Ash"="Aspen"
 
 clust_8$orderedforesttype<- factor(clust_8$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory", "Beech-Maple"))
 
+c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18')
 pls.clust <- ggplot(clust_8, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
   scale_fill_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = " ")+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
@@ -277,13 +278,19 @@ clust.hist.full
 
 clust.hist.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 clust.hist.full.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.msk
 
+
+# plot density vs ppet but colored by species composition:
+png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/Density_vs_ppet_by_comp.png")
+ggplot()+geom_point(data = dens.clust, aes(GS_ppet, mean_dens, color = foresttype), size = 0.5)+
+  theme_bw()+scale_color_manual(values = myColors, name = " ", drop = TRUE)+ylab("Tree Density (trees/ha)")+xlab("Growing Season P-PET (mm)")
+dev.off()
 # ------------------make the same figures but with combined pls and fia clusters-----------------
 # ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------
 
@@ -763,7 +770,7 @@ library(plyr)
 #clust_8$orderedforesttype<- factor(clust_8$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory", "Beech-Maple"))
 
 fia.clust <- ggplot(clust_5, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
-  scale_fill_manual(values = c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086'), name = " ")+
+  scale_fill_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = " ")+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -779,14 +786,28 @@ fia.clust
 dens.clust <- merge(dens, clust_5[,c("x" ,"y", "speciescluster")], by = c("x", "y"), all.x = TRUE)
 dens.clust <- dens.clust[!duplicated(dens.clust),]
 
+clust.fia.convert <- data.frame(speciescluster = c("Maple/Cedar/Pine" ,"Maple/Oak/Ash/Poplar",     
+                                                   "Oak/Maple/Other hardwoods","Oak/Maple/Pine/Poplar","Poplar/Cedar/Pine" ),
+                                foresttype = c("Mixed Maple", 
+                                               "Maple Oak Ash Poplar", 
+                                               "Oak/Maple/Other ",
+                                               "Oak Maple Pine Poplar",
+                                               "Poplar Cedar Pine" ))
+clust_5test<- left_join(clust_5, clust.fia.convert, by = "speciescluster")
+
+clust_5test$orderedforesttype<- factor(clust_5test$foresttype, c("Mixed Maple", 
+                                                                 "Maple Oak Ash Poplar", 
+                                                                 "Oak/Maple/Other ",
+                                                                 "Oak Maple Pine Poplar",
+                                                                 "Poplar Cedar Pine" ))
 
 
-myColors <- c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086')
+myColors <- c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69')
 #names(myColors) <- levels(dens.clust$foresttype_ordered)
 
 clust.hist.fia.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
-  geom_histogram(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = speciescluster), binwidth =  20)+xlim(0,600)+
+  geom_histogram(data = clust_5test[clust_5test$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full
@@ -801,14 +822,23 @@ clust_5 <- merge(clust_plot5 , dens, by = c("x", "y"))
 # need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
 clust_5
 library(plyr)
-#clust_8$foresttype <- revalue(clust_5$speciescluster, c("Maple/Oak/Poplar/Ash"="Maple/Oak/Other", "Poplar/Pine/Cedar/Spruce"="Poplar", 
-#                                                       "Oak/Maple/Elm/Poplar/Ash" = "Oak/Maple/Hickory", "Oak/Maple/Other/Hickory"
-#                                                      "Pine/Poplar" = "Pine", "Spruce/Cedar/Tamarack/Poplar" = "Boreal/Sub-boreal", "Beech/Maple/Hemlock" = "Beech-Maple"))
+clust.fia.convert <- data.frame(speciescluster = c("Maple/Cedar/Pine" ,"Maple/Oak/Ash/Poplar",     
+                                           "Oak/Maple/Other hardwoods","Oak/Maple/Pine/Poplar","Poplar/Cedar/Pine" ),
+                        foresttype = c("Mixed Maple", 
+                                        "Maple Oak Ash Poplar", 
+                                        "Oak/Maple/Other ",
+                                        "Oak Maple Pine Poplar",
+                                        "Poplar Cedar Pine" ))
+clust_5test<- left_join(clust_5, clust.fia.convert, by = "speciescluster")
 
-#clust_8$orderedforesttype<- factor(clust_8$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory", "Beech-Maple"))
+clust_5test$orderedforesttype<- factor(clust_5test$foresttype, c("Mixed Maple", 
+                                                         "Maple Oak Ash Poplar", 
+                                                         "Oak/Maple/Other ",
+                                                         "Oak Maple Pine Poplar",
+                                                         "Poplar Cedar Pine" ))
 
-fia.clust <- ggplot(clust_5, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
-  scale_fill_manual(values = c('#f0027f'  ,'#003c30','#a6cee3',"#beaed4", '#fdc086'), name = " ")+
+fia.clust <- ggplot(clust_5test, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = " ")+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -1257,7 +1287,7 @@ dev.off()
 dev.off()
 
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_indiv_comp.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
@@ -1269,7 +1299,7 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           ncol = 2, align = "h", axis="tb", scale = 1) 
 dev.off()
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_both_comp.png")
 plot_grid(
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1287,7 +1317,7 @@ ncol = 1, align = "h", axis="tb", scale = 1)
 dev.off()
 
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
             FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1307,7 +1337,7 @@ dev.off()
 
 # horizonatal figure 1:
 
-png(height = 6, width = 10, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_two_row_trans_arrow_inset_pct.png")
+png(height = 6, width = 10, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_two_row_trans_arrow_inset_pct_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
             pls.clust.both+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
@@ -1327,7 +1357,27 @@ plot_grid(
 dev.off()
 
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct_nolabels.png")
+png(height = 6, width = 10, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_two_row_trans_arrow_inset_pct_indiv_comp.png")
+plot_grid(
+  plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            pls.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+            FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "C", size = 3),
+            fia.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 4, align = "h", axis = "tb", rel_widths = c(1,1, 1, 1)),
+  
+  
+  plot_grid( clust.hist.full.no.aspect+ theme(plot.margin = unit(c(0, 0, 0, 0.15), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.title.x =element_text(size = 12),axis.title.y =element_text(size = 12), axis.text = element_text(size = 10), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=100,label= "E", size = 3)+ xlab("Tree Density (stems/ha)"),
+             ncell.pct.change.plot + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 10,angle = 45, hjust = 1) ) + annotate("text", x=1, y=600,label= "F", size = 3),
+             clust.hist.fia.full + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text.x = element_text(size = 12), axis.text.y = element_blank(), axis.title =  element_text(size = 12), axis.ticks.y = element_blank(), axis.title.y = element_blank()) + annotate("text", x=600, y=400,label= "G", size = 3),
+             ncell.pct.change.1980.1990.plot + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 10,angle = 45, hjust = 1),axis.ticks.y = element_blank(), axis.text.y = element_blank(), title = element_blank() ) + annotate("text", x=1, y=600,label= "H", size = 3),
+             ncell.pct.change.1990.2000.plot + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 10, angle = 45, hjust = 1) , axis.ticks.y = element_blank(), axis.text.y = element_blank(),title = element_blank()) + annotate("text", x=1, y=600,label= "I", size = 3),
+             inset2 + annotate("text", x=1, y=600,label= "J", size = 3),
+             ncol = 6, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5, 0.5, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_pct_nolabels_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), 
             FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) , ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1345,7 +1395,7 @@ plot_grid(
 dev.off()
 
 # make figure 1 but with grid cells with no fia plots masked out
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
             FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1362,7 +1412,7 @@ plot_grid(
   ncol = 1, align = "h", axis="tb", scale = 1) 
 dev.off()
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change.png")
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
             FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1380,7 +1430,7 @@ plot_grid(
 dev.off()
 
 
-png(height = 8.4, width = 4, units = 'in', res = 400, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_nolabels.png")
+png(height = 8.4, width = 4, units = 'in', res = 400, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_nolabels_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)), 
             FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) , ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1399,7 +1449,7 @@ dev.off()
 
 
 # plot of the modern fia surveys next to pls and FIA histograms:
-png(height = 5, width = 18, units = 'in', res = 300, "outputs/paper_figs_unc/pct_change_all_time_periods.png")
+png(height = 5, width = 18, units = 'in', res = 300, "outputs/paper_figs_unc/pct_change_all_time_periods_both_comp.png")
 plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
            ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
            clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
@@ -1410,7 +1460,7 @@ plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0,
 dev.off()
 
 
-png(height = 3, width = 6, units = 'in', res = 300, "outputs/paper_figs_unc/pct_change_fia_time_periods.png")
+png(height = 3, width = 6, units = 'in', res = 300, "outputs/paper_figs_unc/pct_change_fia_time_periods_both_comp.png")
 plot_grid( clust.hist.fia.full.both.no.aspect.msk  + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
            ncell.pct.change.1980.1990.plot + ggtitle("") , 
            ncell.pct.change.1990.2000.plot+ ggtitle("") ,

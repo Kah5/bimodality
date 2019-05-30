@@ -9,7 +9,8 @@ library(raster)
 library(rgdal)
 library(ncdf4)
 library(cluster)# library needed for pam
-
+library(tidyr)
+library(dplyr)
 
 #-----------------Outline of this script----------------------------------------
 # 1. Clustering of species composition data from raw data, aggregated to the 8km density level
@@ -321,10 +322,11 @@ pls.stat <- pls.long %>% group_by(x, y, variable) %>% summarise(mean = mean(valu
 # make it wide again:
 plsdens.wide <- spread(pls.stat, variable, mean)
 
-ggplot(plsdens.wide, aes(x, y, fill = Dogwood))+geom_raster()
+ggplot(plsdens.wide, aes(x, y, fill = Beech))+geom_raster()
 
 # save this:
 write.csv(plsdens.wide, "data/mean_density_statistical_pls_summary.csv", row.names = FALSE)
+plsdens.wide <- read.csv("data/mean_density_statistical_pls_summary.csv")
 
 ordered.df <- plsdens.wide[ , order(names(plsdens.wide))]
 
@@ -346,16 +348,17 @@ ggplot(plscomp, aes(x,y, fill = Spruce))+geom_raster()
 
 # now run pam with 7 classes again:
 classes.7.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 7, diss = FALSE, keep.diss = TRUE)
-classes.6.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 6, diss = FALSE, keep.diss = FALSE)
-classes.8.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 8, diss = FALSE, keep.diss = FALSE)
+classes.6.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 6, diss = FALSE, keep.diss = TRUE)
+classes.8.smooth.dens <- pam(plscomp[,3:ncol(plscomp)], k = 8, diss = FALSE, keep.diss = TRUE)
 
 
 pls.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width = 0.2903842 lower than 9 classes, but the minimum width is 0.2 for all classes
 pls.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2780922
 pls.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.3057238
 
+
 # in general 7 clusters seems to be the best for the full midwest grid level data data, but you may have a different # 
-# for this data, it seems that 8 classes may be the best cluster
+# for this data, it seems that 7-8 classes may be the best cluster
 
 # --------------- Now lets look at a map of the k=8 clusters ----------------------
 
@@ -389,6 +392,9 @@ rem_class <- factor(old_classes$clustering,
                     ))
 
 classes.8.smooth.dens$silinfo$clus.avg.widths # get the average silohette width for each cluster
+
+min(classes.8.smooth.dens$silinfo$clus.avg.widths)
+
 clust_plot8 <- data.frame(plscomp, speciescluster = rem_class)
 
 # map out the clusters with pretty colors & save to a file:
@@ -405,6 +411,38 @@ dev.off()
 
 # save as csv for future 
 write.csv(clust_plot8, "outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+# summarize average % of each taxa in each cluster:
+clusterinfo <- clust_plot8 %>% select(-x, -y, -cell)
+clusterinfo.m <- melt(clusterinfo)
+clusterinfo.m$value <- clusterinfo.m$value*100
+summary.clusters <- clusterinfo.m %>% group_by(speciescluster, variable) %>% summarise(mean = mean(value, na.rm=TRUE),
+                                                                                       sd = sd(value, na.rm = TRUE),
+                                                                                       sd.low = mean(value, na.rm=TRUE) - sd(value, na.rm=TRUE),
+                                                                                       sd.high = mean(value, na.rm=TRUE) + sd(value, na.rm=TRUE))
+
+ggplot(summary.clusters, aes(x = variable, y =mean, fill = variable))+geom_bar(stat= "identity") +
+  geom_errorbar(aes(ymin = sd.low, ymax = sd.high))+ facet_wrap(~speciescluster, scales = "free_y")+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+silinfo.df <- data.frame(silinfo = classes.8.smooth.dens$silinfo$clus.avg.widths, 
+           cluster = 1:8, 
+           labels=c(
+             'Oak/Poplar/Ash', # 1
+             "Oak", # 2
+             "Oak/Maple/Elm/Ash", # 3
+             'Oak/Hickory',# mediod 4
+             'Spruce/Cedar/Tamarack/Poplar',# mediod 5
+             "Pine/Poplar",
+             'Hemlock/Beech/Cedar/Birch/Maple', # mediod 3
+             "Beech/Maple/Hemlock"
+             # mediod8 # not as much birch
+             
+           ))
+write.csv(summary.clusters, "outputs/eight_clust_pls_mean_taxa_summary.csv", row.names = FALSE)
+write.csv(silinfo.df, "outputs/eight_clust_pls_silinfo_summary.csv", row.names = FALSE)
+
 
 #------------------------FIA clustering using statistical density estimates---------------------------
 
@@ -535,11 +573,11 @@ df5
 rem_class <- factor(old_classes$clustering,
                     # relabel the clusters from numbers to custom names
                     labels=c(
-                      'Maple/Oak/Poplar/Ash', # 1
-                      "Poplar/Pine/Cedar/Spruce", # 2
-                      "Oak/Maple/Elm/Poplar/Ash", # 3
-                      'Oak/Maple/Other/Hickory',# mediod 4
-                      'Maple/Pine/Cedar/Spruce'# mediod 5
+                      'Maple/Oak/Ash/Poplar', # 1
+                      "Poplar/Cedar/Pine", # 2
+                      "Oak/Maple/Pine/Poplar", # 3
+                      'Oak/Maple/Other hardwoods',# mediod 4
+                      'Maple/Cedar/Pine'# mediod 5
                       
                       # mediod5 # not as much birch
                       
@@ -567,6 +605,35 @@ dev.off()
 write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
 
 # the smoothed estimates are very smooth......
+
+# summarize average % of each taxa in each cluster:
+clusterinfo <- clust_plot5 %>% select(-x, -y, -cell)
+clusterinfo.m <- melt(clusterinfo)
+clusterinfo.m$value <- clusterinfo.m$value*100
+summary.clusters.fia <- clusterinfo.m %>% group_by(speciescluster, variable) %>% summarise(mean = mean(value, na.rm=TRUE),
+                                                                                       sd = sd(value, na.rm = TRUE),
+                                                                                       sd.low = mean(value, na.rm=TRUE) - sd(value, na.rm=TRUE),
+                                                                                       sd.high = mean(value, na.rm=TRUE) + sd(value, na.rm=TRUE))
+
+ggplot(summary.clusters.fia, aes(x = variable, y =mean, fill = variable))+geom_bar(stat= "identity") +
+  geom_errorbar(aes(ymin = sd.low, ymax = sd.high))+ facet_wrap(~speciescluster, scales = "free_y")+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+silinfo.df <- data.frame(silinfo = classes.5.smooth.dens$silinfo$clus.avg.widths, 
+                         cluster = 1:5, 
+                         labels=c(
+                           'Maple/Oak/Ash/Poplar', # 1
+                           "Poplar/Cedar/Pine", # 2
+                           "Oak/Maple/Pine/Poplar", # 3
+                           'Oak/Maple/Other hardwoods',# mediod 4
+                           'Maple/Cedar/Pine'# mediod 5
+                         ))
+write.csv(summary.clusters.fia, "outputs/five_clust_fia_mean_taxa_summary.csv", row.names = FALSE)
+write.csv(silinfo.df, "outputs/five_clust_fia_silinfo_summary.csv", row.names = FALSE)
+
+
+
 
 #-------------------------------Run clusters with both FIA and pls composition together--------------
 

@@ -282,7 +282,7 @@ clust.hist.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust
 
 clust.hist.full.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.msk
 
 
@@ -846,7 +846,44 @@ fia.clust <- ggplot(clust_5test, aes(x = x, y=y, fill=orderedforesttype))+geom_r
                                                                                                                            axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
 
 fia.clust
-# merge clust_plot5 and dens.pr
+
+
+fia.clust.msk <- ggplot(clust_5test[!is.na(clust_5test$FIAdensity),], aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
+  scale_fill_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+                                                                                                                           axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
+                                                                                                                           axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                           axis.title.x=element_blank(),
+                                                                                                                           axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
+
+fia.clust.msk
+
+
+clust.hist.fia.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
+  geom_histogram(data = clust_5test[clust_5test$mean_dens_fia >= 0.5 & !is.na(clust_5test$FIAdensity),], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.fia.msk
+
+png(height = 6, width = 6, units = "in", res = 250,"FIA_Density_vs_ppet_by_comp.png")
+ggplot(clust_5, aes(GS_ppet_mod,mean_dens_fia,  color = speciescluster))+geom_point(size = 0.1)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")
+dev.off()
+
+
+# plot both PLS and FIA composition clusters vs envt together
+fia.pet.dens.comp <- ggplot(clust_5, aes(GS_ppet_mod,mean_dens_fia,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = "FIA composition", drop = TRUE)+theme(legend.key.size = unit(1.5, "point"))
+
+pls.pet.dens.comp <- ggplot(clust_8, aes(GS_ppet,mean_dens,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = "PLS composition")+theme(legend.key.size = unit(1.5, "point"))
+
+
+# write both pls and fia to the same png
+png(height = 6, width = 7.5, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_by_comp.png")
+plot_grid(pls.pet.dens.comp, fia.pet.dens.comp, ncol = 1, align = "hv", labels = "AUTO")
+dev.off()
 
 
 
@@ -934,6 +971,7 @@ fia.clust.both.msk <- ggplot(clust_10_fia_msk, aes(x = x, y=y, fill = orderedfor
                                                                                                                            axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
 
 fia.clust.both.msk
+
 
 
 # now get previous FIA surveys:
@@ -1412,7 +1450,24 @@ plot_grid(
   ncol = 1, align = "h", axis="tb", scale = 1) 
 dev.off()
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_both_comp.png")
+png(height = 8.4, width = 5, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_indiv_comp.png")
+plot_grid(
+  plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+            FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid(pls.clust.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "C", size = 3),
+            fia.clust.msk+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
+  
+  plot_grid( clust.hist.full.msk+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=75,label= "E", size = 3)+ylim(0,1000) + xlab("Tree Density (stems/ha)"),
+             ncell.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) )+ annotate("text", x=1, y=600,label= "F", size = 3),
+             clust.hist.fia.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text.x = element_text(size = 5), axis.title.x =  element_text(size = 5), axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()) + annotate("text", x=600, y=100,label= "G", size = 3),
+             inset2+ annotate("text", x=1, y=600,label= "H", size = 3),
+             ncol = 4, align = "h", axis = "tb", rel_widths = c(1,0.5, 1, 0.5)), 
+  
+  ncol = 1, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+png(height = 8.4, width = 4.8, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_msk_pct_change_both_comp.png")
 plot_grid(
   plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
             FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
@@ -1420,7 +1475,7 @@ plot_grid(
   plot_grid(pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
             fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), ncol = 2, align = "h", axis = "tb", rel_widths = c(1,1)),
   
-  plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+  plot_grid( clust.hist.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5), legend.position = c(0.5, 0.8))+ annotate("text", x=600, y=20,label= "C", size = 3),
              ncell.pct.change.plot+theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), axis.text.x =element_text(size = 5) ),
              clust.hist.fia.full.both.no.aspect.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3),
              inset2,

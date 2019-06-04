@@ -270,18 +270,22 @@ dens.clust <- dens.clust[!duplicated(dens.clust),]
 myColors <- c( '#386cb0','#ffff99','#bf5b18','#beaed4','#33a02c','#fdc088','#f0028f','#8fc98f')
 names(myColors) <- levels(dens.clust$foresttype_ordered)
 
+
+dens.clust$orderedforesttype <- factor(dens.clust$foresttype, levels = c( "Beech-Maple", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory",  "Oak", "Pine", "Aspen"))
+
 clust.hist.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full
 
 
 clust.hist.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.83),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+clust.hist.full.no.aspect 
 
 clust.hist.full.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
-  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
+  geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.msk
 
@@ -289,7 +293,7 @@ clust.hist.full.msk
 # plot density vs ppet but colored by species composition:
 png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/Density_vs_ppet_by_comp.png")
 ggplot()+geom_point(data = dens.clust, aes(GS_ppet, mean_dens, color = foresttype), size = 0.5)+
-  theme_bw()+scale_color_manual(values = myColors, name = " ", drop = TRUE)+ylab("Tree Density (trees/ha)")+xlab("Growing Season P-PET (mm)")
+  theme_bw()+scale_color_manual(values = myColors, name = " ", drop = TRUE)+ylab("Tree Density (trees/ha)")+xlab("Growing Season P-PET (mm)")+guides(color = guide_legend(override.aes = list(size = 5)))
 dev.off()
 # ------------------make the same figures but with combined pls and fia clusters-----------------
 # ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------

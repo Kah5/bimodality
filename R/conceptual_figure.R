@@ -206,12 +206,12 @@ ggplot(df, aes(n, y))+geom_jitter()
 
 
 B <- ggplot(df, aes(x = n, y = y))+geom_point(size = 0.05, color = "darkgrey")+theme_bw()+theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank())+ylab("Tree Density")+xlab("Environment")+ ylim(-800, 1500)+#xlim(0,10000)+
-  annotate("segment", x = c( 100,  300, 500, 700, 900), xend = c( 100,  300, 500, 700, 900), 
-           y = c(-700,-700,-700,-700,-700), yend = c(-50,-50,-50,-50, -50), colour = "#01665e", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))+#+
-  annotate("segment", x = c(1300, 1500,  1700,  1900, 2100), xend = c(1300, 1500,  1700,  1900, 2100), 
-           y = c(1100, 1100, 1100,1100,1100), yend = c(600, 600,600,600, 600), colour = "#7b3294", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))
+  annotate("segment", x = c( 100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), xend = c( 100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), 
+           y = c(-700,-700,-700,-700,-700, -700,-700,-700,-700,-700, -700), yend = c(-50,-50,-50,-50,-50, -50, -50,-50,-50,-50, -50), colour = "#01665e", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))+#+
+  annotate("segment", x = c(100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), xend = c(100,  300, 500, 700, 900,1100,1300, 1500,  1700,  1900, 2100), 
+           y = c(1100, 1100,1100, 1100,1100,1100,1100, 1100, 1100,1100,1100), yend = c(600,600,600,600,600,600,600, 600,600,600, 600), colour = "#7b3294", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))
 
-
+B
 
 MSS.concept2.hist <- ggplot(df, aes(y))+geom_density(bw = 75, fill = "blue")+theme_bw()+theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank(), axis.title.y = element_blank())+ylab(" ")+coord_flip()+ xlim(-800, 1500)#+ ylim(-800, 1500)
 MSS.concept2.hist 
@@ -302,125 +302,3 @@ plot_grid(plot_grid(Bigwoods+ theme(plot.margin = unit(c(0.1,0,0.1,0.1), "cm")),
 ncol = 3, rel_widths = c(1,1,1), labels = c("A", "C", "E",  "B",  "D", "F" ) )
 dev.off()
 
-#plot_grid(MSS.concept, MSS.concept)
-
-
-# #--------Old code---------
-# 
-# high.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = 1.5, sd = 2), climate = x3[701:900], envt = "High")
-# high.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[701:900], envt = "High")
-# 
-# 
-# low.p <- data.frame(time = "Past", value = rnorm(n = 500, mean = 30, sd = 10), climate = x3[301:800], bins = "Low")
-# low.m <- data.frame(time = "Modern", value = rnorm(n = 500, mean = 25, sd = 10), climate=x3[301:800], bins = "Low")
-# 
-# int.p <- data.frame(time = "Past", value = rnorm(n = 200, mean = -3, sd = 2), climate = x3[501:700], envt = "Intermediate")
-# int.m <- data.frame(time = "Modern", value = rnorm(n = 200, mean = 2, sd = 2), climate=x3[501:700], envt = "Intermediate")
-# 
-# 
-# #full <- rbind(low.p, low.m, full)
-# 
-# 
-# ggplot(full[full$time %in% "Past",], aes(x = climate, y = value))+geom_point()
-# 
-# 
-# # use the label.breaks function and cut to cut environmental data up into different bins
-# 
-# full$bins <-  cut(full$climate, breaks = seq(-16, 16, by = 2))
-# full <- rbind(full, low.p, low.m)
-# ggplot(full, aes(x = climate, y = value))+geom_point()+facet_wrap(~time)
-# 
-# 
-# 
-# ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_histogram(alpha = 0.5, position = "identity")+theme_bw()+
-#   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")+facet_wrap(~bins)
-# 
-# png(height = 4, width = 2, units = "in", res = 300, "outputs/paper_figs/conceptual_hist_1.png")
-# ggplot(full[full$bins %in% c("(-2,0]") & full$time %in% "Past",], aes(x = value*2, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
-#   scale_fill_manual(values = c("red"), limits = c("Past"))+xlab("Tree Density")+ylab("frequency")+coord_flip()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
-#                                                                                                                      legend.position = 'none',
-#                                                                                                                      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
-# 
-# 
-# dev.off()
-# 
-# png(height = 4, width = 2, units = "in", res = 300, "outputs/paper_figs/conceptual_hist_2.png")
-# 
-# ggplot(full[full$bins %in% c("(-2,0]") & full$time %in% "Modern",], aes(x = value*2, fill = time)) + geom_density(alpha = 0.5, position = "identity", bw = 30)+theme_bw()+
-#   scale_fill_manual(values = c("blue"), limits = c("Modern"))+xlab("Tree Density")+ylab("frequency")+coord_flip()+theme(axis.text = element_blank(), axis.ticks=element_blank(),
-#                                                                                                                      legend.position = 'none',
-#                                                                                                                      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1)) + labs(fill = "p (forest)")+ggtitle("")
-# 
-# 
-# dev.off()
-# # write outputs
-# png("outputs/conceptual_fig_density.png")
-# ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
-#   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+xlab("Tree Density")+coord_flip()
-# dev.off()
-# 
-# png(height = 3, width = 8, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
-# ggplot(full[!full$bins %in% c("(-10,-8]", '(-12,-10]','(8,10]','(10,12]'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity")+theme_bw()+
-#   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins, scales ="free_x", ncol=4)+xlab("Tree Density")+coord_flip()
-# dev.off()
-# 
-# levels(full$bins) <- c("(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "test",   "(-4,-2]",   "Intermediate",    "(0,2]",    
-#                        "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]", "Low")
-# 
-# full$bins_f <-  factor(full$bins, levels = c("Low","(-16,-14]", "(-14,-12]", "(-12,-10]" ,"(-10,-8]",  "(-8,-6]",   "test",   "(-4,-2]",   "Intermediate",    "(0,2]",    
-#                                              "(2,4]",     "(4,6]",     "High"  ,   "(8,10]"  ,  "(10,12]" ,  "(12,14]",   "(14,16]"))
-# 
-# png(height = 3, width = 5, units = 'in',res = 200,'outputs/conceptual_fig_density_by_bins.png')
-# ggplot(full[full$bins %in% c("Low", 'Intermediate','High'),], aes(x = value, fill = time)) + geom_density(alpha = 0.5, position = "identity", adjust = 1.3)+theme_bw(base_size = 12)+
-#   scale_fill_manual(values = c("red", "blue"), limits = c("Modern", "Past"))+facet_wrap(~bins_f, scales ="free_x", ncol=3)+xlab("Tree Density \n")+ylab('frequency')+coord_flip()+theme(axis.title.x=element_blank(),
-#                                                                                                                                                                                    axis.text.x=element_blank(),
-#                                                                           
-#                                                                                                                                                                                                                                                                                             axis.ticks.x=element_blank(), 
-#                                                                                                                                                                                     )
-# 
-# dev.off()
-# # high envt
-# 
-# 
-# # Plotin curves
-# df <- data.frame(x1 = 0, x2 = 5,x3= 2, x4=6, y1 = 0, y2 = 1, y3 = 4, y4 = 5)
-# ggplot()+geom_curve(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "curve"), data = df, curvature = 0.2) +
-#   geom_curve(aes(x = x2, y = y2, xend = x3, yend = y3, colour = "segment"), data = df, curvature = 0.2)
-# 
-# 
-# 
-# 
-# 
-# 
-# library(plotly)
-# 
-# kd <- MASS::kde2d(one$value, one$climate, n = 25)
-# p <- plot_ly(x = kd$x, y = kd$y, z = kd$z) %>% add_surface()
-# p
-# 
-# dens.pr <- read.csv("data/PLS_full_dens_pr_with_bins.csv")
-# 
-# a <- dens.pr[complete.cases(dens.pr),]
-# #a <- a[a$PC1 <= 1 & a$PC1 >= 0,]
-# kd <- MASS::kde2d(a$PLSdensity, a$PC1, n =  100)
-# p <- plot_ly(x = kd$x, y = kd$y, z = t(kd$z)) %>% add_surface() %>%
-# layout(
-#   title = "Surface plot of Tree density in the Environment",
-#   scene = list(
-#     xaxis = list(title = "Tree density"),
-#     yaxis = list(title = "PC1 environment"),
-#     zaxis = list(title = "frequency")
-#   ))
-# p
-# 
-# library(sm)
-# sm.density(cbind(a$PLSdensity, a$PC1), display="image",
-#            props=seq(from=5, to=95, by=10), ylab="Tree Density", xlab="Environmental PC1")
-# 
-# test <- sm.density(cbind(a$PLSdensity, a$PC1), display="none",
-#            props=seq(from=5, to=95, by=10))
-# 
-# new.df <- data.frame(x = testdf$x[,1],
-#            y= testdf$x[,2],
-#             freq = testdf$freq)
-# psm <- plot_ly(x = new.df$x, y = new.df$y, z = new.df$freq) %>% add_surface()

@@ -128,7 +128,7 @@ fia.ppet.bars.below <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , a
   annotate(geom = "text", x = 65, y = 200, label = "Unimodal Forest Modern", color = "black")+
   #annotate(geom = "text", x = -130, y = 200, label = "Savanna", color = "black")+
   theme_nothing()+xlim(-175, 300) +
-  geom_segment(data=state.summaries[state.summaries$mean < 0 & state.summaries$mean > -115,], aes(x = mean, xend=mean,y = 0, yend=400, color = state), size = 1.5)+scale_color_manual(values = c("yellow", "black", "blue"))
+  geom_segment(data=state.summaries[state.summaries$mean < 0 & state.summaries$mean > -115,], aes(x = mean, xend=mean,y = 0, yend=400, color = state), size = 1.5)+scale_color_manual(values = c( "black","blue","yellow"))
 
 png(height = 8, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_bar_fut.png")
 plot_grid(pls.ppet.bars, pls.ppet.bars.below, fia.ppet.bars, fia.ppet.bars.below,align = "v", ncol = 1, rel_heights = c(1,0.15, 1, 0.15))

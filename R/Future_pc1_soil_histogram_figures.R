@@ -102,7 +102,7 @@ pls.pc1.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin 
 fia.pc1.rect <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.forest.fia) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "blue", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(PC1fia))+xlim(-5.5, 5)+xlab("FIA PC1")+
-  annotate(geom = "text", x = 0, y = 4500, label = "Unimodal Forest", color = "black")#+
+  annotate(geom = "text", x = 0, y = 4500, label = "Unimodal Modern", color = "black")#+
   annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
 
 
@@ -148,6 +148,7 @@ bins.summary.soil <- pls.nona %>% group_by(mode, mean_GS_soil_bins, mids) %>% su
 
 test <- bins.summary.soil %>% group_by(mean_GS_soil_bins) %>% spread(key = mode, value = 1)
 test$Savanna <- ifelse(!is.na(test$Savanna), 1, 0)
+
 test$Forest <- ifelse(!is.na(test$Forest), 1, 0)
 nstates <- test %>% group_by(mean_GS_soil_bins, mids) %>% summarise(nstates = sum(Forest, Savanna))
 ncell <- bins.summary.soil %>% group_by(mean_GS_soil_bins, mids) %>% summarise(ncell = sum(ncell))
@@ -207,7 +208,7 @@ pls.soil.rect <- ggplot()+geom_rect(data = data.frame(bimodal.region) , aes(xmin
 fia.soil.rect <- ggplot()+#geom_rect(data = data.frame(bimodal.region) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "red", alpha = 0.5, color = "black")+
   geom_rect(data = data.frame(unimodal.forest.fia) , aes(xmin = min, xmax = xmax,ymin = ymin, ymax = ymax), fill = "blue", alpha = 0.5, color = "black")+
   geom_histogram(data = dens.pr, aes(mean_GS_soil_m))+xlab("FIA soil moisture")+xlim(0, 2)+
-  annotate(geom = "text", x = 0.7, y = 4500, label = "Unimodal Forest", color = "black")#+
+  annotate(geom = "text", x = 0.7, y = 4500, label = "Unimodal Modern", color = "black")#+
 #annotate(geom = "text", x = -125, y = 4500, label = "Savanna", color = "black")
 
 
@@ -233,3 +234,4 @@ plot_grid(
   fut.pc1.rect, fut.soil.rect, 
   ncol = 2, align = "hv", labels = "AUTO")
 dev.off() 
+

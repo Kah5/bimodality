@@ -206,10 +206,10 @@ ggplot(df, aes(n, y))+geom_jitter()
 
 
 B <- ggplot(df, aes(x = n, y = y))+geom_point(size = 0.05, color = "darkgrey")+theme_bw()+theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank())+ylab("Tree Density")+xlab("Environment")+ ylim(-800, 1500)+#xlim(0,10000)+
-  annotate("segment", x = c( 100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), xend = c( 100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), 
-           y = c(-700,-700,-700,-700,-700, -700,-700,-700,-700,-700, -700), yend = c(-50,-50,-50,-50,-50, -50, -50,-50,-50,-50, -50), colour = "#01665e", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))+#+
-  annotate("segment", x = c(100,  300, 500, 700, 900, 1100,1300, 1500,  1700,  1900, 2100), xend = c(100,  300, 500, 700, 900,1100,1300, 1500,  1700,  1900, 2100), 
-           y = c(1100, 1100,1100, 1100,1100,1100,1100, 1100, 1100,1100,1100), yend = c(600,600,600,600,600,600,600, 600,600,600, 600), colour = "#7b3294", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))
+  annotate("segment", x = c( 100,  500,  900, 1300,   1700,  2100), xend = c( 100,  500,  900, 1300,   1700,   2100), 
+           y = c(-700,-700,-700,-700, -700,-700), yend = c(-50,-50,-50,-50, -50, -50), colour = "#01665e", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))+#+
+  annotate("segment", x = c(100,   500, 900, 1300,   1700,  2100), xend = c(100,  500,  900,1300,   1700,  2100), 
+           y = c(1100, 1100, 1100,1100,1100,  1100), yend = c(600,600,600,600,600, 600), colour = "#7b3294", size=1, alpha=1, arrow=arrow(length=unit(4,"mm")))
 
 B
 
@@ -290,7 +290,7 @@ Bigwoods.fia <- ggplot(df.noshift, aes(x = n, y = y))+geom_point(size = 0.05, co
 Bigwoods.fia.hist <- ggplot(df.noshift, aes(y))+geom_density(bw = 120, fill = "blue")+theme_bw()+theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank())+ylab(" ")+coord_flip()+ xlim(-500, 1500)#+ ylim(-800, 1500)
 Bigwoods.fia.hist 
 
-
+dev.off()
 
 png(height = 4.5, width = 10, units = "in", res = 300, "outputs/paper_figs_unc/conceptual_figure_v3.png")
 plot_grid(plot_grid(Bigwoods+ theme(plot.margin = unit(c(0.1,0,0.1,0.1), "cm")), Bigwoods.hist+theme(plot.margin = unit(c(0.1,0.1,0.1,0), "cm")), ncol = 2, rel_widths = c(1,0.5)), 

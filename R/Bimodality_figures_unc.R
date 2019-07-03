@@ -40,7 +40,7 @@ dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
 dens <- dens[!is.na(dens$mean_dens), ]
 
 ggplot(dens[dens$mean_dens <= 0.5,], aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
-write.csv(dens, "outputs/density_full_unc.csv", row.names = FALSE)
+write.csv(dens, "outputs/density_full_unc_v1.0.csv", row.names = FALSE)
 # -------------------figure 1 A: Map of pls bimodality
 
 # need to set up state outlines:

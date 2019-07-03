@@ -3,7 +3,7 @@ library(ggplot2)
 library(dplyr)
 library(ggridges)
 
-pls <- read.csv("outputs/density_full_unc.csv")
+pls <- read.csv("outputs/density_full_unc_v1.0.csv")
 
 msk2 <- caTools::sample.split( pls, SplitRatio = 3/4, group = NULL )
 

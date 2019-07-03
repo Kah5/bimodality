@@ -878,10 +878,10 @@ dev.off()
 
 # plot both PLS and FIA composition clusters vs envt together
 fia.pet.dens.comp <- ggplot(clust_5, aes(GS_ppet_mod,mean_dens_fia,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
-  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = "FIA composition", drop = TRUE)+theme(legend.key.size = unit(1.5, "point"))
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = "FIA composition", drop = TRUE)+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
 
 pls.pet.dens.comp <- ggplot(clust_8, aes(GS_ppet,mean_dens,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
-  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = "PLS composition")+theme(legend.key.size = unit(1.5, "point"))
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = "PLS composition")+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
 
 
 # write both pls and fia to the same png

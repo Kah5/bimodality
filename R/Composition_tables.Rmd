@@ -1,0 +1,150 @@
+---
+title: "Composition_class_summaries"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+library(xtable, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(dplR, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+# 1. Read in the species composition clusters from PLS:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/eight_clust_pls_mean_taxa_summary.csv")
+summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/eight_clust_pls_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% select(variable, everything()))
+
+newdf <- rbind(clusters, sils)
+#newdf
+```
+
+## Table 1: PLS composition cluster summaries
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
+
+# 1. Read in the species composition clusters from PLS:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/eight_clust_pls_mean_taxa_summary.csv")
+summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/eight_clust_pls_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% select(variable, everything()))
+
+newdf <- rbind(clusters, sils)
+#newdf
+
+colnames(newdf) <- c("Taxa", 
+                     "Beech Maple", 
+                     "Northern Mixed Forest", 
+                     "Oak",
+                     "Oak-Hickory",
+                     "Oak Maple Ash",
+                     "Aspen",
+                     "Pine", 
+                     "Boreal/Sub-Boreal")
+
+kable(newdf, "latex", align = "c", booktabs = TRUE,caption = "Average taxa composition in PLS composition clusters", digits = 3, linesep = "")%>% column_spec(2:9, width = "2cm")%>%
+kable_styling() %>% group_rows("Cluster Info", 22, 22) %>% row_spec(21, hline_after = TRUE)
+```
+
+# Plot of mean and sd % species composition
+
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+
+clust.pls <- data.frame(speciescluster = c("Beech/Maple/Hemlock","Hemlock/Beech/Cedar/Birch/Maple", "Oak", "Oak/Hickory", "Oak/Maple/Elm/Ash", "Oak/Poplar/Ash" , "Pine/Poplar" ,"Spruce/Cedar/Tamarack/Poplar" ),
+                        composition = c("Beech Maple", 
+                     "Northern Mixed Forest", 
+                     "Oak",
+                     "Oak-Hickory",
+                     "Oak Maple Ash",
+                     "Aspen",
+                     "Pine", 
+                     "Boreal/Sub-Boreal"))
+
+pls.clusters <- left_join(summary.clusters, clust.pls, by = "speciescluster")
+
+ggplot(pls.clusters, aes(x = variable, y =mean, fill = variable))+geom_bar(stat= "identity") +
+  geom_errorbar(aes(ymin = sd.low, ymax = sd.high))+ facet_wrap(~composition, scales = "free_y")+theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + ylab("Average % composition")
+
+
+
+```
+
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+# 1. Read in the species composition clusters from FIA:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/five_clust_fia_mean_taxa_summary.csv")
+summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/five_clust_fia_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% select(variable, everything()))
+
+newdf <- rbind(clusters, sils)
+#newdf
+```
+
+## Table 2: FIA composition cluster summaries
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
+
+colnames(newdf) <- c("Taxa", 
+                     "Maple Cedar Pine", 
+                     "Maple Oak Ash Poplar", 
+                     "Oak Maple Other Hardwoods",
+                     "Oak Maple Pine Poplar",
+                     "Poplar Cedar Pine" )
+
+kable(newdf, "latex", align = "c", booktabs = TRUE,caption = "Average taxa composition in FIA composition clusters", digits = 3, linesep = "")%>% column_spec(2:9, width = "2cm")%>%
+kable_styling() %>% group_rows("Cluster Info", 22, 22) %>% row_spec(21, hline_after = TRUE)
+```
+
+# Plot of mean and sd % species composition
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+
+clust.fia <- data.frame(speciescluster = c("Maple/Cedar/Pine" ,"Maple/Oak/Ash/Poplar",     
+"Oak/Maple/Other hardwoods","Oak/Maple/Pine/Poplar","Poplar/Cedar/Pine" ),
+                        composition = c("Maple Cedar Pine", 
+                     "Maple Oak Ash Poplar", 
+                     "Oak Maple Other Hardwoods",
+                     "Oak Maple Pine Poplar",
+                     "Poplar Cedar Pine" ))
+
+fia.clusters <- left_join(summary.clusters, clust.fia, by = "speciescluster")
+
+ggplot(fia.clusters, aes(x = variable, y =mean, fill = variable))+geom_bar(stat= "identity") +
+  geom_errorbar(aes(ymin = sd.low, ymax = sd.high))+ facet_wrap(~composition, scales = "free_y")+theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + ylab("Average % composition")
+
+
+
+```

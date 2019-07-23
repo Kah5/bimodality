@@ -39,7 +39,7 @@ dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
 
 dens <- dens[!is.na(dens$mean_dens), ]
 
-ggplot(dens[dens$mean_dens <= 0.5,], aes(x,y, fill =  mean_dens))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
+ggplot(dens[dens$mean_dens <= 0.5,], aes(x,y, fill =  mean_dens))+geom_raster()+scale_fill_distiller(palette = "Spectral")
 write.csv(dens, "outputs/density_full_unc_v1.0.csv", row.names = FALSE)
 # -------------------figure 1 A: Map of pls bimodality
 
@@ -186,9 +186,6 @@ png(height = 4, width = 3, units = "in", res = 300,"/Users/kah/Documents/bimodal
 pls.map.alt.color+ggtitle("PLS mean density smoothed")
 dev.off()
 
-
-ggplot()+geom_errorbar(data= dens, aes(ymin = ci.low_dens, ymax = ci.high_dens), color = "grey")+
-  geom_point(data = dens, aes(PLSdensity, mean_dens), size = 0.2)#+geom_abline(intercept = 0, slope = 1, color = "red")+theme_bw()
 
 
 pred.old.plot <- ggplot(dens, aes(PLSdensity, mean_dens))+geom_point(color = "black", size = 0.5)+
@@ -885,6 +882,8 @@ pls.pet.dens.comp <- ggplot(clust_8, aes(GS_ppet,mean_dens,  color = speciesclus
 
 
 # write both pls and fia to the same png
+dev.off()
+
 png(height = 6, width = 7.5, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_by_comp.png")
 plot_grid(pls.pet.dens.comp, fia.pet.dens.comp, ncol = 1, align = "hv", labels = "AUTO")
 dev.off()
@@ -1272,7 +1271,7 @@ ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment
                               "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
   
 # cant get ncell.change.plot to align with clust.hist.full
-
+dev.off()
 png(height = 6, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_align_arrows.png")
 plot_grid(clust.hist.full.no.aspect, ncell.change.plot, align = "hv", rel_widths = c(1,0.5))
 dev.off()
@@ -1322,11 +1321,11 @@ f.clust.hist.inset.full <- clust.hist.fia.full+ scale_y_continuous(breaks=c(0,10
 
 dev.off()
 dev.off()
-dev.off()
-dev.off()
-dev.off()
-dev.off()
-dev.off()
+# dev.off()
+# dev.off()
+# dev.off()
+# dev.off()
+#dev.off()
 
 
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_indiv_comp.png")
@@ -1617,6 +1616,7 @@ clust.hist.fia.full <- clust.hist.fia.full+ylim(0,6100)
 f.clust.hist.inset.msk <- clust.hist.fia.full.msk+ scale_y_continuous(breaks=c(0,250,500,750))+theme(plot.background = element_rect(fill = "white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ annotation_custom(grob = xbp_grob2, ymin = 700, ymax = 1100, xmin = -140, xmax = 648)#+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = -141, xmax = 648)
 f.clust.hist.inset.msk <- clust.hist.fia.full.msk+ scale_y_continuous(breaks=c(0,1000,2000,3000, 4000), limits = c(0,6100))+theme(plot.background = element_rect(fill = "white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ annotation_custom(grob = xbp_grob2, ymin = 4500, ymax = 6600, xmin = -140, xmax = 648)#+ annotation_custom(grob = xbp_grob, ymin = 750, ymax = 1100, xmin = -141, xmax = 648)
 
+dev.off()
 
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_msk_fia.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
@@ -3132,8 +3132,22 @@ plot_grid(legends,
 
 dev.off()
 
+# reordered figure 2 so that P-PET, then soil moisture, then PC1 are ordered
+png(height = 10, width = 5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed_nohist_reorder.png")
 
+legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
+plot_grid(legends,
+          plot_grid( hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants.dashed + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), #flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+                    hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants.dashed + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), #flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+                    hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants.dashed+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")),
+                    three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 2, align = "h", rel_widths = c(1,1), 
+                    labels = c("A", "E", #"I", 
+                               "B", "F", #"J", 
+                               "C", "G", #"K", 
+                               "D", "H"), 
+                    label_x = c(0.18, 0.22, 0.18, 0.22, 0.18, 0.22,  0.18, 0.22), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
 
+dev.off()
 
 # >>>>>>>>>>>>>>>>>>>>>>> ALL STAT DRAWS 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
 total.pls <- read.csv("data/extracted_total_PLS_density_draws.csv")

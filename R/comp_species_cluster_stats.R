@@ -264,7 +264,7 @@ write.csv(clust_plot, "outputs/seven_clust_pls_dissimilarity_stat_smooth.csv", r
 # right now code below does not properly work because all density for taxa is displayed as the same
 #------------------------------Composition estimated as a function of total density---------------
 # open the density draws:
-pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc")
+pls.nc <- nc_open(filename = "data/PLS_density_western_v1.0rc1.nc")
 
 # data structure: x = 146, y = 180, sample = 250 MCMC samples
 # has x, y, sample for each taxa and for Total density
@@ -317,10 +317,10 @@ pls.df <- pls.df[!is.na(pls.df$Oak),]
 # now pls.df has 250 samples for each gridcell, so lets summarize the mean plsosition draw for each species:
 pls.long <- melt(pls.df, id.vars = c("x", "y", "sample")) # convert from wide format to long
 # get the mean composition value from all the draws for each spects
-pls.stat <- pls.long %>% group_by(x, y, variable) %>% summarise(mean = mean(value, na.rm=TRUE))
+pls.stat <- pls.long %>% group_by(x, y, variable) %>% dplyr::summarise(mean = mean(value, na.rm=TRUE))
 
 # make it wide again:
-plsdens.wide <- spread(pls.stat, variable, mean)
+plsdens.wide <- tidyr::spread(pls.stat, variable, mean)
 
 ggplot(plsdens.wide, aes(x, y, fill = Beech))+geom_raster()
 
@@ -416,7 +416,7 @@ write.csv(clust_plot8, "outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.c
 clusterinfo <- clust_plot8 %>% select(-x, -y, -cell)
 clusterinfo.m <- melt(clusterinfo)
 clusterinfo.m$value <- clusterinfo.m$value*100
-summary.clusters <- clusterinfo.m %>% group_by(speciescluster, variable) %>% summarise(mean = mean(value, na.rm=TRUE),
+summary.clusters <- clusterinfo.m %>% group_by(speciescluster, variable) %>% dplyr::summarise(mean = mean(value, na.rm=TRUE),
                                                                                        sd = sd(value, na.rm = TRUE),
                                                                                        sd.low = mean(value, na.rm=TRUE) - sd(value, na.rm=TRUE),
                                                                                        sd.high = mean(value, na.rm=TRUE) + sd(value, na.rm=TRUE))

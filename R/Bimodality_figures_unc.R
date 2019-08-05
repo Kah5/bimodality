@@ -265,8 +265,10 @@ dens.clust.omit <- dens.clust[ !is.na(dens.clust$foresttype_ordered),]
 dens.clust <- dens.clust[!duplicated(dens.clust),]
 
 myColors <- c( '#386cb0','#ffff99','#bf5b18','#beaed4','#33a02c','#fdc088','#f0028f','#8fc98f')
-names(myColors) <- levels(dens.clust$foresttype_ordered)
+#myColors <- c( '#386cb0','#ffff99','#bf5b18','#beaed4','#a6cee3','#6a3d9a','#f0028f','#8fc98f') # new color scheme
 
+names(myColors) <- levels(dens.clust$foresttype_ordered)
+#6a3d9a
 
 dens.clust$orderedforesttype <- factor(dens.clust$foresttype, levels = c( "Beech-Maple", "N. Mixed Forest", "Boreal/Sub-boreal","Elm/Oak/Maple", "Oak-Hickory",  "Oak", "Pine", "Aspen"))
 
@@ -292,6 +294,7 @@ png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/Dens
 ggplot()+geom_point(data = dens.clust, aes(GS_ppet, mean_dens, color = foresttype), size = 0.5)+
   theme_bw()+scale_color_manual(values = myColors, name = " ", drop = TRUE)+ylab("Tree Density (trees/ha)")+xlab("Growing Season P-PET (mm)")+guides(color = guide_legend(override.aes = list(size = 5)))
 dev.off()
+
 # ------------------make the same figures but with combined pls and fia clusters-----------------
 # ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------
 
@@ -803,13 +806,13 @@ clust_5test$orderedforesttype<- factor(clust_5test$foresttype, c("Mixed Maple",
                                                                  "Poplar Cedar Pine" ))
 
 
-myColors <- c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69')
-#names(myColors) <- levels(dens.clust$foresttype_ordered)
+fiaColors <- c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69')
+names(fiaColors) <- levels(clust_5test$orderedforesttype)
 
 clust.hist.fia.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
   geom_histogram(data = clust_5test[clust_5test$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+
+  scale_fill_manual(values = fiaColors, name = " ", drop = TRUE)+
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full
 
@@ -874,12 +877,14 @@ dev.off()
 
 
 # plot both PLS and FIA composition clusters vs envt together
-fia.pet.dens.comp <- ggplot(clust_5, aes(GS_ppet_mod,mean_dens_fia,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
-  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = "FIA composition", drop = TRUE)+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
+fia.pet.dens.comp <- ggplot(clust_5test, aes(GS_ppet_mod,mean_dens_fia,  color = orderedforesttype))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = fiaColors, name = "FIA composition", drop = TRUE)+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
+fia.pet.dens.comp
 
-pls.pet.dens.comp <- ggplot(clust_8, aes(GS_ppet,mean_dens,  color = speciescluster))+geom_point(size = 0.25)+ylim(0, 500)+
-  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18'), name = "PLS composition")+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
+pls.pet.dens.comp <- ggplot(clust_8, aes(GS_ppet,mean_dens,  color = orderedforesttype))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = myColors, name = "PLS composition")+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
 
+pls.pet.dens.comp
 
 # write both pls and fia to the same png
 dev.off()
@@ -907,8 +912,8 @@ mids.dens.df <- data.frame(new_dens_bins = unique(cut(1:700, breaks=seq(0, 700, 
 
 clust_8 <- merge(clust_8, mids.dens.df, by = "new_dens_bins")      
 
-test.clust <- clust_8 %>% group_by(mids.ppet, mids.dens, speciescluster) %>% summarise(number = n()) %>% spread(speciescluster, number)
-test.clust[is.na(test.clust)]<- 0
+test.clust <- clust_8 %>% group_by(mids.ppet, mids.dens, orderedforesttype) %>% summarise(number = n()) %>% spread(orderedforesttype, number)
+test.clust [ is.na(test.clust) ] <- 0
 test.clust$bins <- 1:length(test.clust$mids.ppet)
 
 library(ggnewscale)
@@ -921,30 +926,14 @@ dens.clust$ncells<- as.numeric(dens.clust$ncells)
 test.clust <- merge(test.clust, dens.clust, by = c("mids.ppet", "mids.dens"))
 
 pies.alpha <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, alpha = ncells, r = 11), data = test.clust, cols = colnames(test.clust)[3:10])+
-  scale_fill_manual(
- 
-  values = c("Oak/Poplar/Ash" = '#8fc98f',
-             "Oak/Maple/Elm/Ash" = '#beaed4',
-             "Oak/Hickory" = '#fdc088',
-             "Spruce/Cedar/Tamarack/Poplar" ='#33a02c' ,
-             "Oak" = '#386cb0' , 
-             "Pine/Poplar" = '#f0028f',
-             "Beech/Maple/Hemlock" = '#bf5b18', 
-             "Hemlock/Beech/Cedar/Birch/Maple" = '#ffff99')) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600), oob = squish)
+  scale_fill_manual(values = myColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600), oob = squish)
 pies.alpha
 
 
-pies <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, r = 11), data = test.clust, cols = colnames(test.clust)[3:10])+
+pies <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, r = 13), data = test.clust, cols = colnames(test.clust)[3:10])+
   scale_fill_manual(
     
-    values = c("Oak/Poplar/Ash" = '#8fc98f',
-               "Oak/Maple/Elm/Ash" = '#beaed4',
-               "Oak/Hickory" = '#fdc088',
-               "Spruce/Cedar/Tamarack/Poplar" ='#33a02c' ,
-               "Oak" = '#386cb0' , 
-               "Pine/Poplar" = '#f0028f',
-               "Beech/Maple/Hemlock" = '#bf5b18', 
-               "Hemlock/Beech/Cedar/Birch/Maple" = '#ffff99')) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")
+    values = myColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")
 pies
 
 #c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18')
@@ -954,17 +943,21 @@ pies
 #+ scale_alpha_continuous(range = c(0.9, 0.1), limits = c(1000, 0), breaks = c(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000))#scale_alpha_discrete(range=c(0.5, 1), limits=0:7, breaks=0:7)
 
 # tile as background
-geom_tiling.black <- ggplot() + geom_tile(data = dens.clust, aes(x = mids.ppet, y = mids.dens, alpha = ncells, r = 11), fill = "black")+scale_alpha_continuous( limits = c(0, 600), oob = squish)+ new_scale("fill")+ geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins), data = test.clust, cols = colnames(test.clust)[3:10])+
-  scale_fill_manual(
-    
-    values = c("Oak/Poplar/Ash" = '#8fc98f',
-               "Oak/Maple/Elm/Ash" = '#beaed4',
-               "Oak/Hickory" = '#fdc088',
-               "Spruce/Cedar/Tamarack/Poplar" ='#33a02c' ,
-               "Oak" = '#386cb0' , 
-               "Pine/Poplar" = '#f0028f',
-               "Beech/Maple/Hemlock" = '#bf5b18', 
-               "Hemlock/Beech/Cedar/Birch/Maple" = '#ffff99')) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")+theme_bw(base_size = 12)+theme(panel.grid = element_blank())
+dens.clust$number <- ifelse(dens.clust$ncells <= 50, "<50", 
+                            ifelse(dens.clust$ncells > 50 & dens.clust$ncells <= 100, "50-100",
+                                   ifelse(dens.clust$ncells > 100 & dens.clust$ncells <= 200, "100-200", 
+                                          ifelse( dens.clust$ncells > 200 & dens.clust$ncells <= 300, "200-300", 
+                                                  ifelse( dens.clust$ncells <= 300 & dens.clust$ncells <= 400, "300-400", ">=400")))))
+
+dens.clust$number<- as.factor(dens.clust$number)
+dens.clust$number<- factor(dens.clust$number, levels = c("<50", "50-100" , "100-200","200-300", "300-400", ">=400"))
+geom_tiling.black <- ggplot() + geom_tile(data = dens.clust, aes(x = mids.ppet, y = mids.dens, fill = number))+scale_fill_manual(values = c("#d9d9d9",
+                                                                                                                                   "#bdbdbd",
+                                                                                                                                   "#969696",
+                                                                                                                                   "#636363",
+                                                                                                                                   "#252525"))+new_scale_fill()+#scale_fill_manual(low = "grey90", high = "black", limits = c(0, 600), breaks = c(0, 100, 200, 400),oob = squish)++#scale_alpha_continuous( limits = c(0, 600), oob = squish)+ new_scale("fill")+ 
+  geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, r = 13), data = test.clust, cols = colnames(test.clust)[3:10])+
+  scale_fill_manual( values = myColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")#+theme_bw(base_size = 12)+theme(panel.grid = element_blank())
 
 geom_tiling.black
 
@@ -974,28 +967,28 @@ geom_tiling.black
 library(scatterpie)
 table(cut_width(clust_5$GS_ppet, 10))
 
-clust_5$new_PPET_bins <- cut(clust_5$GS_ppet_mod, breaks=seq(-175, 300, by = 25))
+clust_5test$new_PPET_bins <- cut(clust_5test$GS_ppet_mod, breaks=seq(-175, 300, by = 25))
 mids.df <- data.frame(new_PPET_bins = unique(cut(-174:300, breaks=seq(-175, 300, by = 25))),
                       mids.ppet = seq(-162.5, 300, by = 25)) 
 
-clust_5 <- merge(clust_5, mids.df, by = "new_PPET_bins")
+clust_5test <- merge(clust_5test, mids.df, by = "new_PPET_bins")
 
 # generate new density bins:
-clust_5$new_dens_bins <- cut(clust_5$mean_dens_fia, breaks=seq(0, 700, by = 50))
+clust_5test$new_dens_bins <- cut(clust_5test$mean_dens_fia, breaks=seq(0, 700, by = 50))
 mids.dens.df <- data.frame(new_dens_bins = unique(cut(1:700, breaks=seq(0, 700, by = 50))),
                            mids.dens = seq(25, 700, by = 50)) 
 
 
-clust_5 <- merge(clust_5, mids.dens.df, by = "new_dens_bins")      
+clust_5test <- merge(clust_5test, mids.dens.df, by = "new_dens_bins")      
 
-test.clust.fia <- clust_5 %>% group_by(mids.ppet, mids.dens, speciescluster) %>% summarise(number = n()) %>% spread(speciescluster, number)
+test.clust.fia <- clust_5test %>% group_by(mids.ppet, mids.dens, orderedforesttype) %>% summarise(number = n()) %>% spread( orderedforesttype, number)
 test.clust.fia[is.na(test.clust.fia)]<- 0
 test.clust.fia$bins <- 1:length(test.clust.fia$mids.ppet)
 
 library(ggnewscale)
 
 
-dens.clust.fia <- clust_5 %>% group_by(mids.ppet, mids.dens) %>% summarise(ncells = n())
+dens.clust.fia <- clust_5test %>% group_by(mids.ppet, mids.dens) %>% summarise(ncells = n())
 #dens.clust$number<- as.factor(dens.clust$number)
 dens.clust.fia$ncells<- as.numeric(dens.clust.fia$ncells)
 
@@ -1003,20 +996,12 @@ test.clust.fia <- merge(test.clust.fia, dens.clust.fia, by = c("mids.ppet", "mid
 
 
 pies.alpha.fia <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, alpha = ncells, r = 11), data = test.clust.fia, cols = colnames(test.clust.fia)[3:7])+#+
-  scale_fill_manual(values = c("Maple/Oak/Ash/Poplar" = '#a6cee3',
-               "Oak/Maple/Pine/Poplar" = "#e31a1c" ,
-               "Poplar/Cedar/Pine" = '#b3de69',
-               "Oak/Maple/Other hardwoods" =  "#beaed4",
-               "Maple/Cedar/Pine" = '#003c30' )) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600), oob = squish)+ylim(0, 700)
+  scale_fill_manual(values = fiaColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600), oob = squish)+ylim(0, 700)
 pies.alpha.fia
 
 #'#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'
 pies.fia <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins , r = 11), data = test.clust.fia, cols = colnames(test.clust.fia)[3:7])+
-  scale_fill_manual(values = c("Maple/Oak/Ash/Poplar" = '#a6cee3',
-                               "Oak/Maple/Pine/Poplar" = "#e31a1c" ,
-                               "Poplar/Cedar/Pine" = '#b3de69',
-                               "Oak/Maple/Other hardwoods" =  "#beaed4",
-                               "Maple/Cedar/Pine" = '#003c30' ))+ ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")+ylim(0, 700)
+  scale_fill_manual(values = fiaColors)+ ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")+ylim(0, 700)
 pies.fia
 
 #c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18')
@@ -1024,14 +1009,26 @@ pies.fia  + geom_tile(data = dens.clust.fia, aes(x = mids.ppet, y = mids.dens, a
 
 
 #+ scale_alpha_continuous(range = c(0.9, 0.1), limits = c(1000, 0), breaks = c(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000))#scale_alpha_discrete(range=c(0.5, 1), limits=0:7, breaks=0:7)
+dens.clust.fia$number <- ifelse(dens.clust.fia$ncells <= 50, "<50", 
+                            ifelse(dens.clust.fia$ncells > 50 & dens.clust.fia$ncells <= 100, "50-100",
+                                   ifelse(dens.clust.fia$ncells > 100 & dens.clust.fia$ncells <= 200, "100-200", 
+                                          ifelse( dens.clust.fia$ncells > 200 & dens.clust.fia$ncells <= 300, "200-300", 
+                                                  ifelse( dens.clust.fia$ncells <= 300 & dens.clust.fia$ncells <= 400, "300-400", ">=400")))))
+
+dens.clust.fia$number<- as.factor(dens.clust.fia$number)
+dens.clust.fia$number<- factor(dens.clust.fia$number, levels = c("<50", "50-100" , "100-200","200-300", "300-400", ">=400"))
+
 
 # tile as background
-geom_tiling.black.fia <- ggplot() + geom_tile(data = dens.clust.fia, aes(x = mids.ppet, y = mids.dens, alpha = ncells), fill = "black")+scale_alpha_continuous( limits = c(0, 600), oob = squish)+ new_scale("fill")+ geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins), data = test.clust.fia, cols = colnames(test.clust.fia)[3:7])+
-  scale_fill_manual(values = c("Maple/Oak/Ash/Poplar" = '#a6cee3',
-                               "Oak/Maple/Pine/Poplar" = "#e31a1c" ,
-                               "Poplar/Cedar/Pine" = '#b3de69',
-                               "Oak/Maple/Other hardwoods" =  "#beaed4",
-                               "Maple/Cedar/Pine" = '#003c30' ))+ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")+theme_bw(base_size = 12)+theme(panel.grid = element_blank())+ylim(0,700)
+geom_tiling.black.fia <- ggplot() + geom_tile(data = dens.clust.fia, aes(x = mids.ppet, y = mids.dens, fill = number))+scale_fill_manual(values = c("#d9d9d9",
+                                                                                                                                                     "#bdbdbd",
+                                                                                                                                                     "#969696",
+                                                                                                                                                     "#636363",
+                                                                                                                                                     "#252525"))+
+  #scale_alpha_continuous( limits = c(0, 600), oob = squish)+ 
+  new_scale("fill")+ 
+  geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, r = 13), data = test.clust.fia, cols = colnames(test.clust.fia)[3:7])+
+  scale_fill_manual(values = fiaColors)+ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET")+ylim(0,700)#+theme_bw(base_size = 12)+theme(panel.grid = element_blank())
 
 geom_tiling.black.fia
 
@@ -1041,14 +1038,15 @@ png(height = 10, width = 12, units = "in", res = 250,"outputs/paper_figs_unc/FIA
 plot_grid(pies + xlim(-200, 300), pies.fia+ xlim(-200, 300), ncol = 1, align = "hv", labels = "AUTO")
 dev.off()
 
-
-png(height = 10, width = 12, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_comp_scaatter_pie_shading.png")
+png(height = 8, width = 8, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_comp_scaatter_pie_shading.png")
 plot_grid(pies.alpha + xlim(-200, 300), pies.alpha.fia+ xlim(-200, 300), ncol = 1, align = "hv", labels = "AUTO")
 dev.off()
 
-png(height = 10, width = 12, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_comp_scaatter_pie_tiling.png")
-plot_grid(geom_tiling.black + xlim(-200, 300), geom_tiling.black.fia+ xlim(-200, 300), ncol = 1, align = "hv", labels = "AUTO")
+png(height = 8, width = 7.5, units = "in", res = 450,"outputs/paper_figs_unc/FIA_Density_vs_ppet_comp_scaatter_pie_tiling.png")
+plot_grid(geom_tiling.black + xlim(-180, 300), geom_tiling.black.fia+ xlim(-180, 300), ncol = 1, align = "hv", labels = "AUTO")
 dev.off()
+
+
 # ----------------------- 10 species comp total FIA density histgram colored by species composition-----------------
 clust_plot10 <- read.csv("outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv")
 clust_plot_fia <- clust_plot10[clust_plot10$period %in% "FIA",]

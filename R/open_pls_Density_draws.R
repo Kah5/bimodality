@@ -8,7 +8,8 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 
-pls.nc <- nc_open(filename = "data/PLS_density_western_v0.999.nc") # data found here https://paleon.geography.wisc.edu/doku.php/data_and_products;settlement_vegetation_density
+# new version! 6.3.19
+pls.nc <- nc_open(filename = "data/PLS_density_western_v1.0rc1.nc") # data found here https://paleon.geography.wisc.edu/doku.php/data_and_products;settlement_vegetation_density
 
 # data structure: x = 146, y = 180, sample = 250 MCMC samples
 # has x, y, sample for each taxa and for Total density
@@ -39,7 +40,7 @@ total.m$y <- as.numeric(total.m$y)
 write.csv(total.m, "data/extracted_total_PLS_density_draws.csv", row.names = FALSE)
 
 # get a summary of density draws by grid cell: mean, & 95% CI
-dens.summary <- total.m %>% group_by(x, y) %>% summarize(mean_dens = mean(value, na.rm=TRUE),
+dens.summary <- total.m %>% group_by(x, y) %>% dplyr::summarize(mean_dens = mean(value, na.rm=TRUE),
                                                          median_dens = median(value, na.rm=TRUE),
                                         ci.low_dens = quantile(value, 0.025, na.rm=TRUE), 
                                         ci.high_dens = quantile(value, 0.975, na.rm=TRUE))
@@ -94,7 +95,7 @@ pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
 
 
 # save map to png
-png(height = 4, width = 3, units = "in", res = 300,"/outputs/paper_figs_unc/PLS_smooth_dens_summary_map_full_alt_colors.png")
+png(height = 4, width = 3, units = "in", res = 300,"/outputs/paper_figs_unc/PLS_smooth_dens_summary_map_full_alt_colors_v1.0.png")
 pls.map.alt.color
 dev.off()
 
@@ -118,7 +119,7 @@ pred.old.plot <- ggplot(dens, aes(PLSdensity, mean_dens))+geom_point(color = "bl
   geom_point(data = dens, aes(PLSdensity, mean_dens), color = "black", size = 0.5)+
   geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+theme_bw()+ylab("Smoothed Density")+xlab("Previous grid cell density")
 
-png(height = 5, width = 5, units = "in", res = 200, "outputs/chris_estimates_vs_previous_estimates.png")
+png(height = 5, width = 5, units = "in", res = 200, "outputs/chris_estimates_v1.0_vs_previous_estimates.png")
 pred.old.plot
 dev.off()
 
@@ -174,7 +175,7 @@ pls.data.stat.diff <- ggplot(dens, aes(x, y, fill = diff_discrete)) + geom_raste
                                                                                                                   axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
   
 
-png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/pls_data_minus_mean_stat.png")
+png(height= 6, width = 5, units = "in", res = 200, "outputs/paper_figs_unc/pls_data_minus_mean_stat_v1.0.png")
 pls.data.stat.diff
 dev.off()
 # ------------------Read in FIA density draws-------------------

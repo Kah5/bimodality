@@ -39,7 +39,7 @@ dens <- merge(dens.pr, dens.summary, by = c("x", "y"), all.y = TRUE)
 
 dens <- dens[!is.na(dens$mean_dens), ]
 
-ggplot(dens[dens$mean_dens <= 0.5,], aes(x,y, fill =  mean_dens))+geom_raster()+scale_fill_distiller(palette = "Spectral")
+ggplot(dens, aes(x,y, fill =  mean_dens))+geom_raster()+scale_fill_distiller(palette = "Spectral")
 write.csv(dens, "outputs/density_full_unc_v1.0.csv", row.names = FALSE)
 # -------------------figure 1 A: Map of pls bimodality
 
@@ -816,7 +816,11 @@ clust.hist.fia.full <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full
 
-
+clust.hist.fia.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
+  geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
+  geom_histogram(data = clust_5test[clust_5test$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
+  scale_fill_manual(values = fiaColors, name = " ", drop = TRUE)+
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 # # ----------------------- FIA histogram of smoothed, unmasked density by species classes----------------------------
 clust_plot5 <- read.csv("outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv")
 
@@ -919,14 +923,14 @@ test.clust$bins <- 1:length(test.clust$mids.ppet)
 library(ggnewscale)
 
 
-dens.clust <- clust_8 %>% group_by(mids.ppet, mids.dens) %>% summarise(ncells = n())
+dens.clust.pls <- clust_8 %>% group_by(mids.ppet, mids.dens) %>% summarise(ncells = n())
 #dens.clust$number<- as.factor(dens.clust$number)
-dens.clust$ncells<- as.numeric(dens.clust$ncells)
+dens.clust.pls $ncells<- as.numeric(dens.clust.pls $ncells)
 
-test.clust <- merge(test.clust, dens.clust, by = c("mids.ppet", "mids.dens"))
+test.clust <- merge(test.clust, dens.clust.pls , by = c("mids.ppet", "mids.dens"))
 
 pies.alpha <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bins, alpha = ncells, r = 11), data = test.clust, cols = colnames(test.clust)[3:10])+
-  scale_fill_manual(values = myColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600), oob = squish)
+  scale_fill_manual(values = myColors) + ylab("Tree Density (stems/ha)") + xlab("Growing Season P-PET") + scale_alpha_continuous(limits = c(0, 500), breaks =c(0, 200, 400, 600))
 pies.alpha
 
 
@@ -937,21 +941,21 @@ pies <- ggplot() + geom_scatterpie( aes(x = mids.ppet, y = mids.dens, group= bin
 pies
 
 #c('#386cb0', '#f0028f','#fdc088','#ffff99','#8fc98f','#beaed4','#33a02c', '#bf5b18')
-pies  + geom_tile(data = dens.clust, aes(x = mids.ppet, y = mids.dens, alpha = rev(ncells), r = 11), fill = "grey90")+scale_alpha(range = c(0.9, 0.1), limits = c(0, 1200), breaks = c(0,  300,  600))
+pies  + geom_tile(data = dens.clust.pls, aes(x = mids.ppet, y = mids.dens, alpha = rev(ncells), r = 11), fill = "grey90")+scale_alpha(range = c(0.9, 0.1), limits = c(0, 1200), breaks = c(0,  300,  600))
 
 pies 
 #+ scale_alpha_continuous(range = c(0.9, 0.1), limits = c(1000, 0), breaks = c(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000))#scale_alpha_discrete(range=c(0.5, 1), limits=0:7, breaks=0:7)
 
 # tile as background
-dens.clust$number <- ifelse(dens.clust$ncells <= 50, "<50", 
-                            ifelse(dens.clust$ncells > 50 & dens.clust$ncells <= 100, "50-100",
-                                   ifelse(dens.clust$ncells > 100 & dens.clust$ncells <= 200, "100-200", 
-                                          ifelse( dens.clust$ncells > 200 & dens.clust$ncells <= 300, "200-300", 
-                                                  ifelse( dens.clust$ncells <= 300 & dens.clust$ncells <= 400, "300-400", ">=400")))))
+dens.clust.pls$number <- ifelse(dens.clust.pls$ncells <= 50, "<50", 
+                            ifelse(dens.clust.pls$ncells > 50 & dens.clust.pls$ncells <= 100, "50-100",
+                                   ifelse(dens.clust.pls$ncells > 100 & dens.clust.pls$ncells <= 200, "100-200", 
+                                          ifelse( dens.clust.pls$ncells > 200 & dens.clust.pls$ncells <= 300, "200-300", 
+                                                  ifelse( dens.clust.pls$ncells <= 300 & dens.clust.pls$ncells <= 400, "300-400", ">=400")))))
 
-dens.clust$number<- as.factor(dens.clust$number)
-dens.clust$number<- factor(dens.clust$number, levels = c("<50", "50-100" , "100-200","200-300", "300-400", ">=400"))
-geom_tiling.black <- ggplot() + geom_tile(data = dens.clust, aes(x = mids.ppet, y = mids.dens, fill = number))+scale_fill_manual(values = c("#d9d9d9",
+dens.clust.pls$number<- as.factor(dens.clust.pls$number)
+dens.clust.pls$number<- factor(dens.clust.pls$number, levels = c("<50", "50-100" , "100-200","200-300", "300-400", ">=400"))
+geom_tiling.black <- ggplot() + geom_tile(data = dens.clust.pls, aes(x = mids.ppet, y = mids.dens, fill = number))+scale_fill_manual(values = c("#d9d9d9",
                                                                                                                                    "#bdbdbd",
                                                                                                                                    "#969696",
                                                                                                                                    "#636363",
@@ -1327,14 +1331,16 @@ ncell.change$xval.dec <- "3"
 
 
 
-# test example with all arrows over top, but lets do it 
+# ---------------------- Novel feedbacks across climate/environmental space figures:----------------------------------------------
+
+# P-PET Many arrows
 ncell.change.ppet <- dens.msk %>% group_by(dens.clust.bins, ppet_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
                                                                             n_dec = sum(fiaminuspls < -5),
                                                                             n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
 
 ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
 #ggplot(ncell.change.ppet, aes(ppet_bins, dens.clust.bins, color=n_dec))+geom_point()
-ncell.change.ppet[ncell.change.ppet == 0] <- NA 
+ncell.change.ppet[ncell.change.ppet == 0] <- NA
 ggplot(ncell.change.ppet, aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = n_inc/2),
                                                             arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
   geom_point(data = ncell.change.ppet, aes(ppet_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
@@ -1349,15 +1355,54 @@ ncell.pct.change.ppet$pct_inc <- (ncell.pct.change.ppet$n_inc/ncell.pct.change.p
 ncell.pct.change.ppet$pct_dec <- (ncell.pct.change.ppet$n_dec/ncell.pct.change.ppet$total_cells)*100
 ncell.pct.change.ppet$pct_nochange <- (ncell.pct.change.ppet$n_nochange/ncell.pct.change.ppet$total_cells)*100
 
+ncell.pct.change.ppet <- ncell.pct.change.ppet[!is.na(ncell.pct.change.ppet$dens.clust.bins),]
+
 # ideally we want to have it be the most common class, but this will do for now
-pct.inc.ppet <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = pct_inc),
+pct.inc.ppet <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = pct_inc/100),
                                                                   arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(ppet_bins, start.bin+20, size = pct_nochange), color = "#636363")+
-  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(ppet_bins, start.bin+20, size = pct_nochange/100), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = pct_dec/100), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/Ha)") + xlab("Growing season P-PET") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.ppet
 
 
+# make the ppet bins smaller:
+dens.msk.10 <- dens.msk
+dens.msk.10$ppet_bins10 <- cut(dens.msk.10[order(dens.msk.10$GS_ppet_mod),]$GS_ppet_mod, breaks=seq(-170, 205, by = 50))
+ordered.cuts <- data.frame(ppet_bins10 = unique(cut(dens.msk.10[order(dens.msk.10$GS_ppet_mod),]$GS_ppet_mod, breaks=seq(-170, 205, by = 50))),
+                           mids = seq(-120, 205, by = 50))
 
-#------------ do the ncell pct change for PC1:
+dens.msk.10 <- merge(dens.msk.10, ordered.cuts, by = "ppet_bins10")
+
+ncell.change.ppet <- dens.msk.10 %>% group_by(dens.clust.bins, ppet_bins10, mids) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                                            n_dec = sum(fiaminuspls < -5),
+                                                                                            n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+
+ncell.pct.change.ppet <- ncell.change.ppet
+
+
+ncell.pct.change.ppet$total_cells <- rowSums(ncell.pct.change.ppet[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.ppet$pct_inc <- (ncell.pct.change.ppet$n_inc/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_dec <- (ncell.pct.change.ppet$n_dec/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_nochange <- (ncell.pct.change.ppet$n_nochange/ncell.pct.change.ppet$total_cells)*100
+
+ncell.pct.change.ppet <- ncell.pct.change.ppet[!is.na(ncell.pct.change.ppet$dens.clust.bins),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.ppet.10 <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                           arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Growing season P-PET") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.ppet.10
+
+# PC1:
 # test example with all arrows over top, but lets do it 
 ncell.change.pc1 <- dens.msk %>% group_by(dens.clust.bins, pc1_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
                                                                                             n_dec = sum(fiaminuspls < -5),
@@ -1384,8 +1429,47 @@ ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.
 pct.inc.pc1 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = pct_inc),
                                                                                                                            arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
   geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(pc1_bins, start.bin+20, size = pct_nochange), color = "#636363")+
-  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
+  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/Ha)")+xlab("Principal Componenet 1")+ theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
+
+
+# make the pc1 bins smaller:
+dens.msk.10 <- dens.msk
+
+dens.msk.10$pc1_bins10 <- cut(dens.msk.10[order(dens.msk.10$PC1fia),]$PC1fia, breaks=seq(-6, 5, by = 1.5))
+ordered.cuts <- data.frame(pc1_bins10 = unique(cut(dens.msk.10[order(dens.msk.10$PC1fia),]$PC1fia, breaks=seq(-6, 5, by = 1.5))),
+                           mids = seq(-5.5, 5, by = 1.5))
+
+
+dens.pc1.msk.10 <- merge(dens.msk.10, ordered.cuts, by = "pc1_bins10")
+
+ncell.change.pc1 <- dens.pc1.msk.10 %>% group_by(dens.clust.bins, pc1_bins10, mids) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                                                       n_dec = sum(fiaminuspls < -5),
+                                                                                                       n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.pc1 <- merge(ncell.change.pc1, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+
+ncell.pct.change.pc1 <- ncell.change.pc1
+
+
+ncell.pct.change.pc1$total_cells <- rowSums(ncell.pct.change.pc1[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.pc1$pct_inc <- (ncell.pct.change.pc1$n_inc/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_dec <- (ncell.pct.change.pc1$n_dec/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.change.pc1$total_cells)*100
+
+ncell.pct.change.pc1 <- ncell.pct.change.pc1[!is.na(ncell.pct.change.pc1$dens.clust.bins),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.pc1.10 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                         arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Principal Component 1") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.pc1.10
 
 
 #------------ do the ncell pct change for soil:
@@ -1415,8 +1499,45 @@ ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pc
 pct.inc.soil <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(soil_bins, start.bin))+geom_segment(aes(xend = soil_bins, yend = end.bin-20, size = pct_inc),
                                                                                                                        arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
   geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(soil_bins, start.bin+20, size = pct_nochange), color = "#636363")+
-  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+ylab("Tree density (stems/Ha)")
+  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/Ha)")+xlab("Growing Season Soil Moisture")+ theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
+
+# make the soil moisture bins smaller:
+dens.msk.10 <- dens.msk
+dens.msk.10$soil_bins10 <- cut(dens.msk.10[order(dens.msk.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))
+ordered.cuts <- data.frame(soil_bins10 = unique(cut(dens.msk.10[order(dens.msk.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))),
+                           mids = seq(0.25, 2, by = 0.25))
+
+
+dens.soil.msk.10 <- merge(dens.msk.10, ordered.cuts, by = "soil_bins10")
+
+ncell.change.soil <- dens.soil.msk.10 %>% group_by(dens.clust.bins, soil_bins10, mids) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
+                                                                                                         n_dec = sum(fiaminuspls < -5),
+                                                                                                         n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+
+ncell.change.soil <- merge(ncell.change.soil, ncell.change[, c("dens.clust.bins", "start.bin", "end.bin")], by = "dens.clust.bins")
+
+ncell.pct.change.soil <- ncell.change.soil
+
+
+ncell.pct.change.soil$total_cells <- rowSums(ncell.pct.change.soil[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.soil$pct_inc <- (ncell.pct.change.soil$n_inc/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_dec <- (ncell.pct.change.soil$n_dec/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pct.change.soil$total_cells)*100
+
+ncell.pct.change.soil <- ncell.pct.change.soil[!is.na(ncell.pct.change.soil$dens.clust.bins),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.soil.10 <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                      arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Growing Season Soil Moisture") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.soil.10
 
 
 # make a general plot with arrows for increasing and decreasing:
@@ -1429,9 +1550,15 @@ ncell.change.plot <- ggplot(ncell.change, aes(xval.inc, start.bin))+geom_segment
   
 # cant get ncell.change.plot to align with clust.hist.full
 dev.off()
-png(height = 6, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/test_align_arrows.png")
-plot_grid(clust.hist.full.no.aspect, ncell.change.plot, align = "hv", rel_widths = c(1,0.5))
+png(height = 15, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/Modern_arrons_across_envts.png")
+plot_grid(pct.inc.ppet, pct.inc.soil, pct.inc.pc1, align = "hv", ncol = 1)
 dev.off()
+
+dev.off()
+png(height = 15, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/Modern_arrons_across_envts_cleaner.png")
+plot_grid(pct.inc.ppet.10, pct.inc.soil.10, pct.inc.pc1.10, align = "hv", ncol = 1)
+dev.off()
+
 
 #--------------------Make arrow figure but with % of grid cells not the total # of grid cells:------
 # find the # of grid cells that decreased between pls and fia:
@@ -1495,6 +1622,18 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           
           f.clust.hist.inset.full+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1) 
+dev.off()
+
+png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_indiv_comp.png")
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
+          pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
+          clust.hist.full.no.aspect  +ylab("Past Tree Density")+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          
+          clust.hist.fia.full.no.aspect+ylab("Modern Tree Density") + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text.x = element_text(size = 5), axis.title.x =  element_text(size = 5)) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          ncol = 2, align = "h", axis="tb", scale = 1 ) 
 dev.off()
 
 png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_arrow_inset_both_comp.png")
@@ -3227,49 +3366,51 @@ grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)),
              arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
 dev.off()
 
-
-png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_lines_hys.png")
-fig3 <- grid.arrange(g, grow2, grow3,grow4, ncol = 1)
-fig3
-dev.off()
-
-# -----make this same figure but with hysteresis plots instead of the yellow and red density plots
-
-png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median.png")
-
-legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
-plot_grid(legends,
-plot_grid(hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), 
-          labels = c("A", "E", "I", 
-                     "B", "F", "J", 
-                     "C", "G", "K", 
-                     "D", "H"), 
-          label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
-,nrow = 2, rel_heights = c(0.05, 1))
-
-dev.off()
+# code commented out b/c no longer using
 
 
-# make the same figure with grey dashed lines on fia plots:
-png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed.png")
-
-legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
-plot_grid(legends,
-          plot_grid(hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants.dashed+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-                    hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants.dashed + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-                    hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants.dashed + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-                    three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), 
-                    labels = c("A", "E", "I", 
-                               "B", "F", "J", 
-                               "C", "G", "K", 
-                               "D", "H"), 
-                    label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
-          ,nrow = 2, rel_heights = c(0.05, 1))
-
-dev.off()
+# png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_lines_hys.png")
+# fig3 <- grid.arrange(g, grow2, grow3,grow4, ncol = 1)
+# fig3
+# dev.off()
+# 
+# # -----make this same figure but with hysteresis plots instead of the yellow and red density plots
+# 
+# png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median.png")
+# 
+# legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
+# plot_grid(legends,
+# plot_grid(hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), 
+#           labels = c("A", "E", "I", 
+#                      "B", "F", "J", 
+#                      "C", "G", "K", 
+#                      "D", "H"), 
+#           label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+# ,nrow = 2, rel_heights = c(0.05, 1))
+# 
+# dev.off()
+# 
+# 
+# # make the same figure with grey dashed lines on fia plots:
+# png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed.png")
+# 
+# legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
+# plot_grid(legends,
+#           plot_grid(hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants.dashed+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#                     hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants.dashed + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#                     hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants.dashed + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+ xlim(-27, 600)+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#                     three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), 
+#                     labels = c("A", "E", "I", 
+#                                "B", "F", "J", 
+#                                "C", "G", "K", 
+#                                "D", "H"), 
+#                     label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+#           ,nrow = 2, rel_heights = c(0.05, 1))
+# 
+# dev.off()
 
 # same figure but without the marginal histograms:
 png(height = 10, width = 5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed_nohist.png")
@@ -3302,7 +3443,26 @@ plot_grid(legends,
                                "B", "F", #"J", 
                                "C", "G", #"K", 
                                "D", "H"), 
-                    label_x = c(0.18, 0.22, 0.18, 0.22, 0.18, 0.22,  0.18, 0.22), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
+                    label_x = c(0.22, 0.22, 0.18, 0.22, 0.22, 0.22,  0.22, 0.22, 0.22,0.22,0.22, 0.22), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
+
+dev.off()
+
+
+# adding the arrow change acros environment plots in a 3rd column:
+
+png(height = 10, width = 7, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed_nohist_reorder_arrows.png")
+
+legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
+plot_grid(legends,
+          plot_grid( hysteresis.ppet.pls.quants.bimodal+xlim(-150, 220) + ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants.dashed + ylim(-27, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,3,1,1), "mm")), pct.inc.ppet.10+ ylim(-27, 600)+xlim(-150, 220) +theme(panel.grid = element_blank(),axis.text.x = element_text(angle = 0), panel.background=element_rect(fill = "transparent",colour = NA)),
+                     hysteresis.soil.pls.quants.bimodal + ylim(-27, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants.dashed + ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,3,1,1), "mm")), pct.inc.soil.10+ ylim(-27, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),axis.text.x = element_text(angle = 0),  panel.background=element_rect(fill = "transparent",colour = NA)),
+                     hysteresis.pc1.pls.quants.bimodal + ylim(-27, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants.dashed+ ylim(-27, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), pct.inc.pc1.10+ ylim(-27, 600)+theme(panel.grid = element_blank(),axis.text.x = element_text(angle = 0), panel.background=element_rect(fill = "transparent",colour = NA)),
+                     three.color.bimodal.plots.nolabs +labs(fill='') +  theme(panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs +labs(fill='')+ theme( plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,1), 
+                     labels = c("A", "E", "I", 
+                                "B", "F", "J", 
+                                "C", "G", "K", 
+                                "D", "H"), 
+                     label_x = c(0.22, 0.22, 0.22, 0.18, 0.22, 0.22, 0.22, 0.22, 0.22,0.22,0.22), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
 
 dev.off()
 

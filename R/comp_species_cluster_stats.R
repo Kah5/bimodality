@@ -342,8 +342,59 @@ plsdens.wide$calc.total <- rowSums(plsdens.wide[,3:(ncol(plsdens.wide)-1)])
 plsdens.wide [,3:(ncol(plsdens.wide)-2)] <- plsdens.wide [,3:(ncol(plsdens.wide)-2)]/plsdens.wide[,ncol(plsdens.wide)] # calculate the proportion of the total density that each species takes up
 plscomp  <- plsdens.wide [,1:(ncol(plsdens.wide)-2)]
 ggplot(plscomp, aes(x,y, fill = Spruce))+geom_raster()
+#------------hclust testing---------------
+# code from this helpful tutorial: http://www.ams.med.uni-goettingen.de/download/Steffen-Unkel/cluster1.html
+d_pls <- dist(plscomp[,3:ncol(plscomp)], method="euclidean")
+( hc_pls <- hclust(d_pls, method = "complete") )
 
 
+library(dendextend)
+dend <- as.dendrogram(hc_pls)
+plot(dend, 
+     main = "Clustered PLS data set", 
+     horiz =  TRUE,  nodePar = list(cex = .007))
+
+
+
+dend <- rotate(dend, 1:150)
+dend <- color_branches(dend, k=3) 
+labels_colors(dend) <-
+  rainbow_hcl(3)[sort_levels_values(
+    as.numeric(iris[,5])[order.dendrogram(dend)]
+  )]
+
+plsdens.wide$structure <- ifelse(plsdens.wide$calc.total <=47, "brown", 
+                                 ifelse(plsdens.wide$calc.total >=47 & plsdens.wide$calc.total <=100,"purple", "forestgreen"))
+labels(dend) <- paste(plsdens.wide$structure)
+
+# dend <- hang.dendrogram(dend,hang_height=0.1)
+# dend <- set(dend, "labels_cex", 0.5)
+# par(mar = c(3,3,3,7))
+# plot(dend, 
+#      main = "Clustered Iris data set
+#      (the labels give the true flower species)", 
+#      horiz =  TRUE,  nodePar = list(cex = .007))
+# legend("topleft", legend = iris_species, fill = rainbow_hcl(3))
+
+some_col_func <- function(n) rev(colorspace::heat_hcl(n, c = c(80, 30), l = c(30, 90), power = c(1/5, 1.5)))
+
+library(gplots)
+
+png(height = 10, width = 15, units = "in", res = 200, "outputs/paper_figs_unc/hclust_dendrogram_pls_comp.png")
+heatmap.2(as.matrix(plscomp[,3:ncol(plscomp)]), 
+          main = "Heatmap for PLS composition",
+          srtCol = 20,
+          dendrogram = "row",
+          Rowv = dend,
+          Colv = "NA", 
+          trace="none",          
+          margins =c(5,0.1),      
+          key.xlab = "% composition",
+          denscol = "grey",
+          density.info = "density",
+          RowSideColors = labels(dend), 
+          col = some_col_func)
+dev.off()
 #----------------------k-mediods cluster analysis---------------------------------
 
 # now run pam with 7 classes again:
@@ -413,7 +464,7 @@ dev.off()
 write.csv(clust_plot8, "outputs/eight_clust_pls_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
 
 # summarize average % of each taxa in each cluster:
-clusterinfo <- clust_plot8 %>% select(-x, -y, -cell)
+clusterinfo <- clust_plot8 %>% dplyr::select(-x, -y, -cell)
 clusterinfo.m <- melt(clusterinfo)
 clusterinfo.m$value <- clusterinfo.m$value*100
 summary.clusters <- clusterinfo.m %>% group_by(speciescluster, variable) %>% dplyr::summarise(mean = mean(value, na.rm=TRUE),
@@ -527,10 +578,146 @@ fiadens.wide [,3:(ncol(fiadens.wide)-2)] <- fiadens.wide [,3:(ncol(fiadens.wide)
 fiacomp  <- fiadens.wide [,1:(ncol(fiadens.wide)-2)]
 ggplot(fiacomp, aes(x,y, fill = Other.hardwood))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
 
-# get only the grid cells also in PLS range:
 
 fiacomp <- merge(fiacomp, plscomp[,c("x", "y")], by = c("x", "y"))
 ggplot(fiacomp, aes(x,y, fill = Beech))+geom_raster()+scale_fill_distiller(palette = "Spectral", limits = c(0,1))
+
+#------------hclust testing---------------
+# code from this helpful tutorial: http://www.ams.med.uni-goettingen.de/download/Steffen-Unkel/cluster1.html
+d_fia <- dist(fiacomp[,3:ncol(fiacomp)], method="euclidean")
+( hc_fia <- hclust(d_fia, method = "complete") )
+
+
+
+library(dendextend)
+dend <- as.dendrogram(hc_fia)
+color_branches(dend, k=2) 
+plot(dend, 
+     main = "Clustered fia data set", 
+     horiz =  TRUE,  nodePar = list(cex = .007))
+
+
+
+# dend <- rotate(dend, 1:150)
+# dend <- color_branches(dend, k=3) 
+# labels_colors(dend) <-
+#   rainbow_hcl(3)[sort_levels_values(
+#     as.numeric(iris[,5])[order.dendrogram(dend)]
+#   )]
+
+fiadens.wide$structure <- ifelse(fiadens.wide$calc.total <=47, "brown", 
+                                 ifelse(fiadens.wide$calc.total >=47 & fiadens.wide$calc.total <=100,"purple", "forestgreen"))
+labels(dend) <- paste(fiadens.wide$structure)
+
+# dend <- hang.dendrogram(dend,hang_height=0.1)
+# dend <- set(dend, "labels_cex", 0.5)
+# par(mar = c(3,3,3,7))
+# plot(dend, 
+#      main = "Clustered Iris data set
+#      (the labels give the true flower species)", 
+#      horiz =  TRUE,  nodePar = list(cex = .007))
+# legend("topleft", legend = iris_species, fill = rainbow_hcl(3))
+
+some_col_func <- function(n) rev(colorspace::heat_hcl(n, c = c(80, 30), l = c(30, 90), power = c(1/5, 1.5)))
+
+library(gplots)
+
+png(height = 10, width = 15, units = "in", res = 200, "outputs/paper_figs_unc/hclust_dendrogram_fia_comp.png")
+heatmap.2(as.matrix(fiacomp[,3:ncol(fiacomp)]), 
+          main = "Heatmap for fia composition",
+          srtCol = 20,
+          dendrogram = "row",
+          Rowv = dend,
+          Colv = "NA", 
+          trace="none",          
+          margins =c(5,0.1),      
+          key.xlab = "% composition",
+          denscol = "grey",
+          density.info = "density",
+          RowSideColors = labels(dend), 
+          col = some_col_func)
+dev.off()
+
+
+
+#------------hclust testing for fia and pls data---------------
+# code from this helpful tutorial: http://www.ams.med.uni-goettingen.de/download/Steffen-Unkel/cluster1.html
+fia.df <- fiacomp %>% select(-"Atlantic.white.cedar")
+pls.df <- plscomp %>% select(-"Dogwood")
+pls.df$period <- "PLS"
+fia.df$period <- "FIA"
+
+pls.and.fia <- rbind(pls.df, fia.df)
+
+
+
+#colnames(fia.dens.tot)[3] <- "FIAdensity"
+# get only the grid cells also in PLS range:
+fiadens.wide <- merge(fiadens.wide, plsdens.wide[,c("x", "y")], by = c("x", "y"))
+fia.dens.tot <- fiadens.wide[,c("x", "y", "calc.total")]
+pls.dens.tot <- plsdens.wide[,c("x", "y", "calc.total")]
+
+pls.fia.dens.wide <- rbind(pls.dens.tot, fia.dens.tot)
+
+
+d_both <- dist(pls.and.fia[,3:(ncol(fiacomp)-1)], method="euclidean")
+( hc_both <- hclust(d_both, method = "complete") )
+
+
+#pls.and.fia$calc.total <-  rowSums(pls.and.fia[,3:22]) 
+
+
+library(dendextend)
+dend <- as.dendrogram(hc_both)
+plot(dend, 
+     main = "Clustered both data set", 
+     horiz =  TRUE,  nodePar = list(cex = .007))
+
+
+
+# dend <- rotate(dend, 1:150)
+# dend <- color_branches(dend, k=3) 
+# labels_colors(dend) <-
+#   rainbow_hcl(3)[sort_levels_values(
+#     as.numeric(iris[,5])[order.dendrogram(dend)]
+#   )]
+
+pls.and.fia$color_structure <- ifelse(pls.and.fia$period %in% "PLS" , "blue", "red")
+pls.and.fia$color <- ifelse(pls.and.fia$period %in% "PLS" & pls.fia.dens.wide$calc.total <= 47, "brown", 
+                            ifelse( pls.and.fia$period %in% "PLS" & pls.fia.dens.wide$calc.total > 47,"forestgreen",
+                            ifelse(pls.and.fia$period %in% "FIA" & pls.fia.dens.wide$calc.total <= 47, "tan", 
+                                   ifelse( pls.and.fia$period %in% "FIA" & pls.fia.dens.wide$calc.total > 47,"green", "black"))))
+
+labels(dend) <- paste(pls.and.fia$color)
+
+# dend <- hang.dendrogram(dend,hang_height=0.1)
+# dend <- set(dend, "labels_cex", 0.5)
+# par(mar = c(3,3,3,7))
+# plot(dend, 
+#      main = "Clustered Iris data set
+#      (the labels give the true flower species)", 
+#      horiz =  TRUE,  nodePar = list(cex = .007))
+# legend("topleft", legend = iris_species, fill = rainbow_hcl(3))
+
+some_col_func <- function(n) rev(colorspace::heat_hcl(n, c = c(80, 30), l = c(30, 90), power = c(1/5, 1.5)))
+
+library(gplots)
+
+png(height = 10, width = 15, units = "in", res = 200, "outputs/paper_figs_unc/hclust_dendrogram_both_comp.png")
+heatmap.2(as.matrix(pls.and.fia[,3:(ncol(fiacomp)-1)]), 
+          main = "Heatmap for both composition",
+          srtCol = 20,
+          dendrogram = "row",
+          Rowv = dend,
+          Colv = "NA", 
+          trace="none",          
+          margins =c(5,0.1),      
+          key.xlab = "% composition",
+          denscol = "grey",
+          density.info = "density",
+          RowSideColors = labels(dend), 
+          col = some_col_func)
+dev.off()
 
 
 #----------------------k-mediods cluster analysis---------------------------------

@@ -642,8 +642,9 @@ dev.off()
 
 #------------hclust testing for fia and pls data---------------
 # code from this helpful tutorial: http://www.ams.med.uni-goettingen.de/download/Steffen-Unkel/cluster1.html
-fia.df <- fiacomp %>% select(-"Atlantic.white.cedar")
-pls.df <- plscomp %>% select(-"Dogwood")
+fia.df <- fiacomp %>% dplyr::select(-"Atlantic.white.cedar")
+pls.df <- plscomp %>% dplyr::select(-"Dogwood")
+pls.df <- pls.df %>% dplyr::select(-"cell")
 pls.df$period <- "PLS"
 fia.df$period <- "FIA"
 
@@ -794,7 +795,7 @@ write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.cs
 # the smoothed estimates are very smooth......
 
 # summarize average % of each taxa in each cluster:
-clusterinfo <- clust_plot5 %>% select(-x, -y, -cell)
+clusterinfo <- clust_plot5 %>% dplyr::select(-x, -y, -cell)
 clusterinfo.m <- melt(clusterinfo)
 clusterinfo.m$value <- clusterinfo.m$value*100
 summary.clusters.fia <- clusterinfo.m %>% group_by(speciescluster, variable) %>% summarise(mean = mean(value, na.rm=TRUE),

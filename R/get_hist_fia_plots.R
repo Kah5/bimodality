@@ -1,7 +1,6 @@
 library(ggplot2)
 library(reshape2)
-# read in FIA data to look at from WI
-
+# read in FIA plot, condition, and tree data to look at state level FIA tables
 wiplot <- read.csv("data/FIA_plot_data/WI_PLOT.csv")
 wicond <- read.csv("data/FIA_plot_data/WI_COND.csv")
 witree <- read.csv("data/FIA_plot_data/WI_TREE.csv")
@@ -22,6 +21,7 @@ ilplot <- read.csv("data/FIA_plot_data/IL_PLOT.csv")
 ilcond <- read.csv("data/FIA_plot_data/IL_COND.csv")
 iltree <- read.csv("data/FIA_plot_data/IL_TREE.csv")
 
+# select the datasets for all surveys before 1999
 wiplot.old <- wiplot[wiplot$INVYR < 1999,]
 wicond.old <- wicond[wicond$INVYR < 1999,] 
 witree.old <- witree[witree$INVYR < 1999,] 
@@ -42,42 +42,41 @@ ilplot.old <- ilplot[ilplot$INVYR < 1999,]
 ilcond.old <- ilcond[ilcond$INVYR < 1999,] 
 iltree.old <- iltree[iltree$INVYR < 1999,] 
 
-# merge plot and cond tables by CN
-
+# Join the all statewide plot, cond, and tree tables together in one big df:
 plot.old <- rbind(inplot.old, ilplot.old, miplot.old, mnplot.old, wiplot.old)
 cond.old <- rbind(incond.old, ilcond.old, micond.old, mncond.old, wicond.old)
 tree.old <- rbind(intree.old, iltree.old, mitree.old, mntree.old, witree.old)
 
 
-    
+
 hist(cond.old$STDAGE)
 
-# get only live trees
+# get only the live trees
 tree.old <- tree.old[tree.old$STATUSCD == 1,]
-tree.old$DIA <- tree.old$DIA*2.54
-tree.old <- tree.old[tree.old$DIA >= 20.32,]
-test <- merge(plot.old, tree.old[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD"))
+tree.old$DIA <- tree.old$DIA*2.54 # convert DBH to cm
+tree.old <- tree.old[tree.old$DIA >= 20.32,] # select trees > 8 inches (>=20.32)
+
+# join the plot table to the tree dable using INVYR, PLOT, COUNTYCD, and STATECD
+merged.tree <- merge(plot.old, tree.old[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD"))
 
 
-merged.tree <- test
-
-
+# plot histograms of inventory yearsL
 ggplot(merged.tree, aes(PLOT, fill = INVYR))+geom_histogram()+facet_wrap(~INVYR)
 
 #cn <- unique(miplot.old$CN)
 #test <- mitree.old[mitree.old$PLT_CN %in% cn,]
 
-
+# summarise the number of trees in each plot
 tree.count <- merged.tree %>% dplyr::count(PLT_CN, SPCD, INVYR, STATECD, PLOT,LAT,LON)
 
-# select trees > 8 inches (>=20.32)
-ac2ha   <- 0.404686 
+
+ac2ha   <- 0.404686 # acre to hectare conversion factor
 
 merged.tree <- tree.count#<- merge(merged.tree, tree.count, by = c("PLT_CN", "SPCD", "INVYR", "PLOT","STATECD"))
 
 # need to matach tree count up with overall merged data
 #merged.tree$DENS <- merged.tree$n * merged.tree$TPA_UNADJ * (1/ac2ha)
-merged.tree$DENS <- merged.tree$n * 6.018046 * (1/ac2ha)
+merged.tree$DENS <- merged.tree$n * 6.018046 * (1/ac2ha) # to get trees per ha, multiple the number trees in the plot * the TPA factor (6.018046) * 1/ ac2ha 
 
 hist(merged.tree$DENS)
 ggplot(merged.tree, aes(DENS))+geom_histogram()+facet_wrap(~INVYR)+xlim(0,500)

@@ -870,7 +870,7 @@ fia.clust.msk
 clust.hist.fia.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_density(data = dens.clust[dens.clust$mean_dens_fia >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
   geom_histogram(data = clust_5test[clust_5test$mean_dens_fia >= 0.5 & !is.na(clust_5test$FIAdensity),], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+
+  scale_fill_manual(values = fiaColors, name = " ", drop = TRUE)+
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.msk
 

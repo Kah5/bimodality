@@ -840,14 +840,14 @@ clust.fia.convert <- data.frame(speciescluster = c("Maple/Cedar/Pine" ,"Maple/Oa
 clust_5test<- left_join(clust_5, clust.fia.convert, by = "speciescluster")
 
 clust_5test$orderedforesttype<- factor(clust_5test$foresttype, c("Mixed Maple", 
-                                                         "Maple Oak Ash Poplar", 
                                                          "Oak/Maple/Other ",
                                                          "Oak Maple Pine Poplar",
+                                                         "Maple Oak Ash Poplar", 
                                                          "Poplar Cedar Pine" ))
 
 fia.clust <- ggplot(clust_5test, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
-  scale_fill_manual(values = c('#003c30','#a6cee3',"#beaed4","#e31a1c", '#b3de69'), name = " ")+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.18),legend.background = element_rect(fill=alpha('transparent', 0)) ,
+  scale_fill_manual(values = fiaColors, name = " ")+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.23, 0.12),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                                            axis.title.x=element_blank(),
@@ -1624,15 +1624,28 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           ncol = 2, align = "h", axis="tb", scale = 1) 
 dev.off()
 
-png(height = 8.4, width = 4, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_indiv_comp.png")
+png(height = 8.4, width = 4.5, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_indiv_comp.png")
 plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
-          pls.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
-          fia.clust+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
-          clust.hist.full.no.aspect  +ylab("Past Tree Density")+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          pls.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
+          clust.hist.full.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
-          clust.hist.fia.full.no.aspect+ylab("Modern Tree Density") + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text.x = element_text(size = 5), axis.title.x =  element_text(size = 5)) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          clust.hist.fia.full.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          ncol = 2, align = "h", axis="tb", scale = 1 ) 
+dev.off()
+
+
+png(height = 8.4, width = 4.5, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_both_comp.png")
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
+          pls.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
+          clust.hist.full.both.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          
+          clust.hist.fia.full.both.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1 ) 
 dev.off()
 
@@ -1856,7 +1869,7 @@ fia.clust.msk
 
 # ----------------------- Figure 1D total FIA density histgram colored by species composition-----------------
 
-dens.clust <- merge(dens, clust_4[,c("x" ,"y", "speciescluster")], by = c("x", "y"), all.x = TRUE)
+dens.clust <- merge(dens, clust_5[,c("x" ,"y", "speciescluster")], by = c("x", "y"), all.x = TRUE)
 #dens.clust$foresttype_ordered <- factor(dens.clust$foresttype, levels = rev(c("Boreal/Sub-boreal", "Pine", "Aspen",  "Elm/Oak/Maple","Oak-Hickory","Beech-Maple","N. Mixed Forest", "Oak")))
 dens.clust.omit <- dens.clust[ !is.na(dens.clust$speciescluster),]
 dens.clust <- dens.clust[!duplicated(dens.clust),]

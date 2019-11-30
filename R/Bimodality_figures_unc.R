@@ -1051,6 +1051,9 @@ plot_grid(geom_tiling.black + xlim(-180, 300), geom_tiling.black.fia+ xlim(-180,
 dev.off()
 
 
+
+
+
 # ----------------------- 10 species comp total FIA density histgram colored by species composition-----------------
 clust_plot10 <- read.csv("outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv")
 clust_plot_fia <- clust_plot10[clust_plot10$period %in% "FIA",]
@@ -1135,6 +1138,114 @@ fia.clust.both.msk <- ggplot(clust_10_fia_msk, aes(x = x, y=y, fill = orderedfor
                                                                                                                            axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
 
 fia.clust.both.msk
+
+
+# plot composition plots agains P-PET for both fia and PLS:
+pls.pet.dens.comp.both <- ggplot(clust_10, aes(GS_ppet,mean_dens,  color = orderedforesttype))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = compColors, name = "Past composition")+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
+
+pls.pet.dens.comp.both
+
+fia.pet.dens.comp.both <- ggplot(clust_10_fia, aes(GS_ppet_mod, mean_dens_fia,  color = orderedforesttype))+geom_point(size = 0.25)+ylim(0, 500)+
+  theme_bw()+ylab("Modern Tree Density (trees/ha)")+xlab("Growing Season P-PET")+scale_color_manual(values = compColors, name = "Modern composition")+theme(legend.key.size = unit(1.5, "point"))+guides(color = guide_legend(override.aes = list(size = 5)))
+
+fia.pet.dens.comp.both
+
+# write both pls and fia to the same png
+dev.off()
+
+png(height = 6, width = 7.5, units = "in", res = 250,"outputs/paper_figs_unc/FIA_Density_vs_ppet_by_comp_both.png")
+plot_grid(pls.pet.dens.comp.both, fia.pet.dens.comp.both, ncol = 1, align = "hv", labels = "AUTO")
+dev.off()
+
+# make the Principal component analysis change figures for composition:
+fia.cluster.short <- clust_10_fia[,1:27]
+colnames(fia.cluster.short)[26] <- "cell"
+pls.cluster.short <- clust_plot_pls[,1:27]
+both.comp <- rbind(fia.cluster.short, pls.cluster.short)
+
+both.comp$foresttype <- revalue(both.comp$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
+                                                                  "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
+                                                                  "Oak-PLS" = "Oak", 
+                                                                  "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
+                                                                  "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
+                                                                  "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                                  "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                                  "Beech/Maple/Pine-PLS" = "Beech-Maple",
+                                                                  "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
+                                                                  "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
+
+both.comp$orderedforesttype <- factor(both.comp$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Oak-Mixed", "Maple Mixed Forest"))
+
+
+pca.comp <- prcomp(both.comp[,3:24], scale = FALSE)
+both.comp.scores  <- pca.comp$x
+both.comp$pc1 <- both.comp.scores[,1]
+both.comp$pc2 <- both.comp.scores[,2]
+
+ggplot(both.comp, aes(pc1, pc2, color = foresttype))+geom_point(size = 0.1)+scale_color_manual(values = compColors, name = " ", drop = TRUE)
+comp.pcs <- both.comp
+pls.pcs <- comp.pcs[comp.pcs$period %in% "PLS", c("x", "y", "cell", "pc1", "pc2",  "foresttype")]
+colnames(pls.pcs) <- c("x", "y","cell", "pls_pc1", "pls_pc2", "foresttype")
+fia.pcs <- comp.pcs[comp.pcs$period %in% "FIA", c("x", "y", "cell", "pc1", "pc2",  "foresttype")]
+colnames(fia.pcs) <- c("x", "y","cell", "fia_pc1", "fia_pc2", "fia_foresttype")
+
+pcs <- merge(fia.pcs, pls.pcs, by = c("x", "y"))
+
+pc.clust <- pcs
+ggplot(pcs, aes(x,y, fill = foresttype))+geom_raster()
+
+# Messy arrow figures: pls oak category
+ggplot(pc.clust[pc.clust$foresttype %in% c("Oak" ),], aes(fia_pc1, fia_pc2))+geom_point(size = 0.2)+geom_point(data = pc.clust[pc.clust$foresttype %in% "Oak",], aes(pls_pc1, pls_pc2, color = foresttype), size = 0.2)+geom_segment(aes(x = pls_pc1, y = pls_pc2, xend = fia_pc1, yend = fia_pc2), data =pc.clust[pc.clust$foresttype %in% "Oak",], arrow = arrow(length = unit(0.5, "cm")), size = 0.05)+theme_bw()
+
+pc.clust2 <- na.omit(pc.clust)
+
+# plot mean arrows of all the species compositions PC values:
+bimodal.region.shifts.full <- ggplot(pc.clust2, aes(fia_pc1, fia_pc2))+geom_point(size = 0.2, color = "darkgrey")+geom_point(data = pc.clust2, aes(pls_pc1, pls_pc2, color = foresttype), size = 0.2)+scale_color_manual(values = compColors, name = " ", drop = TRUE)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% "Oak", ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% "Oak", ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% "Oak", ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% "Oak", ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c("Oak" ),], arrow = arrow(length = unit(0.5, "cm")), size =1)+
+  
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'N. Mixed Forest', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'N. Mixed Forest', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'N. Mixed Forest', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'N. Mixed Forest', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'N. Mixed Forest' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'Aspen', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'Aspen', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Aspen', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Aspen', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Aspen' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'Oak-Hickory', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'Oak-Hickory', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Oak-Hickory', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Oak-Hickory', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Oak-Hickory' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'Boreal/Sub-boreal', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'Boreal/Sub-boreal', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Boreal/Sub-boreal', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Boreal/Sub-boreal', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Boreal/Sub-boreal' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'Beech-Maple', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'Beech-Maple', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Beech-Maple', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Beech-Maple', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Beech-Maple' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+
+  geom_segment(aes(
+    x = mean( pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$pls_pc1), 
+    y = mean(pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$pls_pc2), 
+    xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$fia_pc1), 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Pine' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+theme_bw()+ylab("Species Composition PC2")+
+xlab("Species Composition PC1")+theme(legend.position = "right",legend.direction = "vertical", legend.title = element_blank(), legend.key.size = unit(1,'lines'), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  guides(colour = guide_legend(override.aes = list(size=1.5)))
+
+png(width = 6, height = 5, units = "in", res = 300, "outputs/paper_figs_unc/composition_shift_plot_full.png")
+bimodal.region.shifts.full
+dev.off()
+
+
 
 
 
@@ -1646,6 +1757,18 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
           clust.hist.fia.full.both.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          ncol = 2, align = "h", axis="tb", scale = 1 ) 
+dev.off()
+
+png(height = 8.4, width = 4.5, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_both_comp_msk.png")
+plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
+          pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
+          clust.hist.full.both.no.aspect.msk + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          
+          clust.hist.fia.full.both.no.aspect.msk+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1 ) 
 dev.off()
 
@@ -2219,6 +2342,10 @@ mid.summary.pc1.quants <- pc.pls.mix  %>% group_by(mode, pc1_bins, mids) %>% dpl
 
 mid.summary.pc1.quants.pls <- mid.summary.pc1.quants
 
+mid.summary.pc1.quants.pls %>% group_by(mode)%>% summarise(mean(mean), 
+                                                           quantile(mean,0.025), 
+                                                           quantile(mean, 0.975))
+
 ncell <- mid.summary.pc1 %>% dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
 
 
@@ -2624,7 +2751,9 @@ mid.summary.pc1.quants.one <- pc1.fia.mix  %>% group_by( pc1_bins_fia, mids) %>%
                                                                                                     ncell = length(mean_dens_fia))
 
 
-
+mean(mid.summary.pc1.quants.one$mean)
+quantile(mid.summary.pc1.quants.one$mean, 0.025)
+quantile(mid.summary.pc1.quants.one$mean, 0.975)
 ncell <- mid.summary.pc1 %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
 
 

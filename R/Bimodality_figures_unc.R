@@ -84,9 +84,9 @@ dens$density_discrete <- ifelse(dens$mean_dens <= 0.5, "Prairie",
                                                         ifelse(dens$mean_dens > 200 & dens$mean_dens <= 300, "200-300", 
                                                                ifelse(dens$mean_dens > 300 & dens$mean_dens <= 400, "300-400",
                                                                       ifelse(dens$mean_dens > 400 & dens$mean_dens <= 500, "400-500",
-                                                                             ifelse(dens$mean_dens > 500 , "500+", "No data"))))))))
+                                                                             ifelse(dens$mean_dens > 500 , "500+", "No FIA plots"))))))))
 
-dens$density_discrete <- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+dens$density_discrete <- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No FIA plots"))
 
 
 
@@ -102,7 +102,7 @@ pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=
     '#78c679',
     '#41ab5d',
     '#238443',
-    '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = F) +
+    '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = TRUE) +
   
   theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
                                  legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -122,7 +122,7 @@ pls.map.alt.color.msk <- ggplot()+ geom_polygon(data = mapdata, aes(group = grou
                                '#78c679',
                                '#41ab5d',
                                '#238443',
-                               '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = F) +
+                               '#005a32',"darkgrey"), name ="Tree Density", na.value = 'darkgrey', drop = FALSE) +
   
   theme_bw(base_size = 8)+ theme(legend.position=c(0.2, 0.25),legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
                                  legend.key.size = unit(0.3, "lines"),legend.title = element_text(size = 5),axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -145,7 +145,7 @@ dens$density_discrete_median <- ifelse(dens$media_dens <= 0.5, "Prairie",
                                                      ifelse(dens$media_dens > 200 & dens$media_dens <= 300, "200-300", 
                                                             ifelse(dens$media_dens > 300 & dens$media_dens <= 400, "300-400",
                                                                    ifelse(dens$media_dens > 400 & dens$media_dens <= 500, "400-500",
-                                                                          ifelse(dens$media_dens > 500 , "500+", "No data"))))))))
+                                                                          ifelse(dens$media_dens > 500 , "500+", "No FIA plots"))))))))
 
 dens$density_discrete_median<- factor(dens$density_discrete_median, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
@@ -218,7 +218,6 @@ png(height = 10, width = 4, units = "in", res = 300, "outputs/paper_figs_unc/smo
 cowplot::plot_grid(pc1_unc, ppet_unc, soil_unc, ncol = 1)
 dev.off()
 
-ggplot()+geom_histogram(data = dens, aes(mean_dens), fill = "red")+geom_histogram(data= dens, aes(ci.high_dens), aes = 2, color = "grey")+geom_histogram(data= dens, aes(ci.low_dens), alpha = 0.2, fill = "blue")
 
 # ------------------------------ figure 1C map of pls species clusters with smoothed 8 clusters ------------------------------------
 
@@ -280,12 +279,12 @@ clust.hist.full
 
 clust.hist.full.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.83),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = myColors, name = " ")+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.5, 0.83),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.2, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.no.aspect 
 
 clust.hist.full.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = myColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = myColors, name = " ")+coord_flip()+ylim(0,1050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.msk
 
 
@@ -311,13 +310,14 @@ clust_10$foresttype <- revalue(clust_10$speciescluster, c("Poplar/Oak-FIA"="Aspe
                                                           "Oak-PLS" = "Oak", 
                                                           "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
                                                           "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
-                                                          "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
-                                                          "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                          "Pine/Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                          "Poplar/Pine/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
                                                           "Beech/Maple/Pine-PLS" = "Beech-Maple",
                                                           "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
                                                           "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
 
 clust_10$orderedforesttype <- factor(clust_10$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Maple Mixed Forest", "Oak-Mixed"))
+#clust_10$orderedforesttype <- factor(dens.clust$foresttype, levels = rev(c("Aspen", "Maple Mixed Forest", "Oak-Mixed","Oak/Maple/Ash","Oak-Hickory","Pine","Oak",  "Boreal/Sub-boreal", "N. Mixed Forest",  "Beech-Maple")))
 
 # create a stable coloring scheme:
 compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928",  "#004529",  '#fdc086')
@@ -325,7 +325,7 @@ names(compColors) <- levels(clust_10$orderedforesttype)
 
 
 pls.clust.both <- ggplot(clust_10, aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
-  scale_fill_manual(values = compColors, name = " ")+
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 10)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                             axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                             axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -337,7 +337,7 @@ pls.clust.both
 # merge clust_plot10 and dens.pr
 
 pls.clust.both.msk <- ggplot(clust_10[!is.na(clust_10$FIAdensity),], aes(x = x, y=y, fill=orderedforesttype))+geom_raster()+
-  scale_fill_manual(values = compColors, name = " ")+
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 10)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -357,17 +357,17 @@ dens.clust <- dens.clust[!duplicated(dens.clust),]
 
 clust.hist.full.both <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 10)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.105),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 10)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.105),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.both
 
 
 clust.hist.full.both.no.aspect <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5,], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.095, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+coord_flip()+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.1, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 clust.hist.full.both.no.aspect.msk <- ggplot()+ geom_density(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, 22 *..count..),linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_histogram(data = dens.clust[dens.clust$mean_dens >= 0.5 & !is.na(dens.clust$FIAdensity),], aes(mean_dens, fill = foresttype_ordered), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+coord_flip()+ylim(0,2050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.095, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+coord_flip()+ylim(0,2050)+xlab("PLS tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.54, 0.82),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.1, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.full.both.no.aspect.msk
 
 # --------------------------------Figure 1 FIA maps & Hists ---------------------------------------
@@ -622,9 +622,9 @@ dens$density_discrete <- ifelse(dens$mean_dens_fia <= 0.5, "Prairie",
                                                      ifelse(dens$mean_dens_fia > 200 & dens$mean_dens_fia <= 300, "200-300", 
                                                             ifelse(dens$mean_dens_fia > 300 & dens$mean_dens_fia <= 400, "300-400",
                                                                    ifelse(dens$mean_dens_fia > 400 & dens$mean_dens_fia <= 500, "400-500",
-                                                                          ifelse(dens$mean_dens_fia > 500 , "500+", "No data"))))))))
+                                                                          ifelse(dens$mean_dens_fia > 500 , "500+", "NA"))))))))
 
-dens$density_discrete<- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
+dens$density_discrete<- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+"))
 
 
 
@@ -661,7 +661,7 @@ dens$density_discrete_median <- ifelse(dens$media_dens <= 0.5, "Prairie",
                                                             ifelse(dens$media_dens > 200 & dens$media_dens <= 300, "200-300", 
                                                                    ifelse(dens$media_dens > 300 & dens$media_dens <= 400, "300-400",
                                                                           ifelse(dens$media_dens > 400 & dens$media_dens <= 500, "400-500",
-                                                                                 ifelse(dens$media_dens > 500 , "500+", "No data"))))))))
+                                                                                 ifelse(dens$media_dens > 500 , "500+", "No FIA plots"))))))))
 
 dens$density_discrete_median<- factor(dens$density_discrete_median, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
@@ -672,7 +672,7 @@ dens$density_discrete_low <- ifelse(dens$ci.low_dens_fia <= 0.5, "Prairie",
                                                          ifelse(dens$ci.low_dens_fia > 200 & dens$ci.low_dens_fia <= 300, "200-300", 
                                                                 ifelse(dens$ci.low_dens_fia > 300 & dens$ci.low_dens_fia <= 400, "300-400",
                                                                        ifelse(dens$ci.low_dens_fia > 400 & dens$ci.low_dens_fia <= 500, "400-500",
-                                                                              ifelse(dens$ci.low_dens_fia > 500 , "500+", "No data"))))))))
+                                                                              ifelse(dens$ci.low_dens_fia > 500 , "500+", "No FIA plots"))))))))
 
 dens$density_discrete_low <- factor(dens$density_discrete_low, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No data"))
 
@@ -701,6 +701,20 @@ FIA.map.alt.color.low <- ggplot()+ geom_polygon(data = mapdata, aes(group = grou
 png(height = 4, width = 3, units = "in", res = 300,"/Users/kah/Documents/bimodality/outputs/paper_figs_unc/FIA_smooth_density_map_full_alt_colors.png")
 FIA.map.alt.color+ggtitle("FIA mean density smoothed")
 dev.off()
+
+
+
+dens$density_discrete <- ifelse(dens$mean_dens_fia <= 0.5, "Prairie", 
+                                ifelse(dens$mean_dens_fia <= 47, "Savanna",
+                                       ifelse(dens$mean_dens_fia > 47 & dens$mean_dens_fia <= 100, "47-100",
+                                              ifelse(dens$mean_dens_fia > 100 & dens$mean_dens_fia <= 200, "100-200", 
+                                                     ifelse(dens$mean_dens_fia > 200 & dens$mean_dens_fia <= 300, "200-300", 
+                                                            ifelse(dens$mean_dens_fia > 300 & dens$mean_dens_fia <= 400, "300-400",
+                                                                   ifelse(dens$mean_dens_fia > 400 & dens$mean_dens_fia <= 500, "400-500",
+                                                                          ifelse(dens$mean_dens_fia > 500 , "500+", "No FIA plots"))))))))
+
+dens$density_discrete<- factor(dens$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500",  "500+", "No FIA plots"))
+
 
 
 FIA.map.alt.color.msk <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
@@ -1063,21 +1077,23 @@ clust_10_fia <- merge(clust_plot_fia, dens, by = c("x", "y"))
 # need to rename the clusters here (should go back and do it in the place where we originally make the clusters):
 head(clust_10_fia)
 library(plyr)
+
 clust_10_fia$foresttype <- revalue(clust_10_fia$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
                                                           "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
                                                           "Oak-PLS" = "Oak", 
                                                           "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
                                                           "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
-                                                          "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
-                                                          "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                          "Pine/Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                          "Poplar/Pine/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
                                                           "Beech/Maple/Pine-PLS" = "Beech-Maple",
                                                           "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
                                                           "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
 
-clust_10_fia$orderedforesttype <- factor(clust_10_fia$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Oak-Mixed", "Maple Mixed Forest"))
+#clust_10_fia$orderedforesttype <- factor(clust_10_fia$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Oak-Mixed", "Maple Mixed Forest"))
+clust_10_fia$orderedforesttype <- factor(clust_10_fia$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Maple Mixed Forest", "Oak-Mixed"))
 
 # create a stable coloring scheme:
-compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928", '#fdc086',  "#004529")
+compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928",  "#004529",  '#fdc086')
 names(compColors) <- levels(clust_10_fia$orderedforesttype)
 
 
@@ -1099,7 +1115,7 @@ clust.hist.fia.full.both.no.aspect
 # plot out the map:
 
 fia.clust.both <- ggplot(clust_10_fia, aes(x = x, y=y, fill = orderedforesttype))+geom_raster()+
-  scale_fill_manual(values = compColors, name = " ", drop = F)+
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.22),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -1114,7 +1130,7 @@ clust_10_fia_msk <- clust_10_fia[!is.na(clust_10_fia$FIAdensity),]
 clust.hist.fia.full.both.msk <- ggplot()+ geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens, 22 *..count..), linetype="dashed" , color = "darkgrey", bw = 12,size = 1.5)+ 
   geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
   geom_histogram(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
-  scale_fill_manual(values = compColors, name = " ", drop = TRUE)+
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+
   coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 8)+theme(aspect.ratio = 1,legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full.both.msk
 
@@ -1124,13 +1140,13 @@ clust.hist.fia.full.both.no.aspect.msk <- ggplot()+ geom_density(data = clust_10
   geom_density(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, 22 *..count..), linetype="solid" , color = "black", bw = 12,size = 1.5)+
   geom_histogram(data = clust_10_fia_msk[clust_10_fia_msk$mean_dens_fia >= 0.5,], aes(mean_dens_fia, fill = orderedforesttype), binwidth =  20)+xlim(0,600)+
   scale_fill_manual(values = compColors, name = " ", drop = TRUE)+
-  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.4, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  coord_flip()+xlab("FIA tree density")+ylab("# grid cells")+theme_bw(base_size = 6)+theme(legend.position = c(0.44, 0.85),legend.background = element_rect(fill=alpha('transparent', 0)), legend.key.size = unit(0.1, "line"),legend.key = element_rect(color = "black", linetype ="solid"), panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 clust.hist.fia.full.both.no.aspect.msk
 
 # plot out the map:
 
 fia.clust.both.msk <- ggplot(clust_10_fia_msk, aes(x = x, y=y, fill = orderedforesttype))+geom_raster()+
-  scale_fill_manual(values = compColors, name = " ", drop = F)+
+  scale_fill_manual(values = compColors, name = " ", drop = FALSE)+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw(base_size = 8)+ theme(legend.position=c(0.20, 0.24),legend.background = element_rect(fill=alpha('transparent', 0)) ,
                                                                                                                            axis.line=element_blank(),legend.key.size = unit(0.2,'lines'),legend.text=element_text(size=5),legend.key = element_rect(color = "black", linetype = "solid"),axis.text.x=element_blank(),
                                                                                                                            axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -1164,18 +1180,24 @@ colnames(fia.cluster.short)[26] <- "cell"
 pls.cluster.short <- clust_plot_pls[,1:27]
 both.comp <- rbind(fia.cluster.short, pls.cluster.short)
 
-both.comp$foresttype <- revalue(both.comp$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
-                                                                  "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
-                                                                  "Oak-PLS" = "Oak", 
-                                                                  "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
-                                                                  "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
-                                                                  "Maple/Poplar/Oak/Ash-FIA" = "Pine", 
-                                                                  "Pine/Poplar/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
-                                                                  "Beech/Maple/Pine-PLS" = "Beech-Maple",
-                                                                  "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
-                                                                  "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
 
-both.comp$orderedforesttype <- factor(both.comp$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Oak-Mixed", "Maple Mixed Forest"))
+both.comp$foresttype <- revalue(both.comp$speciescluster, c("Poplar/Oak-FIA"="Aspen", 
+                                                          "Oak/Maple/Ash/Poplar-FIA"="Oak/Maple/Ash", 
+                                                          "Oak-PLS" = "Oak", 
+                                                          "Hemlock/Cedar/Maple-PLS" = "N. Mixed Forest", 
+                                                          "Oak/Hickory/Elm/Maple-FIA" = "Oak-Hickory",
+                                                          "Pine/Maple/Poplar/Oak/Ash-FIA" = "Pine", 
+                                                          "Poplar/Pine/Tamarack/Fir-PLS" = "Boreal/Sub-boreal", 
+                                                          "Beech/Maple/Pine-PLS" = "Beech-Maple",
+                                                          "Maple/Cedar/Poplar-FIA" = "Maple Mixed Forest",
+                                                          "Oak/Maple/Other/Hickory-FIA" = "Oak-Mixed"))
+
+both.comp$orderedforesttype <- factor(both.comp$foresttype, c("Oak", "Pine", "Aspen", "N. Mixed Forest", "Boreal/Sub-boreal","Oak/Maple/Ash", "Oak-Hickory", "Beech-Maple", "Maple Mixed Forest", "Oak-Mixed"))
+#clust_10$orderedforesttype <- factor(dens.clust$foresttype, levels = rev(c("Aspen", "Maple Mixed Forest", "Oak-Mixed","Oak/Maple/Ash","Oak-Hickory","Pine","Oak",  "Boreal/Sub-boreal", "N. Mixed Forest",  "Beech-Maple")))
+
+# create a stable coloring scheme:
+compColors <- c('#386cb0',"#f0027f",'#ff7f00',"#ffff99","#7fc97f", "#beaed4",'#a6cee3',"#b15928",  "#004529",  '#fdc086')
+names(compColors) <- levels(both.comp$orderedforesttype)
 
 
 pca.comp <- prcomp(both.comp[,3:24], scale = FALSE)
@@ -1237,8 +1259,8 @@ bimodal.region.shifts.full <- ggplot(pc.clust2, aes(fia_pc1, fia_pc2))+geom_poin
     x = mean( pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$pls_pc1), 
     y = mean(pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$pls_pc2), 
     xend = mean( pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$fia_pc1), 
-    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Pine' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+theme_bw()+ylab("Species Composition PC2")+
-xlab("Species Composition PC1")+theme(legend.position = "right",legend.direction = "vertical", legend.title = element_blank(), legend.key.size = unit(1,'lines'), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+    yend = mean(pc.clust2[pc.clust2$foresttype %in% 'Pine', ]$fia_pc2)), data =pc.clust2[pc.clust2$foresttype %in% c( 'Pine' ),], arrow = arrow(length = unit(0.5, "cm")), size = 1)+theme_bw()+ylab("Species Composition PC2 \n(12.7% variance explained)")+
+xlab("Species Composition PC1 \n(43.5% variance explained)")+theme(legend.position = "right",legend.direction = "vertical", legend.title = element_blank(), legend.key.size = unit(1,'lines'), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   guides(colour = guide_legend(override.aes = list(size=1.5)))
 
 png(width = 6, height = 5, units = "in", res = 300, "outputs/paper_figs_unc/composition_shift_plot_full.png")
@@ -1740,7 +1762,7 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
-          clust.hist.full.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          clust.hist.full.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=50,label= "C", size = 3),
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
           clust.hist.fia.full.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
@@ -1753,7 +1775,7 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
-          clust.hist.full.both.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          clust.hist.full.both.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=100,label= "C", size = 3),
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
           clust.hist.fia.full.both.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
@@ -1765,10 +1787,10 @@ plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"),
           FIA.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
           pls.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
           fia.clust.both.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
-          clust.hist.full.both.no.aspect.msk + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=20,label= "C", size = 3),
+          clust.hist.full.both.no.aspect.msk + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=100,label= "C", size = 3),
           #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
           
-          clust.hist.fia.full.both.no.aspect.msk+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          clust.hist.fia.full.both.no.aspect.msk+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=200,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1 ) 
 dev.off()
 
@@ -2320,6 +2342,7 @@ contour_95 <- data.frame(contour_95)
 
 
 pc.pls.mix <- read.csv( "outputs/mixture_model/pls_pc1_mixture_mode_estimates.csv")
+pc.pls.mix$mode <- ifelse(pc.pls.mix$mode %in% "Savanna", "Low Tree Density", "High Tree Density")
 mid.summary.pc1 <- pc.pls.mix  %>% group_by(mode, pc1_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
                                                                                                   ci.low = quantile(mean_dens,0.025),
                                                                                                   ci.high = quantile(mean_dens, 0.975), 
@@ -2367,7 +2390,7 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins", "mids"))
 merged.pc1 <- merge(merged.pc1, ncell, by = c("pc1_bins", "mids"))
 
-merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Savanna` +  merged.pc1$`Forest` > 50,"bimodal", "NS")
+merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Low Tree Density` +  merged.pc1$`High Tree Density` > 50,"bimodal", "NS")
 
 merged.pc1[is.na(merged.pc1$bimodal), ]$bimodal <- "One mode"
 merged.pc1$y <- -41
@@ -2384,7 +2407,7 @@ hysteresis.pc1.pls.quants <- ggplot(data = data.frame(mid.summary.pc1.quants), a
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Component 1")+theme(panel.grid.major = element_blank())
 
 hysteresis.pc1.pls.quants.bimodal <- hysteresis.pc1.pls.quants + geom_point(data = data.frame(merged.pc1[merged.pc1$bimodal %in% "bimodal",]), aes( x = mids, y = -25), color = "#386cb0", shape = 15)
 
@@ -2395,11 +2418,11 @@ hysteresis.pc1.pls.smooths <- ggplot(data = data.frame(mid.summary.pc1.quants), 
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Component 1")+theme(panel.grid.major = element_blank())
 
 hysteresis.pc1.pls.smooth.95ci <- ggplot(data = data.frame(mid.summary.pc1.quants), aes(mids, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.pc1.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
     theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Component 1")+theme(panel.grid.major = element_blank())
 
 
 # get bimod.pc.pls from previous code
@@ -2473,6 +2496,7 @@ pls.kde.plot.ppet.gg
 
 
 ppet.pls.mix <- read.csv( "outputs/mixture_model/pls_ppet_mixture_mode_estimates.csv")
+ppet.pls.mix$mode <- ifelse(ppet.pls.mix$mode %in% "Savanna", "Low Tree Density" ,"High Tree Density")
 mid.summary.ppet <- ppet.pls.mix %>% group_by(mode, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
                                                                                       ci.low = quantile(mean_dens,0.025),
                                                                                       ci.high = quantile(mean_dens, 0.975), 
@@ -2506,7 +2530,7 @@ hysteresis.ppet.pls.quants <- ggplot(data = data.frame(mid.summary.ppet), aes(mi
   geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 
 
@@ -2517,7 +2541,7 @@ hysteresis.ppet.pls.quants <- ggplot(data = data.frame(mid.summary.ppet.quants),
   geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 hysteresis.ppet.pls.smooths <- ggplot(data = data.frame(mid.summary.ppet.quants), aes(mids_ppet, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.10, ymax = ci.90, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2529,7 +2553,7 @@ hysteresis.ppet.pls.smooths <- ggplot(data = data.frame(mid.summary.ppet.quants)
 
 hysteresis.ppet.pls.smooth.95ci <- ggplot(data = data.frame(mid.summary.ppet.quants), aes(mids_ppet, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.ppet.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 
 
@@ -2542,7 +2566,7 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_bins", "mids_ppet"))
 merged.ppet <- merge(merged.ppet, ncell, by = c("GS_ppet_bins", "mids_ppet"))
 
-merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` +  merged.ppet$`Forest` > 50,"bimodal", "NS")
+merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Low Tree Density` +  merged.ppet$`High Tree Density` > 50,"bimodal", "NS")
 
 merged.ppet[is.na(merged.ppet$bimodal), ]$bimodal <- "One mode"
 merged.ppet$y <- -41
@@ -2605,6 +2629,7 @@ pls.kde.plot.sm.gg
 
 
 soil.pls.mix <- read.csv( "outputs/mixture_model/pls_soil_mixture_mode_estimates.csv")
+soil.pls.mix$ mode <- ifelse(soil.pls.mix$mode %in% "Savanna", "Low Tree Density", "High Tree Density")
 mid.summary.soil <- soil.pls.mix %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = median(mean_dens),
                                                                                                   meadian = median(mean_dens),
                                                                                                   ci.low = quantile(mean_dens,0.025),
@@ -2641,7 +2666,7 @@ hysteresis.soil.pls.quants <- ggplot(data = data.frame(mid.summary.soil.quants),
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 hysteresis.soil.pls.smooths <- ggplot(data = data.frame(mid.summary.soil.quants), aes(mids, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.10, ymax = ci.90, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2649,11 +2674,11 @@ hysteresis.soil.pls.smooths <- ggplot(data = data.frame(mid.summary.soil.quants)
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 hysteresis.soil.pls.smooth.95ci <- ggplot(data = data.frame(mid.summary.soil.quants), aes(mids, ci.50, color = mode))+stat_smooth(se =FALSE)+geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 
 
@@ -2665,7 +2690,7 @@ colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
 merged.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_bins", "mids"))
 merged.soil <- merge(merged.soil, ncell, by = c("mean_GS_soil_bins", "mids"))
 
-merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Savanna` + merged.soil$`Forest` > 50,"bimodal", "NS")
+merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Low Tree Density` + merged.soil$`High Tree Density` > 50,"bimodal", "NS")
 merged.soil[is.na(merged.soil$bimodal), ]$bimodal <- "One mode"
 merged.soil$y <- -41
 
@@ -2731,6 +2756,7 @@ pc1.f.bim.line$y <- -41
 
 
 pc1.fia.mix <- read.csv( "outputs/mixture_model/fia_pc1_mixture_mode_estimates.csv")
+pc1.fia.mix$mode <- ifelse(pc1.fia.mix$mode %in% "Savanna","Low Tree Density", "High Tree Density" )
 mid.summary.pc1 <- pc1.fia.mix %>% group_by(mode, pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
                                                                                                   ci.low = quantile(mean_dens_fia,0.025),
                                                                                                   ci.high = quantile(mean_dens_fia, 0.975), 
@@ -2763,7 +2789,7 @@ hysteresis.pc1.fia.quants <- ggplot(data = data.frame(mid.summary.pc1.quants.one
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Componenet 1")+theme(panel.grid.major = element_blank())
 
 hysteresis.pc1.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2772,7 +2798,7 @@ hysteresis.pc1.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.pc1.qua
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_line(data = mid.summary.pc1.quants.pls, aes(mids, ci.50, color = mode),  linetype = "dashed")+scale_color_manual(values = c("#636363", "#636363"))+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank(), legend.position = "none")
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Componenet 1")+theme(panel.grid.major = element_blank(), legend.position = "none")
 
 
 hysteresis.pc1.fia.smooths <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2781,24 +2807,24 @@ hysteresis.pc1.fia.smooths <- ggplot(data = data.frame(mid.summary.pc1.quants.on
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("PC1")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Componenet 1")+theme(panel.grid.major = element_blank())
 
 hysteresis.pc1.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.pc1.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.pc1.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season pc1 moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Principle Componenet 1")+theme(panel.grid.major = element_blank())
 
 
 
 
 low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
 high_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+colnames(low_ci)[3] <- c("low_Forest")
+colnames(high_ci)[3] <- c("high_Forest")
 
 merged.fia.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins_fia", "mids"))
 merged.fia.pc1 <- merge(merged.fia.pc1, ncell, by = c("pc1_bins_fia", "mids"))
 
-merged.fia.pc1$bimodal <- ifelse(merged.fia.pc1$low_Forest > merged.fia.pc1$high_Savanna & merged.fia.pc1$`Low Density Forest` > 50 & merged.fia.pc1$`Forest` > 50,"bimodal", "One mode")
+merged.fia.pc1$bimodal <- ifelse("Low Tree Density" %in% colnames(merged.fia.pc1),"check", "One mode")
 merged.fia.pc1[is.na(merged.fia.pc1$bimodal), ]$bimodal <- "One mode"
 merged.fia.pc1$y <- -41
 
@@ -2882,6 +2908,7 @@ ppet.f.bim.line <- ppet.f.bim.line[!duplicated(ppet.f.bim.line),]
 ppet.f.bim.line$y <- -41
 
 ppet.fia.mix <- read.csv( "outputs/mixture_model/fia_ppet_mixture_mode_estimates.csv")
+ppet.fia.mix$mode <- ifelse(ppet.fia.mix$mode %in% "Savanna", "Low Tree Density", "High Tree Density")
 mid.summary.ppet <- ppet.fia.mix %>% group_by(mode, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
                                                                                            ci.low = quantile(mean_dens_fia,0.025),
                                                                                            ci.high = quantile(mean_dens_fia, 0.975), 
@@ -2928,7 +2955,7 @@ hysteresis.ppet.fia.quants <- ggplot(data = data.frame(mid.summary.ppet.quants.o
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 hysteresis.ppet.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2937,7 +2964,7 @@ hysteresis.ppet.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.ppet.q
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_line(data = mid.summary.ppet.quants.pls, aes(mids_ppet, ci.50, color = mode),  linetype = "dashed")+scale_color_manual(values = c("#636363", "#636363"))+
   theme_bw()+#scale_color_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank(), legend.position = "none")
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank(), legend.position = "none")
 
 
 hysteresis.ppet.fia.smooths <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -2946,19 +2973,19 @@ hysteresis.ppet.fia.smooths <- ggplot(data = data.frame(mid.summary.ppet.quants.
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 hysteresis.ppet.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.ppet.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.ppet.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season P-PET")+theme(panel.grid.major = element_blank())
 
 
 
 
 low_ci <- mid.summary.ppet %>% dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
 high_ci <- mid.summary.ppet %>% dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+colnames(low_ci)[3] <- c("low_Forest")
+colnames(high_ci)[3] <- c("high_Forest")
 
 
 ncell <- mid.summary.ppet %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
@@ -2968,7 +2995,7 @@ ncell <- mid.summary.ppet %>%dplyr::select(mode, mids, ncell) %>% spread(key = m
 
 merged.fia.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_mod_bins", "mids"))
 merged.fia.ppet <- merge(merged.fia.ppet, ncell, by = c("GS_ppet_mod_bins", "mids"))
-merged.fia.ppet$bimodal <- ifelse(merged.fia.ppet$low_Forest > merged.fia.ppet$high_Savanna & merged.fia.ppet$`Low Density Forest` > 50 & merged.fia.ppet$`Forest` > 50,"bimodal", "NS")
+merged.fia.ppet$bimodal <- ifelse("Low Tree Density" %in% colnames(merged.fia.ppet),"recheck", "NS")
 merged.fia.ppet[is.na(merged.fia.ppet$bimodal), ]$bimodal <- "One mode"
 merged.fia.ppet$y <- -41
 
@@ -3054,6 +3081,8 @@ sm.f.bim.line <- sm.f.bim.line[!duplicated(sm.f.bim.line),]
 sm.f.bim.line$y <- -41
 
 soil.fia.mix <- read.csv( "outputs/mixture_model/fia_soil_mixture_mode_estimates.csv")
+soil.fia.mix$mode <- ifelse(soil.fia.mix$mode %in% "Savanna", "Low Tree Density", "High Tree Density")
+
 mid.summary.soil <- soil.fia.mix %>% group_by(mode, mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
                                                                                                  ci.low = quantile(mean_dens_fia,0.025),
                                                                                                  ci.high = quantile(mean_dens_fia, 0.975),
@@ -3096,7 +3125,7 @@ hysteresis.soil.fia.quants <- ggplot(data = data.frame(mid.summary.soil.quants.o
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 hysteresis.soil.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50), color = "#005a32")+geom_line()+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.10, ymax = ci.90), fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -3105,7 +3134,7 @@ hysteresis.soil.fia.quants.dashed <- ggplot(data = data.frame(mid.summary.soil.q
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
   geom_line(data = mid.summary.soil.quants.pls, aes(mids, ci.50, color = mode),  linetype = "dashed")+scale_color_manual(values = c("#636363", "#636363"))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank(), legend.position = "none")
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank(), legend.position = "none")
 
 
 hysteresis.soil.fia.smooths <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50), color = "#005a32")+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
@@ -3114,11 +3143,11 @@ hysteresis.soil.fia.smooths <- ggplot(data = data.frame(mid.summary.soil.quants.
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.30, ymax = ci.70),fill = "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.40, ymax = ci.60), fill = "#005a32",alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+#scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 hysteresis.soil.fia.smooth.95ci <- ggplot(data = data.frame(mid.summary.soil.quants.one), aes(mids, ci.50))+stat_smooth(se =FALSE, color = "#005a32")+geom_ribbon(data = mid.summary.soil.quants.one, aes(ymin = ci.low, ymax = ci.high), fill =  "#005a32", alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 
 
@@ -3127,21 +3156,21 @@ hysteresis.soil.fia.quants.two <- ggplot(data = data.frame(mid.summary.soil), ae
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.30, ymax = ci.70, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   geom_ribbon(data = mid.summary.soil.quants, aes(ymin = ci.40, ymax = ci.60, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+#geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season soil moisture")+theme(panel.grid.major = element_blank())
+  ylab("Mean Tree Density (stems/ha)")+xlab("Growing Season Soil Moisture")+theme(panel.grid.major = element_blank())
 
 
 
 low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
 high_ci <- mid.summary.soil %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c( "high_Forest", "high_Savanna")
+colnames(low_ci)[3] <- c("low_Forest")
+colnames(high_ci)[3] <- c( "high_Forest")
 
 
 ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
 
 merged.fia.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_m_bins", "mids"))
 merged.fia.soil <- merge(merged.fia.soil, ncell, by = c("mean_GS_soil_m_bins", "mids"))
-merged.fia.soil$bimodal <- ifelse(merged.fia.soil$low_Forest > merged.fia.soil$high_Savanna & merged.fia.soil$`High Density Mode` > 50 & merged.fia.soil$`Low Density Mode` > 50,"bimodal", "One mode")
+merged.fia.soil$bimodal <- ifelse("Low Tree Density" %in% colnames(merged.fia.soil),"recheck", "One mode")
 merged.fia.soil[is.na(merged.fia.soil$bimodal), ]$bimodal <- "One mode"
 merged.fia.soil$y <- -41
 
@@ -3308,7 +3337,7 @@ kde.surf.soil.fia.df <- merge(pls.df[,!colnames(pls.df) %in% "bimclass_soil_f"],
 # FIA three color maps
 # now merge all of these together to make a map of 1, 2, 3, bimodal metrics:
 bim.class.m.f <- merge(kde.surf.pc1.fia.df[,c("x", "y", "bimodal")], kde.surf.soil.fia.df [,c("x", "y", "bimodal")], by = c("x", "y"), all.x = TRUE)
-bim.class.m.f <- merge(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimodal", "mean_dens_fia")], all.x = TRUE)
+bim.class.m.f <- merge(bim.class.m.f, kde.surf.ppet.fia.df[,c("x", "y", "bimodal")], all.x = TRUE)
 
 bim.class.m.f$nbimod <- as.character(rowSums(bim.class.m.f[,3:5] == "bimodal", na.rm = TRUE))
 # define nbimod as a category:
@@ -3343,7 +3372,7 @@ three.bimpct <-  three.bimpct
 
 
 
-
+### end of code used here
 
 # merge fia and pls bimodal dfs together:
 kde.surf.pc1.df <- merge(kde.surf.pc1.pls.df[,c("x", "y",  "mean_dens",  "bimodal","pc1_bins", "mids")], kde.surf.pc1.fia.df[,c("x", "y",  "mean_dens_fia","bimodal","pc1_bins", "mids")], by = c("x", "y"), all = TRUE)
@@ -3592,7 +3621,7 @@ dev.off()
 
 # adding the arrow change acros environment plots in a 3rd column:
 
-png(height = 10, width = 7, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed_nohist_reorder_arrows.png")
+png(height = 10, width = 7.2, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_dashed_nohist_reorder_arrows.png")
 
 legends <- get_legend(hysteresis.pc1.pls.quants.bimodal+theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
 plot_grid(legends,
@@ -3604,820 +3633,825 @@ plot_grid(legends,
                                 "B", "F", "J", 
                                 "C", "G", "K", 
                                 "D", "H"), 
-                     label_x = c(0.22, 0.22, 0.22, 0.18, 0.22, 0.22, 0.22, 0.22, 0.22,0.22,0.22), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
+                     label_x = c(0.22, 0.22, 0.22, 
+                                 0.22, 0.22, 0.22, 
+                                 0.22, 0.22, 0.22,
+                                 0.18,0.18), label_y = 0.98), nrow = 2, rel_heights = c(0.05, 1))
 
 dev.off()
 
-# >>>>>>>>>>>>>>>>>>>>>>> ALL STAT DRAWS 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
-total.pls <- read.csv("data/extracted_total_PLS_density_draws.csv")
-total.fia <- read.csv("data/extracted_total_FIA_density_draws.csv")
-
-colnames(total.pls) <- c("x",  "y","sample_pls" ,"pls" )
-colnames(total.fia) <-c("x",  "y","sample_fia" ,"fia" )
-
-total.pls <- total.pls[!is.na(total.pls$pls),]
-total.fia <- total.fia[!is.na(total.fia$fia),]
-
-pls.dens <- left_join(total.pls, dens.pr, by=c("x", "y"))
-fia.dens <- left_join(total.fia, dens.pr,  by=c("x", "y"))
-
-
-
-# for PC1:
-H <- Hpi.diag(x=na.omit(cbind(pls.dens$PC1, pls.dens$pls)) )
-fhat <- kde(x=na.omit(cbind(pls.dens$PC1, pls.dens$pls)), #H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550))
-#points(na.omit(cbind(pls.dens$PC1, pls.dens$pls)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
-
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-pc.pls.mix <- read.csv("outputs/mixture_model/pls_pc1_mixture_mode_estimates.csv")
-mid.summary.pc1 <- pc.pls.mix  %>% group_by(mode, pc1_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                       ci.low = quantile(mean_dens,0.025),
-                                                                                       ci.high = quantile(mean_dens, 0.975), 
-                                                                                       ncell = length(mean_dens))
-
-ncell <- mid.summary.pc1 %>% dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-
-
-
-
-
-
-
-
-
-#merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` > 50 & merged.ppet$`Forest` > 50,"bimodal", "NS")
-
-low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
-
-
-merged.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins", "mids"))
-merged.pc1 <- merge(merged.pc1, ncell, by = c("pc1_bins", "mids"))
-
-merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Savanna` > 50 & merged.pc1$`Forest` > 50,"bimodal", "NS")
-
-merged.pc1[is.na(merged.pc1$bimodal), ]$bimodal <- "One mode"
-merged.pc1$y <- -41
-
-
-mid.summary.lowprob <- pc.pls.mix %>% group_by(prob >= 0.49 &  prob <= 0.51, pc1_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                                                  ci.low = quantile(mean_dens,0.025),
-                                                                                                                  ci.high = quantile(mean_dens, 0.975))
-
-
-hysteresis.pc1.pls <- ggplot(data = data.frame(mid.summary.pc1), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
-  theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
-  ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
-
-# get bimod.pc.pls from previous code
-pc1.bim.line <- bimod.pc.pls[,c("pc1_bins", "mids","ncells_pc1", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass")]
-#pc1.bim.line <- bimod.ppet.pls[,c("ppet_bins", "mids","ncells_ppet", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_ppet")]
-pc1.bim.line <- pc1.bim.line[!duplicated(pc1.bim.line),]
-pc1.bim.line$y <- -41
-
-
-library(base2grob)
-
-smoothingSpline.Forest = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean, spar=.75)
-plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Savanna = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mean, spar=.75)
-plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mean)
-lines(smoothingSpline.Savanna, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-pls.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5),cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$mids , pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+
-                                   text(-5, 500, "A"))
-
-pls.kde.plot.pc1.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5),cex.axis = 0.7 ) + points(merged.pc1[merged.pc1$bimodal %in% "bimodal",]$mids , merged.pc1[merged.pc1$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+
-                                         lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+  text(-5, 500, "A"))
-
-pls.kde.plot.pc1.gg.lines.full
-
-
-# plot with the equal spline on it
-pls.kde.plot.pc1.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5.5), cex.axis = 0.7) + points(data = merged.pc1[merged.pc1$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+
-                                             lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2)+  text(-5, 500, "A"))
-pls.kde.plot.pc1.gg.lines.full.hys
-
-# ------------------------PLS for P-PET:
-H <- Hpi.diag(x=na.omit(cbind(pls.dens$GS_ppet, pls.dens$pls)) )
-fhat <- kde(x=na.omit(cbind(pls.dens$GS_ppet, pls.dens$pls)), #H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,80,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550))
-#points(na.omit(cbind(pls.dens$PC1, pls.dens$pls)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-pls.kde.plot.ppet <- recordPlot()
-pls.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550), xlim = c(-180, 300)))
-
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-
-
-# read in statistical summaries
-ppet.pls.mix <- read.csv( "outputs/mixture_model/pls_ppet_mixture_mode_estimates.csv")
-mid.summary.ppet <- ppet.pls.mix %>% group_by(mode, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                                  ci.low = quantile(mean_dens,0.025),
-                                                                                                  ci.high = quantile(mean_dens, 0.975), 
-                                                                                                  ncell = length(mean_dens))
-
-ncell <- mid.summary.ppet %>%dplyr::select(mode, mids_ppet, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-
-
-
-
-
-
-
-low_ci <- mid.summary.ppet %>%dplyr::select(mode,mids_ppet, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.ppet %>%dplyr::select(mode, mids_ppet,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
-
-merged.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_bins", "mids_ppet"))
-merged.ppet <- merge(merged.ppet, ncell, by = c("GS_ppet_bins", "mids_ppet"))
-
-merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` > 50 & merged.ppet$`Forest` > 50,"bimodal", "NS")
-
-merged.ppet[is.na(merged.ppet$bimodal), ]$bimodal <- "One mode"
-merged.ppet$y <- -41
-
-# get summary to make lines
-mid.summary.lowprob <- ppet.pls.mix %>% group_by(prob_ppet >= 0.49 &  prob_ppet <= 0.51, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                                                                       ci.low = quantile(mean_dens,0.025),
-                                                                                                                                       ci.high = quantile(mean_dens, 0.975))
-
-
-
-
-smoothingSpline.Forest = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean, spar=.75)
-plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Savanna = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mean, spar=.75)
-plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mean)
-lines(smoothingSpline.Savanna, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids_ppet, mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400,, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T, ]$mids_ppet, mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-pls.kde.plot.ppet.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue")+
-                                          lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+ text(-170,500, "B"))
-pls.kde.plot.ppet.gg.lines.full
-
-
-
-# ggplotify the kde plots here:
-pls.kde.plot.ppet.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue") + text(-170,500, "B"))
-pls.kde.plot.ppet.gg.full
-
-# plot with the equal spline on it
-pls.kde.plot.ppet.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue")+
-                                              lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2)+ text(-170,500, "B"))
-pls.kde.plot.ppet.gg.lines.full.hys
-
-
-#-------------------------- for soil moisture/bucket model
-
-H <- Hpi.diag(x=na.omit(cbind(pls.dens$mean_GS_soil, pls.dens$pls)) )
-fhat <- kde(x=na.omit(cbind(pls.dens$mean_GS_soil, pls.dens$pls)), #H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density", ylim = c(-40,550))
-
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-pls.kde.plot.sm <- recordPlot()
-pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0.5, 1.5)))
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["10%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-
-
-
-soil.pls.mix <- read.csv( "outputs/mixture_model/pls_soil_mixture_mode_estimates.csv")
-mid.summary.soil <- soil.pls.mix %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                                  ci.low = quantile(mean_dens,0.025),
-                                                                                                  ci.high = quantile(mean_dens, 0.975), 
-                                                                                                  ncell = length(mean_dens) )
-
-ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-
-
-
-low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.soil %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
-
-merged.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_bins", "mids"))
-merged.soil <- merge(merged.soil, ncell, by = c("mean_GS_soil_bins", "mids"))
-
-merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Savanna` > 50 & merged.soil$`Forest` > 50,"bimodal", "NS")
-merged.soil[is.na(merged.soil$bimodal), ]$bimodal <- "One mode"
-merged.soil$y <- -41
-
-mid.summary.lowprob <- soil.pls.mix %>% group_by(prob_soil >= 0.49 &  prob_soil <= 0.51, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
-                                                                                                                                       ci.low = quantile(mean_dens,0.025),
-                                                                                                                                       ci.high = quantile(mean_dens, 0.975))
-
-
-
-
-smoothingSpline.Forest = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mean, spar=.75)
-plot(mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Savanna = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mean, spar=.75)
-plot(mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mean)
-lines(smoothingSpline.Savanna, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-pls.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6),cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
-                                        lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen") + text(0.1,500, "C"))
-pls.kde.plot.sm.gg.lines.full
-# ggplotify the kde plots here:
-pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+ text(0.15,500, "C"))
-pls.kde.plot.sm.gg.full
-
-# plot with the equal spline on it
-pls.kde.plot.sm.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim=c(0,1.7), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
-                                            lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2) + text(0.1,500, "C"))
-pls.kde.plot.sm.gg.lines.full.hys
-
-
-
-# >>>>>>>>>>>>>>>>>>>>>>> FIA full sample distn with 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
-
-# for PC1:
-H <- Hpi.diag(x=na.omit(cbind(fia.dens$PC1fia, fia.dens$fia)) )
-fhat <- kde(x=na.omit(cbind(fia.dens$PC1fia, fia.dens$fia)), H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95,99), xlab = "PC1", ylab = "Tree density")
-#points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-
-contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
-                                      z=estimate,levels=cont["95%"])[[1]])
-
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["16%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-
-
-
-
-
-pc1.fia.mix <- read.csv( "outputs/mixture_model/fia_pc1_mixture_mode_estimates.csv")
-mid.summary.pc1 <- pc1.fia.mix %>% group_by(mode, pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                           ci.low = quantile(mean_dens_fia,0.025),
-                                                                                           ci.high = quantile(mean_dens_fia, 0.975), 
-                                                                                           ncell = length(mean_dens_fia))
-
-
-ncell <- mid.summary.pc1 %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-
-low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
-
-merged.fia.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins_fia", "mids"))
-merged.fia.pc1 <- merge(merged.fia.pc1, ncell, by = c("pc1_bins_fia", "mids"))
-
-merged.fia.pc1$bimodal <- ifelse(merged.fia.pc1$low_Forest > merged.fia.pc1$high_Savanna & merged.fia.pc1$`Low Density Forest` > 50 & merged.fia.pc1$`Forest` > 50,"bimodal", "One mode")
-merged.fia.pc1[is.na(merged.fia.pc1$bimodal), ]$bimodal <- "One mode"
-merged.fia.pc1$y <- -41
-
-
-
-
-
-
-
-mid.summary.lowprob <- pc1.fia.mix %>% group_by(prob >= 0.49 &  prob <= 0.51, pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                                       ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                                       ci.high = quantile(mean_dens_fia, 0.975))
-
-
-
-
-smoothingSpline.Forest = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean, spar=.75)
-plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Low = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mean, spar=.75)
-plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mean)
-lines(smoothingSpline.Low, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids_soil, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-#fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimclass %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
-#fia.kde.plot.pc1.gg + xlab("PC1")
-
-fia.kde.plot.pc1.gg.full.lines <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(-6, 5), yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                         lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(-5.5,500, "E"))+ xlab("P-PET")
-fia.kde.plot.pc1.gg.full.lines + xlab("PC1")
-
-fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  xlim = c(-6, 5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5,500, "E"))+ xlab("PC1")
-fia.kde.plot.pc1.gg.full + xlab("PC1")
-
-# alternate figure where if the CI of modes overlap, we only draw one line:
-
-# for fia if there is just one mode everywhere, just plot 1 line + ci
-unique(merged.fia.pc1$bimodal)
-mid.summary.ppet.one.mode <- pc1.fia.mix %>% group_by(pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                               ci.low = quantile(mean_dens_fia,0.025),
-                                                                                               ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                               ncell = length(mean_dens),
-                                                                                               mode = "Forest")
-
-
-
-smoothingSpline.one = smooth.spline(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean, spar=.75)
-plot(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean)
-lines(smoothingSpline.one, col = "brown")
-
-
-
-fia.kde.plot.pc1.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),   xlim = c(-6, 5.5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                             lines(smoothingSpline.one, lwd = 2, col = "black")+text(-5.5,500, "E"))+ xlab("P-PET")
-fia.kde.plot.pc1.gg.lines.full.hys + xlab("PC1")
-
-
-
-# --------------------for P-PET:
-H <- Hpi.diag(x=na.omit(cbind(fia.dens$GS_ppet_mod, fia.dens$fia)) )
-fhat <- kde(x=na.omit(cbind(fia.dens$GS_ppet_mod, fia.dens$fia)), #H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,80,85,95), xlab = "P-PET", ylab = "Tree density")
-#points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-fia.kde.plot.ppet <- recordPlot()
-fia.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density"))
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-
-
-
-
-ppet.fia.mix <- read.csv( "outputs/mixture_model/fia_ppet_mixture_mode_estimates.csv")
-mid.summary.ppet <- ppet.fia.mix %>% group_by(mode, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                 ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                 ci.high = quantile(mean_dens_fia, 0.975), 
-                                                                                                 ncell = length(mean_dens_fia))
-
-
-
-
-low_ci <- mid.summary.ppet %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.ppet %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
-
-
-ncell <- mid.summary.ppet %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-
-
-
-merged.fia.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_mod_bins", "mids"))
-merged.fia.ppet <- merge(merged.fia.ppet, ncell, by = c("GS_ppet_mod_bins", "mids"))
-merged.fia.ppet$bimodal <- ifelse(merged.fia.ppet$low_Forest > merged.fia.ppet$high_Savanna & merged.fia.ppet$`Low Density Forest` > 50 & merged.fia.ppet$`Forest` > 50,"bimodal", "One mode")
-merged.fia.ppet[is.na(merged.fia.ppet$bimodal), ]$bimodal <- "One mode"
-merged.fia.ppet$y <- -41
-
-mid.summary.lowprob <- ppet.fia.mix %>% group_by(prob_ppet >= 0.49 &  prob_ppet <= 0.51, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                                                      ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                                                      ci.high = quantile(mean_dens_fia, 0.975))
-
-
-
-
-smoothingSpline.Forest = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean, spar=.75)
-plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Low = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mean, spar=.75)
-plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mean)
-lines(smoothingSpline.Low, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-
-
-
-fia.kde.plot.ppet.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(-200, 300), yaxt="n", cex.axis=0.7) + # points(data = merged.fia.ppet[merged.fia.ppet$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                          lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(-175,500, "F"))+ xlab("P-PET")
-fia.kde.plot.ppet.gg.lines.full 
-
-fia.kde.plot.ppet.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7)) #+ points(data = ppet.f.bim.line[ppet.f.bim.line$bimclass %in% "bimodal",], y~ppet_mids, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
-fia.kde.plot.ppet.gg.full +xlab("P-PET")
-
-# alternate figure where if the CI of modes overlap, we only draw one line:
-
-# for fia if there is just one mode everywhere, just plot 1 line + ci
-unique(merged.fia.ppet$bimodal)
-mid.summary.ppet.one.mode <- ppet.fia.mix %>% group_by(GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                    ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                    ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                                    ncell = length(mean_dens),
-                                                                                                    mode = "Forest")
-
-
-
-smoothingSpline.one = smooth.spline(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean, spar=.75)
-plot(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean)
-lines(smoothingSpline.one, col = "brown")
-
-
-
-
-fia.kde.plot.ppet.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "P-PET",  ylim = c(-40,550), xlim = c(-200, 300), yaxt="n", cex.axis=0.7) + points(data = merged.fia.ppet[merged.fia.ppet$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                              lines(smoothingSpline.one, lwd = 2, col = "black")+text(-175,500, "F"))+ xlab("P-PET")
-
-fia.kde.plot.ppet.gg.lines.full.hys 
-
-
-
-
-
-
-# for soil moisture/bucket model
-
-H <- Hpi.diag(x=na.omit(cbind(fia.dens$mean_GS_soil_m, fia.dens$fia)) )
-fhat <- kde(x=na.omit(cbind(fia.dens$mean_GS_soil_m, fia.dens$fia)), #H=H, 
-            compute.cont = TRUE )
-
-plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density")
-#points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
-plot(fhat, display="slice", cont=c(85), add = TRUE)
-fia.kde.plot.sm <- recordPlot()
-fia.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density"))
-
-contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
-                                      z=estimate, levels=cont["15%"])[[1]])
-contour_95 <- data.frame(contour_95)
-
-
-
-
-
-
-soil.fia.mix <- read.csv( "outputs/mixture_model/fia_soil_mixture_mode_estimates.csv")
-mid.summary.soil <- soil.fia.mix %>% group_by(mode, mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                    ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                    ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                                    ncell = length(mean_dens_fia))
-
-
-
-
-low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
-high_ci <- mid.summary.soil %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
-colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
-colnames(high_ci)[3:4] <- c( "high_Forest", "high_Savanna")
-
-
-ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
-
-merged.fia.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_m_bins", "mids"))
-merged.fia.soil <- merge(merged.fia.soil, ncell, by = c("mean_GS_soil_m_bins", "mids"))
-merged.fia.soil$bimodal <- ifelse(merged.fia.soil$low_Forest > merged.fia.soil$high_Savanna & merged.fia.soil$`High Density Mode` > 50 & merged.fia.soil$`Low Density Mode` > 50,"bimodal", "One mode")
-merged.fia.soil[is.na(merged.fia.soil$bimodal), ]$bimodal <- "One mode"
-merged.fia.soil$y <- -41
-
-mid.summary.lowprob <- soil.fia.mix %>% group_by(prob_soil >= 0.49 &  prob_soil <= 0.51, mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                                                         ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                                                         ci.high = quantile(mean_dens_fia, 0.975))
-
-
-
-
-smoothingSpline.Forest = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mean, spar=.75)
-plot(mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mean)
-lines(smoothingSpline.Forest)
-
-smoothingSpline.Low = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mean, spar=.75)
-plot(mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mean)
-lines(smoothingSpline.Low, col = "brown")
-
-smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean, spar=.5)
-plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids_soil, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean)
-lines(smoothingSpline.Equal, col = "brown", lty = 2)
-
-
-# make the plot with GGPLOT:
-fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n",  cex.axis=0.9) + text(0.1,500, "G"))
-fia.kde.plot.sm.gg.full 
-
-fia.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                        lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(0.15,500, "G"))+ xlab("Soil Moisture")
-fia.kde.plot.sm.gg.lines.full + xlab("Soil Moisture")
-
-# alternate figure where if the CI of modes overlap, we only draw one line:
-
-# for fia if there is just one mode everywhere, just plot 1 line + ci
-unique(merged.fia.soil$bimodal)
-mid.summary.soil.one.mode <- soil.fia.mix %>% group_by(mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
-                                                                                                       ci.low = quantile(mean_dens_fia,0.025),
-                                                                                                       ci.high = quantile(mean_dens_fia, 0.975),
-                                                                                                       ncell = length(mean_dens),
-                                                                                                       mode = "Forest")
-
-
-
-smoothingSpline.one = smooth.spline(mid.summary.soil.one.mode$mids, mid.summary.soil.one.mode$mean, spar=.75)
-plot(mid.summary.soil.one.mode$mids, mid.summary.soil.one.mode$mean)
-lines(smoothingSpline.one, col = "brown")
-
-
-
-
-
-fia.kde.plot.sm.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "Soil Moisture",  ylim = c(-40,550), xlim=c(0,1.7),  yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
-                                            lines(smoothingSpline.one, lwd = 2, col = "black")+text(0.1,500, "G"))+ xlab("Soil Moisture")
-fia.kde.plot.sm.gg.lines.full.hys + xlab("Soil Moisture")
-
-
-
-
-# make ggplot figures of cluster density
-
-# need to merge together all of the bimodal/unimodal tags
-library(ggplotify)
-
-
-
-pls.dens$pc1_bins <- cut(pls.dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
-kde.surf.pc1.pls.dens <- left_join(pls.dens, merged.pc1[,!colnames( merged.pc1) %in% "y"], by = "pc1_bins")
-
-pls.dens$GS_ppet_bins <- cut(pls.dens$GS_ppet, breaks=seq(-170, 310, by = 15))
-kde.surf.ppet.pls.dens <- left_join(pls.dens, merged.ppet[,!colnames(merged.ppet) %in% "y"], by = "GS_ppet_bins")
-
-pls.dens$mean_GS_soil_bins <- cut(pls.dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
-kde.surf.soil.pls.dens <- left_join( pls.dens, merged.soil[,!colnames(merged.soil) %in% "y"], by = "mean_GS_soil_bins")
-
-
-
-# merge together the data and the merged summaries of what is bimodal by statistical mixture model for fia
-fia.dens$pc1_bins_fia <- cut(fia.dens$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
-kde.surf.pc1.fia.dens <- left_join(fia.dens, merged.fia.pc1[,!colnames( merged.fia.pc1) %in% "y"], by = "pc1_bins_fia")
-
-fia.dens$GS_ppet_mod_bins <- cut(fia.dens$GS_ppet_mod, breaks=seq(-170, 310, by = 15))
-kde.surf.ppet.fia.dens <- left_join(fia.dens, merged.fia.ppet[,!colnames(merged.fia.ppet) %in% "y"], by = "GS_ppet_mod_bins") #,by.y = "GS_ppet_mod_bins")
-
-fia.dens$mean_GS_soil_m_bins <- cut(fia.dens$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
-kde.surf.soil.fia.dens <- left_join(fia.dens, merged.fia.soil[,!colnames(merged.fia.soil) %in% "y"], by= "mean_GS_soil_m_bins")
-
-
-
-# need to rename to left join by sample number (otherwise merge/left_join freaks out)
-colnames(kde.surf.pc1.pls.dens)[3] <- "sample" 
-colnames(kde.surf.pc1.fia.dens)[3] <- "sample" 
-
-colnames(kde.surf.ppet.pls.dens)[3] <- "sample" 
-colnames(kde.surf.ppet.fia.dens)[3] <- "sample" 
-
-colnames(kde.surf.soil.pls.dens)[3] <- "sample" 
-colnames(kde.surf.soil.fia.dens)[3] <- "sample" 
-
-kde.surf.pc1.dens <- left_join(kde.surf.pc1.pls.dens[,c("x", "y", "sample", "pls",  "bimodal","pc1_bins", "mids")], kde.surf.pc1.fia.dens[,c("x", "y", "sample", "fia","bimodal","pc1_bins_fia", "mids")], by = c("x", "y", "sample"))
-# rename:
-colnames(kde.surf.pc1.dens) <- c("x" , "y" ,"sample", "mean_dens",  "bimclass", "pc1_bins", "mids" , "mean_dens_fia", "bimclass_f", "pc1_bins_f",  "mids_f" )     
-
-kde.surf.ppet.dens <- left_join(kde.surf.ppet.pls.dens[,c("x", "y", "sample", "pls",  "bimodal","GS_ppet_bins", "mids_ppet")], kde.surf.ppet.fia.dens[,c("x", "y",  "sample","fia","bimodal", "GS_ppet_mod_bins","mids")], by = c("x", "y", "sample"))
-colnames(kde.surf.ppet.dens) <- c("x" , "y" , "sample", "mean_dens", "bimclass_ppet", "ppet_bins", "mids" , "mean_dens_fia", "bimclass_ppet_f", "ppet_bins_f",  "mids_f" )     
-
-kde.surf.soilm.dens <- left_join(kde.surf.soil.pls.dens[,c("x", "y", "sample", "pls",  "bimodal", "mean_GS_soil_bins", "mids")], kde.surf.soil.fia.dens[,c("x", "y", "sample", "fia","bimodal", "mean_GS_soil_m_bins","mids")], by = c("x", "y", "sample"))
-colnames(kde.surf.soilm.dens) <- c("x" , "y" , "sample","mean_dens",  "bimclass_soil", "soil_bins", "mids" , "mean_dens_fia", "bimclass_soil_f", "soil_bins_f",  "mids_f" )     
-
-
-
-# make marginal histograms for figure 2 based on the pls data that is significantly bimodal & the climate space that matches that in the fia
-bimodal.pc1.bins <- unique(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$pc1_bins)
-
-flipped.pc1.hist.full <- ggplot(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
-
-bimodal.ppet.bins <- unique(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$ppet_bins)
-flipped.ppet.hist.full <- ggplot(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
-
-bimodal.soil.bins <- unique(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$soil_bins)
-flipped.soilm.hist.full <- ggplot(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
-  geom_density(data = kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
-
-
-# alternative: get density lines then ggplotify them to align:
-
-# for soil moisture
-pls.soilm.density.dens <- data.frame(y = density(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$mean_dens)$y, 
-                                   x = density(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$mean_dens)$x)
-
-fia.soilm.density.dens <- data.frame(y = density(na.omit(kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,]$mean_dens_fia))$y, 
-                                   x = density(na.omit(kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,]$mean_dens_fia))$x)
-flipped.soilm.hist.gg.full <- as.ggplot(~plot(fia.soilm.density.dens[fia.soilm.density.dens$x < 550,] , type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.soilm.density.dens[pls.soilm.density.dens$x < 550 & pls.soilm.density.dens$x > -41,] , type = "l", col = "blue"))
-
-
-# for ppet
-pls.ppet.density.dens <- data.frame(y = density(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$mean_dens)$y, 
-                                  x = density(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$mean_dens)$x)
-
-fia.ppet.density.dens <- data.frame(y = density(na.omit(kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,]$mean_dens_fia))$y, 
-                                  x = density(na.omit(kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,]$mean_dens_fia))$x)
-
-flipped.ppet.hist.gg.full <- as.ggplot(~plot(fia.ppet.density.dens[fia.ppet.density.dens$x < 550,],type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.ppet.density.dens[pls.ppet.density.dens$x < 550 & pls.ppet.density.dens$x > -41,] , type = "l", col = "blue"))
-
-# for pc1
-pls.pc1.density.dens <- data.frame(y = density(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$mean_dens)$y, 
-                                 x = density(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$mean_dens)$x)
-
-fia.pc1.density.dens <- data.frame(y = density(na.omit(kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,]$mean_dens_fia))$y, 
-                                 x = density(na.omit(kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,]$mean_dens_fia))$x)
-flipped.pc1.hist.gg.full <- as.ggplot(~plot(fia.pc1.density.dens[fia.pc1.density.dens$x < 550 ,], type = "l", col = "red", ylim = c(-41, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.dens[pls.pc1.density.dens$x < 550,], type = "l", col = "blue"))
-
-
-
-# grobs for aligning all these plots into figure 2 (no lines on the figure)
-
-library(gtable)
-g1 <- ggplotGrob(pls.kde.plot.pc1.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
-g2 <- ggplotGrob(fia.kde.plot.pc1.gg.full+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
-g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g4 <- ggplotGrob(pls.kde.plot.ppet.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g5 <- ggplotGrob(fia.kde.plot.ppet.gg.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g7 <- ggplotGrob(pls.kde.plot.sm.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g8 <- ggplotGrob(fia.kde.plot.sm.gg.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-g10 <- ggplotGrob(three.color.bimodal.plots)
-g11 <- ggplotGrob(three.color.bimodal.plots.fia)
-
-g <- cbind(g1 ,g2, g3, size = "first")
-g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
-
-grow2 <- cbind(g4 ,g5, g6, size = "first")
-grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
-
-grow3 <- cbind(g7 ,g8, g9, size = "first")
-grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
-grow4 <- cbind(g10, g11, size = "first")
-grow4$heights <-unit.pmax(g10$heights, g11$heights)
-#png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
-grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
-             arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
-             arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
-             arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
-#dev.off()
-
-
-png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats.png")
-fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
-fig3
-dev.off()
-
-
-# grobs for aligning all these plots into figure 2 (with lines of mean mode estimated from stat model)
-
-library(gtable)
-g1 <- ggplotGrob(pls.kde.plot.pc1.gg.lines.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
-g2 <- ggplotGrob(fia.kde.plot.pc1.gg.full.lines+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
-g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g4 <- ggplotGrob(pls.kde.plot.ppet.gg.lines.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g5 <- ggplotGrob(fia.kde.plot.ppet.gg.lines.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g7 <- ggplotGrob(pls.kde.plot.sm.gg.lines.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g8 <- ggplotGrob(fia.kde.plot.sm.gg.lines.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-g10 <- ggplotGrob(three.color.bimodal.plots)
-g11 <- ggplotGrob(three.color.bimodal.plots.fia)
-
-g <- cbind(g1 ,g2, g3, size = "first")
-g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
-
-grow2 <- cbind(g4 ,g5, g6, size = "first")
-grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
-
-grow3 <- cbind(g7 ,g8, g9, size = "first")
-grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
-grow4 <- cbind(g10, g11, size = "first")
-grow4$heights <-unit.pmax(g10$heights, g11$heights)
-#png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
-grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
-             arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
-             arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
-             arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
-dev.off()
-
-
-png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats_lines.png")
-fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
-fig3
-dev.off()
-
-
-# grobs for aligning all these plots into figure 2 (with lines of mean mode estimated from stat model & the 0.5 mode)
-
-library(gtable)
-g1 <- ggplotGrob(pls.kde.plot.pc1.gg.lines.full.hys+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
-g2 <- ggplotGrob(fia.kde.plot.pc1.gg.lines.full.hys+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
-g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g4 <- ggplotGrob(pls.kde.plot.ppet.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g5 <- ggplotGrob(fia.kde.plot.ppet.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-
-g7 <- ggplotGrob(pls.kde.plot.sm.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
-g8 <- ggplotGrob(fia.kde.plot.sm.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
-g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
-g10 <- ggplotGrob(three.color.bimodal.plots)
-g11 <- ggplotGrob(three.color.bimodal.plots.fia)
-
-g <- cbind(g1 ,g2, g3, size = "first")
-g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
-
-grow2 <- cbind(g4 ,g5, g6, size = "first")
-grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
-
-grow3 <- cbind(g7 ,g8, g9, size = "first")
-grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
-grow4 <- cbind(g10, g11, size = "first")
-grow4$heights <-unit.pmax(g10$heights, g11$heights)
-#png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
-grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
-             arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
-             arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
-             arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
-dev.off()
-
-
-png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats_lines_hys.png")
-fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
-fig3
-dev.off()
-
-
-
-# -----make this same figure but with hysteresis plots instead of the yellow and red density plots
-
-png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_full.png")
-
-plot_grid(hysteresis.pc1.pls.quants + ylim(0, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.ppet.pls.quants+xlim(-150, 220) + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(0, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          hysteresis.soil.pls.quants + ylim(0, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(0, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
-          three.color.bimodal.plots.nolabs +  theme(legend.title=element_blank(),panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs + theme(legend.title=element_blank(), plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
-dev.off()
+# # >>>>>>>>>>>>>>>>>>>>>>> ALL STAT DRAWS 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
+# total.pls <- read.csv("data/extracted_total_PLS_density_draws.csv")
+# total.fia <- read.csv("data/extracted_total_FIA_density_draws.csv")
+# 
+# colnames(total.pls) <- c("x",  "y","sample_pls" ,"pls" )
+# colnames(total.fia) <-c("x",  "y","sample_fia" ,"fia" )
+# 
+# total.pls <- total.pls[!is.na(total.pls$pls),]
+# total.fia <- total.fia[!is.na(total.fia$fia),]
+# 
+# pls.dens <- left_join(total.pls, dens.pr, by=c("x", "y"))
+# fia.dens <- left_join(total.fia, dens.pr,  by=c("x", "y"))
+# 
+# 
+# 
+# # for PC1:
+# H <- Hpi.diag(x=na.omit(cbind(pls.dens$PC1, pls.dens$pls)) )
+# fhat <- kde(x=na.omit(cbind(pls.dens$PC1, pls.dens$pls)), #H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550))
+# #points(na.omit(cbind(pls.dens$PC1, pls.dens$pls)), cex=0.3, pch=16)
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# 
+# contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
+#                                       z=estimate,levels=cont["95%"])[[1]])
+# 
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["10%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# pc.pls.mix <- read.csv("outputs/mixture_model/pls_pc1_mixture_mode_estimates.csv")
+# mid.summary.pc1 <- pc.pls.mix  %>% group_by(mode, pc1_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                        ci.low = quantile(mean_dens,0.025),
+#                                                                                        ci.high = quantile(mean_dens, 0.975), 
+#                                                                                        ncell = length(mean_dens))
+# 
+# ncell <- mid.summary.pc1 %>% dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# #merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` > 50 & merged.ppet$`Forest` > 50,"bimodal", "NS")
+# 
+# low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+# 
+# 
+# merged.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins", "mids"))
+# merged.pc1 <- merge(merged.pc1, ncell, by = c("pc1_bins", "mids"))
+# 
+# merged.pc1$bimodal <- ifelse(merged.pc1$low_Forest > merged.pc1$high_Savanna & merged.pc1$`Savanna` > 50 & merged.pc1$`Forest` > 50,"bimodal", "NS")
+# 
+# merged.pc1[is.na(merged.pc1$bimodal), ]$bimodal <- "One mode"
+# merged.pc1$y <- -41
+# 
+# 
+# mid.summary.lowprob <- pc.pls.mix %>% group_by(prob >= 0.49 &  prob <= 0.51, pc1_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                                                   ci.low = quantile(mean_dens,0.025),
+#                                                                                                                   ci.high = quantile(mean_dens, 0.975))
+# 
+# 
+# hysteresis.pc1.pls <- ggplot(data = data.frame(mid.summary.pc1), aes(mids, mean, color = mode))+stat_smooth(se = FALSE)+geom_ribbon(data = mid.summary.pc1, aes(ymin = ci.low, ymax = ci.high, fill = mode), alpha = 0.25, linetype = "dashed", colour = NA)+
+#   theme_bw()+scale_fill_manual(values = c('#005a32', '#8c510a'))+scale_color_manual(values = c('#005a32', '#8c510a'))+geom_smooth(data = mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 &  prob <= 0.51` %in% T,], aes(mids, mean), color = "black", linetype = "dashed",se = FALSE)+
+#   ylab("Mean Tree Density (stems/ha)")+xlab("growing season P-PET")+theme(panel.grid.major = element_blank())
+# 
+# # get bimod.pc.pls from previous code
+# pc1.bim.line <- bimod.pc.pls[,c("pc1_bins", "mids","ncells_pc1", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass")]
+# #pc1.bim.line <- bimod.ppet.pls[,c("ppet_bins", "mids","ncells_ppet", "mean.p", "mean.d", "bimclass_lowsamp", "bimclass_ppet")]
+# pc1.bim.line <- pc1.bim.line[!duplicated(pc1.bim.line),]
+# pc1.bim.line$y <- -41
+# 
+# 
+# library(base2grob)
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean, spar=.75)
+# plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Savanna = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mean, spar=.75)
+# plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Savanna", ]$mean)
+# lines(smoothingSpline.Savanna, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# pls.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5),cex.axis = 0.7 ) + points(pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$mids , pc1.bim.line[pc1.bim.line$bimclass %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+
+#                                    text(-5, 500, "A"))
+# 
+# pls.kde.plot.pc1.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5),cex.axis = 0.7 ) + points(merged.pc1[merged.pc1$bimodal %in% "bimodal",]$mids , merged.pc1[merged.pc1$bimodal %in% "bimodal",]$y, col = "darkblue", pch = 15, cex = 1)+
+#                                          lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+  text(-5, 500, "A"))
+# 
+# pls.kde.plot.pc1.gg.lines.full
+# 
+# 
+# # plot with the equal spline on it
+# pls.kde.plot.pc1.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "PC1", ylab = "Tree density", ylim = c(-40,550), xlim = c(-6, 5.5), cex.axis = 0.7) + points(data = merged.pc1[merged.pc1$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+
+#                                              lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2)+  text(-5, 500, "A"))
+# pls.kde.plot.pc1.gg.lines.full.hys
+# 
+# # ------------------------PLS for P-PET:
+# H <- Hpi.diag(x=na.omit(cbind(pls.dens$GS_ppet, pls.dens$pls)) )
+# fhat <- kde(x=na.omit(cbind(pls.dens$GS_ppet, pls.dens$pls)), #H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,80,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550))
+# #points(na.omit(cbind(pls.dens$PC1, pls.dens$pls)), cex=0.3, pch=16)
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# pls.kde.plot.ppet <- recordPlot()
+# pls.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(0,550), xlim = c(-180, 300)))
+# 
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["10%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# 
+# 
+# # read in statistical summaries
+# ppet.pls.mix <- read.csv( "outputs/mixture_model/pls_ppet_mixture_mode_estimates.csv")
+# mid.summary.ppet <- ppet.pls.mix %>% group_by(mode, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                                   ci.low = quantile(mean_dens,0.025),
+#                                                                                                   ci.high = quantile(mean_dens, 0.975), 
+#                                                                                                   ncell = length(mean_dens))
+# 
+# ncell <- mid.summary.ppet %>%dplyr::select(mode, mids_ppet, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# low_ci <- mid.summary.ppet %>%dplyr::select(mode,mids_ppet, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.ppet %>%dplyr::select(mode, mids_ppet,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+# 
+# merged.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_bins", "mids_ppet"))
+# merged.ppet <- merge(merged.ppet, ncell, by = c("GS_ppet_bins", "mids_ppet"))
+# 
+# merged.ppet$bimodal <- ifelse(merged.ppet$low_Forest > merged.ppet$high_Savanna & merged.ppet$`Savanna` > 50 & merged.ppet$`Forest` > 50,"bimodal", "NS")
+# 
+# merged.ppet[is.na(merged.ppet$bimodal), ]$bimodal <- "One mode"
+# merged.ppet$y <- -41
+# 
+# # get summary to make lines
+# mid.summary.lowprob <- ppet.pls.mix %>% group_by(prob_ppet >= 0.49 &  prob_ppet <= 0.51, GS_ppet_bins, mids_ppet) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                                                                        ci.low = quantile(mean_dens,0.025),
+#                                                                                                                                        ci.high = quantile(mean_dens, 0.975))
+# 
+# 
+# 
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean, spar=.75)
+# plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Savanna = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mean, spar=.75)
+# plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mids_ppet, mid.summary.ppet[mid.summary.ppet$mode %in% "Savanna", ]$mean)
+# lines(smoothingSpline.Savanna, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids_ppet, mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400,, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T, ]$mids_ppet, mid.summary.lowprob[mid.summary.lowprob$`prob_ppet >= 0.49 & prob_ppet <= 0.51` %in% T, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# pls.kde.plot.ppet.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue")+
+#                                           lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+ text(-170,500, "B"))
+# pls.kde.plot.ppet.gg.lines.full
+# 
+# 
+# 
+# # ggplotify the kde plots here:
+# pls.kde.plot.ppet.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue") + text(-170,500, "B"))
+# pls.kde.plot.ppet.gg.full
+# 
+# # plot with the equal spline on it
+# pls.kde.plot.ppet.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density", ylim = c(-40,550), xlim = c(-200, 300), cex.axis = 0.7) + points(data = merged.ppet[merged.ppet$bimodal %in% "bimodal",], y~mids_ppet, cex = 1,  pch = 15,col = "darkblue")+
+#                                               lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2)+ text(-170,500, "B"))
+# pls.kde.plot.ppet.gg.lines.full.hys
+# 
+# 
+# #-------------------------- for soil moisture/bucket model
+# 
+# H <- Hpi.diag(x=na.omit(cbind(pls.dens$mean_GS_soil, pls.dens$pls)) )
+# fhat <- kde(x=na.omit(cbind(pls.dens$mean_GS_soil, pls.dens$pls)), #H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density", ylim = c(-40,550))
+# 
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# pls.kde.plot.sm <- recordPlot()
+# pls.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density", ylim = c(0,550), xlim=c(0.5, 1.5)))
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["10%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# 
+# 
+# 
+# soil.pls.mix <- read.csv( "outputs/mixture_model/pls_soil_mixture_mode_estimates.csv")
+# mid.summary.soil <- soil.pls.mix %>% group_by(mode, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                                   ci.low = quantile(mean_dens,0.025),
+#                                                                                                   ci.high = quantile(mean_dens, 0.975), 
+#                                                                                                   ncell = length(mean_dens) )
+# 
+# ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# 
+# 
+# 
+# low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.soil %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+# 
+# merged.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_bins", "mids"))
+# merged.soil <- merge(merged.soil, ncell, by = c("mean_GS_soil_bins", "mids"))
+# 
+# merged.soil$bimodal <- ifelse(merged.soil$low_Forest > merged.soil$high_Savanna & merged.soil$`Savanna` > 50 & merged.soil$`Forest` > 50,"bimodal", "NS")
+# merged.soil[is.na(merged.soil$bimodal), ]$bimodal <- "One mode"
+# merged.soil$y <- -41
+# 
+# mid.summary.lowprob <- soil.pls.mix %>% group_by(prob_soil >= 0.49 &  prob_soil <= 0.51, mean_GS_soil_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens),
+#                                                                                                                                        ci.low = quantile(mean_dens,0.025),
+#                                                                                                                                        ci.high = quantile(mean_dens, 0.975))
+# 
+# 
+# 
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mean, spar=.75)
+# plot(mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Forest", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Savanna = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mean, spar=.75)
+# plot(mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Savanna", ]$mean)
+# lines(smoothingSpline.Savanna, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 & prob_soil <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400 & mid.summary.lowprob$mean_GS_soil_bins %in% merged.soil[merged.soil$bimodal %in% "bimodal",]$mean_GS_soil_bins, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# pls.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6),cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
+#                                         lines(smoothingSpline.Savanna, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen") + text(0.1,500, "C"))
+# pls.kde.plot.sm.gg.lines.full
+# # ggplotify the kde plots here:
+# pls.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim = c(0, 1.6), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue")+ text(0.15,500, "C"))
+# pls.kde.plot.sm.gg.full
+# 
+# # plot with the equal spline on it
+# pls.kde.plot.sm.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = "Tree density", ylim = c(-40,550), xlim=c(0,1.7), cex.axis = 0.7) + points(data = merged.soil[merged.soil$bimodal %in% "bimodal",], y~mids, cex = 1,  pch = 15,col = "darkblue") +
+#                                             lines(smoothingSpline.Savanna, lwd = 2, col = "black")+  lines(smoothingSpline.Forest, lwd = 2, col = "black") +lines(smoothingSpline.Equal, lwd = 2, col = "grey", lty = 2) + text(0.1,500, "C"))
+# pls.kde.plot.sm.gg.lines.full.hys
+# 
+# 
+# 
+# # >>>>>>>>>>>>>>>>>>>>>>> FIA full sample distn with 2d density plots: <<<<<<<<<<<<<<<<<<<<<<<
+# 
+# # for PC1:
+# H <- Hpi.diag(x=na.omit(cbind(fia.dens$PC1fia, fia.dens$fia)) )
+# fhat <- kde(x=na.omit(cbind(fia.dens$PC1fia, fia.dens$fia)), H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95,99), xlab = "PC1", ylab = "Tree density")
+# #points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# 
+# contour.95 <- with(fhat, contourLines(x=eval.points[[1]],y=eval.points[[2]],
+#                                       z=estimate,levels=cont["95%"])[[1]])
+# 
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["16%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# 
+# 
+# 
+# 
+# 
+# pc1.fia.mix <- read.csv( "outputs/mixture_model/fia_pc1_mixture_mode_estimates.csv")
+# mid.summary.pc1 <- pc1.fia.mix %>% group_by(mode, pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                            ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                            ci.high = quantile(mean_dens_fia, 0.975), 
+#                                                                                            ncell = length(mean_dens_fia))
+# 
+# 
+# ncell <- mid.summary.pc1 %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# 
+# low_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.pc1 %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+# 
+# merged.fia.pc1 <- merge(low_ci, high_ci, by = c("pc1_bins_fia", "mids"))
+# merged.fia.pc1 <- merge(merged.fia.pc1, ncell, by = c("pc1_bins_fia", "mids"))
+# 
+# merged.fia.pc1$bimodal <- ifelse(merged.fia.pc1$low_Forest > merged.fia.pc1$high_Savanna & merged.fia.pc1$`Low Density Forest` > 50 & merged.fia.pc1$`Forest` > 50,"bimodal", "One mode")
+# merged.fia.pc1[is.na(merged.fia.pc1$bimodal), ]$bimodal <- "One mode"
+# merged.fia.pc1$y <- -41
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# mid.summary.lowprob <- pc1.fia.mix %>% group_by(prob >= 0.49 &  prob <= 0.51, pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                                        ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                                        ci.high = quantile(mean_dens_fia, 0.975))
+# 
+# 
+# 
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean, spar=.75)
+# plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Forest", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Low = smooth.spline(mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mean, spar=.75)
+# plot(mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mids, mid.summary.pc1[mid.summary.pc1$mode %in% "Low Density Forest", ]$mean)
+# lines(smoothingSpline.Low, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids_soil, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# #fia.kde.plot.pc1.gg <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  yaxt="n", cex.axis=0.7) + points(data = pc1.f.bim.line[pc1.f.bim.line$bimclass %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5.5,500, "E"))+ xlab("P-PET")
+# #fia.kde.plot.pc1.gg + xlab("PC1")
+# 
+# fia.kde.plot.pc1.gg.full.lines <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(-6, 5), yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                          lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(-5.5,500, "E"))+ xlab("P-PET")
+# fia.kde.plot.pc1.gg.full.lines + xlab("PC1")
+# 
+# fia.kde.plot.pc1.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,99), ylab = " ",xlab = "PC1",  ylim = c(-40,550),  xlim = c(-6, 5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+ text(-5,500, "E"))+ xlab("PC1")
+# fia.kde.plot.pc1.gg.full + xlab("PC1")
+# 
+# # alternate figure where if the CI of modes overlap, we only draw one line:
+# 
+# # for fia if there is just one mode everywhere, just plot 1 line + ci
+# unique(merged.fia.pc1$bimodal)
+# mid.summary.ppet.one.mode <- pc1.fia.mix %>% group_by(pc1_bins_fia, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                ci.high = quantile(mean_dens_fia, 0.975),
+#                                                                                                ncell = length(mean_dens),
+#                                                                                                mode = "Forest")
+# 
+# 
+# 
+# smoothingSpline.one = smooth.spline(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean, spar=.75)
+# plot(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean)
+# lines(smoothingSpline.one, col = "brown")
+# 
+# 
+# 
+# fia.kde.plot.pc1.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550),   xlim = c(-6, 5.5),yaxt="n", cex.axis=0.7) + points(data = merged.fia.pc1[merged.fia.pc1$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                              lines(smoothingSpline.one, lwd = 2, col = "black")+text(-5.5,500, "E"))+ xlab("P-PET")
+# fia.kde.plot.pc1.gg.lines.full.hys + xlab("PC1")
+# 
+# 
+# 
+# # --------------------for P-PET:
+# H <- Hpi.diag(x=na.omit(cbind(fia.dens$GS_ppet_mod, fia.dens$fia)) )
+# fhat <- kde(x=na.omit(cbind(fia.dens$GS_ppet_mod, fia.dens$fia)), #H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,75,80,85,95), xlab = "P-PET", ylab = "Tree density")
+# #points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# fia.kde.plot.ppet <- recordPlot()
+# fia.kde.plot.ppet.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "P-PET", ylab = "Tree density"))
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["15%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# 
+# 
+# 
+# 
+# ppet.fia.mix <- read.csv( "outputs/mixture_model/fia_ppet_mixture_mode_estimates.csv")
+# mid.summary.ppet <- ppet.fia.mix %>% group_by(mode, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                  ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                  ci.high = quantile(mean_dens_fia, 0.975), 
+#                                                                                                  ncell = length(mean_dens_fia))
+# 
+# 
+# 
+# 
+# low_ci <- mid.summary.ppet %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.ppet %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c("high_Forest", "high_Savanna")
+# 
+# 
+# ncell <- mid.summary.ppet %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# 
+# 
+# 
+# merged.fia.ppet <- merge(low_ci, high_ci, by = c("GS_ppet_mod_bins", "mids"))
+# merged.fia.ppet <- merge(merged.fia.ppet, ncell, by = c("GS_ppet_mod_bins", "mids"))
+# merged.fia.ppet$bimodal <- ifelse(merged.fia.ppet$low_Forest > merged.fia.ppet$high_Savanna & merged.fia.ppet$`Low Density Forest` > 50 & merged.fia.ppet$`Forest` > 50,"bimodal", "One mode")
+# merged.fia.ppet[is.na(merged.fia.ppet$bimodal), ]$bimodal <- "One mode"
+# merged.fia.ppet$y <- -41
+# 
+# mid.summary.lowprob <- ppet.fia.mix %>% group_by(prob_ppet >= 0.49 &  prob_ppet <= 0.51, GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                                                       ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                                                       ci.high = quantile(mean_dens_fia, 0.975))
+# 
+# 
+# 
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean, spar=.75)
+# plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Forest", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Low = smooth.spline(mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mean, spar=.75)
+# plot(mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mids, mid.summary.ppet[mid.summary.ppet$mode %in% "Low Density Forest", ]$mean)
+# lines(smoothingSpline.Low, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob >= 0.49 & prob <= 0.51` %in% T & mid.summary.lowprob$ci.high < 400, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# 
+# 
+# 
+# fia.kde.plot.ppet.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(-200, 300), yaxt="n", cex.axis=0.7) + # points(data = merged.fia.ppet[merged.fia.ppet$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                           lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(-175,500, "F"))+ xlab("P-PET")
+# fia.kde.plot.ppet.gg.lines.full 
+# 
+# fia.kde.plot.ppet.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab="P-PET",ylab=NA,  ylim = c(-40,550), xlim = c(-200, 300),  yaxt="n" , cex.axis=0.7)) #+ points(data = ppet.f.bim.line[ppet.f.bim.line$bimclass %in% "bimodal",], y~ppet_mids, cex = 0.9,  pch = 15,col = "red")+ text(-170,500, "F"))+xlab("P-PET")
+# fia.kde.plot.ppet.gg.full +xlab("P-PET")
+# 
+# # alternate figure where if the CI of modes overlap, we only draw one line:
+# 
+# # for fia if there is just one mode everywhere, just plot 1 line + ci
+# unique(merged.fia.ppet$bimodal)
+# mid.summary.ppet.one.mode <- ppet.fia.mix %>% group_by(GS_ppet_mod_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                     ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                     ci.high = quantile(mean_dens_fia, 0.975),
+#                                                                                                     ncell = length(mean_dens),
+#                                                                                                     mode = "Forest")
+# 
+# 
+# 
+# smoothingSpline.one = smooth.spline(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean, spar=.75)
+# plot(mid.summary.ppet.one.mode$mids, mid.summary.ppet.one.mode$mean)
+# lines(smoothingSpline.one, col = "brown")
+# 
+# 
+# 
+# 
+# fia.kde.plot.ppet.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "P-PET",  ylim = c(-40,550), xlim = c(-200, 300), yaxt="n", cex.axis=0.7) + points(data = merged.fia.ppet[merged.fia.ppet$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                               lines(smoothingSpline.one, lwd = 2, col = "black")+text(-175,500, "F"))+ xlab("P-PET")
+# 
+# fia.kde.plot.ppet.gg.lines.full.hys 
+# 
+# 
+# 
+# 
+# 
+# 
+# # for soil moisture/bucket model
+# 
+# H <- Hpi.diag(x=na.omit(cbind(fia.dens$mean_GS_soil_m, fia.dens$fia)) )
+# fhat <- kde(x=na.omit(cbind(fia.dens$mean_GS_soil_m, fia.dens$fia)), #H=H, 
+#             compute.cont = TRUE )
+# 
+# plot(fhat, display="filled.contour2", cont=c(1,5,15,25,30,35,40,35,45,50,60,65,75,80,85,95), xlab = "Growing season soil", ylab = "Tree density")
+# #points(na.omit(cbind(fia.dens$PC1, fia.dens$PLSdensity)), cex=0.3, pch=16)
+# plot(fhat, display="slice", cont=c(85), add = TRUE)
+# fia.kde.plot.sm <- recordPlot()
+# fia.kde.plot.sm.grob <- base2grob(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "soil moisture", ylab = "Tree density"))
+# 
+# contour_95 <- with(fhat, contourLines(x=eval.points[[1]], y=eval.points[[2]],
+#                                       z=estimate, levels=cont["15%"])[[1]])
+# contour_95 <- data.frame(contour_95)
+# 
+# 
+# 
+# 
+# 
+# 
+# soil.fia.mix <- read.csv( "outputs/mixture_model/fia_soil_mixture_mode_estimates.csv")
+# mid.summary.soil <- soil.fia.mix %>% group_by(mode, mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                     ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                     ci.high = quantile(mean_dens_fia, 0.975),
+#                                                                                                     ncell = length(mean_dens_fia))
+# 
+# 
+# 
+# 
+# low_ci <- mid.summary.soil %>%dplyr::select(mode, mids, ci.low) %>% spread(key = mode, value = ci.low, drop = TRUE)
+# high_ci <- mid.summary.soil %>%dplyr::select(mode, mids,ci.high) %>% spread(key = mode, value = ci.high, drop = TRUE)
+# colnames(low_ci)[3:4] <- c("low_Forest", "low_Savanna")
+# colnames(high_ci)[3:4] <- c( "high_Forest", "high_Savanna")
+# 
+# 
+# ncell <- mid.summary.soil %>%dplyr::select(mode, mids, ncell) %>% spread(key = mode, value = ncell, drop = TRUE)
+# 
+# merged.fia.soil <- merge(low_ci, high_ci, by = c("mean_GS_soil_m_bins", "mids"))
+# merged.fia.soil <- merge(merged.fia.soil, ncell, by = c("mean_GS_soil_m_bins", "mids"))
+# merged.fia.soil$bimodal <- ifelse(merged.fia.soil$low_Forest > merged.fia.soil$high_Savanna & merged.fia.soil$`High Density Mode` > 50 & merged.fia.soil$`Low Density Mode` > 50,"bimodal", "One mode")
+# merged.fia.soil[is.na(merged.fia.soil$bimodal), ]$bimodal <- "One mode"
+# merged.fia.soil$y <- -41
+# 
+# mid.summary.lowprob <- soil.fia.mix %>% group_by(prob_soil >= 0.49 &  prob_soil <= 0.51, mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                                                          ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                                                          ci.high = quantile(mean_dens_fia, 0.975))
+# 
+# 
+# 
+# 
+# smoothingSpline.Forest = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mean, spar=.75)
+# plot(mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "High Density Mode", ]$mean)
+# lines(smoothingSpline.Forest)
+# 
+# smoothingSpline.Low = smooth.spline(mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mean, spar=.75)
+# plot(mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mids, mid.summary.soil[mid.summary.soil$mode %in% "Low Density Mode", ]$mean)
+# lines(smoothingSpline.Low, col = "brown")
+# 
+# smoothingSpline.Equal = smooth.spline(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean, spar=.5)
+# plot(mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mids_soil, mid.summary.lowprob[mid.summary.lowprob$`prob_soil >= 0.49 &  prob_soil <= 0.51` %in% T, ]$mean)
+# lines(smoothingSpline.Equal, col = "brown", lty = 2)
+# 
+# 
+# # make the plot with GGPLOT:
+# fia.kde.plot.sm.gg.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), xlab = "Soil Moisture", ylab = NA, ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n",  cex.axis=0.9) + text(0.1,500, "G"))
+# fia.kde.plot.sm.gg.full 
+# 
+# fia.kde.plot.sm.gg.lines.full <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "PC1",  ylim = c(-40,550), xlim = c(0, 1.6), yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                         lines(smoothingSpline.Low, lwd = 2, col = "brown")+  lines(smoothingSpline.Forest, lwd = 2, col = "forestgreen")+text(0.15,500, "G"))+ xlab("Soil Moisture")
+# fia.kde.plot.sm.gg.lines.full + xlab("Soil Moisture")
+# 
+# # alternate figure where if the CI of modes overlap, we only draw one line:
+# 
+# # for fia if there is just one mode everywhere, just plot 1 line + ci
+# unique(merged.fia.soil$bimodal)
+# mid.summary.soil.one.mode <- soil.fia.mix %>% group_by(mean_GS_soil_m_bins, mids) %>% dplyr::summarise(mean = mean(mean_dens_fia),
+#                                                                                                        ci.low = quantile(mean_dens_fia,0.025),
+#                                                                                                        ci.high = quantile(mean_dens_fia, 0.975),
+#                                                                                                        ncell = length(mean_dens),
+#                                                                                                        mode = "Forest")
+# 
+# 
+# 
+# smoothingSpline.one = smooth.spline(mid.summary.soil.one.mode$mids, mid.summary.soil.one.mode$mean, spar=.75)
+# plot(mid.summary.soil.one.mode$mids, mid.summary.soil.one.mode$mean)
+# lines(smoothingSpline.one, col = "brown")
+# 
+# 
+# 
+# 
+# 
+# fia.kde.plot.sm.gg.lines.full.hys <- as.ggplot(~plot(fhat, display="filled.contour2", cont=c(1,5,10,15,25,30,50,60,75,85,95), ylab = " ",xlab = "Soil Moisture",  ylim = c(-40,550), xlim=c(0,1.7),  yaxt="n", cex.axis=0.7) + points(data = merged.fia.soil[merged.fia.soil$bimodal %in% "bimodal",], y~mids, cex = 0.9,  pch = 15,col = "red")+
+#                                             lines(smoothingSpline.one, lwd = 2, col = "black")+text(0.1,500, "G"))+ xlab("Soil Moisture")
+# fia.kde.plot.sm.gg.lines.full.hys + xlab("Soil Moisture")
+# 
+# 
+# 
+# 
+# # make ggplot figures of cluster density
+# 
+# # need to merge together all of the bimodal/unimodal tags
+# library(ggplotify)
+# 
+# 
+# 
+# pls.dens$pc1_bins <- cut(pls.dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
+# kde.surf.pc1.pls.dens <- left_join(pls.dens, merged.pc1[,!colnames( merged.pc1) %in% "y"], by = "pc1_bins")
+# 
+# pls.dens$GS_ppet_bins <- cut(pls.dens$GS_ppet, breaks=seq(-170, 310, by = 15))
+# kde.surf.ppet.pls.dens <- left_join(pls.dens, merged.ppet[,!colnames(merged.ppet) %in% "y"], by = "GS_ppet_bins")
+# 
+# pls.dens$mean_GS_soil_bins <- cut(pls.dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
+# kde.surf.soil.pls.dens <- left_join( pls.dens, merged.soil[,!colnames(merged.soil) %in% "y"], by = "mean_GS_soil_bins")
+# 
+# 
+# 
+# # merge together the data and the merged summaries of what is bimodal by statistical mixture model for fia
+# fia.dens$pc1_bins_fia <- cut(fia.dens$PC1fia, breaks=seq(-5.5, 4.5, by = 0.25))
+# kde.surf.pc1.fia.dens <- left_join(fia.dens, merged.fia.pc1[,!colnames( merged.fia.pc1) %in% "y"], by = "pc1_bins_fia")
+# 
+# fia.dens$GS_ppet_mod_bins <- cut(fia.dens$GS_ppet_mod, breaks=seq(-170, 310, by = 15))
+# kde.surf.ppet.fia.dens <- left_join(fia.dens, merged.fia.ppet[,!colnames(merged.fia.ppet) %in% "y"], by = "GS_ppet_mod_bins") #,by.y = "GS_ppet_mod_bins")
+# 
+# fia.dens$mean_GS_soil_m_bins <- cut(fia.dens$mean_GS_soil_m, breaks=seq(0, 1.8, by = 0.05))
+# kde.surf.soil.fia.dens <- left_join(fia.dens, merged.fia.soil[,!colnames(merged.fia.soil) %in% "y"], by= "mean_GS_soil_m_bins")
+# 
+# 
+# 
+# # need to rename to left join by sample number (otherwise merge/left_join freaks out)
+# colnames(kde.surf.pc1.pls.dens)[3] <- "sample" 
+# colnames(kde.surf.pc1.fia.dens)[3] <- "sample" 
+# 
+# colnames(kde.surf.ppet.pls.dens)[3] <- "sample" 
+# colnames(kde.surf.ppet.fia.dens)[3] <- "sample" 
+# 
+# colnames(kde.surf.soil.pls.dens)[3] <- "sample" 
+# colnames(kde.surf.soil.fia.dens)[3] <- "sample" 
+# 
+# kde.surf.pc1.dens <- left_join(kde.surf.pc1.pls.dens[,c("x", "y", "sample", "pls",  "bimodal","pc1_bins", "mids")], kde.surf.pc1.fia.dens[,c("x", "y", "sample", "fia","bimodal","pc1_bins_fia", "mids")], by = c("x", "y", "sample"))
+# # rename:
+# colnames(kde.surf.pc1.dens) <- c("x" , "y" ,"sample", "mean_dens",  "bimclass", "pc1_bins", "mids" , "mean_dens_fia", "bimclass_f", "pc1_bins_f",  "mids_f" )     
+# 
+# kde.surf.ppet.dens <- left_join(kde.surf.ppet.pls.dens[,c("x", "y", "sample", "pls",  "bimodal","GS_ppet_bins", "mids_ppet")], kde.surf.ppet.fia.dens[,c("x", "y",  "sample","fia","bimodal", "GS_ppet_mod_bins","mids")], by = c("x", "y", "sample"))
+# colnames(kde.surf.ppet.dens) <- c("x" , "y" , "sample", "mean_dens", "bimclass_ppet", "ppet_bins", "mids" , "mean_dens_fia", "bimclass_ppet_f", "ppet_bins_f",  "mids_f" )     
+# 
+# kde.surf.soilm.dens <- left_join(kde.surf.soil.pls.dens[,c("x", "y", "sample", "pls",  "bimodal", "mean_GS_soil_bins", "mids")], kde.surf.soil.fia.dens[,c("x", "y", "sample", "fia","bimodal", "mean_GS_soil_m_bins","mids")], by = c("x", "y", "sample"))
+# colnames(kde.surf.soilm.dens) <- c("x" , "y" , "sample","mean_dens",  "bimclass_soil", "soil_bins", "mids" , "mean_dens_fia", "bimclass_soil_f", "soil_bins_f",  "mids_f" )     
+# 
+# 
+# 
+# # make marginal histograms for figure 2 based on the pls data that is significantly bimodal & the climate space that matches that in the fia
+# bimodal.pc1.bins <- unique(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$pc1_bins)
+# 
+# flipped.pc1.hist.full <- ggplot(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
+#   geom_density(data = kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+# 
+# bimodal.ppet.bins <- unique(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$ppet_bins)
+# flipped.ppet.hist.full <- ggplot(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
+#   geom_density(data = kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+# 
+# bimodal.soil.bins <- unique(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$soil_bins)
+# flipped.soilm.hist.full <- ggplot(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",], aes(mean_dens))+geom_density(color = "blue")+
+#   geom_density(data = kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,], aes(mean_dens_fia), color = "red")+coord_flip()+xlab("Tree density")+ylab("Frequency")+theme_bw(base_size = 8)+xlim(0,550)
+# 
+# 
+# # alternative: get density lines then ggplotify them to align:
+# 
+# # for soil moisture
+# pls.soilm.density.dens <- data.frame(y = density(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$mean_dens)$y, 
+#                                    x = density(kde.surf.soilm.dens[kde.surf.soilm.dens$bimclass_soil %in% "bimodal",]$mean_dens)$x)
+# 
+# fia.soilm.density.dens <- data.frame(y = density(na.omit(kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,]$mean_dens_fia))$y, 
+#                                    x = density(na.omit(kde.surf.soilm.dens[kde.surf.soilm.dens$soil_bins_f %in% bimodal.soil.bins,]$mean_dens_fia))$x)
+# flipped.soilm.hist.gg.full <- as.ggplot(~plot(fia.soilm.density.dens[fia.soilm.density.dens$x < 550,] , type = "l", col = "red", ylim = c(-40, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.soilm.density.dens[pls.soilm.density.dens$x < 550 & pls.soilm.density.dens$x > -41,] , type = "l", col = "blue"))
+# 
+# 
+# # for ppet
+# pls.ppet.density.dens <- data.frame(y = density(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$mean_dens)$y, 
+#                                   x = density(kde.surf.ppet.dens[kde.surf.ppet.dens$bimclass_ppet %in% "bimodal",]$mean_dens)$x)
+# 
+# fia.ppet.density.dens <- data.frame(y = density(na.omit(kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,]$mean_dens_fia))$y, 
+#                                   x = density(na.omit(kde.surf.ppet.dens[kde.surf.ppet.dens$ppet_bins_f %in% bimodal.ppet.bins,]$mean_dens_fia))$x)
+# 
+# flipped.ppet.hist.gg.full <- as.ggplot(~plot(fia.ppet.density.dens[fia.ppet.density.dens$x < 550,],type = "l", col = "red", ylim = c(-40, 550),yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.ppet.density.dens[pls.ppet.density.dens$x < 550 & pls.ppet.density.dens$x > -41,] , type = "l", col = "blue"))
+# 
+# # for pc1
+# pls.pc1.density.dens <- data.frame(y = density(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$mean_dens)$y, 
+#                                  x = density(kde.surf.pc1.dens[kde.surf.pc1.dens$bimclass %in% "bimodal",]$mean_dens)$x)
+# 
+# fia.pc1.density.dens <- data.frame(y = density(na.omit(kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,]$mean_dens_fia))$y, 
+#                                  x = density(na.omit(kde.surf.pc1.dens[kde.surf.pc1.dens$pc1_bins_f %in% bimodal.pc1.bins,]$mean_dens_fia))$x)
+# flipped.pc1.hist.gg.full <- as.ggplot(~plot(fia.pc1.density.dens[fia.pc1.density.dens$x < 550 ,], type = "l", col = "red", ylim = c(-41, 550), yaxt="n", ylab = NA, xlab = NA, xaxt = "n") + lines(pls.pc1.density.dens[pls.pc1.density.dens$x < 550,], type = "l", col = "blue"))
+# 
+# 
+# 
+# # grobs for aligning all these plots into figure 2 (no lines on the figure)
+# 
+# library(gtable)
+# g1 <- ggplotGrob(pls.kde.plot.pc1.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
+# g2 <- ggplotGrob(fia.kde.plot.pc1.gg.full+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
+# g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g4 <- ggplotGrob(pls.kde.plot.ppet.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g5 <- ggplotGrob(fia.kde.plot.ppet.gg.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g7 <- ggplotGrob(pls.kde.plot.sm.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g8 <- ggplotGrob(fia.kde.plot.sm.gg.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# g10 <- ggplotGrob(three.color.bimodal.plots)
+# g11 <- ggplotGrob(three.color.bimodal.plots.fia)
+# 
+# g <- cbind(g1 ,g2, g3, size = "first")
+# g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
+# 
+# grow2 <- cbind(g4 ,g5, g6, size = "first")
+# grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
+# 
+# grow3 <- cbind(g7 ,g8, g9, size = "first")
+# grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
+# grow4 <- cbind(g10, g11, size = "first")
+# grow4$heights <-unit.pmax(g10$heights, g11$heights)
+# #png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
+# grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
+#              arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
+# #dev.off()
+# 
+# 
+# png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats.png")
+# fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
+# fig3
+# dev.off()
+# 
+# 
+# # grobs for aligning all these plots into figure 2 (with lines of mean mode estimated from stat model)
+# 
+# library(gtable)
+# g1 <- ggplotGrob(pls.kde.plot.pc1.gg.lines.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
+# g2 <- ggplotGrob(fia.kde.plot.pc1.gg.full.lines+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
+# g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g4 <- ggplotGrob(pls.kde.plot.ppet.gg.lines.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g5 <- ggplotGrob(fia.kde.plot.ppet.gg.lines.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g7 <- ggplotGrob(pls.kde.plot.sm.gg.lines.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g8 <- ggplotGrob(fia.kde.plot.sm.gg.lines.full+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# g10 <- ggplotGrob(three.color.bimodal.plots)
+# g11 <- ggplotGrob(three.color.bimodal.plots.fia)
+# 
+# g <- cbind(g1 ,g2, g3, size = "first")
+# g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
+# 
+# grow2 <- cbind(g4 ,g5, g6, size = "first")
+# grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
+# 
+# grow3 <- cbind(g7 ,g8, g9, size = "first")
+# grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
+# grow4 <- cbind(g10, g11, size = "first")
+# grow4$heights <-unit.pmax(g10$heights, g11$heights)
+# #png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
+# grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
+#              arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
+# dev.off()
+# 
+# 
+# png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats_lines.png")
+# fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
+# fig3
+# dev.off()
+# 
+# 
+# # grobs for aligning all these plots into figure 2 (with lines of mean mode estimated from stat model & the 0.5 mode)
+# 
+# library(gtable)
+# g1 <- ggplotGrob(pls.kde.plot.pc1.gg.lines.full.hys+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-0.1), "cm")))
+# g2 <- ggplotGrob(fia.kde.plot.pc1.gg.lines.full.hys+theme(plot.margin=unit(c(-0.7,-1,-0.5,-1), "cm")))
+# g3 <- ggplotGrob(flipped.pc1.hist.gg.full+theme(plot.margin=unit(c(-0.7,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g4 <- ggplotGrob(pls.kde.plot.ppet.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g5 <- ggplotGrob(fia.kde.plot.ppet.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g6 <- ggplotGrob(flipped.ppet.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# 
+# g7 <- ggplotGrob(pls.kde.plot.sm.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-0.1), "cm")))
+# g8 <- ggplotGrob(fia.kde.plot.sm.gg.lines.full.hys+theme(plot.margin=unit(c(-0.9,-1,-0.5,-1), "cm")))
+# g9 <- ggplotGrob(flipped.soilm.hist.gg.full+theme(plot.margin=unit(c(-0.9,-0.1,-0.5,-1), "cm"))) #+xlim(-40, 550) + theme(axis.ticks.y = element_blank(), axis.title.y = element_blank(), axis.text.y =element_blank(), axis.text.x = element_text(size = 8, angle = 45, vjust = 0.5)))
+# g10 <- ggplotGrob(three.color.bimodal.plots)
+# g11 <- ggplotGrob(three.color.bimodal.plots.fia)
+# 
+# g <- cbind(g1 ,g2, g3, size = "first")
+# g$heights <-unit.pmax(g1$heights, g2$heights, g3$heights)#, 
+# 
+# grow2 <- cbind(g4 ,g5, g6, size = "first")
+# grow2$heights <-unit.pmax(g4$heights, g5$heights, g6$heights)#, 
+# 
+# grow3 <- cbind(g7 ,g8, g9, size = "first")
+# grow3$heights <-unit.pmax(g7$heights, g8$heights, g9$heights)#, 
+# grow4 <- cbind(g10, g11, size = "first")
+# grow4$heights <-unit.pmax(g10$heights, g11$heights)
+# #png(height = 9, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/new_figure_3.png")
+# grid.arrange(arrangeGrob(g1,g2,g3, ncol=3, nrow=1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g4, g5, g6, ncol = 3, nrow = 1, widths = c(1,1,0.2)) ,
+#              arrangeGrob(g7,g8, g9, ncol = 3, nrow = 1, widths = c(1,1,0.2)), 
+#              arrangeGrob(g10, g11, ncol = 3, nrow = 1, widths = c(1,1, 0)))
+# dev.off()
+# 
+# 
+# png(height = 10, width = 6, units = "in", res = 500, "outputs/paper_figs_unc/new_figure_3_kde_plot_with_hist_uncertainty_full_stats_lines_hys.png")
+# fig3 <- grid.arrange(g, grow2, grow3, grow4, ncol = 1)
+# fig3
+# dev.off()
+# 
+# 
+# 
+# # -----make this same figure but with hysteresis plots instead of the yellow and red density plots
+# 
+# png(height = 10, width = 6.5, units = "in", res = 500, "outputs/paper_figs_unc/figure2_hystereseis_plot_median_full.png")
+# 
+# plot_grid(hysteresis.pc1.pls.quants + ylim(0, 600)+theme(panel.grid = element_blank(), legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.pc1.fia.quants + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,1,1,3), "mm")), flipped.pc1.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           hysteresis.ppet.pls.quants+xlim(-150, 220) + ylim(0, 600)+theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.ppet.fia.quants + ylim(0, 600)+xlim(-150, 220)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.ppet.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(), plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           hysteresis.soil.pls.quants + ylim(0, 600)+xlim(0, 1.5) +theme(panel.grid = element_blank(),legend.position = "none", plot.margin=unit(c(1,3,1,1), "mm")), hysteresis.soil.fia.quants + ylim(0, 600)+xlim(0, 1.5)+theme(panel.grid = element_blank(),legend.position = "none",plot.margin=unit(c(1,1,1,3), "mm")), flipped.soilm.hist.full+theme(panel.grid = element_blank(), axis.ticks= element_blank(), axis.title = element_blank(), axis.text = element_blank(),plot.margin=unit(c(0,1,0,-2), "mm"), panel.background=element_rect(fill = "transparent",colour = NA)),
+#           three.color.bimodal.plots.nolabs +  theme(legend.title=element_blank(),panel.grid = element_blank(),plot.margin=unit(c(1,1,0,14), "mm")), three.color.bimodal.plots.fia.nolabs + theme(legend.title=element_blank(), plot.margin=unit(c(1,1,0,20), "mm")), ncol = 3, align = "h", rel_widths = c(1,1,0.5), labels = "AUTO", label_x = c(0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22, 0.06, 0.18, 0.22), label_y = 0.98)
+# dev.off()
+# 
+# 
 
 
 # >>>>>>>>>>>>>>>>>>>>> Plot figure 3 with grid cells without FIA plots masked out of FIA <<<<<<<<<<<<<<<<<<<<<<<<<

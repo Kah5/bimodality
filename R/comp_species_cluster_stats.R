@@ -886,27 +886,27 @@ plscomp$period <- "PLS"
 both.comps <- rbind(plscomp, fiacomp)
 
 # now run pam with 7 classes again:
-classes.9.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 9, diss = FALSE, keep.diss = FALSE)
+#classes.9.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 9, diss = FALSE, keep.diss = FALSE)
 classes.10.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 10, diss = FALSE, keep.diss = FALSE)
-classes.5.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 5, diss = FALSE, keep.diss = FALSE)
-classes.6.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 6, diss = FALSE, keep.diss = FALSE)
-classes.7.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 7, diss = FALSE, keep.diss = FALSE)
-classes.8.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 8, diss = FALSE, keep.diss = FALSE)
-classes.11.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 11, diss = FALSE, keep.diss = FALSE)
-classes.12.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 12, diss = FALSE, keep.diss = FALSE)
+#classes.5.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 5, diss = FALSE, keep.diss = FALSE)
+#classes.6.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 6, diss = FALSE, keep.diss = FALSE)
+#classes.7.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 7, diss = FALSE, keep.diss = FALSE)
+#classes.8.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 8, diss = FALSE, keep.diss = FALSE)
+#classes.11.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 11, diss = FALSE, keep.diss = FALSE)
+#classes.12.smooth.dens <- pam(both.comps[,3:(ncol(both.comps)-1)], k = 12, diss = FALSE, keep.diss = FALSE)
 
 
-both.9class.smooth.dens <- summary(classes.9.smooth.dens) # avg width = 0.2273168
+#both.9class.smooth.dens <- summary(classes.9.smooth.dens) # avg width = 0.2273168
 both.10class.smooth.dens <- summary(classes.10.smooth.dens) # avg width = 0.2371311
-both.11class.smooth.dens <- summary(classes.11.smooth.dens) # avg width = 0.2262053
-both.12class.smooth.dens <- summary(classes.12.smooth.dens) # avg width = 0.2240107
+#both.11class.smooth.dens <- summary(classes.11.smooth.dens) # avg width = 0.2262053
+#both.12class.smooth.dens <- summary(classes.12.smooth.dens) # avg width = 0.2240107
 
-both.5class.smooth.dens <- summary(classes.5.smooth.dens) # avg width = 0.199837 # highest avg
-both.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2069075
-both.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width =  0.2276273 lower than 9 classes, but the minimum width is 0.2 for all classes
-both.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.2427202
+#both.5class.smooth.dens <- summary(classes.5.smooth.dens) # avg width = 0.199837 # highest avg
+#both.6class.smooth.dens <- summary(classes.6.smooth.dens) # Avg. Silhouette width = 0.2069075
+#both.7class.smooth.dens <- summary(classes.7.smooth.dens) # Avg. Silhouette width =  0.2276273 lower than 9 classes, but the minimum width is 0.2 for all classes
+#both.8class.smooth.dens <- summary(classes.8.smooth.dens) # Avg. Silhouette width = 0.2427202
 
-#------------------------looks like 8 classes fits the data best:
+#------------------------looks like 8 classes fits the okay:
 
 
 # k = 8 mediods: 
@@ -960,7 +960,9 @@ dev.off()
 
 
 # save as csv for future 
-write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+#write.csv(clust_plot5, "outputs/five_clust_fia_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+write.csv(summary.clusters, "outputs/eight_clust_full_mean_taxa_summary.csv", row.names = FALSE)
+write.csv(silinfo.df, "outputs/eight_clust_full_silinfo_summary.csv", row.names = FALSE)
 
 #------------------------looks like 10 classes fits the data pretty well-------------
 # choose ten if you are maximizing both the average and minimum silhoutte width:
@@ -1008,9 +1010,10 @@ ggplot(clust_plot10, aes(x = x, y=y, fill=speciescluster))+geom_raster()+facet_w
 
 # map out the clusters with pretty colors & save to a file:
 png(width = 10, height = 10, units= 'in',res=300,"outputs/paper_figs/10_cluster_map_fia_pls_stat_smooth.dens.png")
-all.clust10 <- ggplot(clust_plot10, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
+all.clust10<- ggplot(clust_plot10, aes(x = x, y=y, fill=speciescluster))+geom_raster()+
   scale_fill_manual(values = c('#ff7f00'  ,'#fdc086','#386cb0',"#beaed4",'#a6cee3',"#7fc97f", "#f0027f", "#004529", "#ffff99", "#b15928"), name = " ")+
-  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+  #geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  theme_bw()+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
                                                                                                               axis.title.x=element_blank(),
                                                                                                               axis.title.y=element_blank(),legend.key.size = unit(0.10,'lines'),
@@ -1019,8 +1022,41 @@ all.clust10
 dev.off()
 
 
+clusterinfo <- clust_plot10 %>% dplyr::select(-x, -y, -cell)
+clusterinfo.m <- melt(clusterinfo)
+clusterinfo.m$value <- clusterinfo.m$value*100
+summary.clusters <- clusterinfo.m %>% group_by(speciescluster, period , variable) %>% dplyr::summarise(mean = mean(value, na.rm=TRUE),
+                                                                                              sd = sd(value, na.rm = TRUE),
+                                                                                              sd.low = mean(value, na.rm=TRUE) - sd(value, na.rm=TRUE),
+                                                                                              sd.high = mean(value, na.rm=TRUE) + sd(value, na.rm=TRUE))
+
+
+silinfo.df <- data.frame(silinfo = classes.10.smooth.dens$silinfo$clus.avg.widths, 
+                         cluster = 1:10, 
+                         labels=c(
+                           'Poplar/Oak-FIA', # 1
+                           "Oak/Maple/Ash/Poplar-FIA", # 2
+                           "Oak-PLS", # 3
+                           "Oak/Hickory/Elm/Maple-FIA", #4
+                           "Oak/Maple/Other/Hickory-FIA", # 5
+                           "Poplar/Pine/Tamarack/Fir-PLS", # 6
+                           
+                           "Pine/Maple/Poplar/Oak/Ash-FIA", # 7
+                           'Maple/Cedar/Poplar-FIA',# 8
+                           "Hemlock/Cedar/Maple-PLS", # 9
+                           "Beech/Maple/Pine-PLS"
+                           
+                           
+                           # mediod5 # not as much birch
+                           
+                         ))
+
+
 # save as csv for future 
 write.csv(clust_plot10, "outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv", row.names = FALSE)
+
+write.csv(summary.clusters, "outputs/ten_clust_full_mean_taxa_summary.csv", row.names = FALSE)
+write.csv(silinfo.df, "outputs/ten_clust_full_silinfo_summary.csv", row.names = FALSE)
 
 
 

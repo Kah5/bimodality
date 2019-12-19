@@ -25,6 +25,7 @@ summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean
 clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
 
 
+
 # 2 read in silhoutte information from PLS composition clusters:
 silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/eight_clust_pls_silinfo_summary.csv")
 
@@ -71,6 +72,137 @@ colnames(newdf) <- c("Taxa",
 kable(newdf, "latex", align = "c", booktabs = TRUE,caption = "Average taxa composition in PLS composition clusters", digits = 3, linesep = "")%>% column_spec(2:9, width = "2cm")%>%
 kable_styling() %>% group_rows("Cluster Info", 22, 22) %>% row_spec(21, hline_after = TRUE)
 ```
+
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+library(xtable, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(dplR, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+# 1. Read in the species composition clusters from PLS:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/eight_clust_pls_mean_taxa_summary.csv")
+summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
+
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/eight_clust_pls_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% select(variable, everything()))
+
+newdf <- rbind(clusters, sils)
+#newdf
+```
+
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
+# 1. Read in the species composition clusters from PLS and FIA combined:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/ten_clust_full_mean_taxa_summary.csv")
+
+
+full.10.cluster <- read.csv("/Users/kah/Documents/bimodality/outputs/ten_clust_combined_dissimilarity_stat_smooth.dens.csv")
+
+# want the total # of FIA and PLS grid cells classified as each species cluster + the mean % for each species of the species cluster 
+ncells.cluster <- full.10.cluster %>% group_by(period, speciescluster) %>% summarise(ncells = n())
+
+clusterinfo <- full.10.cluster %>% dplyr::select(-x, -y, -cell, -period)
+clusterinfo.m <- melt(clusterinfo)
+clusterinfo.m$value <- clusterinfo.m$value*100
+summary.clusters <- clusterinfo.m %>% group_by(speciescluster,  variable) %>%
+      dplyr::summarise(mean = mean(value, na.rm=TRUE),
+      sd = sd(value, na.rm = TRUE),
+      sd.low = mean(value, na.rm=TRUE) - sd(value, na.rm=TRUE),
+      sd.high = mean(value, na.rm=TRUE) + sd(value, na.rm=TRUE))
+
+    
+
+ 
+# need to fix this to make tables by PLS and FIA still
+summary.table.clus <- summary.clusters %>% dplyr::select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% dplyr::select(variable, everything()))
+
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/ten_clust_full_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% dplyr::select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% dplyr::select(variable, everything()))
+
+
+clusters.by.period <- data.frame(ncells.cluster %>% group_by(period)%>%  dplyr::select(speciescluster, ncells) %>% spread(key = speciescluster, value = ncells))
+#clusters.by.period[is.na(clustesrs.by.period),] <- 0
+colnames(clusters.by.period)[1] <- "variable"
+
+clusters.by.period$variable <- c("# in FIA", "# in PLS")
+newdf <- rbind(clusters, sils)
+
+
+new.df.ncells <- rbind(newdf, clusters.by.period )
+
+colnames(new.df.ncells) <- c("Taxa", "Beech-Maple",
+                             "N. Mixed Forest", "Maple Mixed Forest",
+                             "Oak", "Oak-Hickory", 
+                             "Oak-Maple-Ash", "Oak-Mixed", 
+                            "Pine",  "Aspen", 
+                           "Boreal Sub-boreal" )
+
+
+
+ 
+ 
+ kable(new.df.ncells, "latex", align = "c", booktabs = TRUE,caption = "Average taxa composition in community  clusters", digits = 1, linesep = "")%>% column_spec(2:11, width = "1cm")%>%
+kable_styling() %>% group_rows("Cluster Info", 23, 23) %>% row_spec(22, hline_after = TRUE)
+
+```
+
+
+## Table 1: PLS composition cluster summaries
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
+
+# 1. Read in the species composition clusters from PLS:
+summary.clusters <- read.csv("/Users/kah/Documents/bimodality/outputs/eight_clust_pls_mean_taxa_summary.csv")
+summary.table.clus <- summary.clusters %>% select(speciescluster, variable, mean) %>% group_by(variable) %>% spread(key = speciescluster, value = mean)
+
+clusters <- data.frame(summary.table.clus %>% select(variable, everything()))
+
+
+# 2 read in silhoutte information from PLS composition clusters:
+silinfo.df <- read.csv( "/Users/kah/Documents/bimodality/outputs/eight_clust_pls_silinfo_summary.csv")
+
+summary.table.sils <- silinfo.df %>% select(labels, silinfo) %>% spread(key = labels, value = silinfo)
+
+summary.table.sils$variable <- "Silhouette Width"
+sils <- data.frame(summary.table.sils %>% select(variable, everything()))
+
+newdf <- rbind(clusters, sils)
+#newdf
+
+colnames(newdf) <- c("Taxa", 
+                     "Beech Maple", 
+                     "Northern Mixed Forest", 
+                     "Oak",
+                     "Oak-Hickory",
+                     "Oak Maple Ash",
+                     "Aspen",
+                     "Pine", 
+                     "Boreal/Sub-Boreal")
+
+kable(newdf, "latex", align = "c", booktabs = TRUE,caption = "Average taxa composition in community  clusters", digits = 3, linesep = "")%>% column_spec(2:9, width = "2cm")%>%
+kable_styling() %>% group_rows("Cluster Info", 22, 22) %>% row_spec(21, hline_after = TRUE)
+```
+
 
 # Plot of mean and sd % species composition
 

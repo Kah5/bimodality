@@ -5,6 +5,8 @@ library(ggridges)
 
 pls <- read.csv("outputs/density_full_unc_v1.0.csv")
 
+
+
 msk2 <- caTools::sample.split( pls, SplitRatio = 3/4, group = NULL )
 
 train.pls <- pls[msk2,]
@@ -114,7 +116,7 @@ spec$addMonitors('p')
 
 Rmcmc <- buildMCMC(spec)
 
-Cmodel <- compileNimble(model)
+Cmodel <- compileNimble(model, showCompilerOutput = TRUE)
 Cmcmc <- compileNimble(Rmcmc, project = model)
 Cmcmc$run(n_mcmc + n_burn)
 Cmcmc$calculateWAIC(nburnin = 100) # calculate WAIC for mixture model
@@ -139,7 +141,7 @@ beta_env <- samples.fit[,"beta[2]"]
 beta1_post <- samples.fit[, "beta1"]
 beta2_post <- samples.fit[, "beta2"]
 
-plot(beta_dens, type = "l")
+plot(beta_int, type = "l")
 plot(beta_env, type = "l")
 plot(alpha1_post, type = "l")
 plot(alpha2_post, type = "l")

@@ -41,6 +41,75 @@ dens <- dens[!is.na(dens$mean_dens), ]
 
 ggplot(dens, aes(x,y, fill =  mean_dens))+geom_raster()+scale_fill_distiller(palette = "Spectral")
 write.csv(dens, "outputs/density_full_unc_v1.0.csv", row.names = FALSE)
+
+head(dens)
+
+# make histograms of climate for the past and the modern landscapes:
+red.dens <- dens %>% select(x,y, cell, MAP1910, MAP2011, GS_ppet, GS_ppet_mod, mean_GS_soil, mean_GS_soil_m, PC1, PC1fia)
+
+red.dens.m <- reshape2::melt(red.dens, id.vars =c("x", "y", "cell") )
+red.dens.m$period <- ifelse(red.dens.m$variable %in% c("MAP1910", "GS_ppet", "mean_GS_soil", "PC1"), "Past", "Modern")
+red.dens.m$climate <- ifelse(red.dens.m$variable %in% c("MAP1910", "MAP2011"), "Mean Annual Precipitation", 
+                             ifelse(red.dens.m$variable %in% c("GS_ppet", "GS_ppet_mod"), "P-PET", 
+                                    ifelse(red.dens.m$variable %in% c("mean_GS_soil", "mean_GS_soil_m"), "Growing Season Soil Moisture", "Principal Component 1")))
+
+png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/modern_past_climate_histograms.png")
+ggplot(red.dens.m, aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  facet_wrap(~climate, scales = "free_x")+theme_bw(base_size = 12)+xlab("")+theme(panel.grid = element_blank())
+dev.off()
+
+
+# generate individual graphs:
+
+
+a.leg <- ggplot(red.dens.m[red.dens.m$climate %in% "Growing Season Soil Moisture",], aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  theme_bw(base_size = 10)+xlab("Growing Season Soil Moisture")+theme(panel.grid = element_blank())
+legend.hist <- get_legend(a.leg)
+
+a <- ggplot(red.dens.m[red.dens.m$climate %in% "Growing Season Soil Moisture",], aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  theme_bw(base_size = 10)+xlab("Growing Season Soil Moisture")+theme(panel.grid = element_blank(), legend.position = "none")
+
+b <- ggplot(red.dens.m[red.dens.m$climate %in% "Mean Annual Precipitation",], aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  theme_bw(base_size = 10)+xlab("Mean Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
+
+c <- ggplot(red.dens.m[red.dens.m$climate %in% "P-PET",], aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  theme_bw(base_size = 10)+xlab("P-PET (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
+
+d <- ggplot(red.dens.m[red.dens.m$climate %in% "Principal Component 1",], aes(value, fill = period))+geom_histogram(position = "identity", alpha = 0.7)+
+  theme_bw(base_size = 10)+xlab("Principal Component 1")+theme(panel.grid = element_blank(), legend.position = "none")
+
+
+png(height = 4, width = 6, units = "in", res = 300, "outputs/paper_figs_unc/modern_past_climate_histograms_labels.png")
+plot_grid(plot_grid(a, b, c, d, ncol = 2, labels ="AUTO"), legend.hist, ncol = 2, rel_widths = c(1, 0.25))
+dev.off()
+
+
+# make plots of past tree density vs all environmental variables:
+a<- ggplot(dens, aes(awc, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Available Water Capacity")
+b<- ggplot(dens, aes(sandpct, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("% Sand")
+c<- ggplot(dens, aes(MAP1910, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Mean Annual Precipitation (mm)")
+d<- ggplot(dens, aes(modtmean, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Mean Annual Temperature (degC)")
+e<- ggplot(dens, aes(CaCO3, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Calcium Carbonate Content")
+f<- ggplot(dens, aes(CEC, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Cation Exchange Capacity")
+g<- ggplot(dens, aes(moderndeltaP, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Precipitation Seasonality")
+h<- ggplot(dens, aes(moddeltaT, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("Temperature Seasonality")
+i<- ggplot(dens, aes(PC2, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("PC2")
+j <- ggplot(dens, aes(PC2, mean_dens))+geom_point(size = 0.05)+theme_bw(base_size =10)+theme(panel.grid = element_blank())+
+  ylab("PLS Tree Density (stems/ha)")+xlab("PC2")
+
+png(height = 8.5, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/Density_vs_env_vars.png")
+plot_grid(a, b,c, d, 
+          e, f, g, h,i, nrow = 3, labels = "AUTO")
+dev.off()
 # -------------------figure 1 A: Map of pls bimodality
 
 # need to set up state outlines:
@@ -573,9 +642,9 @@ dens.width.fia$width/dens.width.pls$width
 dens.width.fia$width/dens.width.pls$width
 ggplot(dens.summary.fia, aes(x,y, fill = mean_dens_fia))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
 
-dens <- merge(dens, dens.summary.fia, by = c("x", "y"), all.x = TRUE)
+dens.full <- merge(dens, dens.summary.fia, by = c("x", "y"), all.x = TRUE)
 
-dens <- dens[!is.na(dens.full$mean_dens_fia), ]
+dens <- dens.full[!is.na(dens.full$mean_dens_fia), ]
 
 ggplot(dens, aes(x,y, fill =  mean_dens_fia))+geom_raster()+ scale_fill_distiller(palette = "Spectral")
 write.csv(dens, "outputs/density_full_FIA_PLS_unc.csv", row.names = FALSE)
@@ -1693,6 +1762,14 @@ plot_grid(pct.inc.ppet.10, pct.inc.soil.10, pct.inc.pc1.10, align = "hv", ncol =
 dev.off()
 
 
+
+
+# save the arrow plots as RDS so we can load them and plot in the hysteresis working directory:
+saveRDS(pct.inc.ppet.10, "outputs/pct.inc.ppet.10.arrowplot.rds")
+saveRDS(pct.inc.soil.10, "outputs/pct.inc.soil.10.arrowplot.rds")
+saveRDS(pct.inc.pc1.10, "outputs/pct.inc.pc1.10.arrowplot.rds")
+
+
 #--------------------Make arrow figure but with % of grid cells not the total # of grid cells:------
 # find the # of grid cells that decreased between pls and fia:
 ncell.pct.change <- ncell.change
@@ -1781,6 +1858,27 @@ plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plo
           clust.hist.fia.full.both.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
           ncol = 2, align = "h", axis="tb", scale = 1 ) 
 dev.off()
+
+density.legend <- get_legend(pls.map.alt.color + theme( legend.key.size = unit(0.75, "line"),legend.title = element_text(size = 12),legend.text = element_text(size = 10), legend.key = element_rect(color = "black", linetype ="solid"), legend.position = "left"))
+composition.legend <- get_legend(pls.clust.both+theme( legend.key.size = unit(0.75, "line"),legend.text = element_text(size = 10), legend.key = element_rect(color = "black", linetype ="solid"), legend.position = "left"))
+
+
+png(height = 8.4, width = 6, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_both_comp_new_legend.png")
+plot_grid(
+plot_grid(pls.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), legend.position = "none") + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
+          FIA.map.alt.color + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), legend.position = "none") + annotate("text", x=-90000, y=1486000,label= "D", size = 3),
+          pls.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), legend.position = "none") + annotate("text", x=-90000, y=1486000,label= "B", size = 3),
+          fia.clust.both + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), legend.position = "none") + annotate("text", x=-90000, y=1486000,label= "E", size = 3), 
+          clust.hist.full.both.no.aspect + xlab("Tree Density (stems/ha)")+ ylab("# of grid cells")+ theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"),  legend.position = "none",plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10))+ annotate("text", x=600, y=100,label= "C", size = 3),
+          #hist.inset+ theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 5), axis.title =  element_text(size = 5)) + annotate("text", x=600, y=20,label= "F", size = 3), 
+          
+          clust.hist.fia.full.both.no.aspect+xlab("Tree Density (stems/ha)")+ylab("# of grid cells") + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm") , legend.position = "none", plot.background=element_rect(fill=NA, colour=NA), axis.text = element_text(size = 10), axis.title =  element_text(size = 10),  axis.ticks.y =element_blank() ) + annotate("text", x=600, y=400,label= "F", size = 3), 
+          ncol = 2, align = "h", axis="tb", scale = 1 ), 
+
+plot_grid(density.legend, composition.legend, ncol = 1, nrow = 3, rel_heights = c(1.5, 1,1.5), align = "hv"),
+ncol = 2, rel_widths = c(1, 0.5))
+dev.off()
+
 
 png(height = 8.4, width = 4.5, units = 'in', res = 300, "outputs/paper_figs_unc/fig1_6panel_trans_both_comp_msk.png")
 plot_grid(pls.map.alt.color.msk + theme(plot.margin = unit(c(0, 0, 0, 0), "cm"), plot.background=element_rect(fill=NA, colour=NA)) + annotate("text", x=-90000, y=1486000,label= "A", size = 3), 
@@ -3371,7 +3469,9 @@ two.bimpct <-  two.bimpct + three.bimpct
 three.bimpct <-  three.bimpct
 
 
-
+# save RDS files of the 3 color bimodal plots for plotting:
+saveRDS(three.color.bimodal.plots.fia.nolabs, "outputs/three_color_bimodal_map_fia.rds")
+saveRDS(three.color.bimodal.plots.nolabs, "outputs/three_color_bimodal_map_pls.rds")
 ### end of code used here
 
 # merge fia and pls bimodal dfs together:

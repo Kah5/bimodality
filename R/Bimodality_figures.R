@@ -15,6 +15,8 @@ library(tidyr)
 # read in density + climate data:
 dens.pr <- read.csv("data/PLS_FIA_density_climate_full.csv")
 
+ggplot(dens.pr, aes(PLSdensity, FIAdensity))+geom_point()+ylim(0,500)+xlim(0,500)+geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey")
+
 
 # -------------------figure 1 A: Map of pls bimodality
 

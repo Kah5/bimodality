@@ -1,5 +1,7 @@
 library(ggplot2)
 library(cowplot)
+library(tidyr)
+library(dplyr)
 
 dens <- read.csv("outputs/density_full_FIA_PLS_unc.csv")
 
@@ -145,9 +147,31 @@ map.diffs.sm <- ggplot(clust_10, aes(x,y, fill = diff.sm))+geom_raster()+scale_f
 #   guide = "colourbar",
 #   limits = c(-478.05, 195.52)
 # )+theme_bw(base_size = 12)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(), legend.title = element_blank())
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+map.raw.pls <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=clust_10, aes(x=x, y=y, fill = PLSdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,500), name ="Tree \n Density", na.value = 'darkgrey') +
+  theme_bw(base_size = 8)+ theme(legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
+
+map.raw.fia <- ggplot()+ geom_polygon(data = mapdata, aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=clust_10, aes(x=x, y=y, fill = FIAdensity))+
+  geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = NA)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_gradientn(colours = cbpalette, limits = c(0,500), name ="Tree \n Density", na.value = 'darkgrey') +
+  theme_bw(base_size = 8)+ theme(legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal()
 
 
-  
+
 map.diffs.raw <- ggplot()+
   geom_polygon(data = mapdata, aes(group = group,x=long, y =lat),colour="black", fill = "grey")+
   geom_raster(data = clust_10[clust_10$diff.raw > -478.05,], aes(x = x,y = y, fill = diff.raw))+ scale_fill_gradient2(
@@ -162,6 +186,11 @@ map.diffs.raw <- ggplot()+
 png(height = 8, width = 10, units = "in", res = 300, "outputs/paper_figs_unc/pls.fia.difference.plots.maps.png")
 plot_grid(raw.difference.plot, sm.difference.plot, 
           map.diffs.raw, map.diffs.sm, ncol = 2, labels = c("A","B", "C", "D"))
+dev.off()
+
+png(height = 11, width = 10, units = "in", res = 300, "outputs/paper_figs_unc/pls.fia.difference.plots.maps.with.density.png")
+plot_grid(map.raw.pls, map.raw.fia, 
+          map.diffs.raw, map.diffs.sm, raw.difference.plot, sm.difference.plot, ncol = 2, labels = c("A","B", "C", "D", "E", "F"), align = "hv")
 dev.off()
 
 #ggplot(clust_10, aes(PLSdensity, diff.raw, color = orderedforesttype))+geom_point(size = 0.5)+scale_color_manual(values = compColors)+

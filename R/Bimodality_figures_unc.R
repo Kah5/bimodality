@@ -1349,7 +1349,7 @@ past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
 past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
 
 # get data frame w/ 1980s, 1990s, and modern survey estimates:
-modern.fia <- dens.clust[,c("x", "y", "cell", "mean_dens_fia")]
+modern.fia <- dens.clust[,c("x", "y", "cell", "FIAdensity")]
 modern.fia$INVYRcd <- "2000s"
 colnames(modern.fia) <- c("x", "y", "cell", "FIAdensity", "INVYRcd")
 modern.fia$INVYR <- 2000
@@ -1371,6 +1371,7 @@ fia.surveys.wide$pct_inc_1980_2000 <- fia.surveys.wide$`2000s` - fia.surveys.wid
 fia.surveys.wide$dens.bins.1980 <- cut(fia.surveys.wide$`1980s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
 fia.surveys.wide$dens.bins.1990 <- cut(fia.surveys.wide$`1990s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
 fia.surveys.wide$dens.bins.2000 <- cut(fia.surveys.wide$`2000s`, breaks = c(0,50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650))
+
 
 
 # get numbe cells changing between 1980 and 1990:
@@ -1497,6 +1498,243 @@ ncell.change.1980.2000.plot <- ggplot(ncell.change.1980.2000, aes(xval.inc, star
                             "3" = "Decreasing"))+theme_bw()+ylim(0,600)+theme(axis.text.x = element_text(angle = 90, hjust = 1),axis.title  = element_blank(), legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank() )  
 
 
+
+#---------------------------------------------------------------------------------------
+# Change arrow plot for 1980-2000's fof P-PET
+
+# arrow plots for increasing and decreasing across space
+# merge the fia sureveys data bas with climate data of intererst:
+fia.full.surveys.clim <- merge(full.fia.surveys, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+
+fia.full.surveys.clim.wide <- merge(fia.surveys.wide, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+fia.full.surveys.clim.wide$FIAminus1980 <- fia.full.surveys.clim.wide$`2000s`-  fia.full.surveys.clim.wide$`1980s`
+
+ggplot(fia.full.surveys.clim.wide, aes(x, y, fill = `1980s`))+geom_raster()
+ggplot(fia.full.surveys.clim.wide, aes(x, y, fill = `1990s`))+geom_raster()
+ggplot(fia.full.surveys.clim.wide, aes(x, y, fill = `2000s`))+geom_raster()
+
+ggplot(fia.full.surveys.clim.wide, aes(x, y, fill = FIAminus1980))+geom_raster()
+
+# P-PET Many arrows
+ncell.change.ppet <- fia.full.surveys.clim.wide  %>% group_by(dens.bins.1980, ppet_bins) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                            n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                            n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+ncell.change <- fia.full.surveys.clim.wide %>% group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                             n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                             n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+ncell.change$start.bin <- seq(from = 0, to = 650, by = 50)
+ncell.change$end.bin <- seq(from = 50, to = 700, by = 50)
+
+
+ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+#ggplot(ncell.change.ppet, aes(ppet_bins, dens.clust.bins, color=n_dec))+geom_point()
+ncell.change.ppet[ncell.change.ppet == 0] <- NA
+ggplot(ncell.change.ppet, aes(ppet_bins, start.bin))+geom_segment(aes(xend = ppet_bins, yend = end.bin-20, size = n_inc/2),
+                                                                  arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.ppet, aes(ppet_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = ppet_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+
+
+# make the ppet bins smaller:
+dens.msk1980.2000.10 <- fia.full.surveys.clim.wide
+dens.msk1980.2000.10$ppet_bins10 <- cut(dens.msk1980.2000.10[order(dens.msk1980.2000.10$GS_ppet_mod),]$GS_ppet_mod, breaks=seq(-170, 205, by = 50))
+ordered.cuts <- data.frame(ppet_bins10 = unique(cut(dens.msk1980.2000.10[order(dens.msk1980.2000.10$GS_ppet_mod),]$GS_ppet_mod, breaks=seq(-170, 205, by = 50))),
+                           mids = seq(-120, 205, by = 50))
+
+dens.msk1980.2000.10 <- merge(dens.msk1980.2000.10, ordered.cuts, by = "ppet_bins10")
+
+ncell.change.ppet <- dens.msk1980.2000.10 %>% group_by(dens.bins.1980, ppet_bins10, mids) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5,  na.rm = TRUE),
+                                                                                                               n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                                               n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+
+ncell.pct.change.ppet <- ncell.change.ppet
+
+
+ncell.pct.change.ppet$total_cells <- rowSums(ncell.pct.change.ppet[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.ppet$pct_inc <- (ncell.pct.change.ppet$n_inc/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_dec <- (ncell.pct.change.ppet$n_dec/ncell.pct.change.ppet$total_cells)*100
+ncell.pct.change.ppet$pct_nochange <- (ncell.pct.change.ppet$n_nochange/ncell.pct.change.ppet$total_cells)*100
+
+ncell.pct.change.ppet <- ncell.pct.change.ppet[!is.na(ncell.pct.change.ppet$dens.bins.1980),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.ppet1980.2000 <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                         arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Growing season P-PET") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.ppet1980.2000
+
+
+
+#---------------------------------------------------------------------------------------
+# Change arrow plot for 1980-2000's fof PC1
+
+# make the same plot but for PC:
+# test example with all arrows over top, but lets do it 
+fia.full.surveys.clim <- merge(full.fia.surveys, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+fia.full.surveys.clim.wide <- merge(fia.surveys.wide, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+
+fia.full.surveys.clim.wide$FIAminus1980 <- fia.full.surveys.clim.wide$`2000s`-  fia.full.surveys.clim.wide$`1980s`
+
+ncell.change.pc1 <- fia.full.surveys.clim.wide %>% group_by(dens.bins.1980, pc1_bins) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                          n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                          n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+
+ncell.change.pc1 <- merge(ncell.change.pc1, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+#ggplot(ncell.change.pc1, aes(pc1_bins, dens.bins.1980, color=n_dec))+geom_point()
+ncell.change.pc1[ncell.change.pc1 == 0] <- NA 
+ggplot(ncell.change.pc1, aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = n_inc/2),
+                                                                arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.pc1, aes(pc1_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+ncell.pct.change.pc1 <- ncell.change.pc1
+
+ncell.pct.change.pc1$total_cells <- rowSums(ncell.pct.change.pc1[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.pc1$pct_inc <- (ncell.pct.change.pc1$n_inc/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_dec <- (ncell.pct.change.pc1$n_dec/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.change.pc1$total_cells)*100
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.pc1 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = pct_inc),
+                                                                                                                       arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(pc1_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/Ha)")+xlab("Principal Componenet 1")+ theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+
+
+# make the pc1 bins smaller:
+dens.msk.10 <- fia.full.surveys.clim.wide
+
+dens.msk.10$pc1_bins10 <- cut(dens.msk.10[order(dens.msk.10$PC1fia),]$PC1fia, breaks=seq(-6, 5, by = 1.5))
+ordered.cuts <- data.frame(pc1_bins10 = unique(cut(dens.msk.10[order(dens.msk.10$PC1fia),]$PC1fia, breaks=seq(-6, 5, by = 1.5))),
+                           mids = seq(-5.5, 5, by = 1.5))
+
+
+dens.pc1.msk.10 <- merge(dens.msk.10, ordered.cuts, by = "pc1_bins10")
+
+ncell.change.pc1 <- dens.pc1.msk.10 %>% group_by(dens.bins.1980, pc1_bins10, mids) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                                         n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                                         n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+
+ncell.change.pc1 <- merge(ncell.change.pc1, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+
+ncell.pct.change.pc1 <- ncell.change.pc1
+
+
+ncell.pct.change.pc1$total_cells <- rowSums(ncell.pct.change.pc1[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.pc1$pct_inc <- (ncell.pct.change.pc1$n_inc/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_dec <- (ncell.pct.change.pc1$n_dec/ncell.pct.change.pc1$total_cells)*100
+ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.change.pc1$total_cells)*100
+
+ncell.pct.change.pc1 <- ncell.pct.change.pc1[!is.na(ncell.pct.change.pc1$dens.bins.1980),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.pc1.1980.2000 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                      arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Principal Component 1") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.pc1.1980.2000
+
+#---------------------------------------------------------------------------------------
+# Change arrow plot for 1980-2000's for soil moisture
+fia.full.surveys.clim <- merge(full.fia.surveys, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+fia.full.surveys.clim.wide <- merge(fia.surveys.wide, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
+fia.full.surveys.clim.wide$FIAminus1980 <- fia.full.surveys.clim.wide$`2000s`-  fia.full.surveys.clim.wide$`1980s`
+
+ncell.change.soil <- fia.full.surveys.clim.wide %>% group_by(dens.bins.1980, soil_bins) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                            n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                            n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+
+ncell.change.soil <- merge(ncell.change.soil, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+#ggplot(ncell.change.soil, aes(soil_bins, dens.bins.1980, color=n_dec))+geom_point()
+ncell.change.soil[ncell.change.soil == 0] <- NA 
+ggplot(ncell.change.soil, aes(soil_bins, start.bin))+geom_segment(aes(xend = soil_bins, yend = end.bin-20, size = n_inc/2),
+                                                                  arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.change.soil, aes(soil_bins, start.bin+20, size = n_nochange/2), color = "#636363")+
+  geom_segment(aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = n_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")
+
+
+ncell.pct.change.soil <- ncell.change.soil
+
+ncell.pct.change.soil$total_cells <- rowSums(ncell.pct.change.soil[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.soil$pct_inc <- (ncell.pct.change.soil$n_inc/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_dec <- (ncell.pct.change.soil$n_dec/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pct.change.soil$total_cells)*100
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.soil <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(soil_bins, start.bin))+geom_segment(aes(xend = soil_bins, yend = end.bin-20, size = pct_inc),
+                                                                                                                           arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(soil_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend = soil_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/Ha)")+xlab("Growing Season Soil Moisture")+ theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+
+# make the soil moisture bins smaller:
+fia.full.surveys.clim.wide.10 <- fia.full.surveys.clim.wide
+fia.full.surveys.clim.wide.10$soil_bins10 <- cut(fia.full.surveys.clim.wide.10[order(fia.full.surveys.clim.wide.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))
+ordered.cuts <- data.frame(soil_bins10 = unique(cut(fia.full.surveys.clim.wide.10[order(fia.full.surveys.clim.wide.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))),
+                           mids = seq(0.25, 2, by = 0.25))
+
+
+dens.soil.msk.10 <- merge(fia.full.surveys.clim.wide.10, ordered.cuts, by = "soil_bins10")
+
+ncell.change.soil <- dens.soil.msk.10 %>% group_by(dens.bins.1980, soil_bins10, mids) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
+                                                                                                            n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
+                                                                                                            n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+
+ncell.change.soil <- merge(ncell.change.soil, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
+
+ncell.pct.change.soil <- ncell.change.soil
+
+
+ncell.pct.change.soil$total_cells <- rowSums(ncell.pct.change.soil[,c("n_inc", "n_dec", "n_nochange")], na.rm =TRUE)
+
+ncell.pct.change.soil$pct_inc <- (ncell.pct.change.soil$n_inc/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_dec <- (ncell.pct.change.soil$n_dec/ncell.pct.change.soil$total_cells)*100
+ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pct.change.soil$total_cells)*100
+
+ncell.pct.change.soil <- ncell.pct.change.soil[!is.na(ncell.pct.change.soil$dens.bins.1980),]
+
+
+# ideally we want to have it be the most common class, but this will do for now
+pct.inc.soil.1980.2000 <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
+                                                                                                                         arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
+  ylab("Tree density (stems/ha)") + xlab("Growing Season Soil Moisture") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+
+pct.inc.soil.1980.2000
+
+# save all of these plots:
+
+dev.off()
+png(height = 15, width = 7, units = "in", res = 300, "outputs/paper_figs_unc/Change_trajectory_1980_2000s_arrows_across_envts_cleaner.png")
+plot_grid(pct.inc.ppet1980.2000, pct.inc.soil.1980.2000, pct.inc.pc1.1980.2000, align = "hv", ncol = 1)
+dev.off()
+
+
+
+
+# save the arrow plots as RDS so we can load them and plot in the hysteresis working directory:
+saveRDS(pct.inc.ppet1980.2000, "outputs/pct.inc.ppet.1980.2000.arrowplot.rds")
+saveRDS(pct.inc.soil.1980.2000, "outputs/pct.inc.soil.1980.2000.arrowplot.rds")
+saveRDS(pct.inc.pc1.1980.2000, "outputs/pct.inc.pc1.1980.2000.arrowplot.rds")
 
 
 
@@ -1768,6 +2006,12 @@ dev.off()
 saveRDS(pct.inc.ppet.10, "outputs/pct.inc.ppet.10.arrowplot.rds")
 saveRDS(pct.inc.soil.10, "outputs/pct.inc.soil.10.arrowplot.rds")
 saveRDS(pct.inc.pc1.10, "outputs/pct.inc.pc1.10.arrowplot.rds")
+
+
+# ----------------Arrow figures across climate space for the change from 1980 to present---------------------
+
+
+
 
 
 #--------------------Make arrow figure but with % of grid cells not the total # of grid cells:------

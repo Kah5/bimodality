@@ -1504,6 +1504,7 @@ ncell.change.1980.2000.plot <- ggplot(ncell.change.1980.2000, aes(xval.inc, star
 
 # arrow plots for increasing and decreasing across space
 # merge the fia sureveys data bas with climate data of intererst:
+dens.msk <- dens[!is.na(dens$FIAdensity),]
 fia.full.surveys.clim <- merge(full.fia.surveys, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])
 
 fia.full.surveys.clim.wide <- merge(fia.surveys.wide, dens.msk[,c("x", "y", "cell", "ppet_bins", "soil_bins", "pc1_bins", "PC1", "PC1fia", "GS_ppet", "GS_ppet_mod", "mean_GS_soil", "mean_GS_soil_m", "PLSdensity")])

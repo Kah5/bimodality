@@ -1523,8 +1523,8 @@ ncell.change.ppet <- fia.full.surveys.clim.wide  %>% group_by(dens.bins.1980, pp
 ncell.change <- fia.full.surveys.clim.wide %>% group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
                                                                                              n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
                                                                                              n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
-ncell.change$start.bin <- seq(from = 0, to = 650, by = 50)
-ncell.change$end.bin <- seq(from = 50, to = 700, by = 50)
+ncell.change$start.bin <- seq(from = 0, to = 600, by = 50)
+ncell.change$end.bin <- seq(from = 50, to = 650, by = 50)
 
 
 ncell.change.ppet <- merge(ncell.change.ppet, ncell.change[, c("dens.bins.1980", "start.bin", "end.bin")], by = "dens.bins.1980")
@@ -1690,7 +1690,7 @@ pct.inc.soil <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,
 fia.full.surveys.clim.wide.10 <- fia.full.surveys.clim.wide
 fia.full.surveys.clim.wide.10$soil_bins10 <- cut(fia.full.surveys.clim.wide.10[order(fia.full.surveys.clim.wide.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))
 ordered.cuts <- data.frame(soil_bins10 = unique(cut(fia.full.surveys.clim.wide.10[order(fia.full.surveys.clim.wide.10$mean_GS_soil_m),]$mean_GS_soil_m, breaks=seq(0, 2, by = 0.25))),
-                           mids = seq(0.25, 2, by = 0.25))
+                           mids = seq(0.125, 1.75, by = 0.25))
 
 
 dens.soil.msk.10 <- merge(fia.full.surveys.clim.wide.10, ordered.cuts, by = "soil_bins10")

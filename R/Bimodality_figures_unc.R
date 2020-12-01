@@ -43,9 +43,9 @@ ggplot(dens, aes(x,y, fill =  mean_dens))+geom_raster()+scale_fill_distiller(pal
 write.csv(dens, "outputs/density_full_unc_v1.0.csv", row.names = FALSE)
 
 head(dens)
-
+require(dplyr)
 # make histograms of climate for the past and the modern landscapes:
-red.dens <- dens %>% select(x,y, cell, MAP1910, MAP2011, GS_ppet, GS_ppet_mod, mean_GS_soil, mean_GS_soil_m, PC1, PC1fia)
+red.dens <- dens %>% dplyr::select(x,y, cell, MAP1910, MAP2011, GS_ppet, GS_ppet_mod, mean_GS_soil, mean_GS_soil_m, PC1, PC1fia)
 
 red.dens.m <- reshape2::melt(red.dens, id.vars =c("x", "y", "cell") )
 red.dens.m$period <- ifelse(red.dens.m$variable %in% c("MAP1910", "GS_ppet", "mean_GS_soil", "PC1"), "Past", "Modern")
@@ -1345,7 +1345,7 @@ dev.off()
 # read in the past survey data and past logged data:
 
 past.logged <- read.csv("data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv")
-past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
+past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA.csv")
 past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
 
 # get data frame w/ 1980s, 1990s, and modern survey estimates:
@@ -1381,8 +1381,8 @@ ncell.change.1980.1990 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% dply
 
 ncell.change.1980.1990[ncell.change.1980.1990 == 0] <- NA # change 0 ncells to NA
 
-ncell.change.1980.1990$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
-ncell.change.1980.1990$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1980.1990$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
+ncell.change.1980.1990$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
 ncell.change.1980.1990$xval.nochange <- "2"
 ncell.change.1980.1990$xval.inc <- "1"
 ncell.change.1980.1990$xval.dec <- "3"
@@ -1424,8 +1424,8 @@ ncell.change.1990.2000 <- fia.surveys.wide %>% group_by(dens.bins.1990) %>% dply
 
 ncell.change.1990.2000[ncell.change.1990.2000 == 0] <- NA # change 0 ncells to NA
 
-ncell.change.1990.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
-ncell.change.1990.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1990.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
+ncell.change.1990.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
 ncell.change.1990.2000$xval.nochange <- "2"
 ncell.change.1990.2000$xval.inc <- "1"
 ncell.change.1990.2000$xval.dec <- "3"
@@ -1465,8 +1465,8 @@ ncell.change.1980.2000 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% dply
 
 ncell.change.1980.2000[ncell.change.1980.2000 == 0] <- NA # change 0 ncells to NA
 
-ncell.change.1980.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
-ncell.change.1980.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700)
+ncell.change.1980.2000$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
+ncell.change.1980.2000$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
 ncell.change.1980.2000$xval.nochange <- "2"
 ncell.change.1980.2000$xval.inc <- "1"
 ncell.change.1980.2000$xval.dec <- "3"
@@ -1566,7 +1566,7 @@ ncell.pct.change.ppet <- ncell.pct.change.ppet[!is.na(ncell.pct.change.ppet$dens
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.ppet1980.2000 <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                          arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/ha)") + xlab("Growing season P-PET") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -1608,7 +1608,7 @@ ncell.pct.change.pc1$pct_nochange <- (ncell.pct.change.pc1$n_nochange/ncell.pct.
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.pc1 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(pc1_bins, start.bin))+geom_segment(aes(xend = pc1_bins, yend = end.bin-20, size = pct_inc),
                                                                                                                        arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(pc1_bins, start.bin+20, size = pct_nochange), color = "#636363")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 50,], aes(pc1_bins, start.bin+20, size = pct_nochange), color = "#636363")+
   geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend = pc1_bins, yend = start.bin, size = pct_dec/2), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/Ha)")+xlab("Principal Componenet 1")+ theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -1645,7 +1645,7 @@ ncell.pct.change.pc1 <- ncell.pct.change.pc1[!is.na(ncell.pct.change.pc1$dens.bi
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.pc1.1980.2000 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                       arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/ha)") + xlab("Principal Component 1") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -1716,7 +1716,7 @@ ncell.pct.change.soil <- ncell.pct.change.soil[!is.na(ncell.pct.change.soil$dens
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.soil.1980.2000 <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                          arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/ha)") + xlab("Growing Season Soil Moisture") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -2375,7 +2375,7 @@ clust.hist.fia.full.msk
 # get updated modern FIA surveys:
 
 past.logged <- read.csv("data/FIA_plot_data/fia.by.cell.treated.2000_2017.csv")
-past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
+past.survey <- read.csv("data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA.csv")
 past.survey$new_scale <- ifelse(past.survey$INVYRcd %in% "1990s", 775, 1000)
 
 # get data frame w/ 1980s, 1990s, and modern survey estimates:

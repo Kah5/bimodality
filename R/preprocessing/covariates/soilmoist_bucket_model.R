@@ -1,6 +1,6 @@
 # Calculate end of month soil moisture from soil moisture accounting
 # Translated from code written by Ben Cook; which look slike it was translated by Dave Meko in 1997
-# Author: Christy Rollinson (crollinson@mortonarb.org); translated from B. Cook matlab code
+# Original Author: Christy Rollinson (crollinson@mortonarb.org); translated from B. Cook matlab code
 # KH adapted to just calculate soil moisture balance for the region:
 #
 # Notes from Ben Cook:

@@ -1,3 +1,5 @@
+# mixture model code was developed by and with John Tipton
+
 library(nimble)
 library(ggplot2)
 library(dplyr)

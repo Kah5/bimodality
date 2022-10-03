@@ -117,7 +117,7 @@ inil <- rbind(data.frame(ind.data), data.frame(il.data))
 inil <-data.frame(inil, stringsAsFactors = FALSE)
 
 # visualize the data:
-X11(width = 12)
+
 ggplot(inil[inil$L3_tree1 %in% c("No tree", "Oak", "Beech", "Maple", "Hickory"),], aes(x,y, color = L3_tree1))+geom_point(size = 0.05)+coord_equal()+
   scale_color_manual(limits = c("No tree", "Oak", "Beech", "Maple", "Hickory"),values = c("Tan", "Brown", "Blue", "Red","ForestGreen"))
 
@@ -153,7 +153,7 @@ year <- ifelse(inil$year >= 1825, '1825+',
                     ifelse(inil$year < 1825, '< 1825',"ALL"))
 
 inil$surveyyear <- year
-X11(width = 12)
+#X11(width = 12)
 ggplot(data = inil, aes(x = x, y = y, color = surveyyear)) + geom_point()
 ggplot(data = inil, aes(x = x, y = y, color = bearing)) + geom_point()
 
@@ -440,7 +440,7 @@ to.match <- apply(data.frame(state, corr.year, internal, section, stringsAsFacto
 corrections <- corr.vals[match(to.match, match.vec),]
 
 write.csv(corrections, 'data/correction_factors.csv')
-
+corrections <- read.csv('data/correction_factors.csv')
 
 #write the data as a csv
 write.csv(full.final, paste0("outputs/ndilin_pls_for_density_v",version,".csv"), row.names = FALSE )

@@ -325,6 +325,9 @@ pls.clust.msk <- ggplot(clust_8[!is.na(clust_8$FIAdensity),], aes(x = x, y=y, fi
                                                                                                                            axis.title.y=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+coord_equal()
 
 pls.clust.msk
+head(clust_8)
+clust_8.red  <- clust_8 %>% select(x:Walnut, speciescluster, mean_dens, media_dens, ci.low_dens, ci.high_dens, density_discrete)
+write.csv(clust_8.red, "outputs/pls_composition_types_density.csv", row.names = FALSE)
 
 # ----------------------- Figure 1D total PLS density histgram colored by species composition-----------------
 dens.clust <- merge(dens, clust_8[,c("x" ,"y", "speciescluster", "foresttype")], by = c("x", "y"), all.x = TRUE)

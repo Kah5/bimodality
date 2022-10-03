@@ -49,8 +49,15 @@ iltree.old <- iltree[iltree$INVYR < 1999,]
 
 # Join the all statewide plot, cond, and tree tables together in one big df:
 plot.old <- rbind(inplot.old, ilplot.old, miplot.old, mnplot.old, wiplot.old)
-cond.old <- rbind(incond.old, ilcond.old, micond.old,  mncond.old[,colnames(incond.old)], wicond.old) # note the MN condition table now has extra columns
-tree.old <- rbind(intree.old, iltree.old, mitree.old, mntree.old, witree.old)
+
+
+# issues with the condition table names not matching up:
+con.col.names <- colnames(wicond.old[,colnames(wicond.old) %in% colnames(incond.old)])
+
+tree.col.names <- colnames(mitree.old[,colnames(mitree.old) %in% colnames(intree.old)])
+
+cond.old <- rbind(incond.old[,con.col.names], ilcond.old[,con.col.names], micond.old[,con.col.names],  mncond.old[,con.col.names], wicond.old[,con.col.names]) # note the MN condition table now has extra columns
+tree.old <- rbind(intree.old[,tree.col.names], iltree.old[,tree.col.names], mitree.old[,tree.col.names], mntree.old[,tree.col.names], witree.old[,tree.col.names])
 
 
 
@@ -60,10 +67,12 @@ hist(cond.old$STDAGE)
 # get only the live trees
 tree.old <- tree.old[tree.old$STATUSCD == 1,]
 tree.old$DIA <- tree.old$DIA*2.54 # convert DBH to cm
-tree.old <- tree.old[tree.old$DIA >= 20.32,] # select trees > 8 inches (>=20.32)
+#tree.old <- tree.old[tree.old$DIA >= 20.32,] # select trees > 8 inches (>=20.32)
+tree.old <- tree.old[tree.old$DIA >= 2.54,] # select trees > 1 inches (>=20.32)
 
 # join the plot table to the tree dable using INVYR, PLOT, COUNTYCD, and STATECD
 merged.tree <- merge(plot.old, tree.old[,c( "STATECD","PLT_CN","PLOT","COUNTYCD", "INVYR", "TREE", "DIA", "TPA_UNADJ", "SPCD","SUBP", "TPA_UNADJ")], by = c(  "INVYR", "PLOT", "COUNTYCD", "STATECD"))
+
 
 
 # plot histograms of inventory yearsL
@@ -75,10 +84,17 @@ ggplot(merged.tree, aes(PLOT, fill = INVYR))+geom_histogram()+facet_wrap(~INVYR)
 # summarise the number of trees in each plot
 tree.count <- merged.tree %>% dplyr::count(PLT_CN, SPCD, INVYR, STATECD, PLOT,LAT,LON, TPA_UNADJ)
 
+merged.tree$DIA_class <- ifelse(merged.tree$DIA >= 8*2.54, ">8 in", 
+                                ifelse(merged.tree$DIA < 8*2.54 & merged.tree$DIA >= 4*2.54, "4-8 in",
+                                       ifelse(merged.tree$DIA < 4*2.54, "1-4 in", NA)))
+
+tree.count.byDBH <- merged.tree %>% dplyr::count(PLT_CN, SPCD, INVYR, STATECD, PLOT,LAT,LON,DIA_class, TPA_UNADJ)
+
 
 ac2ha   <- 0.404686 # acre to hectare conversion factor
 
 merged.tree <- tree.count#<- merge(merged.tree, tree.count, by = c("PLT_CN", "SPCD", "INVYR", "PLOT","STATECD"))
+merged.tree.dbh <- tree.count.byDBH#<- merge(merged.tree, tree.count, by = c("PLT_CN", "SPCD", "INVYR", "PLOT","STATECD"))
 
 # need to matach tree count up with overall merged data
 merged.tree$DENS_TPA <- merged.tree$n * merged.tree$TPA_UNADJ * (1/ac2ha) # for the old surveys, we need to use TPA_UNAJ to calculate the tree density
@@ -89,7 +105,18 @@ hist(merged.tree$DENS)
 hist(merged.tree$DENS_TPA)
 ggplot(merged.tree, aes(DENS))+geom_histogram()+facet_wrap(~INVYR)+xlim(0,500)
 
-# convert to paleon coordinates (roughly b/c these are fuzzed + swapped)
+# tree count by diameter class:
+# need to matach tree count up with overall merged data
+merged.tree.dbh$DENS_TPA <- merged.tree.dbh$n * merged.tree.dbh$TPA_UNADJ * (1/ac2ha) # for the old surveys, we need to use TPA_UNAJ to calculate the tree density
+# note that DENS is based on: https://github.com/PalEON-Project/PalEON-FIA/blob/master/R_scripts/Plot_parameters_agg.R
+merged.tree.dbh$DENS <- merged.tree.dbh$n * 6.018046 * (1/ac2ha) # to get trees per ha, multiple the number trees in the plot * the TPA factor (6.018046) * 1/ ac2ha 
+
+hist(merged.tree.dbh$DENS)
+hist(merged.tree.dbh$DENS_TPA)
+ggplot(merged.tree.dbh, aes(DENS))+geom_histogram()+facet_grid(INVYR~DIA_class)+xlim(0,500)
+
+
+# ALL data convert to paleon coordinates (roughly b/c these are fuzzed + swapped)
 
 head(merged.tree)
 merged.tree <- merged.tree[complete.cases(merged.tree[,c("LON", "LAT")]),]
@@ -140,12 +167,73 @@ ggplot(fia.by.cell, aes(Beech, fill = INVYRcd))+geom_histogram(position = "ident
 # need to check this method but it gives reasonable vals
 
 
-write.csv(fia.by.cell, "data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA.csv", row.names = FALSE)
-fia.by.cell<- read.csv( "data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA.csv")
-fia.by.cell.v1<- read.csv( "data/FIA_plot_data/fia.by.cell.out_1980_1990.csv")
+write.csv(fia.by.cell, "data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA_1in.csv", row.names = FALSE)
+fia.by.cell<- read.csv( "data/FIA_plot_data/fia.by.cell.out_1980_1990_TPA1in.csv")
+fia.by.cell.v1<- read.csv( "data/FIA_plot_data/fia.by.cell.out_1980_19901in.csv")
 density.compare <- merge(fia.by.cell[,c("x", "y", "INVYR", "FIAdensity")], fia.by.cell.v1[,c("x", "y", "INVYR", "FIAdensity")], by = c("x", "y", "INVYR"))
 
 ggplot(density.compare, aes(FIAdensity.x, FIAdensity.y))+geom_point()+geom_abline(a = 0, b = 1, col = "red")
+
+
+# for DIA classes: convert to paleon coordinates (roughly b/c these are fuzzed + swapped)
+
+head(merged.tree.dbh)
+merged.tree.dbh <- merged.tree.dbh[complete.cases(merged.tree.dbh[,c("LON", "LAT")]),]
+
+coordinates(merged.tree.dbh) <- ~ LON + LAT
+proj4string(merged.tree.dbh)=CRS("+proj=longlat +datum=WGS84") #define: WGS-84 lon,lat projection
+tree.albers <- spTransform(merged.tree.dbh,CRS("+init=epsg:3175")) #convert to: NAD83/Great Lakes and St Lawrence Albers projection
+
+base.rast <- raster(xmn = -71000, xmx = 2297000, ncols=296,
+                    ymn = 58000,  ymx = 1498000, nrows = 180,
+                    crs = '+init=epsg:3175')
+
+numbered.rast <- setValues(base.rast, 1:ncell(base.rast))
+numbered.cell <- raster::extract(numbered.rast, tree.albers)
+
+xys <- raster::xyFromCell(numbered.rast, cell = numbered.cell)
+
+tree.albers <- data.frame(tree.albers)
+tree.albers$x <- xys[,1]
+tree.albers$y <- xys[,2]
+tree.albers$cell <- numbered.cell
+
+
+head(tree.albers)
+speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
+
+FIA.pal <- merge(tree.albers, speciesconversion, by.x = 'SPCD', by.y = "spcd" )
+FIA.by.paleon <- dcast(FIA.pal, LON + LAT + PLT_CN+ x + y + cell + INVYR + DIA_class ~ PalEON, sum, na.rm=TRUE, value.var = 'DENS_TPA') #sum all species in common taxa in FIA grid cells
+FIA.by.paleon$FIAdensity <- rowSums(FIA.by.paleon[,9:length(FIA.by.paleon)], na.rm = TRUE) # sum the total density in each plot
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y',"LON", "LAT", 'cell', "PLT_CN",  "INVYR", "DIA_class")) # melt the dataframe
+fia.by.cell.dbh <- dcast(fia.melt, x + y+ cell + INVYR +DIA_class ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+#fia.by.cell$total <- rowSums(fia.by.cell[,4:28], na.rm = TRUE)
+
+ggplot(fia.by.cell.dbh, aes(x, y, fill = FIAdensity)) + geom_raster()+facet_wrap(~DIA_class)
+ggplot(fia.by.cell.dbh, aes(x, y, fill = DIA_class)) + geom_raster() + facet_wrap(~INVYR)
+ggplot(fia.by.cell.dbh, aes(FIAdensity, fill = DIA_class, alpha = 0.3)) + geom_histogram(position = "identity") + xlim(0,500)+facet_wrap(~INVYR)
+#ggplot(FIA.by.paleon, aes(Hemlock)) + geom_histogram() + facet_wrap(~INVYR)
+
+fia.by.cell.dbh$INVYRcd<- ifelse(fia.by.cell.dbh$INVYR < 1990, "1980s", ifelse(fia.by.cell.dbh$INVYR >= 1990 & fia.by.cell.dbh$INVYR <= 1999, "1990s", "1999-2017") )
+ggplot(fia.by.cell.dbh, aes(FIAdensity, fill = DIA_class)) + geom_histogram() + xlim(0,500)+facet_wrap(~INVYRcd)
+
+ggplot(fia.by.cell.dbh, aes(x,y, fill = FIAdensity)) + geom_raster() + facet_grid(DIA_class~INVYRcd)
+
+ggplot(fia.by.cell.dbh, aes( FIAdensity, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+ggplot(fia.by.cell.dbh, aes(Hemlock, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+ggplot(fia.by.cell.dbh, aes(Beech, fill = INVYRcd))+geom_histogram(position = "identity", alpha = 0.5)+xlim(0,500)
+
+# need to check this method but it gives reasonable vals
+
+
+write.csv(fia.by.cell.dbh, "data/FIA_plot_data/fia.by.cell.dbh.out_1980_1990_TPA_1in.csv", row.names = FALSE)
+fia.by.cell.dbh<- read.csv( "data/FIA_plot_data/fia.by.cell.dbh.out_1980_1990_TPA_1in.csv")
+fia.by.cell.dbh.v1<- read.csv( "data/FIA_plot_data/fia.by.cell.dbh.out_1980_1990_TPA_1in.csv")
+density.compare <- merge(fia.by.cell.dbh[,c("x", "y", "INVYR", "DIA_class","FIAdensity")], fia.by.cell.dbh.v1[,c("x", "y", "INVYR", "DIA_class","FIAdensity")], by = c("x", "y", "INVYR", "DIA_class"))
+
+ggplot(density.compare, aes(FIAdensity.x, FIAdensity.y))+geom_point()+geom_abline(a = 0, b = 1, col = "red")
+
+
 
 #---------------------------------------------------------------------
 # Which types of grid cells are being logged??

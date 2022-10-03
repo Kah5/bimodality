@@ -131,7 +131,7 @@ cells2add <- full.cells[!full.cells$cell %in% densitys$cell, ]
 cells2add$PLSdensity <- NA
 nacells <- cells2add[,c("x", "y", "cell", "PLSdensity")]
 
-densitys <- rbind(nacells, densitys)
+#densitys <- rbind(nacells, densitys)
 # Map out tree density below: 
 
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))

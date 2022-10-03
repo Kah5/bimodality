@@ -11,6 +11,7 @@ library(gridExtra)
 library(modes)
 
 FIA <- read.csv('data/FIA_species_plot_parameters_paleongrid.csv')
+FIA <- read.csv('FIA_species_plot_parameters_paleongrid_1incutoff.csv')
 speciesconversion <- read.csv('data/fia_conversion_v02-sgd.csv')
 
 FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )

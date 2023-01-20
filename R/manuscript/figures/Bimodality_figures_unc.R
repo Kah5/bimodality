@@ -463,8 +463,7 @@ clust.hist.full.both.no.aspect.msk
 #                                                               ci.low.d = quantile(dip, 0.025, na.rm = TRUE),
 #                                                               ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 # 
-# 
-# dens$pc1_bins <- cut(dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
+ dens$pc1_bins <- cut(dens$PC1, breaks=seq(-5.5, 4.5, by = 0.25))
 # 
 # ordered.cuts <- data.frame(pc1_bins = levels(cut(dens[order(dens$PC1),]$PC1, breaks=seq(-5.5, 4.5, by = 0.25))),
 #                            mids = seq(-5.375, 4.5, by = 0.25))
@@ -519,7 +518,7 @@ clust.hist.full.both.no.aspect.msk
 #                                                                ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 # 
 # 
-# dens$ppet_bins <- cut(dens$GS_ppet, breaks=seq(-170, 205, by = 15))
+dens$ppet_bins <- cut(dens$GS_ppet, breaks=seq(-170, 205, by = 15))
 # 
 # ordered.cuts <- data.frame(ppet_bins = unique(cut(dens[order(dens$GS_ppet),]$GS_ppet, breaks=seq(-170, 205, by = 15))),
 #                            mids = seq(-167.5, 205, by = 15))
@@ -573,7 +572,7 @@ clust.hist.full.both.no.aspect.msk
 #                                                                 ci.high.d = quantile(dip, 0.975, na.rm = TRUE))
 # 
 # 
-# dens$soil_bins <- cut(dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
+dens$soil_bins <- cut(dens$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05))
 # 
 # ordered.cuts <- data.frame(soil_bins = levels(unique(cut(dens[order(dens$mean_GS_soil),]$mean_GS_soil, breaks=seq(0, 1.8, by = 0.05)))),
 #                            mids = seq(0.025, 1.8, by = 0.05))
@@ -1374,9 +1373,9 @@ fia.surveys.wide$dens.bins.2000 <- cut(fia.surveys.wide$`2000s`, breaks = c(0,50
 
 
 # get numbe cells changing between 1980 and 1990:
-ncell.change.1980.1990 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(pct_inc_1980_1990 > 5, na.rm = TRUE),
+ncell.change.1980.1990 <- fia.surveys.wide %>%  group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(pct_inc_1980_1990 > 5, na.rm = TRUE),
                                                                      n_dec = sum(pct_inc_1980_1990 < -5, na.rm = TRUE),
-                                                                     n_nochange = sum(pct_inc_1980_1990 >= -5 & pct_inc_1980_1990 <= 5 , na.rm = TRUE))
+                                                                     n_nochange = sum(pct_inc_1980_1990 >= -5 & pct_inc_1980_1990 <= 5 , na.rm = TRUE))%>% filter(!is.na(dens.bins.1980))
 
 ncell.change.1980.1990[ncell.change.1980.1990 == 0] <- NA # change 0 ncells to NA
 
@@ -1419,7 +1418,7 @@ ncell.change.1980.1990.plot <- ggplot(ncell.change.1980.1990, aes(xval.inc, star
 # get number of cells changing between 1990 to 2000:
 ncell.change.1990.2000 <- fia.surveys.wide %>% group_by(dens.bins.1990) %>% dplyr::summarise(n_inc = sum(pct_inc_1990_2000 > 5, na.rm = TRUE),
                                                                                       n_dec = sum(pct_inc_1990_2000 < -5, na.rm = TRUE),
-                                                                                      n_nochange = sum(pct_inc_1990_2000 >= -5 & pct_inc_1990_2000 <= 5 , na.rm = TRUE))
+                                                                                      n_nochange = sum(pct_inc_1990_2000 >= -5 & pct_inc_1990_2000 <= 5 , na.rm = TRUE))%>% filter(!is.na(dens.bins.1990))
 
 ncell.change.1990.2000[ncell.change.1990.2000 == 0] <- NA # change 0 ncells to NA
 
@@ -1460,7 +1459,7 @@ ncell.change.1990.2000.plot <- ggplot(ncell.change.1990.2000, aes(xval.inc, star
 # get number of cells changing between 2000 to 2000:
 ncell.change.1980.2000 <- fia.surveys.wide %>% group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(pct_inc_1980_2000 > 5, na.rm = TRUE),
                                                                                       n_dec = sum(pct_inc_1980_2000 < -5, na.rm = TRUE),
-                                                                                      n_nochange = sum(pct_inc_1980_2000 >= -5 & pct_inc_1980_2000 <= 5 , na.rm = TRUE))
+                                                                                      n_nochange = sum(pct_inc_1980_2000 >= -5 & pct_inc_1980_2000 <= 5 , na.rm = TRUE))%>% filter(!is.na(dens.bins.1980))
 
 ncell.change.1980.2000[ncell.change.1980.2000 == 0] <- NA # change 0 ncells to NA
 
@@ -1521,7 +1520,7 @@ ncell.change.ppet <- fia.full.surveys.clim.wide  %>% group_by(dens.bins.1980, pp
                                                                                             n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
 ncell.change <- fia.full.surveys.clim.wide %>% group_by(dens.bins.1980) %>% dplyr::summarise(n_inc = sum(FIAminus1980 > 5, na.rm = TRUE),
                                                                                              n_dec = sum(FIAminus1980 < -5, na.rm = TRUE),
-                                                                                             n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE))
+                                                                                             n_nochange = sum(FIAminus1980 >= -5 & FIAminus1980 <= 5 , na.rm = TRUE)) %>% filter(!is.na(dens.bins.1980 ))
 ncell.change$start.bin <- seq(from = 0, to = 600, by = 50)
 ncell.change$end.bin <- seq(from = 50, to = 650, by = 50)
 
@@ -1739,17 +1738,17 @@ saveRDS(pct.inc.pc1.1980.2000, "outputs/pct.inc.pc1.1980.2000.arrowplot.rds")
 
 
 
-library(ggpubr)
-inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw()+theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1))
-
-# Create the external graphical objects
-# called a "grop" in Grid terminology
-xbp_grob <- ggplotGrob(inset)
-
-# Place box plots inside the histogram plot
-full.fia.surveys$INV_place <- ifelse(full.fia.surveys$INVYRcd %in% "2000s", 1000, 
-                                     ifelse(full.fia.surveys$INVYRcd %in% "1990s", 900,
-                                            ifelse(full.fia.surveys$INVYRcd %in% "1980s", 800, NA )))
+# library(ggpubr)
+# inset <- ggboxplot( data= full.fia.surveys, x = 'INVYRcd',y = 'FIAdensity', merge=TRUE,width = 0.5, fill = "INVYRcd",  palette =c("grey28", "grey40", "grey60"), outlier.size = 0.0005)+ylim(0,600) +theme_bw()+theme(axis.title = element_blank(),axis.ticks.y = element_blank(),axis.text.y = element_blank(), legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1))
+# 
+# # Create the external graphical objects
+# # called a "grop" in Grid terminology
+# xbp_grob <- ggplotGrob(inset)
+# 
+# # Place box plots inside the histogram plot
+# full.fia.surveys$INV_place <- ifelse(full.fia.surveys$INVYRcd %in% "2000s", 1000, 
+#                                      ifelse(full.fia.surveys$INVYRcd %in% "1990s", 900,
+#                                             ifelse(full.fia.surveys$INVYRcd %in% "1980s", 800, NA )))
 
 # -----------------------make arrow figure for increasing/decreasing between pls and FIA----------
 
@@ -1759,12 +1758,12 @@ dens.msk <- dens.clust[!is.na(dens.clust$mean_dens_fia),]
 dens.msk$fiaminuspls <- dens.msk$mean_dens_fia - dens.msk$mean_dens
 ncell.change <- dens.msk %>% group_by(dens.clust.bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
                                                      n_dec = sum(fiaminuspls < -5),
-                                                     n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))
+                                                     n_nochange = sum(fiaminuspls >= -5 & fiaminuspls <= 5 ))%>% filter(!is.na(dens.clust.bins))
 
 ncell.change[ncell.change == 0] <- NA # change 0 ncells to NA
 
-ncell.change$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
-ncell.change$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650)
+ncell.change$start.bin <- c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550)
+ncell.change$end.bin <- c( 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600)
 ncell.change$xval.nochange <- "2"
 ncell.change$xval.inc <- "1"
 ncell.change$xval.dec <- "3"
@@ -1772,7 +1771,7 @@ ncell.change$xval.dec <- "3"
 
 
 # ---------------------- Novel feedbacks across climate/environmental space figures:----------------------------------------------
-
+# Error:: ppet_bins do not exist
 # P-PET Many arrows
 ncell.change.ppet <- dens.msk %>% group_by(dens.clust.bins, ppet_bins) %>% dplyr::summarise(n_inc = sum(fiaminuspls > 5),
                                                                             n_dec = sum(fiaminuspls < -5),

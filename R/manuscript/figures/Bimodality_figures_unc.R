@@ -1840,7 +1840,7 @@ ncell.pct.change.ppet <- ncell.pct.change.ppet[!is.na(ncell.pct.change.ppet$dens
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.ppet.10 <- ggplot(ncell.pct.change.ppet[ncell.pct.change.ppet$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                            arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.ppet[ncell.pct.change.ppet$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.ppet[ncell.pct.change.ppet$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/ha)") + xlab("Growing season P-PET") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -1909,7 +1909,7 @@ ncell.pct.change.pc1 <- ncell.pct.change.pc1[!is.na(ncell.pct.change.pc1$dens.cl
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.pc1.10 <- ggplot(ncell.pct.change.pc1[ncell.pct.change.pc1$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                          arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.pc1[ncell.pct.change.pc1$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.pc1[ncell.pct.change.pc1$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
   ylab("Tree density (stems/ha)") + xlab("Principal Component 1") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
 
@@ -1974,12 +1974,15 @@ ncell.pct.change.soil$pct_nochange <- (ncell.pct.change.soil$n_nochange/ncell.pc
 ncell.pct.change.soil <- ncell.pct.change.soil[!is.na(ncell.pct.change.soil$dens.clust.bins),]
 
 
+
+ncell.pct.change.soil.nochange <- ncell.pct.change.soil %>% filter(pct_nochange > pct_inc & pct_nochange > pct_dec)
+
 # ideally we want to have it be the most common class, but this will do for now
 pct.inc.soil.10 <- ggplot(ncell.pct.change.soil[ncell.pct.change.soil$pct_inc >=50,], aes(mids, start.bin))+geom_segment(aes(xend = mids, yend = end.bin-20),
                                                                                                                       arrow = arrow(length = unit(0.15,"cm")), color = "#2166ac")+
-  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 20,], aes(mids, start.bin+20), color = "#636363")+
+  geom_point(data = ncell.pct.change.soil[ncell.pct.change.soil$pct_nochange >= 50,], aes(mids, start.bin+20), color = "#636363")+
   geom_segment(data =  ncell.pct.change.soil[ncell.pct.change.soil$pct_dec >=50,], aes( y = end.bin-20, xend =mids, yend = start.bin), arrow = arrow(length = unit(0.15,"cm")), color = "#b2182b")+
-  ylab("Tree density (stems/ha)") + xlab("Growing Season Soil Moisture") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
+  ylab("Tree density (stems/ha)") + xlab("Growing Season Soil Moisture") + theme_bw(base_size = 10)+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())+ylim()
 
 pct.inc.soil.10
 
@@ -2010,6 +2013,45 @@ dev.off()
 saveRDS(pct.inc.ppet.10, "outputs/pct.inc.ppet.10.arrowplot.rds")
 saveRDS(pct.inc.soil.10, "outputs/pct.inc.soil.10.arrowplot.rds")
 saveRDS(pct.inc.pc1.10, "outputs/pct.inc.pc1.10.arrowplot.rds")
+
+
+# make a plot legend:
+legend.df <- data.frame(Mode = c("Low Tree Density", "High Tree Density"),
+                        class2 = c("Savanna", "Forest"), 
+                        dummy = 1:2)
+
+mode.legend <- cowplot::get_legend(ggplot(legend.df, aes(Mode, dummy, fill = Mode))+geom_bar(stat = "identity")+scale_fill_manual(values = c("#005a32", "#8c510a")) + theme_bw(base_size = 12)+ theme(legend.position = "top", legend.direction = "horizontal", legend.title = element_blank()))
+
+
+# now plot out the full thing with all the data
+png(height = 12, width = 10, units = "in", res = 300, "figures/clean_all_hysteresis_plots_fia_single_arrows.png")
+
+plot_grid( mode.legend, 
+           plot_grid(pls.mix.ppet.clean, fia.single.ppet.clean, pct.inc.ppet.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(-170, 300)+ylim(0, 500),
+                     pls.mix.soilm.clean, fia.single.soilm.clean, pct.inc.soil.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(0, 1.6)+ylim(0, 500),
+                     pls.mix.pc1.clean, fia.single.pc1.clean, pct.inc.pc1.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(-5.5, 4.1)+ylim(0, 500),
+                     three.color.bimodal.plots.nolabs + theme(legend.title = element_blank()), three.color.bimodal.plots.fia.nolabs + theme(legend.title = element_blank()),
+                     align = "hv", labels = c("A", "E", "I", 
+                                              "B", "F", "J",
+                                              "C", "G", "K",
+                                              "D", "H") ,  ncol = 3),
+           
+           nrow = 2, rel_heights = c(0.1, 1))
+dev.off()
+
+
+
+png(height = 10.8, width = 4, units = "in", res = 300, "outputs/paper_figs_unc/clean_mixture_arrows_fia_msk.png")
+plot_grid( mode.legend, 
+plot_grid(#pls.mix.ppet.clean, fia.mix.ppet.clean, 
+          pct.inc.ppet.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(-170, 300)+ylim(0, 500),
+          #pls.mix.soilm.clean, fia.mix.soilm.clean, 
+          pct.inc.soil.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(0, 1.6)+ylim(0, 500),
+          #pls.mix.pc1.clean, fia.mix.pc1.clean, 
+          pct.inc.pc1.10 + theme_bw(base_size = 12)+theme(panel.grid = element_blank())+xlim(-5.5, 4.1)+ylim(0, 500),
+          align = "hv", labels = "AUTO", ncol = 1),
+nrow = 2, rel_heights = c(0.1, 1))
+dev.off()
 
 
 # ----------------Arrow figures across climate space for the change from 1980 to present---------------------
@@ -2506,8 +2548,8 @@ dev.off()
 
 # same figure but with the whole 
 
-load("Hysteresis_plots_temp.RData")
-load("Hysteresis_plots_temp_2.RData")
+load("outputs/mixture_model/Hysteresis_plots_temp.RData")
+load("outputs/mixture_model/Hysteresis_plots_temp_fiamsk.RData")
 library(cowplot)
 
 png(height = 12, width = 8, units = "in", res = 300, "figures/clean_all_hysteresis_plots.png")
